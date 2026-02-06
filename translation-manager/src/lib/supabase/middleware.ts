@@ -31,13 +31,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Public routes (no auth required)
+  const publicPaths = ['/admin', '/login', '/change-password'];
+  const isPublicPath = publicPaths.some(
+    path => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
+  );
+
   // Protected routes
   const protectedPaths = ['/', '/upload', '/translations', '/glossary', '/settings'];
   const isProtectedPath = protectedPaths.some(
     path => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/')
   );
 
-  if (isProtectedPath && !user) {
+  if (isProtectedPath && !user && !isPublicPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
