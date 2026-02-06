@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { extractTextFromPDF, extractAllText } from '@/lib/pdf/parser';
 import { ProductCode } from '@/types';
 
-// Maximum file size: 50MB
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+// Maximum file size: 4.5MB (Vercel serverless function limit)
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 
 // Supported file types
 const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         // Check file size
         if (file.size > MAX_FILE_SIZE) {
           const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
-          result.error = `파일 크기는 50MB를 초과할 수 없습니다. (현재: ${sizeInMB}MB)`;
+          result.error = `파일 크기는 4.5MB를 초과할 수 없습니다. (현재: ${sizeInMB}MB)`;
 
           // Create issue for oversized file
           const { data: issue } = await supabase

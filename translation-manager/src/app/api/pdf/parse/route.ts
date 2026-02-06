@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { extractTextFromPDF, extractAllText } from '@/lib/pdf/parser';
 
-// Maximum file size: 50MB (server-side limit, client uses 45MB)
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+// Maximum file size: 4.5MB (Vercel serverless function limit)
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 
 // Note: Body size limit is configured in next.config.ts (serverActions.bodySizeLimit: '50mb')
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (file.size > MAX_FILE_SIZE) {
       const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
       return NextResponse.json(
-        { error: `파일 크기는 50MB를 초과할 수 없습니다. (현재: ${sizeInMB}MB)` },
+        { error: `파일 크기는 4.5MB를 초과할 수 없습니다. (현재: ${sizeInMB}MB)` },
         { status: 413 } // Payload Too Large
       );
     }
