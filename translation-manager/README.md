@@ -1,0 +1,169 @@
+# Translation Resource Manager
+
+번역 리소스 관리 시스템 - 기획서 PDF에서 번역 대상 텍스트를 자동 추출하고, 기존 번역과 중복 검사, AI 문맥 검토, 상태 관리를 제공하는 웹 서비스
+
+## 기술 스택
+
+- **Frontend/Backend**: Next.js 14 (App Router)
+- **Database**: Supabase (PostgreSQL)
+- **AI**: OpenAI API (GPT-4)
+- **PDF 파싱**: pdf-parse
+- **스타일링**: Tailwind CSS
+
+## 주요 기능
+
+### 1. PDF 텍스트 추출
+- PDF 업로드 후 따옴표로 감싼 텍스트 자동 추출
+- 작은따옴표(' ') 및 큰따옴표(" ") 지원
+- 한글 따옴표(' ', " ") 지원
+
+### 2. 중복 번역 검사
+- 완전 일치: "이미 번역됨" 표시
+- 유사 (80%+): "유사 번역 존재" 경고
+- 신규: 번역 필요 표시
+
+### 3. AI 문맥 검토 (OpenAI)
+- 용어 일관성 검토
+- 어조 일관성 검토
+- 브랜드 톤앤매너 검토
+
+### 4. 상태 관리
+| 상태 | 색상 | 의미 |
+|------|------|------|
+| 번역 요청 | 노란색 | 번역 필요 |
+| 검수 완료 | 흰색 | 번역가 검수 완료 |
+| 반영 완료 | 회색 | 개발에 반영됨 |
+
+### 5. 지원 언어 (8개)
+- 한국어 (ko)
+- English (en)
+- 日本語 (ja)
+- 中文简体 (zh-CN)
+- 中文繁體 (zh-TW)
+- Español (es)
+- Français (fr)
+- Deutsch (de)
+
+## 설치 및 실행
+
+### 1. 의존성 설치
+
+```bash
+npm install
+```
+
+### 2. 환경변수 설정
+
+`.env.local.example`을 `.env.local`로 복사하고 값을 설정합니다:
+
+```bash
+cp .env.local.example .env.local
+```
+
+```env
+# Supabase (https://supabase.com에서 프로젝트 생성 후 설정)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# OpenAI (https://platform.openai.com에서 API 키 발급)
+OPENAI_API_KEY=your_openai_api_key
+```
+
+### 3. Supabase 데이터베이스 설정
+
+Supabase 대시보드의 SQL Editor에서 `supabase/migrations/001_initial_schema.sql` 파일의 내용을 실행합니다.
+
+### 4. 개발 서버 실행
+
+```bash
+npm run dev
+```
+
+http://localhost:3000 에서 앱에 접속할 수 있습니다.
+
+### 5. 프로덕션 빌드
+
+```bash
+npm run build
+npm start
+```
+
+## 프로젝트 구조
+
+```
+translation-manager/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/login/         # 로그인 페이지
+│   │   ├── (dashboard)/
+│   │   │   ├── page.tsx          # 대시보드
+│   │   │   ├── upload/           # PDF 업로드
+│   │   │   ├── translations/     # 번역 관리
+│   │   │   ├── glossary/         # 용어집
+│   │   │   └── settings/         # 설정
+│   │   └── api/
+│   │       ├── pdf/parse/        # PDF 파싱
+│   │       ├── translations/     # 번역 CRUD
+│   │       ├── ai/context-check/ # AI 문맥 검토
+│   │       ├── glossary/         # 용어집 CRUD
+│   │       └── import/           # 스프레드시트 import
+│   ├── components/
+│   │   ├── ui/                   # 공통 UI 컴포넌트
+│   │   └── layout/               # 레이아웃 컴포넌트
+│   ├── lib/
+│   │   ├── supabase/             # Supabase 클라이언트
+│   │   ├── openai/               # OpenAI 클라이언트
+│   │   ├── pdf/                  # PDF 파싱 유틸리티
+│   │   └── similarity.ts         # 텍스트 유사도 계산
+│   └── types/                    # TypeScript 타입 정의
+├── supabase/
+│   └── migrations/               # 데이터베이스 마이그레이션
+└── package.json
+```
+
+## API 엔드포인트
+
+### 번역 관리
+- `GET /api/translations` - 번역 목록 조회
+- `POST /api/translations` - 번역 생성
+- `GET /api/translations/[id]` - 번역 상세 조회
+- `PATCH /api/translations/[id]` - 번역 수정
+- `DELETE /api/translations/[id]` - 번역 삭제
+- `POST /api/translations/bulk` - 번역 일괄 생성
+- `PATCH /api/translations/bulk` - 번역 상태 일괄 수정
+- `POST /api/translations/check-duplicates` - 중복 검사
+
+### 용어집
+- `GET /api/glossary` - 용어집 조회
+- `POST /api/glossary` - 용어 추가
+- `PATCH /api/glossary/[id]` - 용어 수정
+- `DELETE /api/glossary/[id]` - 용어 삭제
+
+### AI
+- `POST /api/ai/context-check` - AI 문맥 검토
+
+### 기타
+- `POST /api/pdf/parse` - PDF 텍스트 추출
+- `POST /api/import` - CSV 가져오기
+- `GET /api/dashboard/stats` - 대시보드 통계
+
+## CSV Import 형식
+
+```csv
+source_text,context,status,ko,en
+"Login","로그인 버튼",pending,"로그인","Login"
+"Sign up","회원가입 버튼",pending,"회원가입","Sign up"
+```
+
+## 배포
+
+Vercel에 배포하는 것을 권장합니다:
+
+1. GitHub에 프로젝트 푸시
+2. Vercel에서 프로젝트 Import
+3. 환경변수 설정
+4. 배포
+
+## 라이선스
+
+MIT
