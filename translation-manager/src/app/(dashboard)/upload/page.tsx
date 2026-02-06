@@ -139,8 +139,7 @@ export default function UploadPage() {
         <Card className="mb-6">
           <FileUploader
             onFilesChange={handleFilesChange}
-            maxPdfFiles={5}
-            maxImageFiles={10}
+            maxFiles={5}
           />
         </Card>
 
