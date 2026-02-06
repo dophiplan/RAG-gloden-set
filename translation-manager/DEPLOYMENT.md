@@ -33,7 +33,7 @@ git push origin main
 
 다음 버튼을 클릭하면 자동으로 Vercel 배포 페이지로 이동합니다:
 
-<a href="https://vercel.com/new/clone?repository-url=https://github.com/dophiplan/translation-manager&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,ANTHROPIC_API_KEY&envDescription=Supabase%20and%20Anthropic%20API%20keys%20required&envLink=https://github.com/dophiplan/translation-manager/blob/main/DEPLOYMENT.md">
+<a href="https://vercel.com/new/clone?repository-url=https://github.com/dophiplan/translation-manager&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,OPENAI_API_KEY&envDescription=Supabase%20and%20OpenAI%20API%20keys%20required&envLink=https://github.com/dophiplan/translation-manager/blob/main/DEPLOYMENT.md">
   <img src="https://vercel.com/button" alt="Deploy with Vercel" />
 </a>
 
@@ -66,26 +66,26 @@ Name: NEXT_PUBLIC_SUPABASE_ANON_KEY
 Value: eyJ0eXAiOiJKV1QiLCJhbGc... (Supabase Dashboard에서 복사)
 ```
 
-**2. Anthropic API (필수)**
+**2. OpenAI API (필수)**
 
-1. https://console.anthropic.com 방문
-2. "API Keys" 섹션 접근
+1. https://platform.openai.com 방문
+2. "API keys" 섹션 접근
 3. API Key 생성 또는 기존 키 복사
-
-```
-Name: ANTHROPIC_API_KEY
-Value: sk-ant-v0-xxxxxxxxxxxxxxxx
-```
-
-#### 선택 환경 변수
-
-**OpenAI API (선택사항)**
-
-OpenAI 문맥 검토 기능을 사용하려면:
 
 ```
 Name: OPENAI_API_KEY
 Value: sk-proj-xxxxxxxxxxxxxxxx
+```
+
+#### 선택 환경 변수
+
+**Anthropic API (선택사항)**
+
+Anthropic 문맥 검토 기능을 사용하려면:
+
+```
+Name: ANTHROPIC_API_KEY
+Value: sk-ant-v0-xxxxxxxxxxxxxxxx
 ```
 
 ### 4단계: 배포 시작 (1분)

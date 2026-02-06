@@ -67,13 +67,13 @@ cp .env.local.example .env.local
    - `NEXT_PUBLIC_SUPABASE_URL`: 프로젝트 URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Anonymous Key
 
-2. **Anthropic API** (https://console.anthropic.com에서 API 키 발급)
-   - `ANTHROPIC_API_KEY`: 필수 - AI 번역의 주요 서비스
+2. **OpenAI API** (https://platform.openai.com에서 API 키 발급)
+   - `OPENAI_API_KEY`: 필수 - AI 번역의 주요 서비스
 
 **선택 환경 변수:**
 
-3. **OpenAI API** (선택사항, https://platform.openai.com/api-keys)
-   - `OPENAI_API_KEY`: 문맥 검토 기능 활용 시에만 필요
+3. **Anthropic API** (선택사항, https://console.anthropic.com)
+   - `ANTHROPIC_API_KEY`: 문맥 검토 기능 활용 시에만 필요
 
 4. **기타 설정**
    - `EMAIL_PROVIDER`: 이메일 서비스 (기본값: 'mock')
@@ -190,7 +190,7 @@ source_text,context,status,ko,en
 
 ### 원클릭 Vercel 배포
 
-<a href="https://vercel.com/new/clone?repository-url=https://github.com/dophiplan/translation-manager&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,ANTHROPIC_API_KEY&envDescription=Supabase%20and%20Anthropic%20API%20keys%20required&envLink=https://github.com/dophiplan/translation-manager/blob/main/DEPLOYMENT.md">
+<a href="https://vercel.com/new/clone?repository-url=https://github.com/dophiplan/translation-manager&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,OPENAI_API_KEY&envDescription=Supabase%20and%20OpenAI%20API%20keys%20required&envLink=https://github.com/dophiplan/translation-manager/blob/main/DEPLOYMENT.md">
   <img src="https://vercel.com/button" alt="Deploy with Vercel" />
 </a>
 
