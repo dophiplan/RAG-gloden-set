@@ -2,6 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+  // TEMPORARY: Skip authentication for testing
+  // TODO: Re-enable after admin setup is complete
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -27,6 +29,10 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // Skip all auth checks temporarily
+  return supabaseResponse;
+
+  /* COMMENTED OUT - Re-enable when ready
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -72,4 +78,5 @@ export async function updateSession(request: NextRequest) {
   }
 
   return supabaseResponse;
+  */
 }
