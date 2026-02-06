@@ -2,26 +2,16 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+
+// TEMPORARY: Skip auth check for demo/testing
+// TODO: Re-enable authentication after email verification is configured
 
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (session) {
-        // 로그인된 사용자 → 대시보드로
-        router.push('/translations');
-      } else {
-        // 미로그인 → 로그인 페이지로
-        router.push('/login');
-      }
-    };
-
-    checkAuth();
+    // 바로 번역 관리 페이지로 이동
+    router.push('/translations');
   }, [router]);
 
   return (
