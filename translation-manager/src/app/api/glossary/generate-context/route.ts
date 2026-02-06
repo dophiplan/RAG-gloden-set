@@ -31,14 +31,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 사용자 설정에서 API 키 가져오기
-    const { data: settings } = await supabase
-      .from('user_settings')
-      .select('openai_api_key')
-      .eq('user_id', user.id)
+    // Get API key (organization first, then user settings)
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', user.id)
       .single();
 
-    const openai = getOpenAIClient(settings?.openai_api_key);
+    let apiKey: string | null = null;
+
+    // Priority 1: Organization API key for @rsupport.com users
+    if (userProfile?.email?.endsWith('@rsupport.com')) {
+      const { data: orgSettings } = await supabase
+        .from('organization_settings')
+        .select('openai_api_key')
+        .eq('domain', 'rsupport.com')
+        .single();
+
+      apiKey = orgSettings?.openai_api_key || null;
+    }
+
+    // Priority 2: Individual user API key
+    if (!apiKey) {
+      const { data: settings } = await supabase
+        .from('user_settings')
+        .select('openai_api_key')
+        .eq('user_id', user.id)
+        .single();
+
+      apiKey = settings?.openai_api_key || null;
+    }
+
+    const openai = getOpenAIClient(apiKey);
 
     // AI 프롬프트 구성
     const systemPrompt = `You are a professional translator and terminology expert.

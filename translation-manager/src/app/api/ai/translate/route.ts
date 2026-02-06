@@ -36,14 +36,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch user's OpenAI API key from settings
-    const { data: userSettings } = await supabase
-      .from('user_settings')
-      .select('openai_api_key')
-      .eq('user_id', user.id)
+    // Get user profile to check domain
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', user.id)
       .single();
 
-    const apiKey = userSettings?.openai_api_key || process.env.OPENAI_API_KEY;
+    let apiKey: string | null = null;
+
+    // Priority 1: Organization API key for @rsupport.com users
+    if (userProfile?.email?.endsWith('@rsupport.com')) {
+      const { data: orgSettings } = await supabase
+        .from('organization_settings')
+        .select('openai_api_key')
+        .eq('domain', 'rsupport.com')
+        .single();
+
+      apiKey = orgSettings?.openai_api_key || null;
+    }
+
+    // Priority 2: Individual user API key
+    if (!apiKey) {
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('openai_api_key')
+        .eq('user_id', user.id)
+        .single();
+
+      apiKey = userSettings?.openai_api_key || null;
+    }
+
+    // Priority 3: Environment variable
+    if (!apiKey) {
+      apiKey = process.env.OPENAI_API_KEY || null;
+    }
 
     if (!apiKey) {
       return NextResponse.json(

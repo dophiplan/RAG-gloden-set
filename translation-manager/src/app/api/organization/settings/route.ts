@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isMaster } from '@/lib/permissions';
 
 const RSUPPORT_DOMAIN = 'rsupport.com';
 
@@ -14,16 +13,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // Get current user with roles
+    // Get current user with email to check domain
     const { data: currentUser } = await supabase
       .from('users')
-      .select('*')
+      .select('email')
       .eq('id', user.id)
       .single();
 
-    // Only masters can access organization settings
-    if (!isMaster(currentUser)) {
-      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
+    // Only @rsupport.com users can access organization settings
+    if (!currentUser?.email?.endsWith('@rsupport.com')) {
+      return NextResponse.json({ error: '@rsupport.com 계정만 조직 API 키를 관리할 수 있습니다.' }, { status: 403 });
     }
 
     // Get organization settings for rsupport.com
@@ -74,16 +73,16 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // Get current user with roles
+    // Get current user with email to check domain
     const { data: currentUser } = await supabase
       .from('users')
-      .select('*')
+      .select('email')
       .eq('id', user.id)
       .single();
 
-    // Only masters can update organization settings
-    if (!isMaster(currentUser)) {
-      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
+    // Only @rsupport.com users can update organization settings
+    if (!currentUser?.email?.endsWith('@rsupport.com')) {
+      return NextResponse.json({ error: '@rsupport.com 계정만 조직 API 키를 관리할 수 있습니다.' }, { status: 403 });
     }
 
     const body = await request.json();

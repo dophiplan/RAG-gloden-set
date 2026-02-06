@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [isRsupportUser, setIsRsupportUser] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [apiKeyMessage, setApiKeyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const supabase = createClient();
@@ -49,15 +50,31 @@ export default function SettingsPage() {
             });
           }
 
-          // Check if user has API key configured
-          const { data: settings } = await supabase
-            .from('user_settings')
-            .select('openai_api_key')
-            .eq('user_id', authUser.id)
-            .single();
+          // Check if user is from rsupport.com domain
+          const email = authUser.email || '';
+          const isRsupport = email.endsWith('@rsupport.com');
+          setIsRsupportUser(isRsupport);
 
-          if (settings?.openai_api_key) {
-            setHasApiKey(true);
+          // For @rsupport.com users, check organization API key
+          if (isRsupport) {
+            const orgResponse = await fetch('/api/organization/settings');
+            if (orgResponse.ok) {
+              const { settings: orgSettings } = await orgResponse.json();
+              if (orgSettings?.openai_api_key) {
+                setHasApiKey(true);
+              }
+            }
+          } else {
+            // For other users, check individual API key
+            const { data: settings } = await supabase
+              .from('user_settings')
+              .select('openai_api_key')
+              .eq('user_id', authUser.id)
+              .single();
+
+            if (settings?.openai_api_key) {
+              setHasApiKey(true);
+            }
           }
         }
       } catch (error) {
@@ -104,11 +121,23 @@ export default function SettingsPage() {
     setApiKeyMessage(null);
 
     try {
-      const response = await fetch('/api/settings/openai-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: openaiApiKey }),
-      });
+      let response;
+
+      if (isRsupportUser) {
+        // @rsupport.com users save to organization settings
+        response = await fetch('/api/organization/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ openai_api_key: openaiApiKey }),
+        });
+      } else {
+        // Other users save to personal settings
+        response = await fetch('/api/settings/openai-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: openaiApiKey }),
+        });
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -117,7 +146,8 @@ export default function SettingsPage() {
 
       setHasApiKey(!!openaiApiKey);
       setOpenaiApiKey('');
-      setApiKeyMessage({ type: 'success', text: 'OpenAI API 키가 저장되었습니다.' });
+      const keyType = isRsupportUser ? '조직 공용 OpenAI API 키' : 'OpenAI API 키';
+      setApiKeyMessage({ type: 'success', text: `${keyType}가 저장되었습니다.` });
     } catch (error) {
       console.error('Error saving API key:', error);
       setApiKeyMessage({ type: 'error', text: error instanceof Error ? error.message : 'API 키 저장에 실패했습니다.' });
@@ -128,22 +158,35 @@ export default function SettingsPage() {
 
   const handleDeleteApiKey = async () => {
     if (!user) return;
-    if (!confirm('OpenAI API 키를 삭제하시겠습니까?')) return;
+    const keyType = isRsupportUser ? '조직 공용 OpenAI API 키' : 'OpenAI API 키';
+    if (!confirm(`${keyType}를 삭제하시겠습니까?${isRsupportUser ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) return;
 
     setSavingApiKey(true);
     setApiKeyMessage(null);
 
     try {
-      const response = await fetch('/api/settings/openai-key', {
-        method: 'DELETE',
-      });
+      let response;
+
+      if (isRsupportUser) {
+        // @rsupport.com users delete from organization settings
+        response = await fetch('/api/organization/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ openai_api_key: null }),
+        });
+      } else {
+        // Other users delete from personal settings
+        response = await fetch('/api/settings/openai-key', {
+          method: 'DELETE',
+        });
+      }
 
       if (!response.ok) {
         throw new Error('API 키 삭제 실패');
       }
 
       setHasApiKey(false);
-      setApiKeyMessage({ type: 'success', text: 'OpenAI API 키가 삭제되었습니다.' });
+      setApiKeyMessage({ type: 'success', text: `${keyType}가 삭제되었습니다.` });
     } catch (error) {
       console.error('Error deleting API key:', error);
       setApiKeyMessage({ type: 'error', text: 'API 키 삭제에 실패했습니다.' });
@@ -208,16 +251,29 @@ export default function SettingsPage() {
 
         {/* OpenAI API Key Settings */}
         <Card>
-          <CardTitle>OpenAI API 키</CardTitle>
+          <CardTitle>
+            {isRsupportUser ? '조직 공용 OpenAI API 키' : 'OpenAI API 키'}
+            {isRsupportUser && (
+              <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                조직 전체 공유
+              </span>
+            )}
+          </CardTitle>
           <p className="text-sm text-gray-500 mt-1 mb-4">
-            AI 자동 번역 기능을 사용하려면 OpenAI API 키가 필요합니다.
+            {isRsupportUser
+              ? '@rsupport.com 계정은 조직 전체가 공유하는 API 키를 사용합니다. AI 자동 번역 기능에 사용됩니다.'
+              : 'AI 자동 번역 기능을 사용하려면 OpenAI API 키가 필요합니다.'
+            }
           </p>
           <div className="space-y-4">
             <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
               <div className="flex-1">
                 <p className="font-medium text-gray-900">현재 상태</p>
                 <p className="text-sm text-gray-500">
-                  {hasApiKey ? 'API 키가 설정되어 있습니다.' : 'API 키가 설정되지 않았습니다.'}
+                  {hasApiKey ?
+                    (isRsupportUser ? '조직 API 키가 설정되어 있습니다.' : 'API 키가 설정되어 있습니다.')
+                    : (isRsupportUser ? '조직 API 키가 설정되지 않았습니다.' : 'API 키가 설정되지 않았습니다.')
+                  }
                 </p>
               </div>
               <Badge variant={hasApiKey ? 'success' : 'warning'}>
