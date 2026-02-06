@@ -6,8 +6,9 @@
 
 - **Frontend/Backend**: Next.js 14 (App Router)
 - **Database**: Supabase (PostgreSQL)
-- **AI**: OpenAI API (GPT-4)
-- **PDF 파싱**: pdf-parse
+- **AI**: Anthropic API (Claude) - Primary service
+  - OpenAI API (Optional - for context review feature)
+- **PDF 파싱**: unpdf
 - **스타일링**: Tailwind CSS
 
 ## 주요 기능
@@ -60,18 +61,44 @@ npm install
 cp .env.local.example .env.local
 ```
 
-```env
-# Supabase (https://supabase.com에서 프로젝트 생성 후 설정)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+**필수 환경 변수:**
 
-# OpenAI (https://platform.openai.com에서 API 키 발급)
-OPENAI_API_KEY=your_openai_api_key
-```
+1. **Supabase** (https://supabase.com에서 프로젝트 생성 후 설정)
+   - `NEXT_PUBLIC_SUPABASE_URL`: 프로젝트 URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Anonymous Key
+
+2. **Anthropic API** (https://console.anthropic.com에서 API 키 발급)
+   - `ANTHROPIC_API_KEY`: 필수 - AI 번역의 주요 서비스
+
+**선택 환경 변수:**
+
+3. **OpenAI API** (선택사항, https://platform.openai.com/api-keys)
+   - `OPENAI_API_KEY`: 문맥 검토 기능 활용 시에만 필요
+
+4. **기타 설정**
+   - `EMAIL_PROVIDER`: 이메일 서비스 (기본값: 'mock')
+   - `NEXT_PUBLIC_APP_URL`: 앱 URL (기본값: 'http://localhost:3000')
 
 ### 3. Supabase 데이터베이스 설정
 
+**Option 1: Supabase CLI (권장)**
+```bash
+npx supabase migration list
+npx supabase db push
+```
+
+**Option 2: Supabase 대시보드**
 Supabase 대시보드의 SQL Editor에서 `supabase/migrations/001_initial_schema.sql` 파일의 내용을 실행합니다.
+
+**마이그레이션 파일:**
+- `supabase/migrations/001_initial_schema.sql`: 기본 스키마 (테이블, 인덱스 생성)
+
+설정 완료 후 다음을 확인하세요:
+- [ ] Supabase 프로젝트가 생성됨
+- [ ] 환경 변수가 모두 설정됨
+- [ ] 데이터베이스 마이그레이션이 완료됨
+
+`npm run verify` 명령으로 설정을 검증할 수 있습니다.
 
 ### 4. 개발 서버 실행
 
@@ -155,13 +182,17 @@ source_text,context,status,ko,en
 "Sign up","회원가입 버튼",pending,"회원가입","Sign up"
 ```
 
+## 빠른 시작 가이드
+
+신규 사용자는 [GETTING_STARTED.md](./GETTING_STARTED.md)를 참고하여 15분 안에 설치할 수 있습니다.
+
 ## 배포
 
 Vercel에 배포하는 것을 권장합니다:
 
 1. GitHub에 프로젝트 푸시
 2. Vercel에서 프로젝트 Import
-3. 환경변수 설정
+3. 환경변수 설정 (필수 환경 변수 참고)
 4. 배포
 
 ## 라이선스
