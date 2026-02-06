@@ -43,6 +43,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Check if password reset is required
+  if (user && request.nextUrl.pathname !== '/change-password') {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('password_reset_required')
+      .eq('id', user.id)
+      .single();
+
+    if (userData?.password_reset_required) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/change-password';
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Redirect logged-in users away from login page
   if (request.nextUrl.pathname === '/login' && user) {
     const url = request.nextUrl.clone();

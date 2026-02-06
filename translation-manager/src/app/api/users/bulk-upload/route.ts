@@ -220,9 +220,27 @@ export async function POST(request: NextRequest) {
 
           results.success++;
         } else {
-          // User doesn't exist, create user record
-          const insertData: any = {
+          // User doesn't exist, create auth account with default password
+          const DEFAULT_PASSWORD = '111111';
+
+          // Create auth user with Supabase Admin API
+          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
             email: userRow.email,
+            password: DEFAULT_PASSWORD,
+            email_confirm: true, // Auto-confirm email
+            user_metadata: {
+              name: userRow.name || '',
+            },
+          });
+
+          if (authError) throw authError;
+          if (!authData.user) throw new Error('Failed to create auth user');
+
+          // Create user profile record
+          const insertData: any = {
+            id: authData.user.id,
+            email: userRow.email,
+            password_reset_required: true, // Force password change on first login
           };
 
           if (userRow.name) insertData.name = userRow.name;
@@ -261,9 +279,7 @@ export async function POST(request: NextRequest) {
 
           const { error: insertError } = await supabase
             .from('users')
-            .upsert(insertData, {
-              onConflict: 'email',
-            });
+            .insert(insertData);
 
           if (insertError) throw insertError;
 
