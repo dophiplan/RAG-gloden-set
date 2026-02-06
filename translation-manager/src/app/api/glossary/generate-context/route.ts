@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    let apiKey: string | null = null;
+    let apiKey: string | undefined = undefined;
 
     // Priority 1: Organization API key for @rsupport.com users
     if (userProfile?.email?.endsWith('@rsupport.com')) {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         .eq('domain', 'rsupport.com')
         .single();
 
-      apiKey = orgSettings?.openai_api_key || null;
+      apiKey = orgSettings?.openai_api_key || undefined;
     }
 
     // Priority 2: Individual user API key
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id)
         .single();
 
-      apiKey = settings?.openai_api_key || null;
+      apiKey = settings?.openai_api_key || undefined;
     }
 
     const openai = getOpenAIClient(apiKey);
