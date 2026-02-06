@@ -17,7 +17,7 @@ export interface FileUploaderProps {
 
 const ACCEPTED_PDF_TYPES = ['application/pdf'];
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (Vercel serverless function limit)
 
 export default function FileUploader({
   onFilesChange,
@@ -40,7 +40,7 @@ export default function FileUploader({
 
   const validateFile = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) {
-      return `${file.name} is too large. Maximum size is 10MB.`;
+      return `${file.name} is too large. Maximum size is 4.5MB.`;
     }
 
     const isPdf = ACCEPTED_PDF_TYPES.includes(file.type);
@@ -244,7 +244,8 @@ export default function FileUploader({
           <p className="mt-2 text-xs text-gray-500">
             PDF (max {maxPdfFiles}) or Images (PNG, JPEG, GIF, WEBP - max {maxImageFiles})
           </p>
-          <p className="text-xs text-gray-500">Up to 10MB per file</p>
+          <p className="text-xs text-gray-500">Up to 4.5MB per file</p>
+          <p className="text-xs text-gray-500">⚠️ Larger files require Supabase Storage integration (Phase 2)</p>
           <p className="mt-2 text-xs text-gray-600">
             Current: {pdfCount}/{maxPdfFiles} PDF, {imageCount}/{maxImageFiles} images
           </p>

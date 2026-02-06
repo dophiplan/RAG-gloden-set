@@ -1,0 +1,35 @@
+# Test files (contains large PDFs)
+test-pdfs/
+
+# Documentation
+DEPLOYMENT_CHECKLIST.md
+GETTING_STARTED.md
+GLOSSARY_AUTO_LEARNING_QA.md
+GLOSSARY_AUTO_LEARNING_README.md
+PDF_LOAD_TEST_REPORT.md
+CHANGELOG_GLOSSARY_AUTO_LEARNING.md
+*.md
+!README.md
+
+# Development files
+.env.local
+.env*.local
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Scripts
+scripts/
+*.sh
+
+# Git
+.git/
+.gitignore

@@ -188,12 +188,17 @@ source_text,context,status,ko,en
 
 ## 배포
 
-Vercel에 배포하는 것을 권장합니다:
+### 원클릭 Vercel 배포
 
-1. GitHub에 프로젝트 푸시
-2. Vercel에서 프로젝트 Import
-3. 환경변수 설정 (필수 환경 변수 참고)
-4. 배포
+<a href="https://vercel.com/new/clone?repository-url=https://github.com/dophiplan/translation-manager&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,ANTHROPIC_API_KEY&envDescription=Supabase%20and%20Anthropic%20API%20keys%20required&envLink=https://github.com/dophiplan/translation-manager/blob/main/DEPLOYMENT.md">
+  <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+</a>
+
+### 수동 배포
+
+자세한 배포 방법은 [DEPLOYMENT.md](./DEPLOYMENT.md)를 참고하세요.
+
+**중요**: 현재 버전은 4.5MB PDF를 지원합니다. 더 큰 파일은 Phase 2 업데이트에서 지원 예정입니다.
 
 ## 라이선스
 
