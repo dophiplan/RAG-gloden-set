@@ -8,8 +8,8 @@ import Input from './ui/Input';
 import Select from './ui/Select';
 import { ExtractedText, DuplicateCheckResult, PRODUCTS, ProductCode } from '@/types';
 
-// Maximum file size: 45MB
-const MAX_FILE_SIZE = 45 * 1024 * 1024;
+// Maximum file size: 4.5MB (Vercel serverless function limit)
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
 
 interface PDFUploaderProps {
   onExtracted?: (texts: ExtractedText[]) => void;
@@ -53,7 +53,7 @@ export default function PDFUploader({ onExtracted, onDuplicateCheck }: PDFUpload
     // Check file size before upload
     if (file.size > MAX_FILE_SIZE) {
       const sizeInMB = (file.size / 1024 / 1024).toFixed(2);
-      alert(`파일 크기는 45MB를 초과할 수 없습니다.\n현재 파일 크기: ${sizeInMB}MB`);
+      alert(`파일 크기는 4.5MB를 초과할 수 없습니다.\n현재 파일 크기: ${sizeInMB}MB`);
       return;
     }
 
@@ -222,7 +222,7 @@ export default function PDFUploader({ onExtracted, onDuplicateCheck }: PDFUpload
               따옴표(&apos; &apos; 또는 &quot; &quot;)로 감싼 텍스트가 추출됩니다
             </p>
             <p className="mt-1 text-xs font-medium text-gray-700">
-              최대 용량: 45MB
+              최대 용량: 4.5MB (Vercel 서버리스 함수 제한)
             </p>
           </div>
         </div>
