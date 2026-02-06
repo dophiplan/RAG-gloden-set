@@ -27,9 +27,6 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // TEMPORARY: Skip auth check for demo/testing
-  // TODO: Re-enable authentication after email verification is configured
-  /*
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -52,7 +49,6 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/';
     return NextResponse.redirect(url);
   }
-  */
 
   return supabaseResponse;
 }
