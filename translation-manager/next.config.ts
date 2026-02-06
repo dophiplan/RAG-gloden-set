@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Production output optimization for Vercel
+  output: 'standalone',
+
   // Compression
   compress: true,
 
