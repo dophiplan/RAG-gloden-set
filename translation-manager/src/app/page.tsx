@@ -3,14 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// TEMPORARY: Skip auth check for demo/testing
-// TODO: Re-enable authentication after email verification is configured
-
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // 바로 번역 관리 페이지로 이동
+    // Redirect to translations page (middleware will handle auth)
     router.push('/translations');
   }, [router]);
 
