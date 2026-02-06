@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     // Enforce 500 user limit
     if (userRows.length > MAX_USERS) {
       return NextResponse.json(
-        { error: \`최대 \${MAX_USERS}명까지 업로드 가능합니다. (현재: \${userRows.length}명)\` },
+        { error: `최대 ${MAX_USERS}명까지 업로드 가능합니다. (현재: ${userRows.length}명)` },
         { status: 400 }
       );
     }
@@ -286,10 +286,10 @@ export async function POST(request: NextRequest) {
           results.success++;
         }
       } catch (error) {
-        console.error(\`Error processing user \${userRow.email}:\`, error);
+        console.error(`Error processing user ${userRow.email}:`, error);
         results.failed++;
         results.errors.push(
-          \`\${userRow.email}: \${error instanceof Error ? error.message : '알 수 없는 오류'}\`
+          `${userRow.email}: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
         );
       }
     }
