@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { createClient } from '@/lib/supabase/client';
 import { SUPPORTED_LANGUAGES } from '@/types';
+import { showConfirm } from '@/lib/notifications';
 
 interface UserProfile {
   id: string;
@@ -159,7 +160,7 @@ export default function SettingsPage() {
   const handleDeleteApiKey = async () => {
     if (!user) return;
     const keyType = isRsupportUser ? '조직 공용 OpenAI API 키' : 'OpenAI API 키';
-    if (!confirm(`${keyType}를 삭제하시겠습니까?${isRsupportUser ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) return;
+    if (!showConfirm(`${keyType}를 삭제하시겠습니까?${isRsupportUser ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) return;
 
     setSavingApiKey(true);
     setApiKeyMessage(null);

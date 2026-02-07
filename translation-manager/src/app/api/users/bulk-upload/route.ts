@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const worksheet = workbook.Sheets[sheetName];
 
     // Convert to JSON
-    const rawData: any[] = XLSX.utils.sheet_to_json(worksheet, {
+    const rawData: unknown[][] = XLSX.utils.sheet_to_json(worksheet, {
       header: 1,
       blankrows: false,
     });
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const seenEmails = new Set<string>();
 
     for (let i = 1; i < rawData.length; i++) {
-      const row = rawData[i] as any[];
+      const row = rawData[i];
       const email = row[emailIndex]?.toString().trim().toLowerCase();
 
       if (!email || !email.includes('@')) {
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
 
         if (existingUser) {
           // User exists, update their information
-          const updateData: any = {};
+          const updateData: Record<string, unknown> = {};
 
           if (userRow.name) updateData.name = userRow.name;
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
           if (!authData.user) throw new Error('Failed to create auth user');
 
           // Create user profile record
-          const insertData: any = {
+          const insertData: Record<string, unknown> = {
             id: authData.user.id,
             email: userRow.email,
             password_reset_required: true, // Force password change on first login

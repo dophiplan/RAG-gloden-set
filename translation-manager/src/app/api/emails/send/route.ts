@@ -177,10 +177,10 @@ export async function POST(request: NextRequest) {
       deadline,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending email:', error);
     return NextResponse.json(
-      { error: error.message || '메일 발송 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

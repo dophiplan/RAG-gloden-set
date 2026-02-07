@@ -8,6 +8,7 @@ import UserManageme[기밀마스킹]able from '@/components/UserManageme[기밀�
 import { createClient } from '@/lib/supabase/client';
 import { canManageAccounts } from '@/lib/permissions';
 import { User } from '@/types';
+import { showError } from '@/lib/notifications';
 
 export default function AccountsPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -70,7 +71,7 @@ export default function AccountsPage() {
 
     // Validate file type
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
-      alert('Excel 또는 CSV 파일만 업로드 가능합니다.');
+      showError('Excel 또는 CSV 파일만 업로드 가능합니다.');
       return;
     }
 
@@ -95,11 +96,11 @@ export default function AccountsPage() {
           errors: data.errors || [],
         });
       } else {
-        alert(data.error || '업로드에 실패했습니다.');
+        showError(data.error || '업로드에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('파일 업로드 중 오류가 발생했습니다.');
+      showError('파일 업로드 중 오류가 발생했습니다.');
     } finally {
       setUploading(false);
     }

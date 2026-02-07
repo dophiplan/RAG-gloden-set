@@ -121,10 +121,10 @@ export async function POST(request: NextRequest) {
       variables,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error previewing email:', error);
     return NextResponse.json(
-      { error: error.message || '이메일 미리보기 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

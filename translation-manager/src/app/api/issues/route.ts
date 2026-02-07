@@ -40,10 +40,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ issues });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching issues:', error);
     return NextResponse.json(
-      { error: error.message || '이슈 조회 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }
@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ issue }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating issue:', error);
     return NextResponse.json(
-      { error: error.message || '이슈 생성 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

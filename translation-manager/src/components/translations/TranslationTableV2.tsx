@@ -112,15 +112,6 @@ export default function TranslationTableV2({
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   if (loading) {
     return (
       <div className="p-8 text-center text-gray-500">로딩 중...</div>

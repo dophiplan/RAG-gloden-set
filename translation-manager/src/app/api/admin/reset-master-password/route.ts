@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
       password: DEFAULT_PASSWORD,
       note: 'Password reset to "111111". You will be prompted to change it on next login.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error resetting master password:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to reset password' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

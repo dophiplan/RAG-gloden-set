@@ -13,8 +13,9 @@ export interface FileUploaderProps {
   className?: string;
 }
 
+import { MAX_FILE_SIZE } from '@/lib/constants';
+
 const ACCEPTED_PDF_TYPES = ['application/pdf'];
-const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (Vercel serverless function limit)
 
 export default function FileUploader({
   onFilesChange,
