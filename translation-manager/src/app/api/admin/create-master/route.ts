@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
       email: MASTER_EMAIL,
       note: 'Please login with password "111111" and change it immediately',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating master account:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create master account' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }
@@ -82,7 +82,7 @@ export async function GET() {
       exists: false,
       message: 'Master account not found. Use POST to create it.',
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : '알 수 없는 오류' }, { status: 500 });
   }
 }

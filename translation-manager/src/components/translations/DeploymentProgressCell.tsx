@@ -18,7 +18,7 @@ export default function DeploymentProgressCell({
   const { completion_rate, platform_completions, work_scope } = translation;
 
   // Get platform completion details
-  const platformDetails = work_scope.map((platform) => {
+  const platformDetails = (work_scope || []).map((platform) => {
     const completion = platform_completions?.[platform];
     return {
       platform,

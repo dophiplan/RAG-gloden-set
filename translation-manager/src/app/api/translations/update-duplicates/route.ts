@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 interface UpdateDuplicatesInput {
   sourceText: string;
   field: string;
-  value: any;
+  value: string | string[] | null;
   excludeId?: string;
 }
 

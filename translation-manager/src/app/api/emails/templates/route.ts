@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ templates });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching email templates:', error);
     return NextResponse.json(
-      { error: error.message || '이메일 템플릿 조회 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }
@@ -90,10 +90,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ template }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating email template:', error);
     return NextResponse.json(
-      { error: error.message || '이메일 템플릿 생성 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

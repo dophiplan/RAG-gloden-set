@@ -8,6 +8,8 @@ import ProductTabs from '@/components/ProductTabs';
 import { Issue, ProductCode, IssueType, User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { isMaster } from '@/lib/permissions';
+import { formatDateTimeKR } from '@/lib/format';
+import { showError, showConfirm } from '@/lib/notifications';
 
 const ISSUE_TYPE_LABELS: Record<IssueType, string> = {
   pdf_parse_error: 'PDF 파싱 오류',
@@ -86,16 +88,16 @@ export default function IssuesPage() {
         fetchIssues();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || '이슈 상태 변경에 실패했습니다.');
+        showError(errorData.error || '이슈 상태 변경에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error updating issue:', error);
-      alert('이슈 상태 변경 중 오류가 발생했습니다.');
+      showError('이슈 상태 변경 중 오류가 발생했습니다.');
     }
   };
 
   const handleDelete = async (issueId: string) => {
-    if (!confirm('정말 이 이슈를 삭제하시겠습니까?')) return;
+    if (!showConfirm('정말 이 이슈를 삭제하시겠습니까?')) return;
 
     try {
       const response = await fetch(`/api/issues/${issueId}`, {
@@ -106,22 +108,12 @@ export default function IssuesPage() {
         fetchIssues();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || '이슈 삭제에 실패했습니다.');
+        showError(errorData.error || '이슈 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error deleting issue:', error);
-      alert('이슈 삭제 중 오류가 발생했습니다.');
+      showError('이슈 삭제 중 오류가 발생했습니다.');
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (
@@ -221,7 +213,7 @@ export default function IssuesPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-sm text-gray-600">
-                          {formatDate(issue.created_at)}
+                          {formatDateTimeKR(issue.created_at)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">

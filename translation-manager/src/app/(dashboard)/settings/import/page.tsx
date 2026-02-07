@@ -7,15 +7,8 @@ import Card, { CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { PRODUCTS, ProductCode } from '@/types';
-
-const productOptions = [
-  { value: '', label: '제품 선택 *' },
-  ...Object.entries(PRODUCTS).map(([code, name]) => ({
-    value: code,
-    label: name,
-  })),
-];
+import { ProductCode } from '@/types';
+import { PRODUCT_SELECT_OPTIONS } from '@/lib/constants';
 
 export default function ImportPage() {
   const router = useRouter();
@@ -105,7 +98,7 @@ export default function ImportPage() {
               label="제품 *"
               value={productCode}
               onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
-              options={productOptions}
+              options={PRODUCT_SELECT_OPTIONS}
             />
             <Input
               label="버전"

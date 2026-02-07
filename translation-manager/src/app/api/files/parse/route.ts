@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { extractTextFromPDF, extractAllText } from '@/lib/pdf/parser';
 import { ProductCode } from '@/types';
-
-// Maximum file size: 4.5MB (Vercel serverless function limit)
-const MAX_FILE_SIZE = 4.5 * 1024 * 1024;
+import { MAX_FILE_SIZE } from '@/lib/constants';
 
 // Supported file types
 const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
 
   const createMaster = async () => {
     setLoading(true);

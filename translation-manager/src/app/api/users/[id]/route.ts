@@ -56,7 +56,7 @@ export async function PATCH(
     };
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) {
       updateData.name = name;
@@ -111,10 +111,10 @@ export async function PATCH(
 
     return NextResponse.json({ user: updatedUser });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating user:', error);
     return NextResponse.json(
-      { error: error.message || '사용자 수정 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }
@@ -174,10 +174,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting user:', error);
     return NextResponse.json(
-      { error: error.message || '사용자 삭제 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

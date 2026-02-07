@@ -54,10 +54,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ settings: orgSettings });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching organization settings:', error);
     return NextResponse.json(
-      { error: error.message || '조직 설정 조회 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }
@@ -88,7 +88,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { openai_api_key, settings } = body as {
       openai_api_key?: string | null;
-      settings?: Record<string, any>;
+      settings?: Record<string, unknown>;
     };
 
     // Validate OpenAI API key format if provided
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Build update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 
@@ -151,10 +151,10 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ settings: updatedSettings });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating organization settings:', error);
     return NextResponse.json(
-      { error: error.message || '조직 설정 수정 중 오류가 발생했습니다.' },
+      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
       { status: 500 }
     );
   }

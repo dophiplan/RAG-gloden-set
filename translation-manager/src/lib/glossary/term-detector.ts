@@ -230,8 +230,8 @@ export async function detectTermsFromTranslations(
 
   // 제품 필터링
   const filteredTranslations = productCode
-    ? translations.filter((t: any) =>
-        t.translation_products?.some((p: any) => p.product_code === productCode)
+    ? translations.filter((t) =>
+        t.translation_products?.some((p) => p.product_code === productCode)
       )
     : translations;
 
@@ -240,7 +240,7 @@ export async function detectTermsFromTranslations(
   }
 
   // translation_results 가져오기
-  const translationIds = filteredTranslations.map((t: any) => t.id);
+  const translationIds = filteredTranslations.map((t) => t.id);
 
   const { data: results, error: resultsError } = await supabase
     .from('translation_results')
@@ -254,7 +254,7 @@ export async function detectTermsFromTranslations(
 
   // translations와 results 매핑
   const translationMap = new Map(
-    filteredTranslations.map((t: any) => [t.id, t])
+    filteredTranslations.map((t) => [t.id, t])
   );
 
   // 짧은 번역 단위로 그룹화
@@ -264,7 +264,7 @@ export async function detectTermsFromTranslations(
     frequency: number;
   }>();
 
-  results.forEach((result: any) => {
+  results.forEach((result) => {
     const translation = translationMap.get(result.translation_id);
     if (!translation) return;
 
