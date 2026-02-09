@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { TranslationStatus, ProductCode } from '@/types';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { TranslationStatus, ProductCode, LanguageCode } from '@/types';
+import { getAuthUser } from '@/lib/api-auth';
 
 interface BulkUpdateInput {
   ids: string[];
@@ -12,20 +13,35 @@ interface BulkCreateInput {
   context?: string;
   version?: string;
   product_code?: ProductCode;
+  scope?: 'SaaS' | 'Solution';
+  priority?: string;
+  languages?: LanguageCode[];
 }
 
 // POST - Bulk create translations
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, adminClient: authAdminClient } = await getAuthUser(supabase);
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Always use admin client to bypass RLS for bulk operations
+    console.log('🔧 Creating admin client for bulk operations...');
+    let adminClient;
+    try {
+      adminClient = authAdminClient || createAdminClient();
+      console.log('✅ Admin client created successfully');
+    } catch (adminError) {
+      console.error('❌ Failed to create admin client:', adminError);
+      throw new Error('Failed to create admin client: ' + (adminError instanceof Error ? adminError.message : 'Unknown error'));
+    }
+    const db = adminClient;
+
     // Get user profile for audit log
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await db
       .from('users')
       .select('name, email')
       .eq('id', user.id)
@@ -50,16 +66,84 @@ export async function POST(request: NextRequest) {
         version: body.version?.trim() || null,
         version_updated_at: versionUpdatedAt,
         product_code: body.product_code || null,
+        scope: body.scope || null,
+        priority: body.priority || '중',
         user_id: user.id,
         status: 'pending' as const,
       }));
 
-    const { data, error } = await supabase
+    console.log('Attempting to insert translations:', {
+      count: translations.length,
+      sample: translations[0],
+      product_code: body.product_code,
+      usingAdminClient: !!adminClient,
+    });
+
+    const { data, error } = await db
       .from('translations')
       .insert(translations)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Bulk insert error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      console.error('Bulk insert returned no data');
+      return NextResponse.json(
+        { error: '번역 항목 생성에 실패했습니다.' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Bulk insert success:', {
+      requested: translations.length,
+      created: data.length,
+    });
+
+    // Create translation_products records if product_code is provided
+    if (body.product_code && data && data.length > 0) {
+      const translationProducts = data.map((t) => ({
+        translation_id: t.id,
+        product_code: body.product_code as ProductCode,
+        version: body.version?.trim() || null,
+        version_updated_at: versionUpdatedAt,
+      }));
+
+      const { error: productsError } = await db
+        .from('translation_products')
+        .insert(translationProducts);
+
+      if (productsError) {
+        console.error('Error creating translation_products:', productsError);
+        // Don't fail the entire request, but log the error
+      } else {
+        console.log('Created translation_products records:', translationProducts.length);
+      }
+    }
+
+    // Create translation_results for selected languages
+    if (body.languages && body.languages.length > 0 && data && data.length > 0) {
+      const translationResults = data.flatMap(translation =>
+        body.languages!.map(lang => ({
+          translation_id: translation.id,
+          language_code: lang,
+          translated_text: '',  // Empty initially
+        }))
+      );
+
+      const { error: resultsError } = await db
+        .from('translation_results')
+        .insert(translationResults);
+
+      if (resultsError) {
+        console.error('Error creating translation results:', resultsError);
+        // Don't fail the whole operation, just log
+      } else {
+        console.log('Created translation_results records:', translationResults.length);
+      }
+    }
 
     // Create audit logs for all created translations
     if (data && data.length > 0) {
@@ -72,7 +156,7 @@ export async function POST(request: NextRequest) {
         new_value: t.source_text,
       }));
 
-      await supabase.from('translation_audit_logs').insert(auditLogs);
+      await db.from('translation_audit_logs').insert(auditLogs);
     }
 
     return NextResponse.json({
@@ -81,9 +165,17 @@ export async function POST(request: NextRequest) {
       translations: data,
     }, { status: 201 });
   } catch (error) {
-    console.error('Error bulk creating translations:', error);
+    console.error('❌ Error bulk creating translations:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
     return NextResponse.json(
-      { error: '번역을 일괄 생성하는데 실패했습니다.' },
+      {
+        error: '번역을 일괄 생성하는데 실패했습니다.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -93,10 +185,10 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user } = await getAuthUser(supabase);
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user profile for audit log

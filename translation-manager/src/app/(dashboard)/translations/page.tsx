@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
@@ -10,8 +10,10 @@ import TranslationTableV2 from '@/components/translations/TranslationTableV2';
 import EmailTemplateModal from '@/components/translations/EmailTemplateModal';
 import DeploymentCheckModal from '@/components/translations/DeploymentCheckModal';
 import DuplicateEditModal from '@/components/translations/DuplicateEditModal';
-import { Translation, ProductCode, EmailTemplateType } from '@/types';
-import { showError } from '@/lib/notifications';
+import { Translation, ProductCode, EmailTemplateType, LanguageCode } from '@/types';
+import { showError, showSuccess } from '@/lib/notifications';
+import type { UploadedFile } from '@/components/FileUploader';
+import { getAllSelectableLanguages } from '@/lib/product-languages';
 
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
@@ -32,8 +34,9 @@ function TranslationsContent() {
   const filters = useTranslationFilters();
 
   // Data
-  const { translations, setTranslations, loading, fetchTranslations } = useTranslationData({
+  const { translations, setTranslations, loading, fetchTranslations, updateLocalTranslation } = useTranslationData({
     statusFilter: filters.statusFilter,
+    languageFilter: filters.languageFilter,
     searchTerm: filters.searchTerm,
     selectedProduct: filters.selectedProduct,
     page: filters.page,
@@ -45,6 +48,7 @@ function TranslationsContent() {
     translations,
     setTranslations,
     fetchTranslations,
+    updateLocalTranslation,
   });
 
   // Duplicate check
@@ -59,12 +63,19 @@ function TranslationsContent() {
   const [isDeploymentModalOpen, setIsDeploymentModalOpen] = useState(false);
   const [selectedTranslations, setSelectedTranslations] = useState<Translation[]>([]);
 
-  // Handle new texts from PDF upload
+  // Handle new texts from PDF upload and URL params
   useEffect(() => {
     const newTexts = searchParams.get('new');
     const version = searchParams.get('version');
     const product = searchParams.get('product') as ProductCode | null;
+    const refresh = searchParams.get('refresh');
 
+    // Set product filter FIRST if specified
+    if (product && product !== filters.selectedProduct) {
+      filters.setSelectedProduct(product);
+    }
+
+    // Handle legacy new texts param (if still used)
     if (newTexts) {
       try {
         const texts = JSON.parse(decodeURIComponent(newTexts));
@@ -76,8 +87,19 @@ function TranslationsContent() {
       }
     }
 
-    if (product) {
-      filters.setSelectedProduct(product);
+    // If refresh param exists, trigger fresh data fetch
+    // This handles navigation from upload page
+    if (refresh) {
+      // Wait for product filter to be applied
+      setTimeout(() => {
+        fetchTranslations();
+        // Clean up URL params to avoid re-triggering
+        window.history.replaceState(
+          {},
+          '',
+          '/translations' + (product ? `?product=${product}` : '')
+        );
+      }, 150);
     }
   }, [searchParams]);
 
@@ -87,6 +109,11 @@ function TranslationsContent() {
       prev.filter((selected) => translations.some((t) => t.id === selected.id))
     );
   }, [translations]);
+
+  // Reset language column selection when product changes
+  useEffect(() => {
+    filters.setSelectedLanguageColumns(null);
+  }, [filters.selectedProduct]);
 
   const handleOpenEmailModal = (templateType: EmailTemplateType) => {
     if (selectedTranslations.length === 0) {
@@ -105,18 +132,112 @@ function TranslationsContent() {
     setIsDeploymentModalOpen(true);
   };
 
+  const handlePDFUpload = async (
+    files: UploadedFile[],
+    version: string,
+    productCode: ProductCode | '',
+    scope: 'SaaS' | 'Solution' | '',
+    languages: LanguageCode[]
+  ) => {
+    try {
+      const formData = new FormData();
+      files.forEach((uploadedFile) => {
+        formData.append('files', uploadedFile.file);
+      });
+      if (version) formData.append('version', version);
+      if (productCode) formData.append('product_code', productCode);
+      if (scope) formData.append('scope', scope);
+
+      // Step 1: Parse PDF to extract texts
+      const parseResponse = await fetch('/api/files/parse', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!parseResponse.ok) {
+        const error = await parseResponse.json();
+        showError(error.error || 'PDF 파싱 중 오류가 발생했습니다.');
+        return;
+      }
+
+      const parseData = await parseResponse.json();
+      console.log('Parse response:', parseData);
+
+      // Collect all extracted texts from all files
+      const allTexts: string[] = [];
+      if (parseData.results && Array.isArray(parseData.results)) {
+        parseData.results.forEach((result: any) => {
+          if (result.success && result.texts && Array.isArray(result.texts)) {
+            allTexts.push(...result.texts);
+          }
+        });
+      }
+
+      if (allTexts.length === 0) {
+        showError('추출된 텍스트가 없습니다. 따옴표로 감싼 텍스트를 확인해주세요.');
+        return;
+      }
+
+      showSuccess(`${allTexts.length}개의 텍스트가 추출되었습니다.`);
+
+      // Step 2: Save extracted texts to database
+      const bulkCreateResponse = await fetch('/api/translations/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          texts: allTexts,
+          version: version || undefined,
+          product_code: productCode || undefined,
+          scope: scope || undefined,
+          priority: 'neutral',
+          languages: languages,
+        }),
+      });
+
+      if (!bulkCreateResponse.ok) {
+        const error = await bulkCreateResponse.json();
+        showError(error.error || '번역 항목 저장 중 오류가 발생했습니다.');
+        return;
+      }
+
+      const bulkData = await bulkCreateResponse.json();
+      console.log('Bulk create response:', bulkData);
+
+      // Switch to selected product tab FIRST
+      if (productCode) {
+        filters.setSelectedProduct(productCode as ProductCode);
+      }
+
+      // Wait for state update to complete before fetching
+      // React state updates are async, so we need to give it time
+      setTimeout(() => {
+        fetchTranslations();
+      }, 100);
+
+      showSuccess(`${bulkData.created || allTexts.length}개의 번역 항목이 저장되었습니다.`);
+    } catch (error) {
+      console.error('PDF upload error:', error);
+      showError('PDF 업로드 중 오류가 발생했습니다.');
+    }
+  };
+
   // Duplicate-checked update handlers
   const handleVersionUpdateWithDuplicateCheck = duplicateCheck.makeVersionUpdateWithDuplicateCheck(
     mutations.handleVersionUpdate as (id: string, value: string | string[] | null) => Promise<void>
   );
   const handleNotesUpdateWithDuplicateCheck = duplicateCheck.makeNotesUpdateWithDuplicateCheck();
-  const handleDevCodeUpdateWithDuplicateCheck = duplicateCheck.makeDevCodeUpdateWithDuplicateCheck();
+
+  // Calculate available languages (always all 9)
+  const availableLanguages = useMemo(() => {
+    return getAllSelectableLanguages();
+  }, []);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="번역 관리"
+      subtitle="번역된 언어들을 전체 볼 수 있습니다."
+    >
       <div className="space-y-6">
-        <TranslationsHeader onOpenCreateModal={() => setIsModalOpen(true)} />
-
         <ProductTabs
           selectedProduct={filters.selectedProduct}
           onProductChange={filters.setSelectedProduct}
@@ -125,9 +246,16 @@ function TranslationsContent() {
         <TranslationFiltersBar
           searchTerm={filters.searchTerm}
           onSearchChange={filters.setSearchTerm}
+          languageFilter={filters.languageFilter}
+          onLanguageFilterChange={filters.setLanguageFilter}
           statusFilter={filters.statusFilter}
           onStatusFilterChange={filters.setStatusFilter}
+          selectedLanguageColumns={filters.selectedLanguageColumns}
+          onLanguageColumnsChange={filters.setSelectedLanguageColumns}
+          availableLanguages={availableLanguages}
         />
+
+        <TranslationsHeader onOpenCreateModal={() => setIsModalOpen(true)} />
 
         {/* Bulk Actions */}
         {selectedTranslations.length > 0 && (
@@ -155,16 +283,15 @@ function TranslationsContent() {
 
         <TranslationTableV2
           translations={translations}
+          selectedProduct={filters.selectedProduct}
+          selectedLanguageColumns={filters.selectedLanguageColumns}
           onStatusChange={mutations.handleStatusChange}
           onTranslationUpdate={mutations.handleTranslationUpdate}
           onSourceTextUpdate={mutations.handleSourceTextUpdate}
           onContextUpdate={mutations.handleContextUpdate}
           onScopeUpdate={mutations.handleScopeUpdate}
           onVersionUpdate={handleVersionUpdateWithDuplicateCheck}
-          onWorkScopeUpdate={mutations.handleWorkScopeUpdate}
-          onDevCodeUpdate={handleDevCodeUpdateWithDuplicateCheck}
           onNotesUpdate={handleNotesUpdateWithDuplicateCheck}
-          onPlatformCompletionUpdate={mutations.handlePlatformCompletionUpdate}
           onDelete={mutations.handleDelete}
           onRefresh={fetchTranslations}
           loading={loading}
@@ -177,7 +304,37 @@ function TranslationsContent() {
         <CreateTranslationModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onCreate={mutations.handleCreate}
+          onCreate={async (sourceText, context, version, productCode, scope, priority, languages) => {
+            // Create translation with initial empty translation_results for each language
+            const translationsArray = languages.map(lang => ({
+              language_code: lang,
+              translated_text: '',
+            }));
+
+            const response = await fetch('/api/translations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                source_text: sourceText,
+                context: context || undefined,
+                version: version || undefined,
+                product_codes: productCode ? [productCode] : undefined,
+                scope: scope || undefined,
+                priority,
+                translations: translationsArray,
+              }),
+            });
+
+            if (response.ok) {
+              fetchTranslations();
+              if (productCode) {
+                filters.setSelectedProduct(productCode as ProductCode);
+              }
+              return true;
+            }
+            return false;
+          }}
+          onPDFUpload={handlePDFUpload}
         />
 
         <GlossaryAddModal
@@ -233,7 +390,10 @@ function TranslationsContent() {
 export default function TranslationsPage() {
   return (
     <Suspense fallback={
-      <DashboardLayout>
+      <DashboardLayout
+        title="번역 관리"
+        subtitle="번역된 언어들을 전체 볼 수 있습니다."
+      >
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500">로딩 중...</div>
         </div>

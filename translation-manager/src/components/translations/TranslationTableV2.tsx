@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, memo, useMemo } from 'react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
-import MultiSelectDropdown, { MultiSelectOption } from '@/components/ui/MultiSelectDropdown';
-import DeploymentProgressCell from '@/components/translations/DeploymentProgressCell';
-import DeploymentCheckModal from '@/components/translations/DeploymentCheckModal';
-import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode } from '@/types';
+import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS } from '@/types';
+import { getAllSelectableLanguages } from '@/lib/product-languages';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -15,16 +13,15 @@ interface TranslationWithResults extends Translation {
 
 interface TranslationTableV2Props {
   translations: TranslationWithResults[];
+  selectedProduct: ProductCode | null;
+  selectedLanguageColumns: LanguageCode[] | null;
   onStatusChange: (id: string, status: TranslationStatus) => Promise<void>;
   onTranslationUpdate: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
   onSourceTextUpdate: (translationId: string, sourceText: string) => Promise<void>;
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
   onScopeUpdate: (translationId: string, scope: 'SaaS' | 'Solution' | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
-  onWorkScopeUpdate: (translationId: string, workScope: string[]) => Promise<void>;
-  onDevCodeUpdate: (translationId: string, devCode: string) => Promise<void>;
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
-  onPlatformCompletionUpdate: (translationId: string, platform: string, completed: boolean) => Promise<void>;
   onDelete: (id: string) => void;
   onRefresh: () => void;
   loading?: boolean;
@@ -33,32 +30,169 @@ interface TranslationTableV2Props {
   onPageChange?: (page: number) => void;
 }
 
-const TARGET_LANGUAGES: LanguageCode[] = ['ja', 'en', 'zh-CN', 'zh-TW'];
+// Removed hardcoded TARGET_LANGUAGES - now calculated dynamically based on selected product
 
-// Work scope options (commonly used platforms)
-const WORK_SCOPE_OPTIONS: MultiSelectOption[] = [
-  { value: 'Win', label: 'Win' },
-  { value: 'Mac', label: 'Mac' },
-  { value: 'Front', label: 'Front' },
-  { value: 'Back', label: 'Back' },
-  { value: 'Android', label: 'Android' },
-  { value: 'iOS', label: 'iOS' },
-  { value: 'flutter', label: 'flutter' },
-  { value: '기타', label: '기타' },
-];
+const STATUS_ROW_BG: Record<TranslationStatus, string> = {
+  pending: 'bg-yellow-50',
+  in_progress: 'bg-green-50',
+  reviewed: 'bg-white',
+  deployed: 'bg-gray-50',
+};
 
-export default function TranslationTableV2({
-  translations,
+// Memoized row component to prevent unnecessary re-renders
+interface TranslationRowProps {
+  translation: TranslationWithResults;
+  isSelected: boolean;
+  showProductColumn: boolean;
+  displayLanguages: LanguageCode[];
+  onToggleSelect: (id: string) => void;
+  onStatusChange: TranslationTableV2Props['onStatusChange'];
+  onTranslationUpdate: TranslationTableV2Props['onTranslationUpdate'];
+  onSourceTextUpdate: TranslationTableV2Props['onSourceTextUpdate'];
+  onContextUpdate: TranslationTableV2Props['onContextUpdate'];
+  onScopeUpdate: TranslationTableV2Props['onScopeUpdate'];
+  onVersionUpdate: TranslationTableV2Props['onVersionUpdate'];
+  onNotesUpdate: TranslationTableV2Props['onNotesUpdate'];
+  onDelete: TranslationTableV2Props['onDelete'];
+}
+
+const TranslationRow = memo(function TranslationRow({
+  translation,
+  isSelected,
+  showProductColumn,
+  displayLanguages,
+  onToggleSelect,
   onStatusChange,
   onTranslationUpdate,
   onSourceTextUpdate,
   onContextUpdate,
   onScopeUpdate,
   onVersionUpdate,
-  onWorkScopeUpdate,
-  onDevCodeUpdate,
   onNotesUpdate,
-  onPlatformCompletionUpdate,
+  onDelete,
+}: TranslationRowProps) {
+  const statusInfo = STATUS_COLORS[translation.status];
+
+  const getTranslationForLanguage = (languageCode: LanguageCode): string => {
+    const result = translation.translation_results?.find(
+      (r) => r.language_code === languageCode
+    );
+    return result?.translated_text || '';
+  };
+
+  // Get product names from translation_products
+  const productNames = translation.translation_products?.map(tp => {
+    const productCode = tp.product_code;
+    return PRODUCTS[productCode] || productCode;
+  }).join(', ') || '-';
+
+  return (
+    <tr className={`${STATUS_ROW_BG[translation.status]} hover:bg-gray-100`}>
+      <td className="px-2 py-2 align-top">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelect(translation.id)}
+          className="rounded border-gray-300"
+        />
+      </td>
+      {showProductColumn && (
+        <td className="px-2 py-2 align-top">
+          <div className="text-xs truncate">{productNames}</div>
+        </td>
+      )}
+      <td className="px-2 py-2 align-top">
+        <select
+          value={translation.scope || ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            onScopeUpdate(
+              translation.id,
+              value === '' ? null : (value as 'SaaS' | 'Solution')
+            );
+          }}
+          className="text-xs border rounded px-1 py-1 w-full bg-white"
+        >
+          <option value="">-</option>
+          <option value="SaaS">SaaS</option>
+          <option value="Solution">Solution</option>
+        </select>
+      </td>
+      <td className="px-2 py-2 align-top">
+        <div className="text-xs">
+          <EditableCell
+            value={translation.version || ''}
+            onSave={(newVersion) => onVersionUpdate(translation.id, newVersion)}
+            placeholder="-"
+          />
+        </div>
+      </td>
+      <td className="px-2 py-2 align-top">
+        <div className="text-xs truncate">
+          <EditableCell
+            value={translation.context || ''}
+            onSave={(newContext) => onContextUpdate(translation.id, newContext)}
+            placeholder="-"
+          />
+        </div>
+      </td>
+      <td className="px-2 py-2 align-top">
+        <div className="text-xs truncate">
+          <EditableCell
+            value={translation.source_text}
+            onSave={(newText) => onSourceTextUpdate(translation.id, newText)}
+            placeholder="KEY/id"
+          />
+        </div>
+      </td>
+      {displayLanguages.map((lang) => (
+          <td key={lang} className="px-2 py-2 align-top">
+            <div className="text-xs truncate">
+              <EditableCell
+                value={getTranslationForLanguage(lang)}
+                onSave={(newText) => onTranslationUpdate(translation.id, lang, newText)}
+                placeholder="-"
+              />
+            </div>
+          </td>
+      ))}
+      <td className="px-2 py-2 align-top">
+        <select
+          value={translation.status}
+          onChange={(e) =>
+            onStatusChange(translation.id, e.target.value as TranslationStatus)
+          }
+          className={`text-xs border rounded px-1 py-1 w-full ${statusInfo.bg} ${statusInfo.text}`}
+        >
+          <option value="pending">요청</option>
+          <option value="reviewed">검수</option>
+          <option value="deployed">반영</option>
+        </select>
+      </td>
+      <td className="px-2 py-2 align-top">
+        <div className="text-xs truncate">
+          <EditableCell
+            value={translation.notes || ''}
+            onSave={(newNotes) => onNotesUpdate(translation.id, newNotes)}
+            placeholder="-"
+          />
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+export default memo(function TranslationTableV2({
+  translations,
+  selectedProduct,
+  selectedLanguageColumns,
+  onStatusChange,
+  onTranslationUpdate,
+  onSourceTextUpdate,
+  onContextUpdate,
+  onScopeUpdate,
+  onVersionUpdate,
+  onNotesUpdate,
   onDelete,
   onRefresh,
   loading = false,
@@ -67,7 +201,19 @@ export default function TranslationTableV2({
   onPageChange,
 }: TranslationTableV2Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deploymentModalTranslation, setDeploymentModalTranslation] = useState<Translation | null>(null);
+  const showProductColumn = selectedProduct === null;
+
+  // Calculate which languages to display based on user filter ONLY
+  const displayLanguages = useMemo(() => {
+    const allLanguages = getAllSelectableLanguages();
+
+    // If user has selected specific languages to display, filter to those
+    if (selectedLanguageColumns && selectedLanguageColumns.length > 0) {
+      return allLanguages.filter(lang => selectedLanguageColumns.includes(lang));
+    }
+
+    return allLanguages;
+  }, [selectedLanguageColumns]);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === translations.length) {
@@ -77,21 +223,11 @@ export default function TranslationTableV2({
     }
   };
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
-  };
-
-  const getTranslationForLanguage = (
-    translation: TranslationWithResults,
-    languageCode: LanguageCode
-  ): string => {
-    const result = translation.translation_results?.find(
-      (r) => r.language_code === languageCode
-    );
-    return result?.translated_text || '';
-  };
+  }, []);
 
   const handleBulkStatusChange = async (status: TranslationStatus) => {
     if (selectedIds.length === 0) return;
@@ -111,20 +247,6 @@ export default function TranslationTableV2({
       console.error('Error bulk updating status:', error);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-8 text-center text-gray-500">로딩 중...</div>
-    );
-  }
-
-  if (translations.length === 0) {
-    return (
-      <div className="p-8 text-center text-gray-500">
-        번역 항목이 없습니다.
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -162,11 +284,11 @@ export default function TranslationTableV2({
 
       {/* Table */}
       <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-auto">
+          <table className="w-full table-auto">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-3 py-3 text-left w-10">
+                <th className="px-2 py-2 text-left w-8">
                   <input
                     type="checkbox"
                     checked={selectedIds.length === translations.length}
@@ -174,167 +296,72 @@ export default function TranslationTableV2({
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 min-w-[200px]">
-                  원문 / 문맥
+                {showProductColumn && (
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-28">
+                    제품
+                  </th>
+                )}
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
+                  제품분류
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 w-24">
-                  Scope
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
+                  버전
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 w-28">
-                  Version
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                  설명
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
-                  Work Scope
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-48">
+                  KEY/id
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 w-32">
-                  Dev Code
-                </th>
-                {TARGET_LANGUAGES.map((lang) => (
+                {displayLanguages.map((lang) => (
                   <th
                     key={lang}
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-700 min-w-[180px]"
+                    className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32"
                   >
-                    {SUPPORTED_LANGUAGES[lang]} ({lang})
+                    {lang}
                   </th>
                 ))}
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 min-w-[120px]">
-                  Completion
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
+                  번역 상태
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
-                  Notes
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 w-28">
-                  상태
-                </th>
-                <th className="px-3 py-3 text-right text-xs font-medium text-gray-700 w-20">
-                  작업
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                  비고
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {translations.map((translation) => {
-                const statusInfo = STATUS_COLORS[translation.status];
-                return (
-                  <tr
+              {loading ? (
+                <tr>
+                  <td colSpan={showProductColumn ? 16 : 15} className="px-3 py-12 text-center text-sm text-gray-500">
+                    로딩 중...
+                  </td>
+                </tr>
+              ) : translations.length === 0 ? (
+                <tr>
+                  <td colSpan={showProductColumn ? 16 : 15} className="px-3 py-12 text-center text-sm text-gray-500">
+                    번역 항목이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                translations.map((translation) => (
+                  <TranslationRow
                     key={translation.id}
-                    className={`
-                      ${translation.status === 'pending' ? 'bg-yellow-50' : ''}
-                      ${translation.status === 'reviewed' ? 'bg-white' : ''}
-                      ${translation.status === 'deployed' ? 'bg-gray-50' : ''}
-                      hover:bg-gray-100
-                    `}
-                  >
-                    <td className="px-3 py-2 align-top">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(translation.id)}
-                        onChange={() => toggleSelect(translation.id)}
-                        className="rounded border-gray-300"
-                      />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <EditableCell
-                        value={translation.source_text}
-                        onSave={(newText) => onSourceTextUpdate(translation.id, newText)}
-                        placeholder="원문을 입력하세요"
-                      />
-                      <div className="mt-1">
-                        <EditableCell
-                          value={translation.context || ''}
-                          onSave={(newContext) => onContextUpdate(translation.id, newContext)}
-                          placeholder="문맥/설명 추가"
-                          className="text-xs text-gray-500"
-                        />
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <select
-                        value={translation.scope || ''}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          onScopeUpdate(
-                            translation.id,
-                            value === '' ? null : (value as 'SaaS' | 'Solution')
-                          );
-                        }}
-                        className="text-xs border rounded px-2 py-1 w-full bg-white"
-                      >
-                        <option value="">-</option>
-                        <option value="SaaS">SaaS</option>
-                        <option value="Solution">Solution</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <EditableCell
-                        value={translation.version || ''}
-                        onSave={(newVersion) => onVersionUpdate(translation.id, newVersion)}
-                        placeholder="예: 2.0.0"
-                      />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <MultiSelectDropdown
-                        options={WORK_SCOPE_OPTIONS}
-                        selected={translation.work_scope || []}
-                        onChange={(selected) => onWorkScopeUpdate(translation.id, selected)}
-                        placeholder="플랫폼 선택"
-                      />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <EditableCell
-                        value={translation.dev_code || ''}
-                        onSave={(newDevCode) => onDevCodeUpdate(translation.id, newDevCode)}
-                        placeholder="Dev Code"
-                      />
-                    </td>
-                    {TARGET_LANGUAGES.map((lang) => (
-                      <td key={lang} className="px-3 py-2 align-top">
-                        <EditableCell
-                          value={getTranslationForLanguage(translation, lang)}
-                          onSave={(newText) =>
-                            onTranslationUpdate(translation.id, lang, newText)
-                          }
-                          placeholder={`${SUPPORTED_LANGUAGES[lang]} 번역`}
-                        />
-                      </td>
-                    ))}
-                    <td className="px-3 py-2 align-top">
-                      <DeploymentProgressCell
-                        translation={translation}
-                        onOpenDeploymentModal={setDeploymentModalTranslation}
-                      />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <EditableCell
-                        value={translation.notes || ''}
-                        onSave={(newNotes) => onNotesUpdate(translation.id, newNotes)}
-                        placeholder="메모 추가"
-                      />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <select
-                        value={translation.status}
-                        onChange={(e) =>
-                          onStatusChange(translation.id, e.target.value as TranslationStatus)
-                        }
-                        className={`text-xs border rounded px-2 py-1 ${statusInfo.bg} ${statusInfo.text}`}
-                      >
-                        <option value="pending">번역 요청</option>
-                        <option value="reviewed">검수 완료</option>
-                        <option value="deployed">반영 완료</option>
-                      </select>
-                    </td>
-                    <td className="px-3 py-2 align-top text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onDelete(translation.id)}
-                      >
-                        삭제
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    translation={translation}
+                    isSelected={selectedIds.includes(translation.id)}
+                    showProductColumn={showProductColumn}
+                    displayLanguages={displayLanguages}
+                    onToggleSelect={toggleSelect}
+                    onStatusChange={onStatusChange}
+                    onTranslationUpdate={onTranslationUpdate}
+                    onSourceTextUpdate={onSourceTextUpdate}
+                    onContextUpdate={onContextUpdate}
+                    onScopeUpdate={onScopeUpdate}
+                    onVersionUpdate={onVersionUpdate}
+                    onNotesUpdate={onNotesUpdate}
+                    onDelete={onDelete}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -367,17 +394,6 @@ export default function TranslationTableV2({
         </div>
       )}
 
-      {/* Deployment Check Modal */}
-      {deploymentModalTranslation && (
-        <DeploymentCheckModal
-          isOpen={true}
-          translation={deploymentModalTranslation}
-          onClose={() => setDeploymentModalTranslation(null)}
-          onUpdate={() => {
-            onRefresh();
-          }}
-        />
-      )}
     </div>
   );
-}
+});
