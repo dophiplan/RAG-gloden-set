@@ -10,7 +10,7 @@ import TranslationTableV2 from '@/components/translations/TranslationTableV2';
 import EmailTemplateModal from '@/components/translations/EmailTemplateModal';
 import DeploymentCheckModal from '@/components/translations/DeploymentCheckModal';
 import DuplicateEditModal from '@/components/translations/DuplicateEditModal';
-import { Translation, ProductCode, EmailTemplateType, LanguageCode, PriorityLevel } from '@/types';
+import { Translation, ProductCode, EmailTemplateType, LanguageCode, PriorityLevel, ScopeType } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
 import type { UploadedFile } from '@/components/FileUploader';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
@@ -150,7 +150,7 @@ function TranslationsContent() {
     files: UploadedFile[],
     version: string,
     productCode: ProductCode | '',
-    scope: 'SaaS' | 'Solution' | '',
+    scope: ScopeType,
     priority: PriorityLevel,
     languages: LanguageCode[]
   ) => {

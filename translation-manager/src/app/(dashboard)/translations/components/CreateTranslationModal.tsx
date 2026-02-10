@@ -5,14 +5,11 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
 import LanguageCheckboxGroup from '@/components/LanguageCheckboxGroup';
-import { ProductCode, PriorityLevel, LanguageCode } from '@/types';
+import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { PRODUCT_SELECT_OPTIONS, SCOPE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants';
 import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
 
 type TabType = 'manual' | 'pdf';
-
-// Explicitly define scope type to avoid TypeScript cache issues
-type ScopeType = '' | 'SaaS' | 'Solution';
 
 interface CreateTranslationModalProps {
   isOpen: boolean;
