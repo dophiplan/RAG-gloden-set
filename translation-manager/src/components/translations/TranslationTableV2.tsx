@@ -4,8 +4,9 @@ import { useState, useCallback, memo, useMemo } from 'react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
-import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS } from '@/types';
+import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS, PriorityLevel } from '@/types';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
+import { showSuccess, showError } from '@/lib/notifications';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -21,7 +22,7 @@ interface TranslationTableV2Props {
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
   onScopeUpdate: (translationId: string, scope: 'SaaS' | 'Solution' | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
-  onPriorityUpdate: (translationId: string, priority: string) => Promise<void>;
+  onPriorityUpdate: (translationId: string, priority: PriorityLevel) => Promise<void>;
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
   onDelete: (id: string) => void;
   onRefresh: () => void;
@@ -124,7 +125,7 @@ const TranslationRow = memo(function TranslationRow({
       <td className="px-2 py-2 align-top">
         <select
           value={translation.priority || '중'}
-          onChange={(e) => onPriorityUpdate(translation.id, e.target.value)}
+          onChange={(e) => onPriorityUpdate(translation.id, e.target.value as PriorityLevel)}
           className="text-xs border rounded px-1 py-1 w-full bg-white"
         >
           <option value="긴급">긴급</option>
@@ -207,6 +208,7 @@ export default memo(function TranslationTableV2({
   onContextUpdate,
   onScopeUpdate,
   onVersionUpdate,
+  onPriorityUpdate,
   onNotesUpdate,
   onDelete,
   onRefresh,
@@ -257,9 +259,13 @@ export default memo(function TranslationTableV2({
       if (response.ok) {
         onRefresh();
         setSelectedIds([]);
+        showSuccess(`${selectedIds.length}개 항목의 상태가 변경되었습니다.`);
+      } else {
+        showError('상태 변경에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error bulk updating status:', error);
+      showError('상태 변경 중 오류가 발생했습니다.');
     }
   };
 

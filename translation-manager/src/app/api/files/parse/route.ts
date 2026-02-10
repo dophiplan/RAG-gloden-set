@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { extractTextFromPDF, extractAllText } from '@/lib/pdf/parser';
 import { ProductCode } from '@/types';
 import { MAX_FILE_SIZE } from '@/lib/constants';
+import { getAuthUser } from '@/lib/api-auth';
 
 // Supported file types
 const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
@@ -22,13 +23,10 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user } = await getAuthUser(supabase);
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get form data

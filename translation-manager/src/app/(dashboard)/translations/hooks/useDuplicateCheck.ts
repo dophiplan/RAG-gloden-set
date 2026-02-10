@@ -148,31 +148,6 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
     [translations, checkDuplicatesAndEdit, fetchTranslations]
   );
 
-  const makeDevCodeUpdateWithDuplicateCheck = useCallback(
-    () =>
-      async (translationId: string, devCode: string) => {
-        const translation = translations.find(t => t.id === translationId);
-        if (!translation) return;
-
-        await checkDuplicatesAndEdit(
-          translationId,
-          translation.source_text,
-          'dev_code',
-          '개발코드',
-          devCode || null,
-          async (id, val) => {
-            const response = await fetch(`/api/translations/${id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ dev_code: val }),
-            });
-            if (response.ok) fetchTranslations();
-          }
-        );
-      },
-    [translations, checkDuplicatesAndEdit, fetchTranslations]
-  );
-
   return {
     isDuplicateModalOpen,
     duplicateInfo,
@@ -181,6 +156,5 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
     closeDuplicateModal,
     makeVersionUpdateWithDuplicateCheck,
     makeNotesUpdateWithDuplicateCheck,
-    makeDevCodeUpdateWithDuplicateCheck,
   };
 }

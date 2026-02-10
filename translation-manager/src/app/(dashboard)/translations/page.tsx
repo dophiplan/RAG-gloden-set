@@ -10,7 +10,7 @@ import TranslationTableV2 from '@/components/translations/TranslationTableV2';
 import EmailTemplateModal from '@/components/translations/EmailTemplateModal';
 import DeploymentCheckModal from '@/components/translations/DeploymentCheckModal';
 import DuplicateEditModal from '@/components/translations/DuplicateEditModal';
-import { Translation, ProductCode, EmailTemplateType, LanguageCode } from '@/types';
+import { Translation, ProductCode, EmailTemplateType, LanguageCode, PriorityLevel } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
 import type { UploadedFile } from '@/components/FileUploader';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
@@ -137,6 +137,7 @@ function TranslationsContent() {
     version: string,
     productCode: ProductCode | '',
     scope: 'SaaS' | 'Solution' | '',
+    priority: PriorityLevel,
     languages: LanguageCode[]
   ) => {
     try {
@@ -189,7 +190,7 @@ function TranslationsContent() {
           version: version || undefined,
           product_code: productCode || undefined,
           scope: scope || undefined,
-          priority: 'neutral',
+          priority: priority,
           languages: languages,
         }),
       });

@@ -5,7 +5,7 @@ import { LanguageCode, SUPPORTED_LANGUAGES } from '@/types';
 interface LanguageCheckboxGroupProps {
   selectedLanguages: LanguageCode[];
   onChange: (languages: LanguageCode[]) => void;
-  availableLanguages?: LanguageCode[]; // defaults to creatable languages (8, excluding Korean)
+  availableLanguages?: LanguageCode[]; // defaults to all 9 languages
   label?: string;
   required?: boolean;
 }
@@ -13,7 +13,7 @@ interface LanguageCheckboxGroupProps {
 export default function LanguageCheckboxGroup({
   selectedLanguages,
   onChange,
-  availableLanguages = ['en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
+  availableLanguages = ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
   label = '번역 언어 선택',
   required = false,
 }: LanguageCheckboxGroupProps) {
@@ -58,11 +58,11 @@ export default function LanguageCheckboxGroup({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 p-3 bg-gray-50 rounded-lg border">
+      <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg border">
         {availableLanguages.map((lang) => (
           <label
             key={lang}
-            className="flex items-center gap-2 cursor-pointer hover:bg-white px-2 py-1.5 rounded"
+            className="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded"
           >
             <input
               type="checkbox"
@@ -70,8 +70,8 @@ export default function LanguageCheckboxGroup({
               onChange={() => handleToggle(lang)}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm font-medium text-gray-700">
-              {lang}
+            <span className="text-sm text-gray-700">
+              {SUPPORTED_LANGUAGES[lang]} ({lang})
             </span>
           </label>
         ))}

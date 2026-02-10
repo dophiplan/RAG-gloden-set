@@ -1,12 +1,12 @@
 import { ProductCode, LanguageCode } from '@/types';
 
 /**
- * All products now support ALL languages (8 languages total, excluding Korean).
+ * All products now support ALL languages (9 languages total).
  * This config defines which languages are DEFAULT CHECKED for each product.
  */
 export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
-  // RC defaults to ALL 8 languages
-  RC: ['en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
+  // RC defaults to ALL 9 languages
+  RC: ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
 
   // All other products default to en, ja (but can select any)
   RV: ['en', 'ja'],
@@ -20,18 +20,9 @@ export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
 };
 
 /**
- * Languages available for CREATING new translations (excluding Korean)
- * Korean is excluded from new translation creation but can still be displayed/edited
+ * All languages available for selection (9 languages total)
  */
-export const CREATABLE_LANGUAGES: LanguageCode[] = [
-  'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
-];
-
-/**
- * All languages for DISPLAY in translation table (including Korean)
- * Korean translations can be viewed and edited, just not created new
- */
-export const DISPLAYABLE_LANGUAGES: LanguageCode[] = [
+export const ALL_LANGUAGES: LanguageCode[] = [
   'ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
 ];
 
@@ -43,15 +34,22 @@ export function getDefaultLanguagesForProduct(productCode: ProductCode): Languag
 }
 
 /**
- * Get all selectable languages for CREATING translations (no Korean)
+ * Get all selectable languages (always returns all 9)
  */
 export function getAllSelectableLanguages(): LanguageCode[] {
-  return CREATABLE_LANGUAGES;
+  return ALL_LANGUAGES;
 }
 
 /**
- * Get all displayable languages for translation table (with Korean)
+ * Get union of all default languages (for "전체" view default)
+ */
+export function getAllDefaultLanguages(): LanguageCode[] {
+  return ALL_LANGUAGES;
+}
+
+/**
+ * Get all displayable languages for translation table (same as selectable)
  */
 export function getAllDisplayableLanguages(): LanguageCode[] {
-  return DISPLAYABLE_LANGUAGES;
+  return ALL_LANGUAGES;
 }
