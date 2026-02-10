@@ -19,7 +19,7 @@ interface CreateTranslationModalProps {
     context: string,
     version: string,
     productCode: ProductCode | '',
-    scope: string,
+    scope: 'SaaS' | 'Solution' | '',
     priority: PriorityLevel,
     languages: LanguageCode[]
   ) => Promise<boolean | undefined>;
@@ -27,7 +27,7 @@ interface CreateTranslationModalProps {
     files: UploadedFile[],
     version: string,
     productCode: ProductCode | '',
-    scope: string,
+    scope: 'SaaS' | 'Solution' | '',
     priority: PriorityLevel,
     languages: LanguageCode[]
   ) => Promise<void>;
@@ -46,7 +46,7 @@ export default function CreateTranslationModal({
   const [newContext, setNewContext] = useState('');
   const [newVersion, setNewVersion] = useState('');
   const [newProductCode, setNewProductCode] = useState<ProductCode | ''>('');
-  const [newScope, setNewScope] = useState<string>('');
+  const [newScope, setNewScope] = useState<'SaaS' | 'Solution' | ''>('');
   const [newPriority, setNewPriority] = useState<PriorityLevel>('중');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
 
