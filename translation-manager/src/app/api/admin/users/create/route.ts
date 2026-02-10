@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { PRODUCTS } from '@/lib/constants';
 
 // Security: Verify user is master
 async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; userId?: string }> {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
     const adminClient = createAdminClient();
     const body = await request.json();
-    const { email, name, password, products, accountLevel, permissions } = body;
+    const { email, name, password, products, accountLevel, permissions, translatorLanguages } = body;
 
     if (!email || !name || !password) {
       return NextResponse.json(
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     // Check if user already exists
     const { data: existingUser } = await adminClient
       .from('users')
-      .select('id')
+      .select('id, email')
       .eq('email', email)
       .single();
 
@@ -63,8 +64,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create auth user
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+    // Try to create auth user
+    let { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -73,25 +74,105 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('Failed to create auth user');
+    // If auth user creation fails due to duplicate, try to clean up and retry
+    if (authError && authError.message?.includes('User already registered')) {
+      // Get the existing auth user
+      const { data: { users: existingAuthUsers } } = await adminClient.auth.admin.listUsers();
+      const existingAuthUser = existingAuthUsers?.find(u => u.email === email);
+
+      if (existingAuthUser) {
+        // Check if profile exists
+        const { data: profile } = await adminClient
+          .from('users')
+          .select('id')
+          .eq('id', existingAuthUser.id)
+          .single();
+
+        if (!profile) {
+          // Orphaned auth user - delete and retry
+          console.log('Found orphaned auth user, cleaning up:', existingAuthUser.id);
+          await adminClient.auth.admin.deleteUser(existingAuthUser.id);
+
+          // Retry creating auth user
+          const retryResult = await adminClient.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { name },
+          });
+
+          if (retryResult.error) throw retryResult.error;
+          if (!retryResult.data.user) throw new Error('Failed to create auth user on retry');
+
+          // Use the retry data
+          authData = retryResult.data;
+          authError = null;
+        } else {
+          // Profile exists, this is a real duplicate
+          return NextResponse.json(
+            { error: '이미 등록된 이메일 주소입니다.' },
+            { status: 400 }
+          );
+        }
+      } else {
+        throw authError;
+      }
+    } else if (authError) {
+      throw authError;
+    }
+
+    if (!authData?.user) throw new Error('Failed to create auth user');
 
     // Create user profile
-    // roles array will contain the account level (master, manager, or user)
+    // roles array will contain only the primary account level
     const roles = [accountLevel || 'user'];
 
+    // Master users get all products and permissions automatically
+    const workProducts = accountLevel === 'master'
+      ? Object.keys(PRODUCTS)
+      : (products || []);
+
+    const workPermissions = accountLevel === 'master'
+      ? ['reviewer', 'requester', 'deployer']
+      : (permissions || []);
+
+    // Use upsert to handle any orphaned records
     const { error: profileError } = await adminClient
       .from('users')
-      .insert({
+      .upsert({
         id: authData.user.id,
         email,
         name,
         roles: roles,
-        work_products: products || [],
-        permissions: permissions || [],
+        work_products: workProducts,
+        permissions: workPermissions,
+      }, {
+        onConflict: 'id'
       });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      // Clean up: Delete the auth user if profile creation fails
+      console.error('Profile creation failed, cleaning up auth user:', profileError);
+      await adminClient.auth.admin.deleteUser(authData.user.id);
+      throw profileError;
+    }
+
+    // Insert translator languages if provided
+    if (translatorLanguages && Array.isArray(translatorLanguages) && translatorLanguages.length > 0) {
+      const languageEntries = translatorLanguages.map((lang: string) => ({
+        user_id: authData.user.id,
+        language_code: lang,
+      }));
+
+      const { error: languagesError } = await adminClient
+        .from('translator_languages')
+        .insert(languageEntries);
+
+      if (languagesError) {
+        console.error('Error inserting translator languages:', languagesError);
+        // Don't throw - this is not critical
+      }
+    }
 
     return NextResponse.json({
       success: true,

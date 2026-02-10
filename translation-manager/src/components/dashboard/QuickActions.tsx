@@ -9,12 +9,12 @@ interface QuickActionsProps {
 export default function QuickActions({ glossaryCount = 0 }: QuickActionsProps) {
   return (
     <div className="flex gap-2">
-      {/* PDF 업로드 */}
+      {/* 번역 요청 */}
       <Link
         href="/upload"
         className="px-4 py-2 bg-white border border-[#C8E6C9] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#5FA654] hover:border-[#7BC96F] hover:bg-white/80 transition-all duration-200"
       >
-        PDF 업로드
+        번역 요청
       </Link>
 
       {/* 번역 관리 */}

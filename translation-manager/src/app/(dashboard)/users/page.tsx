@@ -13,8 +13,10 @@ interface SystemUser {
   id: string;
   email: string;
   name: string | null;
+  roles: string[];
   permissions: string[];
   work_products: string[];
+  translatorLanguages?: string[];
   created_at: string;
 }
 
@@ -25,18 +27,25 @@ export default function UsersPage() {
   // Filters
   const [filterProduct, setFilterProduct] = useState<string>('');
   const [filterPermission, setFilterPermission] = useState<string>('');
+  const [filterAccountLevel, setFilterAccountLevel] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Add user modal
+  // Add/Edit user modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalData, setModalData] = useState({
-    products: [] as string[],
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+
+  // Default values for new user
+  const defaultModalData = {
+    products: [] as string[], // No products selected by default
     name: '',
-    email: '',
+    email: '@rsupport.com',
     password: '',
     accountLevel: 'user' as 'master' | 'manager' | 'user',
-    permissions: [] as string[],
-  });
+    permissions: [] as string[], // No permissions selected by default
+    translatorLanguages: [] as string[], // Languages for translator
+  };
+
+  const [modalData, setModalData] = useState(defaultModalData);
 
   // Multi-select for deletion
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -54,6 +63,11 @@ export default function UsersPage() {
         return false;
       }
 
+      // Account level filter
+      if (filterAccountLevel && !user.roles?.includes(filterAccountLevel)) {
+        return false;
+      }
+
       // Search filter (name or email)
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -66,7 +80,7 @@ export default function UsersPage() {
 
       return true;
     });
-  }, [systemUsers, filterProduct, filterPermission, searchQuery]);
+  }, [systemUsers, filterProduct, filterPermission, filterAccountLevel, searchQuery]);
 
   const fetchSystemUsers = async () => {
     setLoading(true);
@@ -132,6 +146,18 @@ export default function UsersPage() {
       return;
     }
 
+    // Check if email is just the domain (starts with @)
+    if (modalData.email.startsWith('@')) {
+      showError('이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    // Check if email is valid format
+    if (!modalData.email.includes('@')) {
+      showError('올바른 이메일 형식이 아닙니다.');
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/users/create', {
         method: 'POST',
@@ -145,6 +171,7 @@ export default function UsersPage() {
           products: modalData.products,
           accountLevel: modalData.accountLevel,
           permissions: modalData.permissions,
+          translatorLanguages: modalData.translatorLanguages,
         }),
       });
 
@@ -153,7 +180,8 @@ export default function UsersPage() {
       if (response.ok) {
         showSuccess('사용자가 등록되었습니다.');
         setIsModalOpen(false);
-        setModalData({ products: [], name: '', email: '', password: '', accountLevel: 'user', permissions: [] });
+        setEditingUserId(null);
+        setModalData(defaultModalData);
         fetchSystemUsers();
       } else {
         showError(data.error || '사용자 등록에 실패했습니다.');
@@ -161,6 +189,62 @@ export default function UsersPage() {
     } catch (error) {
       showError('사용자 등록 중 오류가 발생했습니다.');
     }
+  };
+
+  const handleEditUser = async () => {
+    if (!modalData.name || !modalData.email) {
+      showError('이름과 이메일은 필수 항목입니다.');
+      return;
+    }
+
+    if (!editingUserId) return;
+
+    try {
+      const response = await fetch(`/api/admin/users/${editingUserId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: modalData.name,
+          email: modalData.email,
+          password: modalData.password || undefined, // Only send if provided
+          products: modalData.products,
+          accountLevel: modalData.accountLevel,
+          permissions: modalData.permissions,
+          translatorLanguages: modalData.translatorLanguages,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showSuccess('사용자 정보가 수정되었습니다.');
+        setIsModalOpen(false);
+        setEditingUserId(null);
+        setModalData(defaultModalData);
+        fetchSystemUsers();
+      } else {
+        showError(data.error || '사용자 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      showError('사용자 수정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const openEditModal = (user: SystemUser) => {
+    setEditingUserId(user.id);
+    const isMaster = user.roles?.includes('master');
+    setModalData({
+      products: isMaster ? Object.keys(PRODUCTS) : (user.work_products || []),
+      name: user.name || '',
+      email: user.email,
+      password: '', // Don't pre-fill password
+      accountLevel: (user.roles?.includes('master') ? 'master' : user.roles?.includes('manager') ? 'manager' : 'user') as 'master' | 'manager' | 'user',
+      permissions: isMaster ? ['reviewer', 'requester', 'deployer'] : (user.permissions || []),
+      translatorLanguages: user.translatorLanguages || [],
+    });
+    setIsModalOpen(true);
   };
 
   const handlePermissionToggle = async (userId: string, permission: string, currentPermissions: string[]) => {
@@ -178,7 +262,6 @@ export default function UsersPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || '',
         },
         body: JSON.stringify({ permissions: newPermissions }),
       });
@@ -277,7 +360,11 @@ export default function UsersPage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setEditingUserId(null);
+                  setModalData(defaultModalData);
+                  setIsModalOpen(true);
+                }}
               >
                 추가하기
               </Button>
@@ -286,7 +373,18 @@ export default function UsersPage() {
 
           {/* Filters */}
           <div className="mb-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
+              <Select
+                label="계정 권한"
+                value={filterAccountLevel}
+                onChange={(e) => setFilterAccountLevel(e.target.value)}
+                options={[
+                  { value: '', label: '전체' },
+                  { value: 'master', label: 'Master' },
+                  { value: 'manager', label: 'Manager' },
+                  { value: 'user', label: 'User' },
+                ]}
+              />
               <Select
                 label="제품"
                 value={filterProduct}
@@ -300,40 +398,23 @@ export default function UsersPage() {
                 ]}
               />
               <Select
-                label="권한"
+                label="작업 권한"
                 value={filterPermission}
                 onChange={(e) => setFilterPermission(e.target.value)}
                 options={[
                   { value: '', label: '전체' },
-                  { value: 'translator', label: '번역자' },
+                  { value: 'translator', label: '번역가' },
                   { value: 'requester', label: '번역요청자' },
                   { value: 'deployer', label: '번역반영자' },
                   { value: 'reviewer', label: '번역검수자' },
                 ]}
               />
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    label="검색"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="이름 또는 이메일로 검색"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setFilterProduct('');
-                      setFilterPermission('');
-                      setSearchQuery('');
-                    }}
-                  >
-                    초기화
-                  </Button>
-                </div>
-              </div>
+              <Input
+                label="검색"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="이름 또는 이메일로 검색"
+              />
             </div>
           </div>
 
@@ -350,28 +431,41 @@ export default function UsersPage() {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">계정 권한</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">제품</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">이름</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">이메일</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">권한</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">작업 권한</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">번역 언어</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
                         {systemUsers.length === 0 ? '등록된 사용자가 없습니다.' : '필터 조건에 맞는 사용자가 없습니다.'}
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((systemUser) => (
-                      <tr key={systemUser.id} className="hover:bg-gray-50">
+                      <tr
+                        key={systemUser.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={(e) => {
+                          // Don't open modal if clicking on checkbox or permission checkboxes
+                          const target = e.target as HTMLElement;
+                          if ((target as HTMLInputElement).type === 'checkbox' || target.closest('input[type="checkbox"]')) {
+                            return;
+                          }
+                          openEditModal(systemUser);
+                        }}
+                      >
                         <td className="px-4 py-3 text-center">
                           <input
                             type="checkbox"
@@ -385,6 +479,28 @@ export default function UsersPage() {
                             }}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {systemUser.roles && systemUser.roles.length > 0 ? (
+                              systemUser.roles.map((role) => (
+                                <span
+                                  key={role}
+                                  className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
+                                    role === 'master'
+                                      ? 'bg-purple-100 text-purple-800'
+                                      : role === 'manager'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {role === 'master' ? 'Master' : role === 'manager' ? 'Manager' : 'User'}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
@@ -428,13 +544,33 @@ export default function UsersPage() {
                                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
                                 <span className="text-xs text-gray-700">
-                                  {permission === 'translator' && '번역자'}
+                                  {permission === 'translator' && '번역가'}
                                   {permission === 'requester' && '번역요청자'}
                                   {permission === 'deployer' && '번역반영자'}
                                   {permission === 'reviewer' && '번역검수자'}
                                 </span>
                               </label>
                             ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {systemUser.permissions?.includes('translator') ? (
+                              systemUser.translatorLanguages && systemUser.translatorLanguages.length > 0 ? (
+                                systemUser.translatorLanguages.map((lang) => (
+                                  <span
+                                    key={lang}
+                                    className="inline-block px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded"
+                                  >
+                                    {lang.toUpperCase()}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-gray-400">-</span>
+                              )
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -468,11 +604,14 @@ export default function UsersPage() {
         >
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
             <div className="flex items-center justify-between px-6 py-3 border-b">
-              <h3 className="text-base font-semibold text-gray-900">사용자 추가</h3>
+              <h3 className="text-base font-semibold text-gray-900">
+                {editingUserId ? '사용자 수정' : '사용자 추가'}
+              </h3>
               <button
                 onClick={() => {
                   setIsModalOpen(false);
-                  setModalData({ products: [], name: '', email: '', password: '', accountLevel: 'user', permissions: [] });
+                  setEditingUserId(null);
+                  setModalData(defaultModalData);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -493,12 +632,11 @@ export default function UsersPage() {
                   onChange={(e) => {
                     const level = e.target.value as 'master' | 'manager' | 'user';
                     if (level === 'master') {
-                      // Auto-select all products and permissions for master
+                      // Auto-select all products for master
                       setModalData({
                         ...modalData,
                         accountLevel: level,
                         products: Object.keys(PRODUCTS),
-                        permissions: ['translator', 'reviewer', 'requester', 'deployer']
                       });
                     } else {
                       setModalData({ ...modalData, accountLevel: level });
@@ -547,12 +685,12 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Permissions (disabled for master) */}
+              {/* Permissions */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   권한 선택
                 </label>
-                <div className={`grid grid-cols-2 gap-2 ${modalData.accountLevel === 'master' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { value: 'translator', label: '번역가' },
                     { value: 'reviewer', label: '검수가' },
@@ -570,10 +708,15 @@ export default function UsersPage() {
                           if (e.target.checked) {
                             setModalData({ ...modalData, permissions: [...modalData.permissions, perm.value] });
                           } else {
-                            setModalData({ ...modalData, permissions: modalData.permissions.filter(p => p !== perm.value) });
+                            // Clear translator languages when translator permission is unchecked
+                            const newPermissions = modalData.permissions.filter(p => p !== perm.value);
+                            const updates: any = { permissions: newPermissions };
+                            if (perm.value === 'translator') {
+                              updates.translatorLanguages = [];
+                            }
+                            setModalData({ ...modalData, ...updates });
                           }
                         }}
-                        disabled={modalData.accountLevel === 'master'}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-sm text-gray-700">{perm.label}</span>
@@ -581,6 +724,47 @@ export default function UsersPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Translator Languages - Show only when translator permission is selected */}
+              {modalData.permissions.includes('translator') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    번역 가능 언어
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'ja', label: 'JA (일본어)' },
+                      { value: 'zh', label: 'CA (중국어)' },
+                      { value: 'en', label: 'EN (영어)' },
+                    ].map((lang) => (
+                      <label
+                        key={lang.value}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={modalData.translatorLanguages.includes(lang.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setModalData({
+                                ...modalData,
+                                translatorLanguages: [...modalData.translatorLanguages, lang.value]
+                              });
+                            } else {
+                              setModalData({
+                                ...modalData,
+                                translatorLanguages: modalData.translatorLanguages.filter(l => l !== lang.value)
+                              });
+                            }
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{lang.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Input
                 label="이름 *"
@@ -598,11 +782,11 @@ export default function UsersPage() {
               />
 
               <Input
-                label="초기 비밀번호 *"
+                label={editingUserId ? '비밀번호 (변경 시에만 입력)' : '초기 비밀번호 *'}
                 type="password"
                 value={modalData.password}
                 onChange={(e) => setModalData({ ...modalData, password: e.target.value })}
-                placeholder="초기 비밀번호 입력"
+                placeholder={editingUserId ? '변경하지 않으려면 비워두세요' : '초기 비밀번호 입력'}
               />
             </div>
 
@@ -612,7 +796,8 @@ export default function UsersPage() {
                 size="sm"
                 onClick={() => {
                   setIsModalOpen(false);
-                  setModalData({ products: [], name: '', email: '', password: '', accountLevel: 'user', permissions: [] });
+                  setEditingUserId(null);
+                  setModalData(defaultModalData);
                 }}
               >
                 취소
@@ -620,9 +805,9 @@ export default function UsersPage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={handleAddUser}
+                onClick={editingUserId ? handleEditUser : handleAddUser}
               >
-                추가
+                {editingUserId ? '수정' : '추가'}
               </Button>
             </div>
           </div>

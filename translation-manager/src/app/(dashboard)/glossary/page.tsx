@@ -50,7 +50,7 @@ export default function GlossaryPage() {
   return (
     <DashboardLayout
       title="용어집"
-      subtitle="번역 일관성을 위한 용어집을 관리합니다."
+      subtitle="여기에 등록된 번역 문구 기준으로 일관성 있게 번역 됩니다."
     >
       <div className="space-y-6">
         {/* Product Tabs */}

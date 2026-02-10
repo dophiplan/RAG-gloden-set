@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     const language = searchParams.get('language');
     const search = searchParams.get('search');
     const productCode = searchParams.get('product_code') as ProductCode | null;
+    const requestId = searchParams.get('request_id');
+    const scope = searchParams.get('scope') as 'SaaS' | 'Solution' | null;
+    const version = searchParams.get('version');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
@@ -53,6 +56,18 @@ export async function GET(request: NextRequest) {
     if (productCode) {
       // Filter by translation_products table using inner join
       query = query.eq('translation_products.product_code', productCode);
+    }
+
+    if (requestId) {
+      query = query.eq('request_id', requestId);
+    }
+
+    if (scope) {
+      query = query.eq('scope', scope);
+    }
+
+    if (version) {
+      query = query.ilike('version', `%${version}%`);
     }
 
     if (search) {

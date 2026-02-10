@@ -39,6 +39,9 @@ function TranslationsContent() {
     languageFilter: filters.languageFilter,
     searchTerm: filters.searchTerm,
     selectedProduct: filters.selectedProduct,
+    requestIdFilter: filters.requestIdFilter,
+    scopeFilter: filters.scopeFilter,
+    versionFilter: filters.versionFilter,
     page: filters.page,
     setTotalPages: filters.setTotalPages,
   });
@@ -68,11 +71,17 @@ function TranslationsContent() {
     const newTexts = searchParams.get('new');
     const version = searchParams.get('version');
     const product = searchParams.get('product') as ProductCode | null;
+    const requestId = searchParams.get('request_id');
     const refresh = searchParams.get('refresh');
 
     // Set product filter FIRST if specified
     if (product && product !== filters.selectedProduct) {
       filters.setSelectedProduct(product);
+    }
+
+    // Set request_id filter if specified
+    if (requestId && requestId !== filters.requestIdFilter) {
+      filters.setRequestIdFilter(requestId);
     }
 
     // Handle legacy new texts param (if still used)
@@ -112,7 +121,12 @@ function TranslationsContent() {
 
   // Reset language column selection when product changes
   useEffect(() => {
-    filters.setSelectedLanguageColumns(null);
+    // For RC product, show all languages; for others, default to KO, EN, JA
+    if (filters.selectedProduct === 'RC') {
+      filters.setSelectedLanguageColumns(null);
+    } else {
+      filters.setSelectedLanguageColumns(['ko', 'en', 'ja']);
+    }
   }, [filters.selectedProduct]);
 
   const handleOpenEmailModal = (templateType: EmailTemplateType) => {
@@ -251,6 +265,10 @@ function TranslationsContent() {
           onLanguageFilterChange={filters.setLanguageFilter}
           statusFilter={filters.statusFilter}
           onStatusFilterChange={filters.setStatusFilter}
+          scopeFilter={filters.scopeFilter}
+          onScopeFilterChange={filters.setScopeFilter}
+          versionFilter={filters.versionFilter}
+          onVersionFilterChange={filters.setVersionFilter}
           selectedLanguageColumns={filters.selectedLanguageColumns}
           onLanguageColumnsChange={filters.setSelectedLanguageColumns}
           availableLanguages={availableLanguages}
@@ -294,6 +312,7 @@ function TranslationsContent() {
           onVersionUpdate={handleVersionUpdateWithDuplicateCheck}
           onPriorityUpdate={mutations.handlePriorityUpdate}
           onNotesUpdate={handleNotesUpdateWithDuplicateCheck}
+          onDevCodeUpdate={mutations.handleDevCodeUpdate}
           onDelete={mutations.handleDelete}
           onRefresh={fetchTranslations}
           loading={loading}

@@ -14,7 +14,7 @@ export async function GET() {
     // Fetch user profile from users table
     const { data: userProfile, error } = await supabase
       .from('users')
-      .select('id, name, email')
+      .select('id, name, email, roles, permissions, work_products')
       .eq('id', user.id)
       .single();
 
@@ -26,6 +26,9 @@ export async function GET() {
           id: user.id,
           name: null,
           email: user.email || '',
+          roles: [],
+          permissions: [],
+          work_products: [],
         },
       });
     }
@@ -35,6 +38,9 @@ export async function GET() {
         id: userProfile.id,
         name: userProfile.name,
         email: userProfile.email,
+        roles: userProfile.roles || [],
+        permissions: userProfile.permissions || [],
+        work_products: userProfile.work_products || [],
       },
     });
   } catch (error) {

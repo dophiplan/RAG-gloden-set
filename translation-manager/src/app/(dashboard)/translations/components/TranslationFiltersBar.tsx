@@ -11,6 +11,10 @@ interface TranslationFiltersBarProps {
   onLanguageFilterChange: (value: string) => void;
   statusFilter: TranslationStatus | '';
   onStatusFilterChange: (value: TranslationStatus | '') => void;
+  scopeFilter: 'SaaS' | 'Solution' | '';
+  onScopeFilterChange: (value: 'SaaS' | 'Solution' | '') => void;
+  versionFilter: string;
+  onVersionFilterChange: (value: string) => void;
   selectedLanguageColumns: LanguageCode[] | null;
   onLanguageColumnsChange: (languages: LanguageCode[] | null) => void;
   availableLanguages: LanguageCode[];
@@ -23,6 +27,10 @@ export default function TranslationFiltersBar({
   onLanguageFilterChange,
   statusFilter,
   onStatusFilterChange,
+  scopeFilter,
+  onScopeFilterChange,
+  versionFilter,
+  onVersionFilterChange,
   selectedLanguageColumns,
   onLanguageColumnsChange,
   availableLanguages,
@@ -79,6 +87,26 @@ export default function TranslationFiltersBar({
                 { value: 'reviewed', label: '검수 완료' },
                 { value: 'deployed', label: '반영 완료' },
               ]}
+            />
+          </div>
+          {/* 제품 분류 */}
+          <div className="w-40">
+            <Select
+              value={scopeFilter}
+              onChange={(e) => onScopeFilterChange(e.target.value as 'SaaS' | 'Solution' | '')}
+              options={[
+                { value: '', label: '모든 분류' },
+                { value: 'SaaS', label: 'SaaS' },
+                { value: 'Solution', label: 'Solution' },
+              ]}
+            />
+          </div>
+          {/* 버전 */}
+          <div className="w-40">
+            <Input
+              placeholder="버전 검색..."
+              value={versionFilter}
+              onChange={(e) => onVersionFilterChange(e.target.value)}
             />
           </div>
           {/* 검색 */}
