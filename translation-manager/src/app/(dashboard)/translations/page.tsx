@@ -325,7 +325,15 @@ function TranslationsContent() {
         <CreateTranslationModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onCreate={async (sourceText, context, version, productCode, scope, priority, languages) => {
+          onCreate={async (
+            sourceText: string,
+            context: string,
+            version: string,
+            productCode: ProductCode | '',
+            scope: ScopeType,
+            priority: PriorityLevel,
+            languages: LanguageCode[]
+          ) => {
             // Create translation with initial empty translation_results for each language
             const translationsArray = languages.map(lang => ({
               language_code: lang,
