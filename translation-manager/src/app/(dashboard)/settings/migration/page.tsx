@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ProductCode, PRODUCTS } from '@/types';
 import MigrationPreviewTable from './components/MigrationPreviewTable';
 
@@ -146,13 +147,11 @@ export default function MigrationPage() {
   const translationEntries = entries.filter((e) => (e.category || e.suggested_category) === 'translation');
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">데이터 마이그레이션</h1>
-        <p className="text-gray-600">
-          기존 번역 데이터를 Excel/CSV 파일에서 가져와 용어집 및 번역 관리에 추가합니다.
-        </p>
-      </div>
+    <DashboardLayout
+      title="데이터 마이그레이션"
+      subtitle="기존 번역 데이터를 Excel/CSV 파일에서 가져와 용어집 및 번역 관리에 추가합니다."
+    >
+      <div className="max-w-7xl mx-auto">
 
       {/* Progress Steps */}
       <div className="mb-8">
@@ -162,7 +161,7 @@ export default function MigrationPage() {
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full ${
                 step === 'upload'
-                  ? 'bg-[#7BC96F] text-white'
+                  ? 'bg-[#818CF8] text-white'
                   : 'bg-gray-200 text-gray-600'
               }`}
             >
@@ -170,7 +169,7 @@ export default function MigrationPage() {
             </div>
             <span
               className={`ml-2 font-medium ${
-                step === 'upload' ? 'text-[#7BC96F]' : 'text-gray-600'
+                step === 'upload' ? 'text-[#818CF8]' : 'text-gray-600'
               }`}
             >
               업로드
@@ -185,7 +184,7 @@ export default function MigrationPage() {
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full ${
                 step === 'preview'
-                  ? 'bg-[#7BC96F] text-white'
+                  ? 'bg-[#818CF8] text-white'
                   : 'bg-gray-200 text-gray-600'
               }`}
             >
@@ -193,7 +192,7 @@ export default function MigrationPage() {
             </div>
             <span
               className={`ml-2 font-medium ${
-                step === 'preview' ? 'text-[#7BC96F]' : 'text-gray-600'
+                step === 'preview' ? 'text-[#818CF8]' : 'text-gray-600'
               }`}
             >
               미리보기 및 분류
@@ -208,7 +207,7 @@ export default function MigrationPage() {
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full ${
                 step === 'confirm'
-                  ? 'bg-[#7BC96F] text-white'
+                  ? 'bg-[#818CF8] text-white'
                   : 'bg-gray-200 text-gray-600'
               }`}
             >
@@ -216,7 +215,7 @@ export default function MigrationPage() {
             </div>
             <span
               className={`ml-2 font-medium ${
-                step === 'confirm' ? 'text-[#7BC96F]' : 'text-gray-600'
+                step === 'confirm' ? 'text-[#818CF8]' : 'text-gray-600'
               }`}
             >
               확인 및 실행
@@ -247,7 +246,7 @@ export default function MigrationPage() {
                 type="file"
                 accept=".csv"
                 onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#E8F5E9] file:text-[#5FA654] hover:file:bg-[#C8E6C9]"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#E0E7FF] file:text-[#4F46E5] hover:file:bg-[#C7D2FE]"
               />
               {file && (
                 <p className="mt-2 text-sm text-gray-600">선택된 파일: {file.name}</p>
@@ -262,7 +261,7 @@ export default function MigrationPage() {
               <select
                 value={productCode}
                 onChange={(e) => setProductCode(e.target.value as ProductCode)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
               >
                 {Object.entries(PRODUCTS).map(([code, name]) => (
                   <option key={code} value={code}>
@@ -282,7 +281,7 @@ export default function MigrationPage() {
                 value={version}
                 onChange={(e) => setVersion(e.target.value)}
                 placeholder="예: v1.0.0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
               />
             </div>
 
@@ -290,7 +289,7 @@ export default function MigrationPage() {
             <button
               onClick={handleUpload}
               disabled={!file || loading}
-              className="w-full px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="w-full px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? '처리 중...' : '다음 단계'}
             </button>
@@ -309,11 +308,11 @@ export default function MigrationPage() {
                 <p className="text-sm text-gray-600">전체</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#7BC96F]">{glossaryEntries.length}</p>
+                <p className="text-2xl font-bold text-[#818CF8]">{glossaryEntries.length}</p>
                 <p className="text-sm text-gray-600">용어집</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#66BB6A]">{translationEntries.length}</p>
+                <p className="text-2xl font-bold text-[#6366F1]">{translationEntries.length}</p>
                 <p className="text-sm text-gray-600">번역</p>
               </div>
             </div>
@@ -334,7 +333,7 @@ export default function MigrationPage() {
             </button>
             <button
               onClick={() => setStep('confirm')}
-              className="flex-1 px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A]"
+              className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]"
             >
               다음 단계
             </button>
@@ -353,7 +352,7 @@ export default function MigrationPage() {
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">추가</p>
-                  <p className="text-lg font-semibold text-[#7BC96F]">
+                  <p className="text-lg font-semibold text-[#818CF8]">
                     {glossaryEntries.filter((e) => e.action === 'import' || e.action === 'merge' || e.action === 'overwrite').length}건
                   </p>
                 </div>
@@ -371,7 +370,7 @@ export default function MigrationPage() {
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">추가</p>
-                  <p className="text-lg font-semibold text-[#66BB6A]">
+                  <p className="text-lg font-semibold text-[#6366F1]">
                     {translationEntries.filter((e) => e.action === 'import').length}건
                   </p>
                 </div>
@@ -408,13 +407,14 @@ export default function MigrationPage() {
             <button
               onClick={handleCommit}
               disabled={loading}
-              className="flex-1 px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A] disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               {loading ? '마이그레이션 중...' : '마이그레이션 실행'}
             </button>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

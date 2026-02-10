@@ -33,7 +33,7 @@ export default function DuplicateConflictModal({ entry, onClose, onSelectAction 
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-white px-6 py-4">
+        <div className="bg-gradient-to-r from-[#818CF8] to-[#6366F1] text-white px-6 py-4">
           <h2 className="text-xl font-semibold">중복 항목 처리</h2>
           <p className="text-sm mt-1 opacity-90">
             {isExactMatch ? '동일한 항목이 이미 존재합니다.' : '유사한 항목이 존재합니다.'}
