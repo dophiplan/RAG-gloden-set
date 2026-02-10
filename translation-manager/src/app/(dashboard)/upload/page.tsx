@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { ProductCode, PriorityLevel, LanguageCode } from '@/types';
+import { Holiday } from '@/types/api';
 import { PRODUCT_SELECT_OPTIONS, SCOPE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants';
 import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
@@ -196,7 +197,7 @@ export default function UploadPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [completionDate, setCompletionDate] = useState('');
   const [dateWarning, setDateWarning] = useState('');
-  const [holidays, setHolidays] = useState<Array<{ holiday_date: string; name: string }>>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [isInvalidDate, setIsInvalidDate] = useState(false);
 
   // Navigation handlers

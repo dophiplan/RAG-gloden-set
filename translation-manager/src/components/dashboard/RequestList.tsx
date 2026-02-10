@@ -8,7 +8,7 @@ import { TranslationStatus, PRIORITY_LABELS } from '@/types/translations';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
-import { showSuccess, showError } from '@/lib/notifications.tsx';
+import { showSuccess, showError } from '@/lib/notifications';
 
 interface RequestListProps {
   requests: DashboardRequest[];

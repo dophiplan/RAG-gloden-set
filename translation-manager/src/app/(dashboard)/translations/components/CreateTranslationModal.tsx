@@ -54,7 +54,7 @@ export default function CreateTranslationModal({
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
   const [pdfVersion, setPdfVersion] = useState('');
   const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>('');
-  const [pdfScope, setPdfScope] = useState<string>('');
+  const [pdfScope, setPdfScope] = useState<'SaaS' | 'Solution' | ''>('');
   const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('중');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [uploading, setUploading] = useState(false);
@@ -194,7 +194,7 @@ export default function CreateTranslationModal({
             <Select
               label="제품 분류 *"
               value={newScope}
-              onChange={(e) => setNewScope(e.target.value)}
+              onChange={(e) => setNewScope(e.target.value as 'SaaS' | 'Solution' | '')}
               options={SCOPE_OPTIONS}
             />
             <Input
@@ -253,7 +253,7 @@ export default function CreateTranslationModal({
             <Select
               label="제품 분류 *"
               value={pdfScope}
-              onChange={(e) => setPdfScope(e.target.value)}
+              onChange={(e) => setPdfScope(e.target.value as 'SaaS' | 'Solution' | '')}
               options={SCOPE_OPTIONS}
             />
             <Input
