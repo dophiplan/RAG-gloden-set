@@ -5,7 +5,7 @@ import { LanguageCode, SUPPORTED_LANGUAGES } from '@/types';
 interface LanguageCheckboxGroupProps {
   selectedLanguages: LanguageCode[];
   onChange: (languages: LanguageCode[]) => void;
-  availableLanguages?: LanguageCode[]; // defaults to all 8 (excluding Korean)
+  availableLanguages?: LanguageCode[]; // defaults to creatable languages (8, excluding Korean)
   label?: string;
   required?: boolean;
 }

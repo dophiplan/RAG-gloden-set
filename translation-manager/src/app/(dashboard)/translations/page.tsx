@@ -13,7 +13,7 @@ import DuplicateEditModal from '@/components/translations/DuplicateEditModal';
 import { Translation, ProductCode, EmailTemplateType, LanguageCode } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
 import type { UploadedFile } from '@/components/FileUploader';
-import { getAllSelectableLanguages } from '@/lib/product-languages';
+import { getAllDisplayableLanguages } from '@/lib/product-languages';
 
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
@@ -227,9 +227,9 @@ function TranslationsContent() {
   );
   const handleNotesUpdateWithDuplicateCheck = duplicateCheck.makeNotesUpdateWithDuplicateCheck();
 
-  // Calculate available languages (always all 9)
+  // Calculate available languages for display (includes Korean)
   const availableLanguages = useMemo(() => {
-    return getAllSelectableLanguages();
+    return getAllDisplayableLanguages();
   }, []);
 
   return (

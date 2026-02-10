@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
 import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS } from '@/types';
-import { getAllSelectableLanguages } from '@/lib/product-languages';
+import { getAllDisplayableLanguages } from '@/lib/product-languages';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -220,7 +220,7 @@ export default memo(function TranslationTableV2({
 
   // Calculate which languages to display based on user filter ONLY
   const displayLanguages = useMemo(() => {
-    const allLanguages = getAllSelectableLanguages();
+    const allLanguages = getAllDisplayableLanguages();
 
     // If user has selected specific languages to display, filter to those
     if (selectedLanguageColumns && selectedLanguageColumns.length > 0) {

@@ -20,29 +20,38 @@ export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
 };
 
 /**
- * All languages available for selection (same for all products, excluding Korean)
+ * Languages available for CREATING new translations (excluding Korean)
+ * Korean is excluded from new translation creation but can still be displayed/edited
  */
-export const ALL_LANGUAGES: LanguageCode[] = [
+export const CREATABLE_LANGUAGES: LanguageCode[] = [
   'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
 ];
 
 /**
- * Get default checked languages for a product
+ * All languages for DISPLAY in translation table (including Korean)
+ * Korean translations can be viewed and edited, just not created new
+ */
+export const DISPLAYABLE_LANGUAGES: LanguageCode[] = [
+  'ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
+];
+
+/**
+ * Get default checked languages for a product (for creation forms)
  */
 export function getDefaultLanguagesForProduct(productCode: ProductCode): LanguageCode[] {
   return PRODUCT_DEFAULT_LANGUAGES[productCode] || ['en', 'ja'];
 }
 
 /**
- * Get all selectable languages (always returns all 9)
+ * Get all selectable languages for CREATING translations (no Korean)
  */
 export function getAllSelectableLanguages(): LanguageCode[] {
-  return ALL_LANGUAGES;
+  return CREATABLE_LANGUAGES;
 }
 
 /**
- * Get union of all default languages (for "전체" view default)
+ * Get all displayable languages for translation table (with Korean)
  */
-export function getAllDefaultLanguages(): LanguageCode[] {
-  return ALL_LANGUAGES;
+export function getAllDisplayableLanguages(): LanguageCode[] {
+  return DISPLAYABLE_LANGUAGES;
 }
