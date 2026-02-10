@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('translations')
       .select(selectStatement, { count: 'exact' })
+      .order('priority_order', { ascending: false })
+      .order('completion_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
