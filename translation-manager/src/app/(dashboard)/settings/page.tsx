@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { createClient } from '@/lib/supabase/client';
+import { SUPPORTED_LANGUAGES } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 
 interface UserProfile {
@@ -142,10 +143,41 @@ export default function SettingsPage() {
         const response = await fetch('/api/languages');
         if (response.ok) {
           const data = await response.json();
-          setLanguages(data.languages || []);
+          if (data.languages && data.languages.length > 0) {
+            setLanguages(data.languages);
+          } else {
+            // Fallback: Use hardcoded languages if API returns empty
+            const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
+              id: code,
+              code,
+              name,
+              description: null,
+              display_order: index + 1,
+            }));
+            setLanguages(fallbackLanguages);
+          }
+        } else {
+          // Fallback: Use hardcoded languages if API fails
+          const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
+            id: code,
+            code,
+            name,
+            description: null,
+            display_order: index + 1,
+          }));
+          setLanguages(fallbackLanguages);
         }
       } catch (error) {
         console.error('Error fetching languages:', error);
+        // Fallback: Use hardcoded languages on error
+        const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
+          id: code,
+          code,
+          name,
+          description: null,
+          display_order: index + 1,
+        }));
+        setLanguages(fallbackLanguages);
       } finally {
         setLoadingLanguages(false);
       }
@@ -560,16 +592,18 @@ export default function SettingsPage() {
                 {products.map((product) => (
                   <div
                     key={product.id}
-                    className="flex flex-col p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="info">{product.code}</Badge>
-                      <p className="font-medium text-gray-900">{product.name}</p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="info">{product.code}</Badge>
+                        <p className="font-semibold text-gray-900">{product.name}</p>
+                      </div>
                     </div>
                     {product.description && (
-                      <p className="text-xs text-gray-500 mb-3">{product.description}</p>
+                      <p className="text-sm text-gray-600 mb-4">{product.description}</p>
                     )}
-                    <div className="flex items-center gap-2 mt-auto">
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="secondary"
@@ -614,16 +648,18 @@ export default function SettingsPage() {
                 {languages.map((language) => (
                   <div
                     key={language.id}
-                    className="flex flex-col p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="info">{language.code}</Badge>
-                      <p className="font-medium text-gray-900">{language.name}</p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="info">{language.code}</Badge>
+                        <p className="font-semibold text-gray-900">{language.name}</p>
+                      </div>
                     </div>
                     {language.description && (
-                      <p className="text-xs text-gray-500 mb-3">{language.description}</p>
+                      <p className="text-sm text-gray-600 mb-4">{language.description}</p>
                     )}
-                    <div className="flex items-center gap-2 mt-auto">
+                    <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         variant="secondary"
