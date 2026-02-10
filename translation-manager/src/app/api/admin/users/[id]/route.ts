@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { PRODUCTS } from '@/lib/constants';
+import { FIRST_MASTER_EMAIL } from '@/types/users';
 
 // PATCH - Update user
 export async function PATCH(
@@ -28,7 +29,7 @@ export async function PATCH(
     console.log('Authorization check:', { adminUser, checkError, authUserId: authUser.id });
 
     // Check for both 'admin' and 'master' roles for backwards compatibility
-    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master'))) {
+    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master') || adminUser.roles?.includes('1st_master'))) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 
@@ -36,6 +37,23 @@ export async function PATCH(
     const { id: userId } = await params;
     const body = await request.json();
     const { name, email, password, products, accountLevel, permissions, translatorLanguages } = body;
+
+    // Protect 1st_master account from being modified by master users
+    const { data: targetUser } = await adminClient
+      .from('users')
+      .select('email, roles')
+      .eq('id', userId)
+      .single();
+
+    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.roles?.includes('1st_master');
+    const isRequesterFirstMaster = adminUser.roles?.includes('1st_master');
+
+    if (isTargetFirstMaster && !isRequesterFirstMaster) {
+      return NextResponse.json(
+        { error: '최고 관리자 계정은 수정할 수 없습니다.' },
+        { status: 403 }
+      );
+    }
 
     // Prevent users from changing their own role (security protection)
     if (userId === authUser.id && accountLevel !== undefined) {

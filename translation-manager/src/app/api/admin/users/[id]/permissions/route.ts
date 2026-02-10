@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { FIRST_MASTER_EMAIL } from '@/types/users';
 
 /**
  * PATCH - Update user permissions
@@ -26,7 +27,7 @@ export async function PATCH(
       .eq('id', authUser.id)
       .single();
 
-    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master'))) {
+    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master') || adminUser.roles?.includes('1st_master'))) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 
@@ -44,9 +45,20 @@ export async function PATCH(
     // Check if the target user is a master
     const { data: targetUser } = await adminClient
       .from('users')
-      .select('roles')
+      .select('email, roles')
       .eq('id', id)
       .single();
+
+    // Protect 1st_master account from being modified by master users
+    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.roles?.includes('1st_master');
+    const isRequesterFirstMaster = adminUser.roles?.includes('1st_master');
+
+    if (isTargetFirstMaster && !isRequesterFirstMaster) {
+      return NextResponse.json(
+        { error: '최고 관리자 계정은 수정할 수 없습니다.' },
+        { status: 403 }
+      );
+    }
 
     // Master users always get all permissions
     const finalPermissions = targetUser?.roles?.includes('master')

@@ -2,6 +2,7 @@ import type { ProductCode } from './products';
 
 // User role labels for display
 export const USER_ROLE_LABELS: Record<string, string> = {
+  '1st_master': '최고 관리자',
   master: '마스터',
   translator_ja: '일본어 번역',
   translator_zh: '중국어 번역',
@@ -16,6 +17,7 @@ export const USER_ROLE_LABELS: Record<string, string> = {
 };
 
 export type UserRole =
+  | '1st_master'
   | 'master'
   | 'translator_ja' | 'translator_zh' | 'translator_en'
   | 'reviewer_ja' | 'reviewer_zh' | 'reviewer_en'
@@ -23,6 +25,9 @@ export type UserRole =
   | 'deployer'
   | 'pm'
   | 'pl';
+
+// Special protected user email
+export const FIRST_MASTER_EMAIL = 'nhkim@rsupport.com';
 
 export interface User {
   id: string;

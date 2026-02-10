@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
 import { PRODUCTS } from '@/lib/constants';
+import { FIRST_MASTER_EMAIL } from '@/types/users';
 
 interface SystemUser {
   id: string;
@@ -23,6 +24,8 @@ interface SystemUser {
 export default function UsersPage() {
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([]);
 
   // Filters
   const [filterProduct, setFilterProduct] = useState<string>('');
@@ -40,7 +43,7 @@ export default function UsersPage() {
     name: '',
     email: '@rsupport.com',
     password: '',
-    accountLevel: 'user' as 'master' | 'manager' | 'user',
+    accountLevel: 'user' as '1st_master' | 'master' | 'manager' | 'user',
     permissions: [] as string[], // No permissions selected by default
     translatorLanguages: [] as string[], // Languages for translator
   };
@@ -104,6 +107,15 @@ export default function UsersPage() {
 
   const handleDeleteUsers = async () => {
     if (selectedUserIds.length === 0) return;
+
+    // Check if trying to delete 1st master account
+    const selectedUsers = systemUsers.filter(u => selectedUserIds.includes(u.id));
+    const hasFirstMaster = selectedUsers.some(u => u.email === FIRST_MASTER_EMAIL);
+
+    if (hasFirstMaster) {
+      showError('최고 관리자 계정은 삭제할 수 없습니다.');
+      return;
+    }
 
     if (!showConfirm(`선택한 ${selectedUserIds.length}명의 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
       return;
@@ -233,14 +245,23 @@ export default function UsersPage() {
   };
 
   const openEditModal = (user: SystemUser) => {
+    // Check if trying to edit 1st master account
+    const isFirstMaster = user.email === FIRST_MASTER_EMAIL;
+    const currentUserIsFirstMaster = currentUserRoles.includes('1st_master');
+
+    if (isFirstMaster && !currentUserIsFirstMaster) {
+      showError('최고 관리자 계정은 수정할 수 없습니다.');
+      return;
+    }
+
     setEditingUserId(user.id);
-    const isMaster = user.roles?.includes('master');
+    const isMaster = user.roles?.includes('master') || user.roles?.includes('1st_master');
     setModalData({
       products: isMaster ? Object.keys(PRODUCTS) : (user.work_products || []),
       name: user.name || '',
       email: user.email,
       password: '', // Don't pre-fill password
-      accountLevel: (user.roles?.includes('master') ? 'master' : user.roles?.includes('manager') ? 'manager' : 'user') as 'master' | 'manager' | 'user',
+      accountLevel: (user.roles?.includes('1st_master') ? '1st_master' : user.roles?.includes('master') ? 'master' : user.roles?.includes('manager') ? 'manager' : 'user') as '1st_master' | 'master' | 'manager' | 'user',
       permissions: isMaster ? ['reviewer', 'requester', 'deployer'] : (user.permissions || []),
       translatorLanguages: user.translatorLanguages || [],
     });
@@ -286,6 +307,17 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchSystemUsers();
+
+    // Fetch current user info
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setCurrentUserEmail(data.user.email);
+          setCurrentUserRoles(data.user.roles || []);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   return (
@@ -380,6 +412,7 @@ export default function UsersPage() {
                 onChange={(e) => setFilterAccountLevel(e.target.value)}
                 options={[
                   { value: '', label: '전체' },
+                  { value: '1st_master', label: '1st Master' },
                   { value: 'master', label: 'Master' },
                   { value: 'manager', label: 'Manager' },
                   { value: 'user', label: 'User' },
@@ -487,14 +520,16 @@ export default function UsersPage() {
                                 <span
                                   key={role}
                                   className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
-                                    role === 'master'
+                                    role === '1st_master'
+                                      ? 'bg-red-100 text-red-800'
+                                      : role === 'master'
                                       ? 'bg-purple-100 text-purple-800'
                                       : role === 'manager'
                                       ? 'bg-green-100 text-green-800'
                                       : 'bg-gray-100 text-gray-800'
                                   }`}
                                 >
-                                  {role === 'master' ? 'Master' : role === 'manager' ? 'Manager' : 'User'}
+                                  {role === '1st_master' ? '1st Master' : role === 'master' ? 'Master' : role === 'manager' ? 'Manager' : 'User'}
                                 </span>
                               ))
                             ) : (
@@ -630,9 +665,9 @@ export default function UsersPage() {
                 <select
                   value={modalData.accountLevel}
                   onChange={(e) => {
-                    const level = e.target.value as 'master' | 'manager' | 'user';
-                    if (level === 'master') {
-                      // Auto-select all products for master
+                    const level = e.target.value as '1st_master' | 'master' | 'manager' | 'user';
+                    if (level === 'master' || level === '1st_master') {
+                      // Auto-select all products for master and 1st_master
                       setModalData({
                         ...modalData,
                         accountLevel: level,
@@ -647,10 +682,11 @@ export default function UsersPage() {
                   <option value="user">사용자</option>
                   <option value="manager">중간 관리자</option>
                   <option value="master">마스터</option>
+                  <option value="1st_master">최고 관리자</option>
                 </select>
-                {modalData.accountLevel === 'master' && (
+                {(modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master') && (
                   <p className="text-xs text-blue-600 mt-1">
-                    ℹ️ 마스터는 모든 제품과 권한에 자동으로 접근할 수 있습니다.
+                    ℹ️ {modalData.accountLevel === '1st_master' ? '최고 관리자' : '마스터'}는 모든 제품과 권한에 자동으로 접근할 수 있습니다.
                   </p>
                 )}
               </div>
@@ -658,9 +694,9 @@ export default function UsersPage() {
               {/* Products - Multiple Select (disabled for master) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  담당 제품 {modalData.accountLevel !== 'master' && '*'}
+                  담당 제품 {modalData.accountLevel !== 'master' && modalData.accountLevel !== '1st_master' && '*'}
                 </label>
-                <div className={`grid grid-cols-3 gap-2 ${modalData.accountLevel === 'master' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className={`grid grid-cols-3 gap-2 ${(modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master') ? 'opacity-50 pointer-events-none' : ''}`}>
                   {Object.keys(PRODUCTS).map((code) => (
                     <label
                       key={code}
@@ -676,7 +712,7 @@ export default function UsersPage() {
                             setModalData({ ...modalData, products: modalData.products.filter(p => p !== code) });
                           }
                         }}
-                        disabled={modalData.accountLevel === 'master'}
+                        disabled={modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master'}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span className="text-sm text-gray-700">{code}</span>
