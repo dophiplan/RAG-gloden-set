@@ -174,7 +174,7 @@ export default function SettingsPage() {
       title="설정"
       subtitle="계정 및 환경 설정을 관리합니다."
     >
-      <div className="max-w-2xl space-y-8">
+      <div className="max-w-5xl space-y-8">
         {/* OpenAI API Key Settings */}
         <Card>
           <CardTitle>
@@ -272,15 +272,6 @@ export default function SettingsPage() {
         <Card>
           <CardTitle>데이터 관리</CardTitle>
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">스프레드시트 Import</p>
-                <p className="text-sm text-gray-500">CSV 파일에서 번역 데이터 가져오기</p>
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => window.location.href = '/settings/import'}>
-                Import
-              </Button>
-            </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium text-gray-900">번역 Export</p>
