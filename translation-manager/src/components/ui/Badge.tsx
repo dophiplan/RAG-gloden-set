@@ -18,7 +18,7 @@ export default function Badge({
     const statusStyle = STATUS_COLORS[status];
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text} ${className}`}
+        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusStyle.bg} ${statusStyle.text} shadow-sm ${className}`}
         {...props}
       >
         {children || statusStyle.label}
@@ -27,11 +27,11 @@ export default function Badge({
   }
 
   const variants = {
-    default: 'bg-white/80 text-[#64748B] border border-[#C8E6C9]',
-    success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-    warning: 'bg-amber-50 text-amber-700 border border-amber-200',
-    error: 'bg-red-50 text-red-700 border border-red-200',
-    info: 'bg-[#E8F5E9] text-[#5FA654] border border-[#7BC96F]/20',
+    default: 'bg-white text-[#546E7A] border border-[#E0E7FF] shadow-sm',
+    success: 'bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm',
+    warning: 'bg-amber-50 text-amber-700 border border-amber-100 shadow-sm',
+    error: 'bg-red-50 text-red-700 border border-red-100 shadow-sm',
+    info: 'bg-[#E0E7FF] text-[#6366F1] border border-[#818CF8]/20 shadow-sm',
   };
 
   return (
