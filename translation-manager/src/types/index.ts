@@ -1,4 +1,5 @@
 // Barrel re-exports — existing imports from '@/types' continue to work
+export * from './common';
 export * from './languages';
 export * from './products';
 export * from './translations';

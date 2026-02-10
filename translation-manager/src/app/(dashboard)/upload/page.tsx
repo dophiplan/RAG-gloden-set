@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
-import { ProductCode, PriorityLevel, LanguageCode } from '@/types';
+import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { Holiday } from '@/types/api';
 import { PRODUCT_SELECT_OPTIONS, SCOPE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants';
 import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
@@ -183,7 +183,7 @@ function LanguageChipSelector({
 export default function UploadPage() {
   const router = useRouter();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [scope, setScope] = useState<'SaaS' | 'Solution' | ''>('');
+  const [scope, setScope] = useState<ScopeType>('');
   const [productCode, setProductCode] = useState<ProductCode | ''>('');
   const [version, setVersion] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('중');
@@ -584,7 +584,7 @@ export default function UploadPage() {
                       <Select
                         label="제품 분류"
                         value={scope}
-                        onChange={(e) => setScope(e.target.value as any)}
+                        onChange={(e) => setScope(e.target.value as ScopeType)}
                         options={SCOPE_OPTIONS}
                         required
                       />
