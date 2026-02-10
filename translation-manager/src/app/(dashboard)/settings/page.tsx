@@ -542,10 +542,8 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Product & Language Management - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Product Management */}
-          <Card>
+        {/* Product Management */}
+        <Card>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>제품 관리</CardTitle>
               <Button size="sm" onClick={() => openProductModal()}>
@@ -558,22 +556,20 @@ export default function SettingsPage() {
             {loadingProducts ? (
               <div className="text-center py-8 text-gray-500">로딩 중...</div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {products.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex flex-col p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge variant="info">{product.code}</Badge>
-                      <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        {product.description && (
-                          <p className="text-xs text-gray-500">{product.description}</p>
-                        )}
-                      </div>
+                      <p className="font-medium text-gray-900">{product.name}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {product.description && (
+                      <p className="text-xs text-gray-500 mb-3">{product.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-auto">
                       <Button
                         size="sm"
                         variant="secondary"
@@ -592,7 +588,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
                 {products.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="col-span-2 text-center py-8 text-gray-500">
                     등록된 제품이 없습니다.
                   </div>
                 )}
@@ -600,8 +596,8 @@ export default function SettingsPage() {
             )}
           </Card>
 
-          {/* Language Management */}
-          <Card>
+        {/* Language Management */}
+        <Card>
             <div className="flex items-center justify-between mb-4">
               <CardTitle>언어 관리</CardTitle>
               <Button size="sm" onClick={() => openLanguageModal()}>
@@ -614,22 +610,20 @@ export default function SettingsPage() {
             {loadingLanguages ? (
               <div className="text-center py-8 text-gray-500">로딩 중...</div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {languages.map((language) => (
                   <div
                     key={language.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex flex-col p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <Badge variant="info">{language.code}</Badge>
-                      <div>
-                        <p className="font-medium text-gray-900">{language.name}</p>
-                        {language.description && (
-                          <p className="text-xs text-gray-500">{language.description}</p>
-                        )}
-                      </div>
+                      <p className="font-medium text-gray-900">{language.name}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    {language.description && (
+                      <p className="text-xs text-gray-500 mb-3">{language.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-auto">
                       <Button
                         size="sm"
                         variant="secondary"
@@ -648,14 +642,13 @@ export default function SettingsPage() {
                   </div>
                 ))}
                 {languages.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="col-span-2 text-center py-8 text-gray-500">
                     등록된 언어가 없습니다.
                   </div>
                 )}
               </div>
             )}
           </Card>
-        </div>
 
 
         {/* Data Management */}
