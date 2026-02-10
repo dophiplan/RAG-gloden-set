@@ -1,32 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { TranslationCreateInput, TranslationStatus, ProductCode } from '@/types';
+import { getAuthUser } from '@/lib/api-auth';
 
 // GET - List translations
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user } = await getAuthUser(supabase);
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as TranslationStatus | null;
+    const language = searchParams.get('language');
     const search = searchParams.get('search');
     const productCode = searchParams.get('product_code') as ProductCode | null;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from('translations')
-      .select(`
+    // Build select statement with inner join if filtering by product
+    const selectStatement = productCode
+      ? `
+        *,
+        translation_results (*),
+        translation_products!inner (*)
+      `
+      : `
         *,
         translation_results (*),
         translation_products (*)
-      `, { count: 'exact' })
+      `;
+
+    let query = supabase
+      .from('translations')
+      .select(selectStatement, { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -34,15 +45,32 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', status);
     }
 
+    if (language) {
+      // Filter by translation_results table - translations that have a result in the specified language
+      query = query.eq('translation_results.language_code', language);
+    }
+
     if (productCode) {
-      query = query.eq('product_code', productCode);
+      // Filter by translation_products table using inner join
+      query = query.eq('translation_products.product_code', productCode);
     }
 
     if (search) {
-      query = query.ilike('source_text', `%${search}%`);
+      // Search in both source_text and translated_text
+      query = query.or(`source_text.ilike.%${search}%,translation_results.translated_text.ilike.%${search}%`);
     }
 
     const { data, error, count } = await query;
+
+    console.log('GET /api/translations:', {
+      productCode,
+      status,
+      language,
+      search,
+      page,
+      resultCount: data?.length || 0,
+      totalCount: count,
+    });
 
     if (error) throw error;
 
@@ -129,6 +157,8 @@ export async function POST(request: NextRequest) {
         version: body.version?.trim() || null,
         version_updated_at: body.version ? new Date().toISOString() : null,
         product_code: body.product_code || null,
+        scope: body.scope || null,
+        priority: body.priority || '중',
         user_id: user.id,
         status: 'pending',
       })
