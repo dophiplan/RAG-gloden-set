@@ -116,23 +116,23 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div className={`
-        flex flex-col w-64 bg-white border-r border-[#C8E6C9] min-h-screen
+        flex flex-col w-64 bg-white border-r border-[#E0E7FF] min-h-screen
         fixed lg:static inset-y-0 left-0 z-50
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `} style={{
-        boxShadow: '2px 0 12px rgba(123, 201, 111, 0.12)'
+        boxShadow: '4px 0 16px rgba(99, 102, 241, 0.06)'
       }}>
         {/* Logo */}
-        <div className="flex items-center h-16 px-5 border-b border-[#C8E6C9] bg-gradient-to-br from-[#7BC96F] via-[#66BB6A] to-[#5FA654]" style={{
-          boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+        <div className="flex items-center h-16 px-5 border-b border-[#C7D2FE] bg-gradient-to-br from-[#6366F1] via-[#4F46E5] to-[#818CF8]" style={{
+          boxShadow: '0 4px 16px rgba(99, 102, 241, 0.25)'
         }}>
-          <h1 className="text-xl font-bold text-[#1E293B] tracking-tight drop-shadow-sm">Translation Manager</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">Language Monster</h1>
           {/* Close button for mobile */}
           {onClose && (
             <button
               onClick={onClose}
-              className="ml-auto lg:hidden text-[#1E293B] hover:text-white"
+              className="ml-auto lg:hidden text-white hover:text-white/80 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -142,7 +142,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-2 bg-gradient-to-b from-white to-[#F1F8F4]">
+        <nav className="flex-1 px-4 py-6 space-y-2 bg-white">
           {filteredNavigation.map((item) => {
             // Exact match for root and translations, prefix match for others
             let isActive;
@@ -160,14 +160,14 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose}
                 className={`
-                  flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200
+                  flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
                   ${isActive
-                    ? 'bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-[#1E293B] shadow-lg transform scale-[1.02]'
-                    : 'text-[#475569] hover:bg-[#F1F8F4] hover:text-[#5FA654] hover:shadow-sm'
+                    ? 'bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white shadow-md'
+                    : 'text-[#546E7A] hover:bg-[#E0E7FF] hover:text-[#6366F1]'
                   }
                 `}
                 style={isActive ? {
-                  boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+                  boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
                 } : undefined}
               >
                 <span className="mr-3">{item.icon}</span>
