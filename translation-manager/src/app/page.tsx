@@ -12,6 +12,7 @@ import type { DashboardRequest } from '@/types/translations';
 interface DashboardStats {
   total: number;
   pending: number;
+  in_progress: number;
   reviewed: number;
   deployed: number;
   glossaryCount: number;
@@ -102,7 +103,7 @@ export default function DashboardPage() {
     >
       <div className="space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
             <div className="flex items-center justify-between">
               <div>
@@ -120,7 +121,7 @@ export default function DashboardPage() {
           <Card className="border-l-4 border-l-amber-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">번역 요청</p>
+                <p className="text-sm text-[#64748B]">요청</p>
                 <p className="text-3xl font-bold text-amber-600">{stats?.pending || 0}</p>
               </div>
               <div className="p-3 bg-amber-100 rounded-full">
@@ -131,10 +132,24 @@ export default function DashboardPage() {
             </div>
           </Card>
 
+          <Card className="border-l-4 border-l-blue-400">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-[#64748B]">진행중</p>
+                <p className="text-3xl font-bold text-blue-600">{stats?.in_progress || 0}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+            </div>
+          </Card>
+
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">검수 완료</p>
+                <p className="text-sm text-[#64748B]">검수중</p>
                 <p className="text-3xl font-bold text-[#475569]">{stats?.reviewed || 0}</p>
               </div>
               <div className="p-3 bg-[#F8FAFC] rounded-full">
@@ -148,7 +163,7 @@ export default function DashboardPage() {
           <Card className="border-l-4 border-l-emerald-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">반영 완료</p>
+                <p className="text-sm text-[#64748B]">반영완료</p>
                 <p className="text-3xl font-bold text-emerald-600">{stats?.deployed || 0}</p>
               </div>
               <div className="p-3 bg-emerald-100 rounded-full">

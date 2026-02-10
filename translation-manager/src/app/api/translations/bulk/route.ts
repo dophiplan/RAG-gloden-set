@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
-import { TranslationStatus, ProductCode, LanguageCode } from '@/types';
+import { TranslationStatus, ProductCode, LanguageCode, Scope } from '@/types';
 import { getAuthUser } from '@/lib/api-auth';
+import { autoTranslate } from '@/lib/openai/auto-translate';
 
 interface BulkUpdateInput {
   ids: string[];
@@ -13,9 +14,10 @@ interface BulkCreateInput {
   context?: string;
   version?: string;
   product_code?: ProductCode;
-  scope?: 'SaaS' | 'Solution';
+  scope?: Scope;
   priority?: string;
   languages?: LanguageCode[];
+  completion_date?: string;
 }
 
 // POST - Bulk create translations
@@ -27,6 +29,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Generate unique request ID for this batch
+    const requestId = crypto.randomUUID();
 
     // Always use admin client to bypass RLS for bulk operations
     console.log('🔧 Creating admin client for bulk operations...');
@@ -58,19 +63,22 @@ export async function POST(request: NextRequest) {
 
     const versionUpdatedAt = body.version ? new Date().toISOString() : null;
 
-    const translations = body.texts
-      .filter((text) => text.trim())
-      .map((text) => ({
-        source_text: text.trim(),
-        context: body.context?.trim() || null,
-        version: body.version?.trim() || null,
-        version_updated_at: versionUpdatedAt,
-        product_code: body.product_code || null,
-        scope: body.scope || null,
-        priority: body.priority || '중',
-        user_id: user.id,
-        status: 'pending' as const,
-      }));
+    // Store original texts for creating KO translation results
+    const originalTexts = body.texts.filter((text) => text.trim()).map((text) => text.trim());
+
+    const translations = originalTexts.map((text, index) => ({
+      source_text: `key_${requestId.slice(0, 8)}_${index + 1}`, // Auto-generated key for developers
+      context: body.context?.trim() || null,
+      version: body.version?.trim() || null,
+      version_updated_at: versionUpdatedAt,
+      product_code: body.product_code || null,
+      scope: body.scope || null,
+      priority: body.priority || '중',
+      user_id: user.id,
+      status: 'pending' as const,
+      request_id: requestId,
+      completion_date: body.completion_date || null,
+    }));
 
     console.log('Attempting to insert translations:', {
       count: translations.length,
@@ -124,12 +132,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create translation_results for selected languages
-    if (body.languages && body.languages.length > 0 && data && data.length > 0) {
-      const translationResults = data.flatMap(translation =>
-        body.languages!.map(lang => ({
+    // Always include KO with the original text
+    if (data && data.length > 0) {
+      const languages = body.languages || [];
+      // Ensure KO is always included
+      const allLanguages = languages.includes('ko') ? languages : ['ko', ...languages];
+
+      const translationResults = data.flatMap((translation, index) =>
+        allLanguages.map(lang => ({
           translation_id: translation.id,
           language_code: lang,
-          translated_text: '',  // Empty initially
+          // Put original text in KO column, empty for other languages
+          translated_text: lang === 'ko' ? originalTexts[index] : '',
         }))
       );
 
@@ -142,6 +156,224 @@ export async function POST(request: NextRequest) {
         // Don't fail the whole operation, just log
       } else {
         console.log('Created translation_results records:', translationResults.length);
+      }
+
+      // Auto-translate using glossary
+      try {
+        console.log('🔍 Starting glossary auto-translation...');
+        console.log('Product code:', body.product_code);
+
+        // Fetch glossary terms for the product (or all if no product)
+        let glossaryQuery = db
+          .from('glossary')
+          .select('term, translation, language_code, product_code')
+          .order('term', { ascending: false }); // Longer terms first for better matching
+
+        if (body.product_code) {
+          glossaryQuery = glossaryQuery.or(`product_code.eq.${body.product_code},product_code.is.null`);
+        }
+
+        const { data: glossaryTerms, error: glossaryError } = await glossaryQuery;
+
+        console.log('📚 Glossary terms fetched:', glossaryTerms?.length || 0);
+        if (glossaryError) {
+          console.error('Glossary fetch error:', glossaryError);
+        }
+
+        // Declare updates outside the if block so it's accessible later
+        const updates: Array<{ translation_id: string; language_code: string; translated_text: string }> = [];
+
+        if (glossaryTerms && glossaryTerms.length > 0) {
+          console.log('Sample glossary terms:', glossaryTerms.slice(0, 3));
+          // For each translation, check for glossary matches and update
+
+          for (let i = 0; i < data.length; i++) {
+            const translationId = data[i].id;
+            const koText = originalTexts[i];
+
+            // Group glossary terms by language
+            const glossaryByLang = new Map<string, Map<string, string>>();
+            glossaryTerms.forEach(g => {
+              if (!glossaryByLang.has(g.language_code)) {
+                glossaryByLang.set(g.language_code, new Map());
+              }
+              glossaryByLang.get(g.language_code)!.set(g.term, g.translation);
+            });
+
+            // For each language, check if the KO text matches any glossary term
+            for (const lang of allLanguages) {
+              if (lang === 'ko') continue; // Skip KO, it already has the original text
+
+              const glossaryForLang = glossaryByLang.get(lang);
+              if (!glossaryForLang) continue;
+
+              // Priority 1: Exact match
+              let matchedTranslation = glossaryForLang.get(koText);
+
+              // Priority 2: If KO text is a single word/term found in glossary
+              if (!matchedTranslation && koText.trim().length > 0) {
+                matchedTranslation = glossaryForLang.get(koText.trim());
+              }
+
+              // Priority 3: Replace all glossary terms found in the text
+              if (!matchedTranslation) {
+                let translatedText = koText;
+                let foundMatch = false;
+
+                // Sort terms by length (longest first) to avoid partial replacements
+                const sortedTerms = Array.from(glossaryForLang.entries())
+                  .sort((a, b) => b[0].length - a[0].length);
+
+                for (const [term, translation] of sortedTerms) {
+                  if (koText.includes(term)) {
+                    translatedText = translatedText.replace(new RegExp(term, 'g'), translation);
+                    foundMatch = true;
+                  }
+                }
+
+                if (foundMatch) {
+                  matchedTranslation = translatedText;
+                }
+              }
+
+              if (matchedTranslation) {
+                updates.push({
+                  translation_id: translationId,
+                  language_code: lang,
+                  translated_text: matchedTranslation,
+                });
+              }
+            }
+          }
+
+          // Batch update translation_results with glossary matches
+          if (updates.length > 0) {
+            console.log('🎯 Applying', updates.length, 'glossary matches...');
+            for (const update of updates) {
+              await db
+                .from('translation_results')
+                .update({ translated_text: update.translated_text })
+                .eq('translation_id', update.translation_id)
+                .eq('language_code', update.language_code);
+            }
+            console.log('✅ Auto-translated using glossary:', updates.length, 'matches');
+          } else {
+            console.log('⚠️ No glossary matches found');
+            console.log('Sample original texts:', originalTexts.slice(0, 3));
+          }
+        } else {
+          console.log('⚠️ No glossary terms available for auto-translation');
+        }
+
+        // AI Translation fallback for empty translations
+        try {
+          console.log('🤖 Starting AI auto-translation for remaining empty fields...');
+
+          // Get OpenAI API key with priority: organization > user > environment
+          let apiKey: string | null = null;
+
+          // Priority 1: Organization API key
+          const { data: userProfile } = await db
+            .from('users')
+            .select('email')
+            .eq('id', user.id)
+            .single();
+
+          if (userProfile?.email?.endsWith('@rsupport.com')) {
+            const { data: orgSettings } = await db
+              .from('organization_settings')
+              .select('openai_api_key')
+              .eq('domain', 'rsupport.com')
+              .single();
+
+            apiKey = orgSettings?.openai_api_key || null;
+          }
+
+          // Priority 2: Individual user API key
+          if (!apiKey) {
+            const { data: userSettings } = await db
+              .from('user_settings')
+              .select('openai_api_key')
+              .eq('user_id', user.id)
+              .single();
+
+            apiKey = userSettings?.openai_api_key || null;
+          }
+
+          // Priority 3: Environment variable
+          if (!apiKey) {
+            apiKey = process.env.OPENAI_API_KEY || null;
+          }
+
+          if (apiKey) {
+            // Group updates by translation_id to track which were filled
+            const filledTranslations = new Set(updates.map(u => `${u.translation_id}_${u.language_code}`));
+
+            // Collect texts that need AI translation
+            const aiTranslationNeeded: Array<{
+              translationId: string;
+              koText: string;
+              languages: LanguageCode[];
+            }> = [];
+
+            for (let i = 0; i < data.length; i++) {
+              const translationId = data[i].id;
+              const koText = originalTexts[i];
+              const emptyLanguages = allLanguages.filter(lang =>
+                lang !== 'ko' && !filledTranslations.has(`${translationId}_${lang}`)
+              ) as LanguageCode[];
+
+              if (emptyLanguages.length > 0) {
+                aiTranslationNeeded.push({
+                  translationId,
+                  koText,
+                  languages: emptyLanguages,
+                });
+              }
+            }
+
+            if (aiTranslationNeeded.length > 0) {
+              console.log(`🤖 AI translating ${aiTranslationNeeded.length} texts...`);
+
+              // Process in batches to avoid rate limits
+              for (const item of aiTranslationNeeded) {
+                try {
+                  const aiResults = await autoTranslate({
+                    sourceText: item.koText,
+                    context: body.context || null,
+                    targetLanguages: item.languages,
+                    glossaryTerms: (glossaryTerms || []) as any,
+                    apiKey,
+                  });
+
+                  // Update translation_results with AI translations
+                  for (const result of aiResults) {
+                    await db
+                      .from('translation_results')
+                      .update({ translated_text: result.translatedText })
+                      .eq('translation_id', item.translationId)
+                      .eq('language_code', result.languageCode);
+                  }
+                } catch (aiError) {
+                  console.error('AI translation error for text:', item.koText.substring(0, 50), aiError);
+                  // Continue with other texts even if one fails
+                }
+              }
+
+              console.log('✅ AI auto-translation completed');
+            } else {
+              console.log('✓ All translations filled by glossary, no AI translation needed');
+            }
+          } else {
+            console.log('⚠️ No OpenAI API key available, skipping AI translation');
+          }
+        } catch (aiError) {
+          console.error('❌ Error in AI auto-translation:', aiError);
+          // Don't fail the whole operation
+        }
+      } catch (glossaryError) {
+        console.error('❌ Error applying glossary auto-translation:', glossaryError);
+        // Don't fail the whole operation
       }
     }
 
@@ -163,6 +395,7 @@ export async function POST(request: NextRequest) {
       success: true,
       created: data.length,
       translations: data,
+      request_id: requestId,
     }, { status: 201 });
   } catch (error) {
     console.error('❌ Error bulk creating translations:', error);

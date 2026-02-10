@@ -48,7 +48,24 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ users });
+    // Fetch translator languages for all users
+    const { data: allTranslatorLanguages } = await adminClient
+      .from('translator_languages')
+      .select('user_id, language_code');
+
+    // Map translator languages to users
+    const usersWithLanguages = users?.map(user => {
+      const userLanguages = allTranslatorLanguages
+        ?.filter(tl => tl.user_id === user.id)
+        ?.map(tl => tl.language_code) || [];
+
+      return {
+        ...user,
+        translatorLanguages: userLanguages,
+      };
+    });
+
+    return NextResponse.json({ users: usersWithLanguages });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(

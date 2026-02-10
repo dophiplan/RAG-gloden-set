@@ -68,6 +68,7 @@ export async function PATCH(
     if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
     if (body.version !== undefined) updateData.version = body.version?.trim() || null;
     if (body.version_updated_at !== undefined) updateData.version_updated_at = body.version_updated_at;
+    if ((body as any).dev_code !== undefined) updateData.dev_code = (body as any).dev_code?.trim() || null;
 
     const { data, error } = await supabase
       .from('translations')

@@ -83,6 +83,13 @@ export function useTranslationMutations({
 
     updateLocalTranslation(translationId, { translation_results: updatedResults });
 
+    // Check if status needs to be reverted for completed translations
+    const needsStatusRevert = translation.status === 'reviewed' || translation.status === 'deployed';
+    if (needsStatusRevert) {
+      // Automatically revert to in_progress
+      updateLocalTranslation(translationId, { status: 'in_progress' });
+    }
+
     try {
       const response = await fetch(`/api/translations/${translationId}/results`, {
         method: 'POST',
@@ -94,7 +101,17 @@ export function useTranslationMutations({
       });
 
       if (response.ok) {
-        showSuccess('번역이 저장되었습니다.');
+        // If status was reverted, also update it on the server and show appropriate message
+        if (needsStatusRevert) {
+          await fetch(`/api/translations/${translationId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'in_progress' }),
+          });
+          showSuccess('번역이 저장되었습니다. 상태가 "진행 중"으로 변경되었습니다.');
+        } else {
+          showSuccess('번역이 저장되었습니다.');
+        }
         // Record correction in background (fire-and-forget)
         if (existingResult && existingResult.translated_text !== text) {
           fetch('/api/ai/corrections', {
@@ -121,8 +138,28 @@ export function useTranslationMutations({
   }, [translations, updateLocalTranslation]);
 
   const handleSourceTextUpdate = useCallback(async (translationId: string, sourceText: string) => {
-    await optimisticPatch(translationId, { source_text: sourceText }, { source_text: sourceText }, '원문이 수정되었습니다.');
-  }, [optimisticPatch]);
+    const translation = translations.find((t) => t.id === translationId);
+    const needsStatusRevert = translation?.status === 'reviewed' || translation?.status === 'deployed';
+
+    if (needsStatusRevert) {
+      // Update both source_text and status
+      updateLocalTranslation(translationId, { source_text: sourceText, status: 'in_progress' });
+      try {
+        await fetch(`/api/translations/${translationId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_text: sourceText, status: 'in_progress' }),
+        });
+        showSuccess('원문이 수정되었습니다. 상태가 "진행 중"으로 변경되었습니다.');
+      } catch (error) {
+        console.error('Error updating translation:', error);
+        if (translation) updateLocalTranslation(translationId, translation);
+        showError('수정 중 오류가 발생했습니다.');
+      }
+    } else {
+      await optimisticPatch(translationId, { source_text: sourceText }, { source_text: sourceText }, '원문이 수정되었습니다.');
+    }
+  }, [translations, optimisticPatch, updateLocalTranslation]);
 
   const handleContextUpdate = useCallback(async (translationId: string, context: string) => {
     await optimisticPatch(translationId, { context: context || null }, { context: context || null }, '설명이 수정되었습니다.');
@@ -147,6 +184,15 @@ export function useTranslationMutations({
       { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null },
       { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null },
       '버전이 수정되었습니다.'
+    );
+  }, [optimisticPatch]);
+
+  const handleDevCodeUpdate = useCallback(async (translationId: string, devCode: string) => {
+    await optimisticPatch(
+      translationId,
+      { dev_code: devCode || null },
+      { dev_code: devCode || null },
+      '개발자 코드가 업데이트되었습니다.'
     );
   }, [optimisticPatch]);
 
@@ -260,6 +306,7 @@ export function useTranslationMutations({
     handlePriorityUpdate,
     handleNotesUpdate,
     handleVersionUpdate,
+    handleDevCodeUpdate,
     handleProductsUpdate,
     handleDelete,
     handleBulkCreate,

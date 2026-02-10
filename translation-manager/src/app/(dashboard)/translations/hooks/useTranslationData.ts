@@ -18,6 +18,9 @@ interface UseTranslationDataParams {
   languageFilter: string;
   searchTerm: string;
   selectedProduct: ProductCode | null;
+  requestIdFilter: string | null;
+  scopeFilter: 'SaaS' | 'Solution' | '';
+  versionFilter: string;
   page: number;
   setTotalPages: (pages: number) => void;
 }
@@ -27,6 +30,9 @@ export function useTranslationData({
   languageFilter,
   searchTerm,
   selectedProduct,
+  requestIdFilter,
+  scopeFilter,
+  versionFilter,
   page,
   setTotalPages,
 }: UseTranslationDataParams) {
@@ -47,6 +53,9 @@ export function useTranslationData({
       if (languageFilter) params.set('language', languageFilter);
       if (searchTerm) params.set('search', searchTerm);
       if (selectedProduct) params.set('product_code', selectedProduct);
+      if (requestIdFilter) params.set('request_id', requestIdFilter);
+      if (scopeFilter) params.set('scope', scopeFilter);
+      if (versionFilter) params.set('version', versionFilter);
       params.set('page', page.toString());
 
       const response = await fetch(`/api/translations?${params}`);
@@ -67,7 +76,7 @@ export function useTranslationData({
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, languageFilter, searchTerm, selectedProduct, page, setTotalPages]);
+  }, [statusFilter, languageFilter, searchTerm, selectedProduct, requestIdFilter, scopeFilter, versionFilter, page, setTotalPages]);
 
   useEffect(() => {
     fetchTranslations();

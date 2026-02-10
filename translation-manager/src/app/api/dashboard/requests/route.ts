@@ -1,13 +1,119 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { PRODUCTS } from '@/lib/constants';
+import type { TranslationStatus, PriorityLevel } from '@/types';
 
 export async function GET() {
   try {
     const supabase = await createClient();
 
-    // Fetch recent translations with user and product information (fetch 100 for client-side sorting)
-    const { data: translations, error: translationsError } = await supabase
+    // Step 1: Fetch translations with request_id (grouped requests)
+    const { data: groupedTranslations, error: groupedError } = await supabase
+      .from('translations')
+      .select(`
+        id,
+        request_id,
+        status,
+        priority,
+        scope,
+        created_at,
+        user_id,
+        users!inner(id, name, email),
+        translation_products(product_code, version)
+      `)
+      .not('request_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (groupedError) throw groupedError;
+
+    // Step 2: Group translations by request_id
+    const requestMap = new Map<string, any[]>();
+    (groupedTranslations || []).forEach(trans => {
+      if (!requestMap.has(trans.request_id)) {
+        requestMap.set(trans.request_id, []);
+      }
+      requestMap.get(trans.request_id)!.push(trans);
+    });
+
+    // Step 3: Get all translation IDs for audit log query
+    const allTranslationIds = (groupedTranslations || []).map(t => t.id);
+
+    // Step 4: Fetch deployed timestamps
+    const { data: deployedLogs } = await supabase
+      .from('translation_audit_logs')
+      .select('translation_id, created_at')
+      .in('translation_id', allTranslationIds)
+      .eq('action', 'update')
+      .eq('field_name', 'status')
+      .eq('new_value', 'deployed')
+      .order('created_at', { ascending: true });
+
+    const deployedMap = new Map<string, string>();
+    (deployedLogs || []).forEach(log => {
+      if (!deployedMap.has(log.translation_id)) {
+        deployedMap.set(log.translation_id, log.created_at);
+      }
+    });
+
+    // Step 5: Format grouped requests
+    const groupedRequests = Array.from(requestMap.entries()).map(([requestId, translations]) => {
+      const user = Array.isArray(translations[0].users)
+        ? translations[0].users[0]
+        : translations[0].users;
+
+      // Determine request-level status
+      const statuses = translations.map(t => t.status);
+      let requestStatus: TranslationStatus;
+      if (statuses.includes('pending')) requestStatus = 'pending';
+      else if (statuses.every(s => s === 'deployed')) requestStatus = 'deployed';
+      else if (statuses.every(s => s === 'reviewed' || s === 'deployed')) requestStatus = 'reviewed';
+      else requestStatus = 'in_progress';
+
+      // Get highest priority
+      const priorityOrder: Record<string, number> = { '긴급': 4, '상': 3, '중': 2, '하': 1 };
+      const priority = translations.reduce((highest, t) =>
+        (priorityOrder[t.priority] || 0) > (priorityOrder[highest] || 0) ? t.priority : highest
+      , translations[0].priority) as PriorityLevel;
+
+      // Get earliest deployed_at if all deployed
+      const deployedAt = requestStatus === 'deployed'
+        ? translations
+            .map(t => deployedMap.get(t.id))
+            .filter(Boolean)
+            .sort()[0] || null
+        : null;
+
+      // Get unique products
+      const allProducts = translations.flatMap(t => t.translation_products || []);
+      const uniqueProducts = Array.from(
+        new Map(allProducts.map(p => [p.product_code, p])).values()
+      );
+
+      return {
+        id: requestId,
+        translation_ids: translations.map(t => t.id),
+        translation_count: translations.length,
+        status: requestStatus,
+        priority,
+        request_date: translations[0].created_at,
+        deployed_at: deployedAt,
+        requester: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        products: uniqueProducts.map(tp => ({
+          code: tp.product_code,
+          name: PRODUCTS[tp.product_code as keyof typeof PRODUCTS] || tp.product_code,
+          version: tp.version || null,
+          category: translations[0].scope || null,
+        })),
+      };
+    });
+
+    // Step 6: Also fetch individual translations (backwards compatibility)
+    const { data: individualTranslations } = await supabase
       .from('translations')
       .select(`
         id,
@@ -16,66 +122,22 @@ export async function GET() {
         scope,
         created_at,
         user_id,
-        users!inner(
-          id,
-          name,
-          email
-        ),
-        translation_products(
-          product_code,
-          version
-        )
+        users!inner(id, name, email),
+        translation_products(product_code, version)
       `)
+      .is('request_id', null)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(50);
 
-    if (translationsError) {
-      console.error('Error fetching translations:', translationsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch translations' },
-        { status: 500 }
-      );
-    }
-
-    if (!translations || translations.length === 0) {
-      return NextResponse.json({ requests: [] });
-    }
-
-    // Get translation IDs for audit log query
-    const translationIds = translations.map(t => t.id);
-
-    // Fetch deployed timestamps from audit logs
-    const { data: deployedLogs, error: logsError } = await supabase
-      .from('translation_audit_logs')
-      .select('translation_id, created_at')
-      .in('translation_id', translationIds)
-      .eq('action', 'update')
-      .eq('field_name', 'status')
-      .eq('new_value', 'deployed')
-      .order('created_at', { ascending: true });
-
-    if (logsError) {
-      console.error('Error fetching audit logs:', logsError);
-      // Continue without deployed dates rather than failing
-    }
-
-    // Create a map of translation_id to deployed_at timestamp (first occurrence)
-    const deployedMap = new Map<string, string>();
-    if (deployedLogs) {
-      for (const log of deployedLogs) {
-        if (!deployedMap.has(log.translation_id)) {
-          deployedMap.set(log.translation_id, log.created_at);
-        }
-      }
-    }
-
-    // Format the response
-    const requests = translations.map(translation => {
-      // Supabase returns users as array when using !inner, take first element
-      const user = Array.isArray(translation.users) ? translation.users[0] : translation.users;
+    const individualRequests = (individualTranslations || []).map(translation => {
+      const user = Array.isArray(translation.users)
+        ? translation.users[0]
+        : translation.users;
 
       return {
         id: translation.id,
+        translation_ids: [translation.id],
+        translation_count: 1,
         status: translation.status,
         priority: translation.priority,
         request_date: translation.created_at,
@@ -85,53 +147,42 @@ export async function GET() {
           name: user.name,
           email: user.email,
         },
-        products: (translation.translation_products || []).map(tp => {
-          const productCode = tp.product_code;
-          const productName = PRODUCTS[productCode as keyof typeof PRODUCTS] || productCode;
-          return {
-            code: productCode,
-            name: productName,
-            version: tp.version || null,
-            category: translation.scope || null,
-          };
-        }),
+        products: (translation.translation_products || []).map(tp => ({
+          code: tp.product_code,
+          name: PRODUCTS[tp.product_code as keyof typeof PRODUCTS] || tp.product_code,
+          version: tp.version || null,
+          category: translation.scope || null,
+        })),
       };
     });
 
-    // Sort by priority and completion status
+    // Step 7: Combine and sort all requests
+    const allRequests = [...groupedRequests, ...individualRequests];
+
     const priorityOrder: Record<string, number> = { '긴급': 4, '상': 3, '중': 2, '하': 1 };
 
-    requests.sort((a, b) => {
-      // Incomplete items (no deployed_at) come first
+    allRequests.sort((a, b) => {
+      // Incomplete first
       const aCompleted = !!a.deployed_at;
       const bCompleted = !!b.deployed_at;
+      if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
 
-      if (aCompleted !== bCompleted) {
-        return aCompleted ? 1 : -1;  // Incomplete first
-      }
-
-      // Within same completion status, sort by priority (higher first)
+      // By priority
       const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
       if (priorityDiff !== 0) return priorityDiff;
 
-      // For incomplete items, sort by created_at (most recent first)
+      // By date
       if (!aCompleted) {
         return new Date(b.request_date).getTime() - new Date(a.request_date).getTime();
       }
-
-      // For completed items, sort by deployed_at (most recent first)
       const aDate = a.deployed_at ? new Date(a.deployed_at).getTime() : 0;
       const bDate = b.deployed_at ? new Date(b.deployed_at).getTime() : 0;
       return bDate - aDate;
     });
 
-    // Return top 10 after sorting
-    return NextResponse.json({ requests: requests.slice(0, 10) });
+    return NextResponse.json({ requests: allRequests.slice(0, 10) });
   } catch (error) {
-    console.error('Unexpected error in dashboard requests API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Dashboard requests API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

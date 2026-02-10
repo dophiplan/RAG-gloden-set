@@ -19,7 +19,7 @@ interface CreateTranslationModalProps {
     context: string,
     version: string,
     productCode: ProductCode | '',
-    scope: 'SaaS' | 'Solution' | '',
+    scope: string,
     priority: PriorityLevel,
     languages: LanguageCode[]
   ) => Promise<boolean | undefined>;
@@ -27,7 +27,7 @@ interface CreateTranslationModalProps {
     files: UploadedFile[],
     version: string,
     productCode: ProductCode | '',
-    scope: 'SaaS' | 'Solution' | '',
+    scope: string,
     priority: PriorityLevel,
     languages: LanguageCode[]
   ) => Promise<void>;
@@ -46,7 +46,7 @@ export default function CreateTranslationModal({
   const [newContext, setNewContext] = useState('');
   const [newVersion, setNewVersion] = useState('');
   const [newProductCode, setNewProductCode] = useState<ProductCode | ''>('');
-  const [newScope, setNewScope] = useState<'SaaS' | 'Solution' | ''>('');
+  const [newScope, setNewScope] = useState<string>('');
   const [newPriority, setNewPriority] = useState<PriorityLevel>('중');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
 
@@ -54,7 +54,7 @@ export default function CreateTranslationModal({
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
   const [pdfVersion, setPdfVersion] = useState('');
   const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>('');
-  const [pdfScope, setPdfScope] = useState<'SaaS' | 'Solution' | ''>('');
+  const [pdfScope, setPdfScope] = useState<string>('');
   const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('중');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [uploading, setUploading] = useState(false);
@@ -194,7 +194,7 @@ export default function CreateTranslationModal({
             <Select
               label="제품 분류 *"
               value={newScope}
-              onChange={(e) => setNewScope(e.target.value as 'SaaS' | 'Solution' | '')}
+              onChange={(e) => setNewScope(e.target.value)}
               options={SCOPE_OPTIONS}
             />
             <Input
@@ -253,7 +253,7 @@ export default function CreateTranslationModal({
             <Select
               label="제품 분류 *"
               value={pdfScope}
-              onChange={(e) => setPdfScope(e.target.value as 'SaaS' | 'Solution' | '')}
+              onChange={(e) => setPdfScope(e.target.value)}
               options={SCOPE_OPTIONS}
             />
             <Input

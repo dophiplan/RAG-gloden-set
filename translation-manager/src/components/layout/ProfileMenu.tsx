@@ -10,7 +10,9 @@ interface UserProfile {
   id: string;
   name: string | null;
   email: string;
+  roles?: string[];
   permissions?: string[];
+  work_products?: string[];
 }
 
 export default function ProfileMenu() {
@@ -139,25 +141,66 @@ export default function ProfileMenu() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">
-              {user.name || '이름 미설정'}
-            </p>
-            <p className="text-xs text-gray-500 truncate mb-2">{user.email}</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-gray-900">
+                {user.name || '이름 미설정'}
+              </p>
+              {/* Account Level Badge */}
+              {user.roles && user.roles.length > 0 && (
+                <span
+                  className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
+                    user.roles.includes('master')
+                      ? 'bg-purple-100 text-purple-800'
+                      : user.roles.includes('manager')
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {user.roles.includes('master') ? 'Master' : user.roles.includes('manager') ? 'Manager' : 'User'}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 truncate">{user.email}</p>
 
-            {/* Permissions */}
-            {user.permissions && user.permissions.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {user.permissions.map((permission) => (
-                  <span
-                    key={permission}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {getPermissionLabel(permission)}
-                  </span>
-                ))}
+            {/* Products and Permissions for non-master users */}
+            {user.roles && !user.roles.includes('master') && (
+              <div className="mt-3 space-y-2">
+                {/* Products */}
+                {user.work_products && user.work_products.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1">관리 제품</p>
+                    <div className="flex flex-wrap gap-1">
+                      {user.work_products.map((product) => (
+                        <span
+                          key={product}
+                          className="inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded"
+                        >
+                          {product}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Permissions */}
+                {user.permissions && user.permissions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-1">작업 권한</p>
+                    <div className="flex flex-wrap gap-1">
+                      {user.permissions.map((permission) => (
+                        <span
+                          key={permission}
+                          className="inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded"
+                        >
+                          {getPermissionLabel(permission)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -216,10 +259,11 @@ export default function ProfileMenu() {
                 />
               </div>
               <Input
-                label="이름 *"
+                label="이름 * (최대 5글자)"
                 value={editingName}
-                onChange={(e) => setEditingName(e.target.value)}
+                onChange={(e) => setEditingName(e.target.value.slice(0, 5))}
                 placeholder="이름을 입력하세요"
+                maxLength={5}
               />
             </div>
 

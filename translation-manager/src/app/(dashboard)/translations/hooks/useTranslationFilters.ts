@@ -6,9 +6,13 @@ export function useTranslationFilters() {
   const [languageFilter, setLanguageFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
+  const [requestIdFilter, setRequestIdFilter] = useState<string | null>(null);
+  const [scopeFilter, setScopeFilter] = useState<'SaaS' | 'Solution' | ''>('');
+  const [versionFilter, setVersionFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   // Languages to display in table columns (null = show all available for product)
+  // Default to show all languages
   const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[] | null>(null);
 
   return {
@@ -20,6 +24,12 @@ export function useTranslationFilters() {
     setSearchTerm,
     selectedProduct,
     setSelectedProduct,
+    requestIdFilter,
+    setRequestIdFilter,
+    scopeFilter,
+    setScopeFilter,
+    versionFilter,
+    setVersionFilter,
     page,
     setPage,
     totalPages,

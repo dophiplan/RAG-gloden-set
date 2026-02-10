@@ -1,0 +1,420 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ProductCode, PRODUCTS } from '@/types';
+import MigrationPreviewTable from './components/MigrationPreviewTable';
+
+interface PreviewEntry {
+  id: string;
+  source_text: string;
+  context?: string;
+  translations: Record<string, string>;
+  suggested_category: 'glossary' | 'translation';
+  word_count: number;
+  duplicate_status: {
+    status: 'exact' | 'similar' | 'new';
+    similarity?: number;
+    existing_id?: string;
+    existing_translations?: Record<string, string>;
+  };
+  category?: 'glossary' | 'translation'; // User-modified category
+  action?: 'import' | 'skip' | 'merge' | 'overwrite';
+}
+
+interface Summary {
+  total: number;
+  glossary_suggested: number;
+  translation_suggested: number;
+  exact_matches: number;
+  similar_matches: number;
+  new_entries: number;
+}
+
+type Step = 'upload' | 'preview' | 'confirm';
+
+export default function MigrationPage() {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>('upload');
+  const [file, setFile] = useState<File | null>(null);
+  const [productCode, setProductCode] = useState<ProductCode>('RC');
+  const [version, setVersion] = useState('');
+  const [entries, setEntries] = useState<PreviewEntry[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setError('');
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      setError('파일을 선택해주세요.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('product_code', productCode);
+
+      const response = await fetch('/api/migration/preview', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '미리보기 중 오류가 발생했습니다.');
+      }
+
+      // Initialize category and action for each entry
+      const initializedEntries = data.entries.map((entry: PreviewEntry) => ({
+        ...entry,
+        category: entry.suggested_category,
+        action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+      }));
+
+      setEntries(initializedEntries);
+      setSummary(data.summary);
+      setStep('preview');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCommit = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/migration/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entries: entries.map((e) => ({
+            id: e.id,
+            source_text: e.source_text,
+            context: e.context,
+            translations: e.translations,
+            category: e.category || e.suggested_category,
+            action: e.action || 'import',
+          })),
+          product_code: productCode,
+          version: version || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '마이그레이션 중 오류가 발생했습니다.');
+      }
+
+      // Show success message and redirect
+      alert(
+        `마이그레이션 완료!\n\n` +
+        `용어집: ${data.glossary.created}개 생성, ${data.glossary.skipped}개 건너뜀\n` +
+        `번역: ${data.translations.created}개 생성, ${data.translations.updated}개 업데이트, ${data.translations.skipped}개 건너뜀`
+      );
+
+      router.push('/translations');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateEntry = (id: string, updates: Partial<PreviewEntry>) => {
+    setEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
+    );
+  };
+
+  const glossaryEntries = entries.filter((e) => (e.category || e.suggested_category) === 'glossary');
+  const translationEntries = entries.filter((e) => (e.category || e.suggested_category) === 'translation');
+
+  return (
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">데이터 마이그레이션</h1>
+        <p className="text-gray-600">
+          기존 번역 데이터를 Excel/CSV 파일에서 가져와 용어집 및 번역 관리에 추가합니다.
+        </p>
+      </div>
+
+      {/* Progress Steps */}
+      <div className="mb-8">
+        <div className="flex items-center">
+          {/* Step 1 */}
+          <div className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                step === 'upload'
+                  ? 'bg-[#7BC96F] text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              1
+            </div>
+            <span
+              className={`ml-2 font-medium ${
+                step === 'upload' ? 'text-[#7BC96F]' : 'text-gray-600'
+              }`}
+            >
+              업로드
+            </span>
+          </div>
+
+          {/* Connector */}
+          <div className="w-24 h-1 mx-4 bg-gray-200" />
+
+          {/* Step 2 */}
+          <div className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                step === 'preview'
+                  ? 'bg-[#7BC96F] text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              2
+            </div>
+            <span
+              className={`ml-2 font-medium ${
+                step === 'preview' ? 'text-[#7BC96F]' : 'text-gray-600'
+              }`}
+            >
+              미리보기 및 분류
+            </span>
+          </div>
+
+          {/* Connector */}
+          <div className="w-24 h-1 mx-4 bg-gray-200" />
+
+          {/* Step 3 */}
+          <div className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                step === 'confirm'
+                  ? 'bg-[#7BC96F] text-white'
+                  : 'bg-gray-200 text-gray-600'
+              }`}
+            >
+              3
+            </div>
+            <span
+              className={`ml-2 font-medium ${
+                step === 'confirm' ? 'text-[#7BC96F]' : 'text-gray-600'
+              }`}
+            >
+              확인 및 실행
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+
+      {/* Step 1: Upload */}
+      {step === 'upload' && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">파일 업로드</h2>
+
+          <div className="space-y-6">
+            {/* File Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                CSV 파일 선택
+              </label>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#E8F5E9] file:text-[#5FA654] hover:file:bg-[#C8E6C9]"
+              />
+              {file && (
+                <p className="mt-2 text-sm text-gray-600">선택된 파일: {file.name}</p>
+              )}
+            </div>
+
+            {/* Product Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                제품 선택
+              </label>
+              <select
+                value={productCode}
+                onChange={(e) => setProductCode(e.target.value as ProductCode)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+              >
+                {Object.entries(PRODUCTS).map(([code, name]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Version (Optional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                버전 (선택사항)
+              </label>
+              <input
+                type="text"
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                placeholder="예: v1.0.0"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+              />
+            </div>
+
+            {/* Upload Button */}
+            <button
+              onClick={handleUpload}
+              disabled={!file || loading}
+              className="w-full px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? '처리 중...' : '다음 단계'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Preview */}
+      {step === 'preview' && summary && (
+        <div>
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">미리보기 및 분류</h2>
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-900">{summary.total}</p>
+                <p className="text-sm text-gray-600">전체</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-[#7BC96F]">{glossaryEntries.length}</p>
+                <p className="text-sm text-gray-600">용어집</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-[#66BB6A]">{translationEntries.length}</p>
+                <p className="text-sm text-gray-600">번역</p>
+              </div>
+            </div>
+          </div>
+
+          <MigrationPreviewTable
+            glossaryEntries={glossaryEntries}
+            translationEntries={translationEntries}
+            onUpdateEntry={updateEntry}
+          />
+
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={() => setStep('upload')}
+              className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+            >
+              이전
+            </button>
+            <button
+              onClick={() => setStep('confirm')}
+              className="flex-1 px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A]"
+            >
+              다음 단계
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Confirm */}
+      {step === 'confirm' && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">확인 및 실행</h2>
+
+          <div className="space-y-4 mb-6">
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-gray-900 mb-2">용어집</h3>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">추가</p>
+                  <p className="text-lg font-semibold text-[#7BC96F]">
+                    {glossaryEntries.filter((e) => e.action === 'import' || e.action === 'merge' || e.action === 'overwrite').length}건
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">건너뛰기</p>
+                  <p className="text-lg font-semibold text-gray-600">
+                    {glossaryEntries.filter((e) => e.action === 'skip').length}건
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-b pb-4">
+              <h3 className="font-semibold text-gray-900 mb-2">번역</h3>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">추가</p>
+                  <p className="text-lg font-semibold text-[#66BB6A]">
+                    {translationEntries.filter((e) => e.action === 'import').length}건
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">병합</p>
+                  <p className="text-lg font-semibold text-blue-600">
+                    {translationEntries.filter((e) => e.action === 'merge').length}건
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">건너뛰기</p>
+                  <p className="text-lg font-semibold text-gray-600">
+                    {translationEntries.filter((e) => e.action === 'skip').length}건
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-yellow-800">
+              ⚠️ 마이그레이션을 실행하면 선택한 항목이 데이터베이스에 추가됩니다. 이 작업은 되돌릴 수 없습니다.
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={() => setStep('preview')}
+              disabled={loading}
+              className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              이전
+            </button>
+            <button
+              onClick={handleCommit}
+              disabled={loading}
+              className="flex-1 px-6 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A] disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {loading ? '마이그레이션 중...' : '마이그레이션 실행'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

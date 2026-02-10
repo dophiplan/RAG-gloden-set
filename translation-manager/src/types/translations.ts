@@ -4,6 +4,9 @@ import type { ProductCode } from './products';
 // Translation status
 export type TranslationStatus = 'pending' | 'in_progress' | 'reviewed' | 'deployed';
 
+// Scope types (제품 분류)
+export type Scope = 'SaaS' | 'Solution' | '정부과제' | '기타';
+
 export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '번역 요청' },
   in_progress: { bg: 'bg-[#E8F5E9]', text: 'text-[#5FA654]', label: '진행 중' },
@@ -41,7 +44,7 @@ export interface Translation {
   team_id: string | null;
   translation_products?: TranslationProduct[];
   // New fields from Phase 1
-  scope: 'SaaS' | 'Solution' | null;
+  scope: Scope | null;
   work_scope: string[];
   dev_code: string | null;
   notes: string | null;
@@ -51,6 +54,8 @@ export interface Translation {
     completed_at?: string;
     completed_by?: string;
   }>;
+  completion_date?: string | null; // ISO date format (YYYY-MM-DD)
+  is_migrated?: boolean;
 }
 
 export interface TranslationProduct {
@@ -97,12 +102,13 @@ export interface TranslationCreateInput {
   version?: string;
   product_code?: ProductCode; // Deprecated
   product_codes?: ProductCode[]; // Use this for multiple products
-  scope?: 'SaaS' | 'Solution';
+  scope?: Scope;
   priority?: PriorityLevel;
   translations?: {
     language_code: LanguageCode;
     translated_text: string;
   }[];
+  completion_date?: string;
 }
 
 export interface TranslationUpdateInput {
@@ -140,7 +146,9 @@ export interface VersionGroup {
 
 // Dashboard request types
 export interface DashboardRequest {
-  id: string;
+  id: string; // request_id (for grouped) or translation_id (for individual)
+  translation_ids: string[]; // Array of translation IDs in this request
+  translation_count: number; // Number of translations in this request
   status: TranslationStatus;
   priority: PriorityLevel;
   request_date: string; // ISO timestamp
@@ -154,7 +162,7 @@ export interface DashboardRequest {
     code: ProductCode;
     name: string;
     version: string | null;
-    category: 'SaaS' | 'Solution' | null;
+    category: Scope | null;
   }[];
 }
 

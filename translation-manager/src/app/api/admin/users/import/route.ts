@@ -17,7 +17,10 @@ function verifyAdminSecret(request: NextRequest): boolean {
 }
 
 interface UserImportRow {
+  계정권한?: string;
   담당제품: string;
+  권한선택?: string;
+  번역언어?: string;
   이름: string;
   이메일주소: string;
   초기비밀번호: string;
@@ -66,7 +69,14 @@ export async function POST(request: NextRequest) {
     };
 
     // Group by email to handle multiple products per user
-    const usersByEmail: Map<string, { name: string; password: string; products: string[] }> = new Map();
+    const usersByEmail: Map<string, {
+      name: string;
+      password: string;
+      products: string[];
+      accountLevel: 'master' | 'manager' | 'user';
+      permissions: string[];
+      translatorLanguages: string[];
+    }> = new Map();
 
     for (const row of data) {
       if (!row.이메일주소 || !row.이름 || !row.초기비밀번호) {
@@ -80,6 +90,27 @@ export async function POST(request: NextRequest) {
       const email = row.이메일주소.trim().toLowerCase();
       const existing = usersByEmail.get(email);
 
+      // Parse account level (default to 'user')
+      const accountLevel = (row.계정권한?.trim().toLowerCase() === 'master' ? 'master'
+        : row.계정권한?.trim().toLowerCase() === 'manager' ? 'manager'
+        : 'user') as 'master' | 'manager' | 'user';
+
+      // Parse permissions (comma-separated)
+      const permissions = row.권한선택
+        ? row.권한선택.split(',').map(p => p.trim()).filter(Boolean)
+        : [];
+
+      // Parse translator languages (comma-separated: JA, CA, EN)
+      const translatorLanguages = row.번역언어
+        ? row.번역언어.split(',').map(lang => {
+            const l = lang.trim().toLowerCase();
+            if (l === 'ja') return 'ja';
+            if (l === 'ca' || l === 'zh') return 'zh';
+            if (l === 'en') return 'en';
+            return '';
+          }).filter(Boolean)
+        : [];
+
       if (existing) {
         // Add product to existing user
         if (row.담당제품) {
@@ -91,6 +122,9 @@ export async function POST(request: NextRequest) {
           name: row.이름.trim(),
           password: row.초기비밀번호.trim(),
           products: row.담당제품 ? [row.담당제품.trim()] : [],
+          accountLevel,
+          permissions,
+          translatorLanguages,
         });
       }
     }
@@ -106,17 +140,38 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (existingUser) {
-          // Update existing user - add products
+          // Update existing user
           const { error: updateError } = await supabase
             .from('users')
             .update({
               name: userData.name,
+              roles: [userData.accountLevel],
               work_products: userData.products,
+              permissions: userData.permissions,
               updated_at: new Date().toISOString(),
             })
             .eq('id', existingUser.id);
 
           if (updateError) throw updateError;
+
+          // Update translator languages
+          if (userData.translatorLanguages.length > 0) {
+            // Delete existing languages
+            await supabase
+              .from('translator_languages')
+              .delete()
+              .eq('user_id', existingUser.id);
+
+            // Insert new languages
+            const languageEntries = userData.translatorLanguages.map(lang => ({
+              user_id: existingUser.id,
+              language_code: lang,
+            }));
+
+            await supabase
+              .from('translator_languages')
+              .insert(languageEntries);
+          }
 
           results.success.push({ email, action: 'updated' });
         } else {
@@ -140,12 +195,29 @@ export async function POST(request: NextRequest) {
               id: authData.user.id,
               email,
               name: userData.name,
-              roles: ['user'],
+              roles: [userData.accountLevel],
               work_products: userData.products,
-              permissions: [],
+              permissions: userData.permissions,
             });
 
           if (profileError) throw profileError;
+
+          // Insert translator languages if provided
+          if (userData.translatorLanguages.length > 0) {
+            const languageEntries = userData.translatorLanguages.map(lang => ({
+              user_id: authData.user.id,
+              language_code: lang,
+            }));
+
+            const { error: languagesError } = await supabase
+              .from('translator_languages')
+              .insert(languageEntries);
+
+            if (languagesError) {
+              console.error('Error inserting translator languages:', languagesError);
+              // Don't throw - user was created successfully
+            }
+          }
 
           results.success.push({ email, action: 'created' });
         }

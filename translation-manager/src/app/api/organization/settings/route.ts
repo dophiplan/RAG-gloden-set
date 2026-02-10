@@ -120,7 +120,7 @@ export async function PATCH(request: NextRequest) {
         .from('organization_settings')
         .select('settings')
         .eq('domain', RSUPPORT_DOMAIN)
-        .single();
+        .maybeSingle();
 
       updateData.settings = {
         ...(existingSettings?.settings || {}),

@@ -26,6 +26,8 @@ export const SCOPE_OPTIONS = [
   { value: '', label: '제품 분류 선택 *' },
   { value: 'SaaS', label: 'SaaS' },
   { value: 'Solution', label: 'Solution' },
+  { value: '정부과제', label: '정부과제' },
+  { value: '기타', label: '기타' },
 ];
 
 // Priority select dropdown options

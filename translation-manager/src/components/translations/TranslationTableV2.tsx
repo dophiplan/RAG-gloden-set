@@ -24,6 +24,7 @@ interface TranslationTableV2Props {
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
   onPriorityUpdate: (translationId: string, priority: PriorityLevel) => Promise<void>;
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
+  onDevCodeUpdate: (translationId: string, devCode: string) => Promise<void>;
   onDelete: (id: string) => void;
   onRefresh: () => void;
   loading?: boolean;
@@ -56,6 +57,7 @@ interface TranslationRowProps {
   onVersionUpdate: TranslationTableV2Props['onVersionUpdate'];
   onPriorityUpdate: TranslationTableV2Props['onPriorityUpdate'];
   onNotesUpdate: TranslationTableV2Props['onNotesUpdate'];
+  onDevCodeUpdate: TranslationTableV2Props['onDevCodeUpdate'];
   onDelete: TranslationTableV2Props['onDelete'];
 }
 
@@ -73,6 +75,7 @@ const TranslationRow = memo(function TranslationRow({
   onVersionUpdate,
   onPriorityUpdate,
   onNotesUpdate,
+  onDevCodeUpdate,
   onDelete,
 }: TranslationRowProps) {
   const statusInfo = STATUS_COLORS[translation.status];
@@ -112,7 +115,7 @@ const TranslationRow = memo(function TranslationRow({
             const value = e.target.value;
             onScopeUpdate(
               translation.id,
-              value === '' ? null : (value as 'SaaS' | 'Solution')
+              value === '' ? null : (value as any)
             );
           }}
           className="text-xs border rounded px-1 py-1 w-full bg-white"
@@ -120,6 +123,8 @@ const TranslationRow = memo(function TranslationRow({
           <option value="">-</option>
           <option value="SaaS">SaaS</option>
           <option value="Solution">Solution</option>
+          <option value="정부과제">정부과제</option>
+          <option value="기타">기타</option>
         </select>
       </td>
       <td className="px-2 py-2 align-top">
@@ -158,6 +163,16 @@ const TranslationRow = memo(function TranslationRow({
             value={translation.source_text}
             onSave={(newText) => onSourceTextUpdate(translation.id, newText)}
             placeholder="KEY/id"
+          />
+        </div>
+      </td>
+      <td className="px-2 py-2 align-top">
+        <div className="text-xs truncate">
+          <EditableCell
+            value={translation.dev_code || ''}
+            onSave={(newCode) => onDevCodeUpdate(translation.id, newCode)}
+            placeholder="dev_key_001"
+            className="text-xs text-gray-600 font-mono"
           />
         </div>
       </td>
@@ -210,6 +225,7 @@ export default memo(function TranslationTableV2({
   onVersionUpdate,
   onPriorityUpdate,
   onNotesUpdate,
+  onDevCodeUpdate,
   onDelete,
   onRefresh,
   loading = false,
@@ -337,6 +353,9 @@ export default memo(function TranslationTableV2({
                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-48">
                   KEY/id
                 </th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                  개발자 코드
+                </th>
                 {displayLanguages.map((lang) => (
                   <th
                     key={lang}
@@ -384,6 +403,7 @@ export default memo(function TranslationTableV2({
                     onVersionUpdate={onVersionUpdate}
                     onPriorityUpdate={onPriorityUpdate}
                     onNotesUpdate={onNotesUpdate}
+                    onDevCodeUpdate={onDevCodeUpdate}
                     onDelete={onDelete}
                   />
                 ))
