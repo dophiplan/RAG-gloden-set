@@ -2,10 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 const navigation = [
+  {
+    name: '대시보드',
+    href: '/',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      </svg>
+    ),
+  },
   {
     name: '번역 관리',
     href: '/translations',
@@ -34,6 +42,16 @@ const navigation = [
     ),
   },
   {
+    name: '사용자 관리',
+    href: '/users',
+    masterOnly: true,
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
+  {
     name: '설정',
     href: '/settings',
     icon: (
@@ -47,38 +65,66 @@ const navigation = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  };
+  useEffect(() => {
+    // Fetch current user
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setUserEmail(data.user.email);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  // Filter navigation based on user
+  const filteredNavigation = navigation.filter(item => {
+    if (item.masterOnly) {
+      return userEmail === 'nhkim@rsupport.com';
+    }
+    return true;
+  });
 
   return (
-    <div className="flex flex-col w-64 bg-gray-900 min-h-screen">
+    <div className="flex flex-col w-64 bg-white border-r border-[#C8E6C9] min-h-screen" style={{
+      boxShadow: '2px 0 12px rgba(123, 201, 111, 0.12)'
+    }}>
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 bg-gray-800">
-        <h1 className="text-xl font-bold text-white">Translation Manager</h1>
+      <div className="flex items-center h-16 px-5 border-b border-[#C8E6C9] bg-gradient-to-br from-[#7BC96F] via-[#66BB6A] to-[#5FA654]" style={{
+        boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+      }}>
+        <h1 className="text-xl font-bold text-[#1E293B] tracking-tight drop-shadow-sm">Translation Manager</h1>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href);
+      <nav className="flex-1 px-3 py-6 space-y-2 bg-gradient-to-b from-white to-[#F1F8F4]">
+        {filteredNavigation.map((item) => {
+          // Exact match for root and translations, prefix match for others
+          let isActive;
+          if (item.href === '/') {
+            isActive = pathname === '/';
+          } else if (item.href === '/translations') {
+            isActive = pathname === '/translations' || pathname.startsWith('/translations/');
+          } else {
+            isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          }
 
           return (
             <Link
               key={item.name}
               href={item.href}
               className={`
-                flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
+                flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200
                 ${isActive
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-[#1E293B] shadow-lg transform scale-[1.02]'
+                  : 'text-[#475569] hover:bg-[#F1F8F4] hover:text-[#5FA654] hover:shadow-sm'
                 }
               `}
+              style={isActive ? {
+                boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+              } : undefined}
             >
               <span className="mr-3">{item.icon}</span>
               {item.name}
@@ -86,19 +132,6 @@ export default function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Logout button */}
-      <div className="p-4 border-t border-gray-700">
-        <button
-          onClick={handleLogout}
-          className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors"
-        >
-          <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          로그아웃
-        </button>
-      </div>
     </div>
   );
 }

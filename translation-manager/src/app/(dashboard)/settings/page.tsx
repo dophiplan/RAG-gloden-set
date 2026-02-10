@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { createClient } from '@/lib/supabase/client';
 import { SUPPORTED_LANGUAGES } from '@/types';
-import { showConfirm } from '@/lib/notifications';
+import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 
 interface UserProfile {
   id: string;
@@ -19,62 +19,53 @@ interface UserProfile {
 export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
-  const [name, setName] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [hasApiKey, setHasApiKey] = useState(false);
   const [isRsupportUser, setIsRsupportUser] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [apiKeyMessage, setApiKeyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchUser() {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
+        // Use the same API endpoint as ProfileMenu
+        const response = await fetch('/api/auth/me');
+        console.log('🔍 /api/auth/me response:', response.ok);
 
-          if (profile) {
-            setUser(profile);
-            setName(profile.name || '');
-          } else {
+        if (response.ok) {
+          const data = await response.json();
+          console.log('🔍 /api/auth/me data:', data);
+
+          if (data.user) {
             setUser({
-              id: authUser.id,
-              email: authUser.email || '',
-              name: null,
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name || null,
             });
-          }
 
-          // Check if user is from rsupport.com domain
-          const email = authUser.email || '';
-          const isRsupport = email.endsWith('@rsupport.com');
-          setIsRsupportUser(isRsupport);
+            // Check if user is from rsupport.com domain
+            const email = data.user.email || '';
+            const isRsupport = email.endsWith('@rsupport.com');
+            setIsRsupportUser(isRsupport);
 
-          // For @rsupport.com users, check organization API key
-          if (isRsupport) {
-            const orgResponse = await fetch('/api/organization/settings');
-            if (orgResponse.ok) {
-              const { settings: orgSettings } = await orgResponse.json();
-              if (orgSettings?.openai_api_key) {
-                setHasApiKey(true);
+            // For @rsupport.com users, check organization API key
+            if (isRsupport) {
+              const orgResponse = await fetch('/api/organization/settings');
+              if (orgResponse.ok) {
+                const { settings: orgSettings } = await orgResponse.json();
+                if (orgSettings?.openai_api_key) {
+                  setHasApiKey(true);
+                }
               }
-            }
-          } else {
-            // For other users, check individual API key
-            const { data: settings } = await supabase
-              .from('user_settings')
-              .select('openai_api_key')
-              .eq('user_id', authUser.id)
-              .single();
-
-            if (settings?.openai_api_key) {
-              setHasApiKey(true);
+            } else {
+              // For other users, check individual API key
+              const settingsResponse = await fetch('/api/settings/openai-key');
+              if (settingsResponse.ok) {
+                const settingsData = await settingsResponse.json();
+                if (settingsData?.has_key) {
+                  setHasApiKey(true);
+                }
+              }
             }
           }
         }
@@ -86,53 +77,26 @@ export default function SettingsPage() {
     }
 
     fetchUser();
-  }, [supabase]);
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-
-    setSaving(true);
-    setMessage(null);
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          name: name || null,
-        });
-
-      if (error) throw error;
-
-      setUser({ ...user, name });
-      setMessage({ type: 'success', text: '프로필이 저장되었습니다.' });
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      setMessage({ type: 'error', text: '프로필 저장에 실패했습니다.' });
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, []);
 
   const handleSaveApiKey = async () => {
-    if (!user) return;
+    if (!user) {
+      showError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
 
     setSavingApiKey(true);
-    setApiKeyMessage(null);
 
     try {
       let response;
 
       if (isRsupportUser) {
-        // @rsupport.com users save to organization settings
         response = await fetch('/api/organization/settings', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ openai_api_key: openaiApiKey }),
         });
       } else {
-        // Other users save to personal settings
         response = await fetch('/api/settings/openai-key', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -140,18 +104,18 @@ export default function SettingsPage() {
         });
       }
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'API 키 저장 실패');
       }
 
       setHasApiKey(!!openaiApiKey);
       setOpenaiApiKey('');
       const keyType = isRsupportUser ? '조직 공용 OpenAI API 키' : 'OpenAI API 키';
-      setApiKeyMessage({ type: 'success', text: `${keyType}가 저장되었습니다.` });
+      showSuccess(`${keyType}가 저장되었습니다.`);
     } catch (error) {
-      console.error('Error saving API key:', error);
-      setApiKeyMessage({ type: 'error', text: error instanceof Error ? error.message : 'API 키 저장에 실패했습니다.' });
+      showError(error instanceof Error ? error.message : 'API 키 저장에 실패했습니다.');
     } finally {
       setSavingApiKey(false);
     }
@@ -163,7 +127,6 @@ export default function SettingsPage() {
     if (!showConfirm(`${keyType}를 삭제하시겠습니까?${isRsupportUser ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) return;
 
     setSavingApiKey(true);
-    setApiKeyMessage(null);
 
     try {
       let response;
@@ -187,10 +150,10 @@ export default function SettingsPage() {
       }
 
       setHasApiKey(false);
-      setApiKeyMessage({ type: 'success', text: `${keyType}가 삭제되었습니다.` });
+      showSuccess(`${keyType}가 삭제되었습니다.`);
     } catch (error) {
       console.error('Error deleting API key:', error);
-      setApiKeyMessage({ type: 'error', text: 'API 키 삭제에 실패했습니다.' });
+      showError('API 키 삭제에 실패했습니다.');
     } finally {
       setSavingApiKey(false);
     }
@@ -207,49 +170,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="설정"
+      subtitle="계정 및 환경 설정을 관리합니다."
+    >
       <div className="max-w-2xl space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">설정</h1>
-          <p className="text-gray-600 mt-1">계정 및 환경 설정을 관리합니다.</p>
-        </div>
-
-        {/* Profile Settings */}
-        <Card>
-          <CardTitle>프로필</CardTitle>
-          <div className="mt-4 space-y-4">
-            <Input
-              label="이메일"
-              value={user?.email || ''}
-              disabled
-              className="bg-gray-50"
-            />
-            <Input
-              label="이름"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="이름을 입력하세요"
-            />
-
-            {message && (
-              <div
-                className={`p-3 rounded ${
-                  message.type === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-                }`}
-              >
-                {message.text}
-              </div>
-            )}
-
-            <Button onClick={handleSaveProfile} loading={saving}>
-              저장
-            </Button>
-          </div>
-        </Card>
-
         {/* OpenAI API Key Settings */}
         <Card>
           <CardTitle>
@@ -289,18 +214,6 @@ export default function SettingsPage() {
               onChange={(e) => setOpenaiApiKey(e.target.value)}
               placeholder="sk-..."
             />
-
-            {apiKeyMessage && (
-              <div
-                className={`p-3 rounded ${
-                  apiKeyMessage.type === 'success'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-                }`}
-              >
-                {apiKeyMessage.text}
-              </div>
-            )}
 
             <div className="flex gap-2">
               <Button

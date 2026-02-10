@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
-// TEMPORARY: Completely disable middleware for testing
-// import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession } from '@/lib/supabase/middleware';
 
 export async function middleware(request: NextRequest) {
-  // Skip all middleware logic - allow all requests through
-  return NextResponse.next();
+  // Allow bypassing auth in development if explicitly enabled
+  if (process.env.ALLOW_AUTH_BYPASS === 'true' && process.env.NODE_ENV === 'development') {
+    console.warn('⚠️  AUTH BYPASS ENABLED - Development mode only');
+    return NextResponse.next();
+  }
 
-  // return await updateSession(request);
+  return await updateSession(request);
 }
 
 export const config = {

@@ -1,14 +1,30 @@
 /**
  * 중앙 알림 관리
- * 향후 Toast UI로 교체 시 이 파일만 수정하면 됨
+ * react-hot-toast를 사용한 토스트 메시지
  */
 
+import toast from 'react-hot-toast';
+
 export function showSuccess(message: string): void {
-  alert(message);
+  toast.success(message, {
+    duration: 3000,
+    position: 'top-right',
+  });
 }
 
 export function showError(message: string): void {
-  alert(message);
+  toast.error(message, {
+    duration: 4000,
+    position: 'top-right',
+  });
+}
+
+export function showInfo(message: string): void {
+  toast(message, {
+    duration: 3000,
+    position: 'top-right',
+    icon: 'ℹ️',
+  });
 }
 
 export function showConfirm(message: string): boolean {

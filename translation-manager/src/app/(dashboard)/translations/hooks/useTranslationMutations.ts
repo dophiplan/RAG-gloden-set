@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { TranslationStatus, LanguageCode, ProductCode, PriorityLevel } from '@/types';
-import { showConfirm } from '@/lib/notifications';
+import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from './useTranslationData';
 
 interface UseTranslationMutationsParams {
@@ -21,7 +21,8 @@ export function useTranslationMutations({
   const optimisticPatch = useCallback(async (
     id: string,
     localUpdates: Partial<TranslationWithAudit>,
-    body: Record<string, unknown>
+    body: Record<string, unknown>,
+    successMessage?: string
   ) => {
     const prev = translations.find((t) => t.id === id);
     updateLocalTranslation(id, localUpdates);
@@ -31,17 +32,23 @@ export function useTranslationMutations({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!response.ok && prev) {
+      if (response.ok) {
+        if (successMessage) {
+          showSuccess(successMessage);
+        }
+      } else if (prev) {
         updateLocalTranslation(id, prev);
+        showError('수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error updating translation:', error);
       if (prev) updateLocalTranslation(id, prev);
+      showError('수정 중 오류가 발생했습니다.');
     }
   }, [translations, updateLocalTranslation]);
 
   const handleStatusChange = useCallback(async (id: string, status: TranslationStatus) => {
-    await optimisticPatch(id, { status }, { status });
+    await optimisticPatch(id, { status }, { status }, '상태가 변경되었습니다.');
   }, [optimisticPatch]);
 
   const handleTranslationUpdate = useCallback(async (
@@ -87,6 +94,7 @@ export function useTranslationMutations({
       });
 
       if (response.ok) {
+        showSuccess('번역이 저장되었습니다.');
         // Record correction in background (fire-and-forget)
         if (existingResult && existingResult.translated_text !== text) {
           fetch('/api/ai/corrections', {
@@ -103,31 +111,33 @@ export function useTranslationMutations({
       } else {
         // Rollback
         updateLocalTranslation(translationId, { translation_results: translation.translation_results });
+        showError('번역 저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error updating translation:', error);
       updateLocalTranslation(translationId, { translation_results: translation.translation_results });
+      showError('번역 저장 중 오류가 발생했습니다.');
     }
   }, [translations, updateLocalTranslation]);
 
   const handleSourceTextUpdate = useCallback(async (translationId: string, sourceText: string) => {
-    await optimisticPatch(translationId, { source_text: sourceText }, { source_text: sourceText });
+    await optimisticPatch(translationId, { source_text: sourceText }, { source_text: sourceText }, '원문이 수정되었습니다.');
   }, [optimisticPatch]);
 
   const handleContextUpdate = useCallback(async (translationId: string, context: string) => {
-    await optimisticPatch(translationId, { context: context || null }, { context: context || null });
+    await optimisticPatch(translationId, { context: context || null }, { context: context || null }, '설명이 수정되었습니다.');
   }, [optimisticPatch]);
 
   const handleScopeUpdate = useCallback(async (translationId: string, scope: 'SaaS' | 'Solution' | null) => {
-    await optimisticPatch(translationId, { scope }, { scope });
+    await optimisticPatch(translationId, { scope }, { scope }, '제품분류가 변경되었습니다.');
   }, [optimisticPatch]);
 
-  const handlePriorityUpdate = useCallback(async (translationId: string, priority: string) => {
-    await optimisticPatch(translationId, { priority }, { priority });
+  const handlePriorityUpdate = useCallback(async (translationId: string, priority: PriorityLevel) => {
+    await optimisticPatch(translationId, { priority }, { priority }, '중요도가 변경되었습니다.');
   }, [optimisticPatch]);
 
   const handleNotesUpdate = useCallback(async (translationId: string, notes: string) => {
-    await optimisticPatch(translationId, { notes: notes || null }, { notes: notes || null });
+    await optimisticPatch(translationId, { notes: notes || null }, { notes: notes || null }, '비고가 수정되었습니다.');
   }, [optimisticPatch]);
 
   const handleVersionUpdate = useCallback(async (translationId: string, version: string) => {
@@ -135,7 +145,8 @@ export function useTranslationMutations({
     await optimisticPatch(
       translationId,
       { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null },
-      { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null }
+      { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null },
+      '버전이 수정되었습니다.'
     );
   }, [optimisticPatch]);
 
@@ -150,9 +161,15 @@ export function useTranslationMutations({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_codes: products }),
       });
-      if (response.ok) fetchTranslations();
+      if (response.ok) {
+        fetchTranslations();
+        showSuccess('제품이 변경되었습니다.');
+      } else {
+        showError('제품 변경에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Error updating products:', error);
+      showError('제품 변경 중 오류가 발생했습니다.');
     }
   }, [fetchTranslations]);
 
@@ -162,9 +179,13 @@ export function useTranslationMutations({
       const response = await fetch(`/api/translations/${id}`, { method: 'DELETE' });
       if (response.ok) {
         setTranslations((prev) => prev.filter((t) => t.id !== id));
+        showSuccess('삭제되었습니다.');
+      } else {
+        showError('삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error deleting translation:', error);
+      showError('삭제 중 오류가 발생했습니다.');
     }
   }, [setTranslations]);
 
@@ -184,9 +205,13 @@ export function useTranslationMutations({
       if (response.ok) {
         fetchTranslations();
         window.history.replaceState({}, '', '/translations');
+        showSuccess(`${texts.length}개의 번역이 생성되었습니다.`);
+      } else {
+        showError('번역 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error creating translations:', error);
+      showError('번역 생성 중 오류가 발생했습니다.');
     }
   }, [fetchTranslations]);
 
@@ -214,10 +239,14 @@ export function useTranslationMutations({
       });
       if (response.ok) {
         fetchTranslations();
+        showSuccess('번역이 생성되었습니다.');
         return true;
+      } else {
+        showError('번역 생성에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error creating translation:', error);
+      showError('번역 생성 중 오류가 발생했습니다.');
     }
     return false;
   }, [fetchTranslations]);

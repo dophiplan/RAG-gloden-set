@@ -15,6 +15,7 @@ interface Stats {
 
 interface UseTranslationDataParams {
   statusFilter: TranslationStatus | '';
+  languageFilter: string;
   searchTerm: string;
   selectedProduct: ProductCode | null;
   page: number;
@@ -23,6 +24,7 @@ interface UseTranslationDataParams {
 
 export function useTranslationData({
   statusFilter,
+  languageFilter,
   searchTerm,
   selectedProduct,
   page,
@@ -42,6 +44,7 @@ export function useTranslationData({
     try {
       const params = new URLSearchParams();
       if (statusFilter) params.set('status', statusFilter);
+      if (languageFilter) params.set('language', languageFilter);
       if (searchTerm) params.set('search', searchTerm);
       if (selectedProduct) params.set('product_code', selectedProduct);
       params.set('page', page.toString());
@@ -64,11 +67,20 @@ export function useTranslationData({
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, searchTerm, selectedProduct, page, setTotalPages]);
+  }, [statusFilter, languageFilter, searchTerm, selectedProduct, page, setTotalPages]);
 
   useEffect(() => {
     fetchTranslations();
   }, [fetchTranslations]);
+
+  const updateLocalTranslation = useCallback((
+    id: string,
+    updates: Partial<TranslationWithAudit>
+  ) => {
+    setTranslations((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+    );
+  }, []);
 
   return {
     translations,
@@ -76,5 +88,6 @@ export function useTranslationData({
     loading,
     stats,
     fetchTranslations,
+    updateLocalTranslation,
   };
 }

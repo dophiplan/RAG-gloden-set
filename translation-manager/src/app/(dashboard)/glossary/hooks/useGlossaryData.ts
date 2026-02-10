@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GlossaryTerm, SUPPORTED_LANGUAGES, LanguageCode, ProductCode } from '@/types';
-import { showError, showConfirm } from '@/lib/notifications';
+import { showError, showConfirm, showSuccess } from '@/lib/notifications';
 
 export function useGlossaryData() {
   const [terms, setTerms] = useState<GlossaryTerm[]>([]);
@@ -85,12 +85,14 @@ export function useGlossaryData() {
         setIsModalOpen(false);
         resetForm();
         fetchTerms();
+        showSuccess('용어가 추가되었습니다.');
       } else {
         const data = await response.json();
         showError(data.error || '용어 추가에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error creating glossary term:', error);
+      showError('용어 추가 중 오류가 발생했습니다.');
     }
   };
 
@@ -113,9 +115,13 @@ export function useGlossaryData() {
         setEditingTerm(null);
         resetForm();
         fetchTerms();
+        showSuccess('용어가 수정되었습니다.');
+      } else {
+        showError('용어 수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error updating glossary term:', error);
+      showError('용어 수정 중 오류가 발생했습니다.');
     }
   };
 
@@ -129,9 +135,13 @@ export function useGlossaryData() {
 
       if (response.ok) {
         setTerms((prev) => prev.filter((t) => t.id !== id));
+        showSuccess('용어가 삭제되었습니다.');
+      } else {
+        showError('용어 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Error deleting glossary term:', error);
+      showError('용어 삭제 중 오류가 발생했습니다.');
     }
   };
 

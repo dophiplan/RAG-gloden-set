@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,7 +13,6 @@ import { useGlossaryData } from './hooks/useGlossaryData';
 import GlossaryFormModal from './components/GlossaryFormModal';
 
 export default function GlossaryPage() {
-  const router = useRouter();
   const {
     terms,
     loading,
@@ -50,48 +48,11 @@ export default function GlossaryPage() {
   } = useGlossaryData();
 
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      title="용어집"
+      subtitle="번역 일관성을 위한 용어집을 관리합니다."
+    >
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">용어집</h1>
-            <p className="text-gray-600 mt-1">
-              번역 일관성을 위한 용어집을 관리합니다.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              onClick={handleAIReview}
-              loading={isReviewing}
-            >
-              AI 일관성 검사
-            </Button>
-            <Button onClick={() => setIsModalOpen(true)}>용어 추가</Button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              className="border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600"
-            >
-              용어 목록
-            </button>
-            <button
-              onClick={() => router.push('/glossary/suggestions')}
-              className="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 flex items-center gap-2"
-            >
-              제안된 용어
-              {suggestionCount > 0 && (
-                <Badge variant="info">{suggestionCount}</Badge>
-              )}
-            </button>
-          </nav>
-        </div>
-
         {/* Product Tabs */}
         <ProductTabs
           selectedProduct={selectedProduct}
@@ -101,13 +62,7 @@ export default function GlossaryPage() {
         {/* Filters */}
         <Card>
           <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <Input
-                placeholder="용어 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            {/* 모든 언어 */}
             <div className="w-40">
               <Select
                 value={languageFilter}
@@ -115,55 +70,102 @@ export default function GlossaryPage() {
                 options={LANGUAGE_SELECT_OPTIONS}
               />
             </div>
+            {/* 검색 */}
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                placeholder="용어 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={handleAIReview}
+            loading={isReviewing}
+          >
+            AI 일관성 검사
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>용어 추가</Button>
+        </div>
 
         {/* Terms List */}
         {loading ? (
           <Card>
-            <div className="p-8 text-center text-gray-500">로딩 중...</div>
-          </Card>
-        ) : terms.length === 0 ? (
-          <Card>
-            <div className="p-8 text-center text-gray-500">
-              <p>등록된 용어가 없습니다.</p>
-              <p className="text-sm mt-2">용어를 추가하여 번역 일관성을 유지하세요.</p>
+            <div className="p-12 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#7BC96F]"></div>
+              <p className="mt-4 text-[#64748B]">로딩 중...</p>
             </div>
           </Card>
         ) : languageFilter ? (
           <Card padding="none">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">용어</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">번역</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">문맥</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">제품</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">작업</th>
+                    <th>용어</th>
+                    <th>번역</th>
+                    <th>문맥</th>
+                    <th>제품</th>
+                    <th style={{ textAlign: 'right' }}>작업</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
-                  {terms.map((term) => (
-                    <tr key={term.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{term.term}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{term.translation}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{term.context || '-'}</td>
-                      <td className="px-4 py-3">
-                        {term.product_code ? (
-                          <Badge variant="info">{PRODUCTS[term.product_code]}</Badge>
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => openEditModal(term)}>수정</Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(term.id)}>삭제</Button>
-                        </div>
+                <tbody>
+                  {terms.length === 0 ? (
+                    <tr>
+                      <td colSpan={5}>
+                        등록된 용어가 없습니다.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    terms.map((term) => (
+                      <tr key={term.id}>
+                        <td className="font-semibold">{term.term}</td>
+                        <td>{term.translation}</td>
+                        <td className="text-[#64748B]">{term.context || '-'}</td>
+                        <td>
+                          {term.product_code ? (
+                            <Badge variant="info">{PRODUCTS[term.product_code]}</Badge>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => openEditModal(term)}>수정</Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleDelete(term.id)}>삭제</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : terms.length === 0 ? (
+          <Card padding="none">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th>용어</th>
+                    <th>번역</th>
+                    <th>문맥</th>
+                    <th>제품</th>
+                    <th style={{ textAlign: 'right' }}>작업</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan={5}>
+                      등록된 용어가 없습니다.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -171,41 +173,41 @@ export default function GlossaryPage() {
         ) : (
           <div className="space-y-6">
             {Object.entries(groupedTerms).map(([langCode, langTerms]) => (
-              <Card key={langCode}>
-                <div className="flex items-center gap-2 mb-4">
+              <Card key={langCode} padding="none">
+                <div className="px-6 py-4 border-b border-[#E2E8F0] bg-white/60 flex items-center gap-3">
                   <Badge variant="info">
                     {SUPPORTED_LANGUAGES[langCode as LanguageCode]}
                   </Badge>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[#64748B] font-medium">
                     {langTerms.length}개 용어
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b">
+                    <thead>
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">용어</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">번역</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">문맥</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">제품</th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-700">작업</th>
+                        <th>용어</th>
+                        <th>번역</th>
+                        <th>문맥</th>
+                        <th>제품</th>
+                        <th style={{ textAlign: 'right' }}>작업</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody>
                       {langTerms.map((term) => (
-                        <tr key={term.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2 text-sm font-medium text-gray-900">{term.term}</td>
-                          <td className="px-4 py-2 text-sm text-gray-600">{term.translation}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{term.context || '-'}</td>
-                          <td className="px-4 py-2">
+                        <tr key={term.id}>
+                          <td className="font-semibold">{term.term}</td>
+                          <td>{term.translation}</td>
+                          <td className="text-[#64748B]">{term.context || '-'}</td>
+                          <td>
                             {term.product_code ? (
                               <Badge variant="info">{PRODUCTS[term.product_code]}</Badge>
                             ) : (
-                              <span className="text-xs text-gray-400">-</span>
+                              <span className="text-xs text-[#94A3B8]">-</span>
                             )}
                           </td>
-                          <td className="px-4 py-2 text-right">
-                            <div className="flex justify-end gap-1">
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="flex justify-end gap-2">
                               <Button size="sm" variant="ghost" onClick={() => openEditModal(term)}>수정</Button>
                               <Button size="sm" variant="ghost" onClick={() => handleDelete(term.id)}>삭제</Button>
                             </div>

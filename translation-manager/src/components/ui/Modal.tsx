@@ -31,7 +31,8 @@ export default function Modal({
     <Fragment>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 z-40 transition-opacity"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}
         onClick={onClose}
       />
 
@@ -39,7 +40,7 @@ export default function Modal({
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
           <div
-            className={`relative bg-white rounded-lg shadow-xl w-full ${sizes[size]} transform transition-all`}
+            className={`relative bg-white rounded-lg shadow-2xl w-full ${sizes[size]} transform transition-all border border-gray-200`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

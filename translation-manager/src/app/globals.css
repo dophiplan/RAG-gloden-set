@@ -1,28 +1,171 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light Green Theme Colors */
+  --primary: #7BC96F;
+  --primary-hover: #5FA654;
+  --primary-light: #E8F5E9;
+  --secondary: #66BB6A;
+  --background: #F1F8F4; /* Very light mint background */
+  --background-secondary: #E8F5E9;
+  --surface: #FFFFFF;
+  --border: #C8E6C9;
+  --border-light: #D4EDD6;
+  --text-main: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+
+  /* Legacy */
+  --foreground: #1E293B;
 }
 
 @theme inline {
+  /* Tech Blue Color Palette */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --color-foreground: var(--foreground);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Input & Textarea Styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea,
+select {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(123, 201, 111, 0.15);
+}
+
+/* Button Base Styles */
+button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Table Styles */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+table thead {
+  background: linear-gradient(135deg, #7BC96F 0%, #66BB6A 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(123, 201, 111, 0.25);
+}
+
+table thead th {
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1E293B;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: none;
+  white-space: nowrap;
+}
+
+table thead th:first-child {
+  border-top-left-radius: 8px;
+}
+
+table thead th:last-child {
+  border-top-right-radius: 8px;
+}
+
+table tbody tr {
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+table tbody tr:hover {
+  background: #E8F5E9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(123, 201, 111, 0.15);
+}
+
+table tbody td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #1E293B;
+  border-bottom: 1px solid #E8F0FE;
+}
+
+table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
+}
+
+/* Empty state styling */
+table tbody tr td[colspan] {
+  text-align: center;
+  padding: 64px 24px;
+  color: #64748B;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Progress bar shimmer animation */

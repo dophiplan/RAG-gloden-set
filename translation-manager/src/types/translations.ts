@@ -2,12 +2,27 @@ import type { LanguageCode } from './languages';
 import type { ProductCode } from './products';
 
 // Translation status
-export type TranslationStatus = 'pending' | 'reviewed' | 'deployed';
+export type TranslationStatus = 'pending' | 'in_progress' | 'reviewed' | 'deployed';
 
 export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '번역 요청' },
+  in_progress: { bg: 'bg-[#E8F5E9]', text: 'text-[#5FA654]', label: '진행 중' },
   reviewed: { bg: 'bg-white', text: 'text-gray-800', label: '검수 완료' },
   deployed: { bg: 'bg-gray-100', text: 'text-gray-500', label: '반영 완료' },
+};
+
+// Priority levels
+export type PriorityLevel = '긴급' | '상' | '중' | '하';
+
+export const PRIORITY_LABELS: Record<PriorityLevel, {
+  label: string;
+  color: string;
+  sortOrder: number;
+}> = {
+  '긴급': { label: '긴급', color: 'bg-red-100 text-red-800', sortOrder: 4 },
+  '상': { label: '상', color: 'bg-orange-100 text-orange-800', sortOrder: 3 },
+  '중': { label: '중', color: 'bg-yellow-100 text-yellow-800', sortOrder: 2 },
+  '하': { label: '하', color: 'bg-gray-100 text-gray-800', sortOrder: 1 },
 };
 
 // Database types
@@ -16,6 +31,7 @@ export interface Translation {
   source_text: string;
   context: string | null;
   status: TranslationStatus;
+  priority: PriorityLevel;
   version: string | null;
   version_updated_at: string | null;
   product_code: ProductCode | null; // Deprecated: use translation_products
@@ -81,6 +97,8 @@ export interface TranslationCreateInput {
   version?: string;
   product_code?: ProductCode; // Deprecated
   product_codes?: ProductCode[]; // Use this for multiple products
+  scope?: 'SaaS' | 'Solution';
+  priority?: PriorityLevel;
   translations?: {
     language_code: LanguageCode;
     translated_text: string;
@@ -94,6 +112,9 @@ export interface TranslationUpdateInput {
   version?: string;
   product_code?: ProductCode; // Deprecated
   product_codes?: ProductCode[]; // Use this for multiple products
+  scope?: 'SaaS' | 'Solution' | null;
+  priority?: PriorityLevel;
+  notes?: string | null;
 }
 
 // Dashboard stats
@@ -115,4 +136,28 @@ export interface VersionGroup {
   version: string;
   version_updated_at: string | null;
   translations: (Translation & { translation_results: TranslationResult[] })[];
+}
+
+// Dashboard request types
+export interface DashboardRequest {
+  id: string;
+  status: TranslationStatus;
+  priority: PriorityLevel;
+  request_date: string; // ISO timestamp
+  deployed_at: string | null; // ISO timestamp or null
+  requester: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  products: {
+    code: ProductCode;
+    name: string;
+    version: string | null;
+    category: 'SaaS' | 'Solution' | null;
+  }[];
+}
+
+export interface DashboardRequestsResponse {
+  requests: DashboardRequest[];
 }
