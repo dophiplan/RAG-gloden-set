@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { FIRST_MASTER_EMAIL } from '@/types/users';
 
 // Security: Verify user is master
 async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; userId?: string }> {
@@ -9,14 +10,14 @@ async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; u
     return { authorized: false };
   }
 
-  // Check if user has master role
+  // Check if user has master or 1st_master role
   const { data: userProfile } = await supabase
     .from('users')
     .select('roles')
     .eq('id', user.id)
     .single();
 
-  const isMaster = userProfile?.roles?.includes('master');
+  const isMaster = userProfile?.roles?.includes('master') || userProfile?.roles?.includes('1st_master');
 
   return {
     authorized: isMaster,
@@ -50,6 +51,23 @@ export async function POST(request: NextRequest) {
     }
 
     const adminClient = createAdminClient();
+
+    // Protect 1st_master account from being deleted
+    const { data: targetUsers } = await adminClient
+      .from('users')
+      .select('id, email, roles')
+      .in('id', userIds);
+
+    const hasFirstMaster = targetUsers?.some(
+      u => u.email === FIRST_MASTER_EMAIL || u.roles?.includes('1st_master')
+    );
+
+    if (hasFirstMaster) {
+      return NextResponse.json(
+        { error: '최고 관리자 계정은 삭제할 수 없습니다.' },
+        { status: 403 }
+      );
+    }
 
     // Delete users from auth and database (CASCADE will handle user profile)
     let deletedCount = 0;

@@ -42,10 +42,10 @@ export type ApiHandler = (
 ) => Promise<NextResponse>;
 
 /**
- * Check if user has master role
+ * Check if user has master or 1st_master role
  */
 export function isMaster(profile?: AuthContext['profile'] | null): boolean {
-  return profile?.roles?.includes('master') ?? false;
+  return profile?.roles?.includes('master') || profile?.roles?.includes('1st_master') ?? false;
 }
 
 /**

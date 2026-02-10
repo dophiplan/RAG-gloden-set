@@ -152,21 +152,23 @@ export default function ProfileMenu() {
               {user.roles && user.roles.length > 0 && (
                 <span
                   className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
-                    user.roles.includes('master')
+                    user.roles.includes('1st_master')
+                      ? 'bg-red-100 text-red-800'
+                      : user.roles.includes('master')
                       ? 'bg-purple-100 text-purple-800'
                       : user.roles.includes('manager')
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  {user.roles.includes('master') ? 'Master' : user.roles.includes('manager') ? 'Manager' : 'User'}
+                  {user.roles.includes('1st_master') ? '1st Master' : user.roles.includes('master') ? 'Master' : user.roles.includes('manager') ? 'Manager' : 'User'}
                 </span>
               )}
             </div>
             <p className="text-xs text-gray-500 truncate">{user.email}</p>
 
             {/* Products and Permissions for non-master users */}
-            {user.roles && !user.roles.includes('master') && (
+            {user.roles && !user.roles.includes('master') && !user.roles.includes('1st_master') && (
               <div className="mt-3 space-y-2">
                 {/* Products */}
                 {user.work_products && user.work_products.length > 0 && (

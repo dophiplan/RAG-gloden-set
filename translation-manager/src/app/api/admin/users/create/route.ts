@@ -10,14 +10,14 @@ async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; u
     return { authorized: false };
   }
 
-  // Check if user has master role
+  // Check if user has master or 1st_master role
   const { data: userProfile } = await supabase
     .from('users')
     .select('roles')
     .eq('id', user.id)
     .single();
 
-  const isMaster = userProfile?.roles?.includes('master');
+  const isMaster = userProfile?.roles?.includes('master') || userProfile?.roles?.includes('1st_master');
 
   return {
     authorized: isMaster,
@@ -127,12 +127,12 @@ export async function POST(request: NextRequest) {
     // roles array will contain only the primary account level
     const roles = [accountLevel || 'user'];
 
-    // Master users get all products and permissions automatically
-    const workProducts = accountLevel === 'master'
+    // Master and 1st_master users get all products and permissions automatically
+    const workProducts = (accountLevel === 'master' || accountLevel === '1st_master')
       ? Object.keys(PRODUCTS)
       : (products || []);
 
-    const workPermissions = accountLevel === 'master'
+    const workPermissions = (accountLevel === 'master' || accountLevel === '1st_master')
       ? ['reviewer', 'requester', 'deployer']
       : (permissions || []);
 

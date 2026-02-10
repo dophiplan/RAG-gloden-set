@@ -531,11 +531,32 @@ export default function UploadPage() {
             {/* Step 1: File Upload */}
             <div className="w-full flex-shrink-0 px-4">
               <Card>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-[#818CF8] text-white flex items-center justify-center font-semibold">
-                    1
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#818CF8] text-white flex items-center justify-center font-semibold">
+                      1
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">파일 업로드</h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">파일 업로드</h3>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/samples/test.pdf');
+                        const blob = await response.blob();
+                        const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
+                        const uploadedFile = {
+                          file,
+                          id: `test-pdf-${Date.now()}`,
+                        };
+                        handleFilesChange([uploadedFile]);
+                      } catch (error) {
+                        console.error('Failed to load sample PDF:', error);
+                      }
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-[#818CF8] hover:text-[#6366F1] bg-[#E0E7FF] hover:bg-[#C7D2FE] rounded-lg transition-colors"
+                  >
+                    📄 test.pdf
+                  </button>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
                   번역할 텍스트가 포함된 PDF 또는 이미지 파일을 업로드하세요

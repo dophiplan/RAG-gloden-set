@@ -98,8 +98,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   // Filter navigation based on user role
   const filteredNavigation = navigation.filter(item => {
     if (item.masterOnly) {
-      // Only show to master users
-      return userRoles.includes('master');
+      // Show to master and 1st_master users
+      return userRoles.includes('master') || userRoles.includes('1st_master');
     }
     return true;
   });
@@ -124,7 +124,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         boxShadow: '4px 0 16px rgba(99, 102, 241, 0.06)'
       }}>
         {/* Logo */}
-        <div className="flex items-center h-16 px-5 border-b border-[#C7D2FE] bg-gradient-to-br from-[#6366F1] via-[#4F46E5] to-[#818CF8]" style={{
+        <div className="flex items-center justify-center h-16 px-5 border-b border-[#C7D2FE] bg-gradient-to-br from-[#6366F1] via-[#4F46E5] to-[#818CF8]" style={{
           boxShadow: '0 4px 16px rgba(99, 102, 241, 0.25)'
         }}>
           <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">Language Monster</h1>
