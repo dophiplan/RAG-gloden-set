@@ -334,9 +334,10 @@ export default memo(function TranslationTableV2({
                 {displayLanguages.map((lang) => (
                   <th
                     key={lang}
-                    className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32"
+                    className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32 cursor-help"
+                    title={SUPPORTED_LANGUAGES[lang]}
                   >
-                    {lang}
+                    {lang.toUpperCase()}
                   </th>
                 ))}
                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
