@@ -63,6 +63,9 @@ export async function PATCH(
     if (body.source_text !== undefined) updateData.source_text = body.source_text.trim();
     if (body.context !== undefined) updateData.context = body.context?.trim() || null;
     if (body.status !== undefined) updateData.status = body.status;
+    if (body.scope !== undefined) updateData.scope = body.scope;
+    if (body.priority !== undefined) updateData.priority = body.priority;
+    if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
     if (body.version !== undefined) updateData.version = body.version?.trim() || null;
     if (body.version_updated_at !== undefined) updateData.version_updated_at = body.version_updated_at;
 
