@@ -7,7 +7,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { createClient } from '@/lib/supabase/client';
-import { SUPPORTED_LANGUAGES } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 
 interface UserProfile {
@@ -17,6 +16,14 @@ interface UserProfile {
 }
 
 interface Product {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+}
+
+interface Language {
   id: string;
   code: string;
   name: string;
@@ -42,6 +49,16 @@ export default function SettingsPage() {
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
   const [savingProduct, setSavingProduct] = useState(false);
+
+  // Languages management
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [loadingLanguages, setLoadingLanguages] = useState(true);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
+  const [languageCode, setLanguageCode] = useState('');
+  const [languageName, setLanguageName] = useState('');
+  const [languageDescription, setLanguageDescription] = useState('');
+  const [savingLanguage, setSavingLanguage] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -115,6 +132,26 @@ export default function SettingsPage() {
     }
 
     fetchProducts();
+  }, []);
+
+  // Fetch languages
+  useEffect(() => {
+    async function fetchLanguages() {
+      setLoadingLanguages(true);
+      try {
+        const response = await fetch('/api/languages');
+        if (response.ok) {
+          const data = await response.json();
+          setLanguages(data.languages || []);
+        }
+      } catch (error) {
+        console.error('Error fetching languages:', error);
+      } finally {
+        setLoadingLanguages(false);
+      }
+    }
+
+    fetchLanguages();
   }, []);
 
   const handleSaveApiKey = async () => {
@@ -306,6 +343,115 @@ export default function SettingsPage() {
     }
   };
 
+  // Language management functions
+  const openLanguageModal = (language?: Language) => {
+    if (language) {
+      setEditingLanguage(language);
+      setLanguageCode(language.code);
+      setLanguageName(language.name);
+      setLanguageDescription(language.description || '');
+    } else {
+      setEditingLanguage(null);
+      setLanguageCode('');
+      setLanguageName('');
+      setLanguageDescription('');
+    }
+    setIsLanguageModalOpen(true);
+  };
+
+  const closeLanguageModal = () => {
+    setIsLanguageModalOpen(false);
+    setEditingLanguage(null);
+    setLanguageCode('');
+    setLanguageName('');
+    setLanguageDescription('');
+  };
+
+  const handleSaveLanguage = async () => {
+    if (!languageCode.trim() || !languageName.trim()) {
+      showError('언어 코드와 이름은 필수입니다.');
+      return;
+    }
+
+    setSavingLanguage(true);
+
+    try {
+      let response;
+
+      if (editingLanguage) {
+        // Update existing language
+        response = await fetch(`/api/languages/${editingLanguage.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: languageCode.trim(),
+            name: languageName.trim(),
+            description: languageDescription.trim() || null,
+          }),
+        });
+      } else {
+        // Create new language
+        response = await fetch('/api/languages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: languageCode.trim(),
+            name: languageName.trim(),
+            description: languageDescription.trim() || null,
+            display_order: languages.length,
+          }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '언어 저장 실패');
+      }
+
+      // Refresh languages list
+      const languagesResponse = await fetch('/api/languages');
+      if (languagesResponse.ok) {
+        const languagesData = await languagesResponse.json();
+        setLanguages(languagesData.languages || []);
+      }
+
+      showSuccess(editingLanguage ? '언어가 수정되었습니다.' : '언어가 추가되었습니다.');
+      closeLanguageModal();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '언어 저장에 실패했습니다.');
+    } finally {
+      setSavingLanguage(false);
+    }
+  };
+
+  const handleDeleteLanguage = async (language: Language) => {
+    if (!showConfirm(`언어 "${language.name}" (${language.code})을(를) 삭제하시겠습니까?`)) return;
+
+    try {
+      const response = await fetch(`/api/languages/${language.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '언어 삭제 실패');
+      }
+
+      // Refresh languages list
+      const languagesResponse = await fetch('/api/languages');
+      if (languagesResponse.ok) {
+        const languagesData = await languagesResponse.json();
+        setLanguages(languagesData.languages || []);
+      }
+
+      showSuccess('언어가 삭제되었습니다.');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '언어 삭제에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -396,80 +542,121 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Product Management */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <CardTitle>제품 관리</CardTitle>
-            <Button size="sm" onClick={() => openProductModal()}>
-              제품 추가
-            </Button>
-          </div>
-          <p className="text-sm text-gray-500 mb-4">
-            번역 관리에 사용되는 제품 목록을 관리합니다.
-          </p>
-          {loadingProducts ? (
-            <div className="text-center py-8 text-gray-500">로딩 중...</div>
-          ) : (
-            <div className="space-y-2">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge variant="info">{product.code}</Badge>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      {product.description && (
-                        <p className="text-xs text-gray-500">{product.description}</p>
-                      )}
+        {/* Product & Language Management - 2 Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Product Management */}
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle>제품 관리</CardTitle>
+              <Button size="sm" onClick={() => openProductModal()}>
+                제품 추가
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              번역 관리에 사용되는 제품 목록을 관리합니다.
+            </p>
+            {loadingProducts ? (
+              <div className="text-center py-8 text-gray-500">로딩 중...</div>
+            ) : (
+              <div className="space-y-2">
+                {products.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="info">{product.code}</Badge>
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        {product.description && (
+                          <p className="text-xs text-gray-500">{product.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openProductModal(product)}
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteProduct(product)}
+                      >
+                        삭제
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => openProductModal(product)}
-                    >
-                      수정
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => handleDeleteProduct(product)}
-                    >
-                      삭제
-                    </Button>
+                ))}
+                {products.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    등록된 제품이 없습니다.
                   </div>
-                </div>
-              ))}
-              {products.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  등록된 제품이 없습니다.
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Language Settings */}
-        <Card>
-          <CardTitle>지원 언어</CardTitle>
-          <p className="text-sm text-gray-500 mt-1 mb-4">
-            시스템에서 지원하는 번역 언어 목록입니다.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => (
-              <div
-                key={code}
-                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg"
-              >
-                <Badge variant="info">{code}</Badge>
-                <span className="text-sm text-gray-700">{name}</span>
+                )}
               </div>
-            ))}
-          </div>
-        </Card>
+            )}
+          </Card>
+
+          {/* Language Management */}
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle>언어 관리</CardTitle>
+              <Button size="sm" onClick={() => openLanguageModal()}>
+                언어 추가
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              번역 지원 언어 목록을 관리합니다.
+            </p>
+            {loadingLanguages ? (
+              <div className="text-center py-8 text-gray-500">로딩 중...</div>
+            ) : (
+              <div className="space-y-2">
+                {languages.map((language) => (
+                  <div
+                    key={language.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="info">{language.code}</Badge>
+                      <div>
+                        <p className="font-medium text-gray-900">{language.name}</p>
+                        {language.description && (
+                          <p className="text-xs text-gray-500">{language.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => openLanguageModal(language)}
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteLanguage(language)}
+                      >
+                        삭제
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {languages.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    등록된 언어가 없습니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
+
 
         {/* Data Management */}
         <Card>
@@ -563,6 +750,75 @@ export default function SettingsPage() {
                 disabled={!productCode.trim() || !productName.trim()}
               >
                 {editingProduct ? '수정' : '추가'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Language Modal */}
+      {isLanguageModalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingLanguage ? '언어 수정' : '언어 추가'}
+              </h3>
+              <button
+                onClick={closeLanguageModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <Input
+                label="언어 코드 *"
+                value={languageCode}
+                onChange={(e) => setLanguageCode(e.target.value)}
+                placeholder="예: ko, en, ja, zh-CN"
+                disabled={!!editingLanguage}
+              />
+              <Input
+                label="언어 이름 *"
+                value={languageName}
+                onChange={(e) => setLanguageName(e.target.value)}
+                placeholder="예: 한국어, English, 日本語"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명 (선택)
+                </label>
+                <textarea
+                  value={languageDescription}
+                  onChange={(e) => setLanguageDescription(e.target.value)}
+                  placeholder="언어에 대한 간단한 설명"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-[#818CF8] transition-colors"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+              <Button
+                variant="secondary"
+                onClick={closeLanguageModal}
+                disabled={savingLanguage}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSaveLanguage}
+                loading={savingLanguage}
+                disabled={!languageCode.trim() || !languageName.trim()}
+              >
+                {editingLanguage ? '수정' : '추가'}
               </Button>
             </div>
           </div>
