@@ -16,7 +16,7 @@ export default function ProductTabs({
   const products = Object.entries(PRODUCTS) as [ProductCode, string][];
 
   return (
-    <div className="bg-transparent border-b-2 border-[#C8E6C9]">
+    <div className="bg-transparent border-b-2 border-[#C7D2FE]">
       <nav className="-mb-px flex space-x-1 overflow-x-auto px-3 py-2" aria-label="Tabs">
         {showAll && (
           <button
@@ -25,8 +25,8 @@ export default function ProductTabs({
               whitespace-nowrap py-3 px-6 border-b-3 font-bold text-sm transition-all duration-200 rounded-t-xl
               ${
                 selectedProduct === null
-                  ? 'border-[#7BC96F] text-[#5FA654] bg-gradient-to-t from-[#E8F5E9] to-white shadow-lg transform translate-y-0.5'
-                  : 'border-transparent text-[#64748B] hover:text-[#5FA654] hover:bg-white/50'
+                  ? 'border-[#818CF8] text-[#4F46E5] bg-gradient-to-t from-[#E0E7FF] to-white shadow-lg transform translate-y-0.5'
+                  : 'border-transparent text-[#64748B] hover:text-[#4F46E5] hover:bg-white/50'
               }
             `}
             style={selectedProduct === null ? {
@@ -44,8 +44,8 @@ export default function ProductTabs({
               whitespace-nowrap py-3 px-6 border-b-3 font-bold text-sm transition-all duration-200 rounded-t-xl
               ${
                 selectedProduct === code
-                  ? 'border-[#7BC96F] text-[#5FA654] bg-gradient-to-t from-[#E8F5E9] to-white shadow-lg transform translate-y-0.5'
-                  : 'border-transparent text-[#64748B] hover:text-[#5FA654] hover:bg-white/50'
+                  ? 'border-[#818CF8] text-[#4F46E5] bg-gradient-to-t from-[#E0E7FF] to-white shadow-lg transform translate-y-0.5'
+                  : 'border-transparent text-[#64748B] hover:text-[#4F46E5] hover:bg-white/50'
               }
             `}
             style={selectedProduct === code ? {

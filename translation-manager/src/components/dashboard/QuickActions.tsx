@@ -12,7 +12,7 @@ export default function QuickActions({ glossaryCount = 0 }: QuickActionsProps) {
       {/* 번역 요청 */}
       <Link
         href="/upload"
-        className="px-4 py-2 bg-white border border-[#C8E6C9] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#5FA654] hover:border-[#7BC96F] hover:bg-white/80 transition-all duration-200"
+        className="px-4 py-2 bg-white border border-[#C7D2FE] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#4F46E5] hover:border-[#818CF8] hover:bg-white/80 transition-all duration-200"
       >
         번역 요청
       </Link>
@@ -20,7 +20,7 @@ export default function QuickActions({ glossaryCount = 0 }: QuickActionsProps) {
       {/* 번역 관리 */}
       <Link
         href="/translations"
-        className="px-4 py-2 bg-white border border-[#C8E6C9] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#5FA654] hover:border-[#7BC96F] hover:bg-white/80 transition-all duration-200"
+        className="px-4 py-2 bg-white border border-[#C7D2FE] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#4F46E5] hover:border-[#818CF8] hover:bg-white/80 transition-all duration-200"
       >
         번역 관리
       </Link>
@@ -28,7 +28,7 @@ export default function QuickActions({ glossaryCount = 0 }: QuickActionsProps) {
       {/* 용어집 관리 */}
       <Link
         href="/glossary"
-        className="px-4 py-2 bg-white border border-[#C8E6C9] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#5FA654] hover:border-[#7BC96F] hover:bg-white/80 transition-all duration-200"
+        className="px-4 py-2 bg-white border border-[#C7D2FE] rounded-lg text-sm font-semibold text-[#64748B] hover:text-[#4F46E5] hover:border-[#818CF8] hover:bg-white/80 transition-all duration-200"
       >
         용어집 관리
       </Link>

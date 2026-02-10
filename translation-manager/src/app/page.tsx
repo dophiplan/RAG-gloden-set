@@ -88,7 +88,7 @@ export default function DashboardPage() {
         subtitle="번역 현황을 한눈에 확인하세요."
       >
         <div className="flex flex-col items-center justify-center h-64">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-3 border-[#7BC96F]"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-3 border-[#818CF8]"></div>
           <p className="mt-4 text-[#64748B]">로딩 중...</p>
         </div>
       </DashboardLayout>
@@ -110,8 +110,8 @@ export default function DashboardPage() {
                 <p className="text-sm text-[#64748B]">전체 번역</p>
                 <p className="text-3xl font-bold text-[#1E293B]">{stats?.total || 0}</p>
               </div>
-              <div className="p-3 bg-[#E8F5E9] rounded-full">
-                <svg className="w-6 h-6 text-[#7BC96F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-3 bg-[#E0E7FF] rounded-full">
+                <svg className="w-6 h-6 text-[#818CF8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
               </div>

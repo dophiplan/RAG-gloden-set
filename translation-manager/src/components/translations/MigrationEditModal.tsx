@@ -34,7 +34,7 @@ export default function MigrationEditModal({
         <div className="space-y-3">
           <button
             onClick={onModify}
-            className="w-full px-4 py-3 bg-[#7BC96F] text-white font-semibold rounded-lg hover:bg-[#66BB6A] text-left"
+            className="w-full px-4 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] text-left"
           >
             <div className="flex items-start">
               <span className="text-lg mr-2">✏️</span>
