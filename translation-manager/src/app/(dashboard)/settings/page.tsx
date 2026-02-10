@@ -603,7 +603,7 @@ export default function SettingsPage() {
                     {product.description && (
                       <p className="text-sm text-gray-600 mb-4">{product.description}</p>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"
                         variant="secondary"
@@ -659,7 +659,7 @@ export default function SettingsPage() {
                     {language.description && (
                       <p className="text-sm text-gray-600 mb-4">{language.description}</p>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"
                         variant="secondary"
