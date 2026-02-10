@@ -4,6 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
 const navigation = [
   {
     name: '대시보드',
@@ -24,7 +29,16 @@ const navigation = [
     ),
   },
   {
-    name: 'PDF 업로드',
+    name: '용어집',
+    href: '/glossary',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ),
+  },
+  {
+    name: '번역 요청하기',
     href: '/upload',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -33,11 +47,12 @@ const navigation = [
     ),
   },
   {
-    name: '용어집',
-    href: '/glossary',
+    name: '데이터 마이그레이션',
+    href: '/settings/migration',
+    masterOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
       </svg>
     ),
   },
@@ -54,6 +69,7 @@ const navigation = [
   {
     name: '설정',
     href: '/settings',
+    masterOnly: true,
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -63,75 +79,104 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
 
   useEffect(() => {
-    // Fetch current user
+    // Fetch current user with roles
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(data => {
-        if (data.user) {
-          setUserEmail(data.user.email);
+        if (data.user && data.user.roles) {
+          setUserRoles(data.user.roles);
         }
       })
       .catch(console.error);
   }, []);
 
-  // Filter navigation based on user
+  // Filter navigation based on user role
   const filteredNavigation = navigation.filter(item => {
     if (item.masterOnly) {
-      return userEmail === 'nhkim@rsupport.com';
+      // Only show to master users
+      return userRoles.includes('master');
     }
     return true;
   });
 
   return (
-    <div className="flex flex-col w-64 bg-white border-r border-[#C8E6C9] min-h-screen" style={{
-      boxShadow: '2px 0 12px rgba(123, 201, 111, 0.12)'
-    }}>
-      {/* Logo */}
-      <div className="flex items-center h-16 px-5 border-b border-[#C8E6C9] bg-gradient-to-br from-[#7BC96F] via-[#66BB6A] to-[#5FA654]" style={{
-        boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && onClose && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        flex flex-col w-64 bg-white border-r border-[#C8E6C9] min-h-screen
+        fixed lg:static inset-y-0 left-0 z-50
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `} style={{
+        boxShadow: '2px 0 12px rgba(123, 201, 111, 0.12)'
       }}>
-        <h1 className="text-xl font-bold text-[#1E293B] tracking-tight drop-shadow-sm">Translation Manager</h1>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-2 bg-gradient-to-b from-white to-[#F1F8F4]">
-        {filteredNavigation.map((item) => {
-          // Exact match for root and translations, prefix match for others
-          let isActive;
-          if (item.href === '/') {
-            isActive = pathname === '/';
-          } else if (item.href === '/translations') {
-            isActive = pathname === '/translations' || pathname.startsWith('/translations/');
-          } else {
-            isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-          }
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`
-                flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200
-                ${isActive
-                  ? 'bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-[#1E293B] shadow-lg transform scale-[1.02]'
-                  : 'text-[#475569] hover:bg-[#F1F8F4] hover:text-[#5FA654] hover:shadow-sm'
-                }
-              `}
-              style={isActive ? {
-                boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
-              } : undefined}
+        {/* Logo */}
+        <div className="flex items-center h-16 px-5 border-b border-[#C8E6C9] bg-gradient-to-br from-[#7BC96F] via-[#66BB6A] to-[#5FA654]" style={{
+          boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+        }}>
+          <h1 className="text-xl font-bold text-[#1E293B] tracking-tight drop-shadow-sm">Translation Manager</h1>
+          {/* Close button for mobile */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="ml-auto lg:hidden text-[#1E293B] hover:text-white"
             >
-              <span className="mr-3">{item.icon}</span>
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-6 space-y-2 bg-gradient-to-b from-white to-[#F1F8F4]">
+          {filteredNavigation.map((item) => {
+            // Exact match for root and translations, prefix match for others
+            let isActive;
+            if (item.href === '/') {
+              isActive = pathname === '/';
+            } else if (item.href === '/translations') {
+              isActive = pathname === '/translations' || pathname.startsWith('/translations/');
+            } else {
+              isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            }
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose}
+                className={`
+                  flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200
+                  ${isActive
+                    ? 'bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-[#1E293B] shadow-lg transform scale-[1.02]'
+                    : 'text-[#475569] hover:bg-[#F1F8F4] hover:text-[#5FA654] hover:shadow-sm'
+                  }
+                `}
+                style={isActive ? {
+                  boxShadow: '0 4px 12px rgba(123, 201, 111, 0.35)'
+                } : undefined}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
 }
