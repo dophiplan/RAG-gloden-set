@@ -25,7 +25,7 @@ export function showSuccess(message: string, options?: ToastOptions): void {
               options.action!.onClick();
               toast.dismiss(t.id);
             }}
-            className="px-3 py-1 text-sm font-medium text-white bg-[#5FA654] rounded hover:bg-[#4a8542] transition-colors"
+            className="px-3 py-1 text-sm font-medium text-white bg-[#4F46E5] rounded hover:bg-[#4a8542] transition-colors"
           >
             {options.action!.label}
           </button>

@@ -35,7 +35,7 @@ export default function StatusRevertModal({
         <div className="space-y-3">
           <button
             onClick={() => onConfirm('in_progress')}
-            className="w-full px-4 py-3 bg-[#E8F5E9] text-[#5FA654] font-semibold rounded-lg hover:bg-[#C8E6C9] text-left"
+            className="w-full px-4 py-3 bg-[#E0E7FF] text-[#4F46E5] font-semibold rounded-lg hover:bg-[#C7D2FE] text-left"
           >
             <div>
               <p className="font-semibold">진행 중 (in_progress)</p>

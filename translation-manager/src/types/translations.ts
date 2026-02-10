@@ -9,7 +9,7 @@ export type Scope = 'SaaS' | 'Solution' | '정부과제' | '기타';
 
 export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string; label: string }> = {
   pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '번역 요청' },
-  in_progress: { bg: 'bg-[#E8F5E9]', text: 'text-[#5FA654]', label: '진행 중' },
+  in_progress: { bg: 'bg-[#E0E7FF]', text: 'text-[#4F46E5]', label: '진행 중' },
   reviewed: { bg: 'bg-white', text: 'text-gray-800', label: '검수 완료' },
   deployed: { bg: 'bg-gray-100', text: 'text-gray-500', label: '반영 완료' },
 };

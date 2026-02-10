@@ -97,7 +97,7 @@ export default function GlossaryPage() {
         {loading ? (
           <Card>
             <div className="p-12 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#7BC96F]"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#818CF8]"></div>
               <p className="mt-4 text-[#64748B]">로딩 중...</p>
             </div>
           </Card>

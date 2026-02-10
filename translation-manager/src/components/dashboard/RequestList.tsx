@@ -254,7 +254,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
           <CardTitle>요청 리스트</CardTitle>
         </CardHeader>
         <div className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#7BC96F]"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#818CF8]"></div>
           <p className="mt-4 text-[#64748B]">로딩 중...</p>
         </div>
       </Card>
@@ -294,7 +294,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
       </CardHeader>
 
       {/* Tab Navigation */}
-      <div className="px-6 flex border-b border-[#C8E6C9]">
+      <div className="px-6 flex border-b border-[#C7D2FE]">
         {tabs.map(tab => (
           <button
             key={tab.status}
@@ -303,8 +303,8 @@ export default function RequestList({ requests, loading = false, onStatusChange 
               px-4 py-2 font-semibold text-sm transition-all
               ${
                 activeTab === tab.status
-                  ? 'border-b-2 border-[#7BC96F] text-[#5FA654]'
-                  : 'text-[#64748B] hover:text-[#5FA654]'
+                  ? 'border-b-2 border-[#818CF8] text-[#4F46E5]'
+                  : 'text-[#64748B] hover:text-[#4F46E5]'
               }
             `}
           >
@@ -387,7 +387,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                   <td>
                     {request.deployed_at ? formatDate(request.deployed_at) : '-'}
                   </td>
-                  <td className="font-semibold text-[#5FA654]">
+                  <td className="font-semibold text-[#4F46E5]">
                     {request.translation_count}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>

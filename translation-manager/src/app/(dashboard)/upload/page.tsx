@@ -58,7 +58,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                 transition-all duration-200
                 ${
                   currentStep >= step.num
-                    ? 'bg-[#7BC96F] text-white shadow-lg'
+                    ? 'bg-[#818CF8] text-white shadow-lg'
                     : 'bg-gray-200 text-gray-500'
                 }
               `}
@@ -71,7 +71,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
                 step.num
               )}
             </div>
-            <span className={`mt-2 text-xs font-medium ${currentStep >= step.num ? 'text-[#5FA654]' : 'text-gray-500'}`}>
+            <span className={`mt-2 text-xs font-medium ${currentStep >= step.num ? 'text-[#4F46E5]' : 'text-gray-500'}`}>
               {step.label}
             </span>
           </div>
@@ -79,7 +79,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             <div
               className={`
                 w-24 h-1 mx-4 rounded transition-all duration-200
-                ${currentStep > step.num ? 'bg-[#7BC96F]' : 'bg-gray-200'}
+                ${currentStep > step.num ? 'bg-[#818CF8]' : 'bg-gray-200'}
               `}
             />
           )}
@@ -138,7 +138,7 @@ function LanguageChipSelector({
           <button
             type="button"
             onClick={selectAll}
-            className="text-xs text-[#5FA654] hover:text-[#4A8F42] font-medium"
+            className="text-xs text-[#4F46E5] hover:text-[#4A8F42] font-medium"
           >
             전체 선택
           </button>
@@ -165,7 +165,7 @@ function LanguageChipSelector({
                 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
                 ${
                   isSelected
-                    ? 'bg-[#7BC96F] text-white shadow-md hover:bg-[#66BB6A]'
+                    ? 'bg-[#818CF8] text-white shadow-md hover:bg-[#6366F1]'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }
               `}
@@ -532,7 +532,7 @@ export default function UploadPage() {
             <div className="w-full flex-shrink-0 px-4">
               <Card>
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-[#7BC96F] text-white flex items-center justify-center font-semibold">
+                  <div className="w-8 h-8 rounded-full bg-[#818CF8] text-white flex items-center justify-center font-semibold">
                     1
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">파일 업로드</h3>
@@ -578,7 +578,7 @@ export default function UploadPage() {
                           pattern="[A-Za-z0-9.\-_]+"
                           title="숫자, 영문, 점(.), 하이픈(-), 언더스코어(_)만 입력 가능합니다"
                           required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
                         />
                       </div>
                       <Select
@@ -621,7 +621,7 @@ export default function UploadPage() {
                           className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
                             isInvalidDate
                               ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-[#7BC96F]'
+                              : 'border-gray-300 focus:ring-[#818CF8]'
                           }`}
                         />
                         {dateWarning && (
@@ -719,7 +719,7 @@ export default function UploadPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#7BC96F] text-white flex items-center justify-center font-semibold">
+                  <div className="w-8 h-8 rounded-full bg-[#818CF8] text-white flex items-center justify-center font-semibold">
                     3
                   </div>
                   <div>
@@ -809,7 +809,7 @@ export default function UploadPage() {
                               type="checkbox"
                               checked={allSelected}
                               onChange={toggleAll}
-                              className="w-4 h-4 text-[#7BC96F] rounded border-gray-300 focus:ring-[#7BC96F]"
+                              className="w-4 h-4 text-[#818CF8] rounded border-gray-300 focus:ring-[#818CF8]"
                             />
                             <span className="text-sm font-medium text-gray-700">전체 선택</span>
                           </label>
@@ -822,7 +822,7 @@ export default function UploadPage() {
                                 flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
                                 ${
                                   selectedTexts.has(index)
-                                    ? 'border-[#7BC96F] bg-green-50'
+                                    ? 'border-[#818CF8] bg-green-50'
                                     : 'border-gray-200 bg-white hover:border-gray-300'
                                 }
                               `}
@@ -831,7 +831,7 @@ export default function UploadPage() {
                                 type="checkbox"
                                 checked={selectedTexts.has(index)}
                                 onChange={() => toggleText(index)}
-                                className="mt-0.5 w-4 h-4 text-[#7BC96F] rounded border-gray-300 focus:ring-[#7BC96F]"
+                                className="mt-0.5 w-4 h-4 text-[#818CF8] rounded border-gray-300 focus:ring-[#818CF8]"
                               />
                               <p className="text-sm text-gray-900 flex-1">{text}</p>
                             </label>
@@ -902,7 +902,7 @@ export default function UploadPage() {
                   }
                 }}
                 className={`w-2 h-2 rounded-full transition-all ${
-                  currentStep === step ? 'bg-[#7BC96F] w-8' : 'bg-gray-300'
+                  currentStep === step ? 'bg-[#818CF8] w-8' : 'bg-gray-300'
                 }`}
                 aria-label={`Step ${step}`}
               />
