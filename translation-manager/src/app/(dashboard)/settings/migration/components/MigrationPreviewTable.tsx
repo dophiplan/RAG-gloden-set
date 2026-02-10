@@ -139,7 +139,7 @@ export default function MigrationPreviewTable({
               moveToGlossary(entry.id);
             }
           }}
-          className="ml-2 p-1 text-gray-400 hover:text-[#7BC96F] transition-colors"
+          className="ml-2 p-1 text-gray-400 hover:text-[#818CF8] transition-colors"
           title={type === 'glossary' ? '번역으로 이동' : '용어집으로 이동'}
         >
           {type === 'glossary' ? '→' : '←'}
@@ -154,7 +154,7 @@ export default function MigrationPreviewTable({
           return (
             <span
               key={langCode}
-              className="inline-flex items-center px-2 py-1 bg-[#E8F5E9] text-[#5FA654] text-xs rounded"
+              className="inline-flex items-center px-2 py-1 bg-[#E0E7FF] text-[#4F46E5] text-xs rounded"
               title={text}
             >
               {langCode.toUpperCase()}
@@ -186,7 +186,7 @@ export default function MigrationPreviewTable({
       <div className="grid grid-cols-2 gap-6 mb-6">
         {/* Glossary Column */}
         <div>
-          <div className="bg-gradient-to-r from-[#7BC96F] to-[#66BB6A] text-white px-4 py-3 rounded-t-lg">
+          <div className="bg-gradient-to-r from-[#818CF8] to-[#6366F1] text-white px-4 py-3 rounded-t-lg">
             <h3 className="font-semibold">용어집 ({glossaryEntries.length})</h3>
           </div>
           <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-gray-50 min-h-[400px]">
@@ -204,7 +204,7 @@ export default function MigrationPreviewTable({
 
         {/* Translations Column */}
         <div>
-          <div className="bg-gradient-to-r from-[#66BB6A] to-[#5FA654] text-white px-4 py-3 rounded-t-lg">
+          <div className="bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white px-4 py-3 rounded-t-lg">
             <h3 className="font-semibold">번역 ({translationEntries.length})</h3>
           </div>
           <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-gray-50 min-h-[400px]">
