@@ -16,6 +16,14 @@ interface UserProfile {
   name: string | null;
 }
 
+interface Product {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+}
+
 export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +32,16 @@ export default function SettingsPage() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [isRsupportUser, setIsRsupportUser] = useState(false);
   const supabase = createClient();
+
+  // Products management
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productCode, setProductCode] = useState('');
+  const [productName, setProductName] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [savingProduct, setSavingProduct] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -77,6 +95,26 @@ export default function SettingsPage() {
     }
 
     fetchUser();
+  }, []);
+
+  // Fetch products
+  useEffect(() => {
+    async function fetchProducts() {
+      setLoadingProducts(true);
+      try {
+        const response = await fetch('/api/products');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    }
+
+    fetchProducts();
   }, []);
 
   const handleSaveApiKey = async () => {
@@ -156,6 +194,115 @@ export default function SettingsPage() {
       showError('API 키 삭제에 실패했습니다.');
     } finally {
       setSavingApiKey(false);
+    }
+  };
+
+  // Product management functions
+  const openProductModal = (product?: Product) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductCode(product.code);
+      setProductName(product.name);
+      setProductDescription(product.description || '');
+    } else {
+      setEditingProduct(null);
+      setProductCode('');
+      setProductName('');
+      setProductDescription('');
+    }
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setEditingProduct(null);
+    setProductCode('');
+    setProductName('');
+    setProductDescription('');
+  };
+
+  const handleSaveProduct = async () => {
+    if (!productCode.trim() || !productName.trim()) {
+      showError('제품 코드와 이름은 필수입니다.');
+      return;
+    }
+
+    setSavingProduct(true);
+
+    try {
+      let response;
+
+      if (editingProduct) {
+        // Update existing product
+        response = await fetch(`/api/products/${editingProduct.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: productCode.trim(),
+            name: productName.trim(),
+            description: productDescription.trim() || null,
+          }),
+        });
+      } else {
+        // Create new product
+        response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: productCode.trim(),
+            name: productName.trim(),
+            description: productDescription.trim() || null,
+            display_order: products.length,
+          }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '제품 저장 실패');
+      }
+
+      // Refresh products list
+      const productsResponse = await fetch('/api/products');
+      if (productsResponse.ok) {
+        const productsData = await productsResponse.json();
+        setProducts(productsData.products || []);
+      }
+
+      showSuccess(editingProduct ? '제품이 수정되었습니다.' : '제품이 추가되었습니다.');
+      closeProductModal();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '제품 저장에 실패했습니다.');
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const handleDeleteProduct = async (product: Product) => {
+    if (!showConfirm(`제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`)) return;
+
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '제품 삭제 실패');
+      }
+
+      // Refresh products list
+      const productsResponse = await fetch('/api/products');
+      if (productsResponse.ok) {
+        const productsData = await productsResponse.json();
+        setProducts(productsData.products || []);
+      }
+
+      showSuccess('제품이 삭제되었습니다.');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '제품 삭제에 실패했습니다.');
     }
   };
 
@@ -249,6 +396,62 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+        {/* Product Management */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>제품 관리</CardTitle>
+            <Button size="sm" onClick={() => openProductModal()}>
+              제품 추가
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            번역 관리에 사용되는 제품 목록을 관리합니다.
+          </p>
+          {loadingProducts ? (
+            <div className="text-center py-8 text-gray-500">로딩 중...</div>
+          ) : (
+            <div className="space-y-2">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Badge variant="info">{product.code}</Badge>
+                    <div>
+                      <p className="font-medium text-gray-900">{product.name}</p>
+                      {product.description && (
+                        <p className="text-xs text-gray-500">{product.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => openProductModal(product)}
+                    >
+                      수정
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => handleDeleteProduct(product)}
+                    >
+                      삭제
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  등록된 제품이 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+
         {/* Language Settings */}
         <Card>
           <CardTitle>지원 언어</CardTitle>
@@ -296,6 +499,75 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Product Modal */}
+      {isProductModalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingProduct ? '제품 수정' : '제품 추가'}
+              </h3>
+              <button
+                onClick={closeProductModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <Input
+                label="제품 코드 *"
+                value={productCode}
+                onChange={(e) => setProductCode(e.target.value)}
+                placeholder="예: RC, RV, RM"
+                disabled={!!editingProduct}
+              />
+              <Input
+                label="제품 이름 *"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="예: RemoteCall"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명 (선택)
+                </label>
+                <textarea
+                  value={productDescription}
+                  onChange={(e) => setProductDescription(e.target.value)}
+                  placeholder="제품에 대한 간단한 설명"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-[#818CF8] transition-colors"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+              <Button
+                variant="secondary"
+                onClick={closeProductModal}
+                disabled={savingProduct}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSaveProduct}
+                loading={savingProduct}
+                disabled={!productCode.trim() || !productName.trim()}
+              >
+                {editingProduct ? '수정' : '추가'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
