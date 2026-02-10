@@ -25,7 +25,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             focus:outline-none focus:ring-3 transition-all duration-200
             ${error
               ? 'border-red-300 focus:ring-red-500/20 focus:border-red-500'
-              : 'border-[#C8E6C9] focus:ring-[#7BC96F]/15 focus:border-[#7BC96F]'
+              : 'border-[#E0E7FF] focus:ring-[#818CF8]/15 focus:border-[#818CF8]'
             }
             ${className}
           `}
