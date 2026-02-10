@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
-import LanguageCheckboxGroup from '@/components/LanguageCheckboxGroup';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -14,6 +13,7 @@ import { ProductCode, PriorityLevel, LanguageCode } from '@/types';
 import { PRODUCT_SELECT_OPTIONS, SCOPE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants';
 import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
+import { calculateDeadline, formatDeadline } from '@/lib/utils/holidays';
 
 interface ParseResult {
   success: boolean;
@@ -39,6 +39,146 @@ interface ParseResult {
   error?: string;
 }
 
+// Step indicator component
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  const steps = [
+    { num: 1, label: '파일 업로드' },
+    { num: 2, label: '정보 입력' },
+    { num: 3, label: '텍스트 확인' },
+  ];
+
+  return (
+    <div className="flex items-center justify-center mb-8">
+      {steps.map((step, index) => (
+        <div key={step.num} className="flex items-center">
+          <div className="flex flex-col items-center">
+            <div
+              className={`
+                w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                transition-all duration-200
+                ${
+                  currentStep >= step.num
+                    ? 'bg-[#7BC96F] text-white shadow-lg'
+                    : 'bg-gray-200 text-gray-500'
+                }
+              `}
+            >
+              {currentStep > step.num ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                step.num
+              )}
+            </div>
+            <span className={`mt-2 text-xs font-medium ${currentStep >= step.num ? 'text-[#5FA654]' : 'text-gray-500'}`}>
+              {step.label}
+            </span>
+          </div>
+          {index < steps.length - 1 && (
+            <div
+              className={`
+                w-24 h-1 mx-4 rounded transition-all duration-200
+                ${currentStep > step.num ? 'bg-[#7BC96F]' : 'bg-gray-200'}
+              `}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Language name mapping
+const LANGUAGE_NAMES: Record<LanguageCode, string> = {
+  ko: '한국어',
+  en: 'English',
+  ja: '日本語',
+  'zh-CN': '中文简体',
+  'zh-TW': '中文繁體',
+  fr: 'Français',
+  es: 'Español',
+  pt: 'Português',
+  de: 'Deutsch',
+};
+
+// Language chip selector
+function LanguageChipSelector({
+  selectedLanguages,
+  onChange,
+  availableLanguages,
+}: {
+  selectedLanguages: LanguageCode[];
+  onChange: (languages: LanguageCode[]) => void;
+  availableLanguages: LanguageCode[];
+}) {
+  const toggleLanguage = (code: LanguageCode) => {
+    if (selectedLanguages.includes(code)) {
+      onChange(selectedLanguages.filter((l) => l !== code));
+    } else {
+      onChange([...selectedLanguages, code]);
+    }
+  };
+
+  const selectAll = () => {
+    onChange(availableLanguages);
+  };
+
+  const deselectAll = () => {
+    onChange([]);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-semibold text-gray-900">
+          번역 언어 선택 <span className="text-red-500">*</span>
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={selectAll}
+            className="text-xs text-[#5FA654] hover:text-[#4A8F42] font-medium"
+          >
+            전체 선택
+          </button>
+          <span className="text-gray-300">|</span>
+          <button
+            type="button"
+            onClick={deselectAll}
+            className="text-xs text-gray-600 hover:text-gray-800 font-medium"
+          >
+            전체 해제
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {availableLanguages.map((code) => {
+          const isSelected = selectedLanguages.includes(code);
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => toggleLanguage(code)}
+              title={LANGUAGE_NAMES[code]} // 툴팁으로 풀네임 표시
+              className={`
+                px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                ${
+                  isSelected
+                    ? 'bg-[#7BC96F] text-white shadow-md hover:bg-[#66BB6A]'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }
+              `}
+            >
+              {code.toUpperCase()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -51,6 +191,40 @@ export default function UploadPage() {
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedTexts, setSelectedTexts] = useState<Set<number>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completionDate, setCompletionDate] = useState('');
+  const [dateWarning, setDateWarning] = useState('');
+  const [holidays, setHolidays] = useState<Array<{ holiday_date: string; name: string }>>([]);
+  const [isInvalidDate, setIsInvalidDate] = useState(false);
+
+  // Navigation handlers
+  const goToNextStep = () => {
+    if (currentStep === 1 && uploadedFiles.length === 0) {
+      showError('파일을 먼저 업로드해주세요.');
+      return;
+    }
+    if (currentStep === 2 && (!productCode || !scope || !version || !completionDate)) {
+      showError('필수 정보를 입력해주세요.');
+      return;
+    }
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const canGoNext = () => {
+    if (currentStep === 1) return uploadedFiles.length > 0;
+    if (currentStep === 2) return productCode && scope && version && completionDate;
+    return false;
+  };
 
   // Update languages when product changes
   useEffect(() => {
@@ -61,6 +235,29 @@ export default function UploadPage() {
       setSelectedLanguages(['en', 'ja']);
     }
   }, [productCode]);
+
+  // Fetch Korean and Japanese holidays
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const response = await fetch('/api/holidays');
+        const result = await response.json();
+        if (result.data) setHolidays(result.data);
+      } catch (error) {
+        console.error('Failed to fetch holidays:', error);
+      }
+    };
+    fetchHolidays();
+  }, []);
+
+  // Auto-calculate completion date (today + 3 business days)
+  useEffect(() => {
+    if (holidays.length > 0 && !completionDate) {
+      const today = new Date();
+      const defaultDate = calculateDeadline(today, 3, holidays);
+      setCompletionDate(formatDeadline(defaultDate));
+    }
+  }, [holidays, completionDate]);
 
   const handleFilesChange = (files: UploadedFile[]) => {
     setUploadedFiles(files);
@@ -78,7 +275,6 @@ export default function UploadPage() {
           allTexts.push(...result.texts);
         }
       });
-      // Select all by default
       setSelectedTexts(new Set(allTexts.map((_, index) => index)));
     }
   }, [parseResult]);
@@ -106,12 +302,10 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
 
-      // Append all files
       uploadedFiles.forEach((uploadedFile) => {
         formData.append('files', uploadedFile.file);
       });
 
-      // Append metadata
       if (scope) formData.append('scope', scope);
       if (productCode) formData.append('product_code', productCode);
       if (version) formData.append('version', version);
@@ -129,12 +323,12 @@ export default function UploadPage() {
 
       setParseResult(data);
 
-      // Calculate total extracted texts
       const totalTexts = data.summary?.totalTexts || 0;
 
-      // If parsing was successful, show success message
       if (data.success && totalTexts > 0) {
         showSuccess(`${totalTexts}개의 텍스트가 추출되었습니다.`);
+        // Automatically go to step 3 after successful parsing
+        setCurrentStep(3);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '오류가 발생했습니다.';
@@ -149,10 +343,85 @@ export default function UploadPage() {
     router.push('/issues');
   };
 
+  // Page-wide drag and drop handlers with counter pattern
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setDragCounter(prev => {
+        const newCount = prev + 1;
+        if (newCount === 1 && e.dataTransfer?.types.includes('Files')) {
+          setIsDragging(true);
+        }
+        return newCount;
+      });
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setDragCounter(prev => {
+        const newCount = prev - 1;
+        if (newCount <= 0) {
+          setIsDragging(false);
+          return 0;
+        }
+        return newCount;
+      });
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      setDragCounter(0);
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer?.files || []);
+      if (files.length > 0) {
+        const uploadedFileObjects: UploadedFile[] = files.map((file) => ({
+          file,
+          id: `${file.name}-${Date.now()}-${Math.random()}`,
+        }));
+        setUploadedFiles(uploadedFileObjects);
+        setParseResult(null);
+        setError(null);
+        setSelectedTexts(new Set());
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDragCounter(0);
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter as any);
+    window.addEventListener('dragover', handleDragOver as any);
+    window.addEventListener('dragleave', handleDragLeave as any);
+    window.addEventListener('drop', handleDrop as any);
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter as any);
+      window.removeEventListener('dragover', handleDragOver as any);
+      window.removeEventListener('dragleave', handleDragLeave as any);
+      window.removeEventListener('drop', handleDrop as any);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   const handleAddTranslations = async () => {
     if (!parseResult) return;
 
-    // Collect all extracted texts from results
     const allTexts: string[] = [];
     if (parseResult.results && Array.isArray(parseResult.results)) {
       parseResult.results.forEach((result) => {
@@ -162,7 +431,6 @@ export default function UploadPage() {
       });
     }
 
-    // Filter only selected texts
     const selectedTextsArray = allTexts.filter((_, index) => selectedTexts.has(index));
 
     if (selectedTextsArray.length === 0) {
@@ -181,7 +449,6 @@ export default function UploadPage() {
     }
 
     try {
-      // Save to database using bulk create API
       const response = await fetch('/api/translations/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,6 +459,7 @@ export default function UploadPage() {
           scope: scope || undefined,
           priority: priority,
           languages: selectedLanguages,
+          completion_date: completionDate || undefined,
         }),
       });
 
@@ -209,8 +477,6 @@ export default function UploadPage() {
       console.log('Bulk create success:', data);
       showSuccess(`${data.created}개의 번역 항목이 추가되었습니다.`);
 
-      // Navigate with refresh flag to force data reload
-      // Timestamp ensures URL change triggers useEffect
       if (productCode) {
         router.push(`/translations?product=${productCode}&refresh=${Date.now()}`);
       } else {
@@ -224,100 +490,194 @@ export default function UploadPage() {
 
   return (
     <DashboardLayout
-      title="PDF 업로드"
-      subtitle="기획서 PDF 또는 이미지를 업로드하면 따옴표로 감싼 텍스트를 자동으로 추출합니다. 파싱에 실패한 경우 이슈로 등록되어 나중에 확인할 수 있습니다."
+      title="번역 요청하기"
+      subtitle="PDF 또는 이미지를 업로드하여 번역 요청을 간편하게 생성하세요"
     >
-      <div className="w-full">
-        {/* 2-Column Layout: Configuration + File Upload */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Left: Configuration */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">파일 정보</h3>
-            <div className="space-y-4">
-              {/* 2x2 Grid for basic fields */}
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label="제품 *"
-                  value={productCode}
-                  onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
-                  options={PRODUCT_SELECT_OPTIONS}
+      {/* Page-wide drag overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 bg-blue-500 bg-opacity-20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-lg shadow-2xl p-8 border-4 border-dashed border-blue-500">
+            <div className="flex flex-col items-center gap-4">
+              <svg
+                className="w-16 h-16 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
-                <Select
-                  label="제품 분류 *"
-                  value={scope}
-                  onChange={(e) => setScope(e.target.value as 'SaaS' | 'Solution' | '')}
-                  options={SCOPE_OPTIONS}
-                />
-                <Input
-                  label="버전"
-                  value={version}
-                  onChange={(e) => setVersion(e.target.value)}
-                  placeholder="예: 2.0.0"
-                />
-                <Select
-                  label="중요도"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                  options={PRIORITY_OPTIONS}
-                />
-              </div>
-              {/* Language selection - full width */}
-              <LanguageCheckboxGroup
-                selectedLanguages={selectedLanguages}
-                onChange={setSelectedLanguages}
-                availableLanguages={getAllSelectableLanguages()}
-                label="번역 언어 선택"
-                required={true}
-              />
+              </svg>
+              <p className="text-xl font-semibold text-gray-900">파일을 여기에 드롭하세요</p>
+              <p className="text-sm text-gray-600">PDF, PNG, JPG 파일 지원</p>
             </div>
-          </Card>
+          </div>
+        </div>
+      )}
 
-          {/* Right: File Uploader */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">파일 업로드</h3>
-            <FileUploader
-              onFilesChange={handleFilesChange}
-              maxFiles={5}
-            />
+      <div className="max-w-6xl mx-auto">
+        {/* Step Indicator */}
+        <StepIndicator currentStep={currentStep} />
 
-            {/* Upload Button - shown when files are uploaded */}
-            {uploadedFiles.length > 0 && (
-              <div className="mt-6 pt-6 border-t">
-                <div className="flex items-center justify-between">
+        {/* Step Container with horizontal layout */}
+        <div className="relative overflow-hidden">
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${(currentStep - 1) * 100}%)` }}
+          >
+            {/* Step 1: File Upload */}
+            <div className="w-full flex-shrink-0 px-4">
+              <Card>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-[#7BC96F] text-white flex items-center justify-center font-semibold">
+                    1
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">파일 업로드</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  번역할 텍스트가 포함된 PDF 또는 이미지 파일을 업로드하세요
+                </p>
+                <FileUploader onFilesChange={handleFilesChange} maxFiles={5} />
+              </Card>
+            </div>
+
+            {/* Step 2: Information */}
+            <div className="w-full flex-shrink-0 px-4">
+              <Card>
+                <div className="space-y-6">
+                  {/* Basic Information */}
                   <div>
-                    <p className="text-sm text-gray-600">
-                      {uploadedFiles.length}개 파일 준비됨
-                    </p>
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      {scope && (
-                        <Badge variant="info">
-                          {scope}
-                        </Badge>
-                      )}
-                      {productCode && (
-                        <Badge variant="success">
-                          {productCode}
-                        </Badge>
-                      )}
-                      {version && (
-                        <Badge variant="warning">
-                          v{version}
-                        </Badge>
-                      )}
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Select
+                        label="제품"
+                        value={productCode}
+                        onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
+                        options={PRODUCT_SELECT_OPTIONS}
+                        required
+                      />
+                      <Select
+                        label="제품 분류"
+                        value={scope}
+                        onChange={(e) => setScope(e.target.value as any)}
+                        options={SCOPE_OPTIONS}
+                        required
+                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          버전 <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={version}
+                          onChange={(e) => setVersion(e.target.value)}
+                          placeholder="예: 2.0.0"
+                          pattern="[A-Za-z0-9.\-_]+"
+                          title="숫자, 영문, 점(.), 하이픈(-), 언더스코어(_)만 입력 가능합니다"
+                          required
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7BC96F] focus:border-transparent"
+                        />
+                      </div>
+                      <Select
+                        label="중요도"
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value as PriorityLevel)}
+                        options={PRIORITY_OPTIONS}
+                        required
+                      />
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          요청 완료일 <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={completionDate}
+                          onChange={(e) => {
+                            const selectedDate = new Date(e.target.value);
+                            setCompletionDate(e.target.value);
+
+                            // Check if weekend or holiday
+                            const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
+                            const isHoliday = holidays.some(h => h.holiday_date === e.target.value);
+                            const invalid = isWeekend || isHoliday;
+
+                            setIsInvalidDate(invalid);
+
+                            if (invalid) {
+                              const holidayName = holidays.find(h => h.holiday_date === e.target.value)?.name;
+                              setDateWarning(
+                                isHoliday
+                                  ? `⚠️ ${holidayName} - 휴일입니다. 완료일로 선택하시겠습니까?`
+                                  : '⚠️ 주말입니다. 완료일로 선택하시겠습니까?'
+                              );
+                            } else {
+                              setDateWarning('');
+                            }
+                          }}
+                          required
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                            isInvalidDate
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-[#7BC96F]'
+                          }`}
+                        />
+                        {dateWarning && (
+                          <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                            {dateWarning}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button
-                    onClick={handleParse}
-                    loading={isUploading}
-                    disabled={isUploading || !productCode || !scope}
-                  >
-                    {isUploading ? '파싱 중...' : '파일 파싱'}
-                  </Button>
+
+                  {/* Language Selection */}
+                  <LanguageChipSelector
+                    selectedLanguages={selectedLanguages}
+                    onChange={setSelectedLanguages}
+                    availableLanguages={getAllSelectableLanguages()}
+                  />
+
+                  {/* Action Buttons with Language Counter */}
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <p className="text-sm text-gray-600">
+                      {selectedLanguages.length}개 언어 선택됨
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        onClick={async () => {
+                          await handleParse();
+                          if (parseResult) {
+                            setCurrentStep(3);
+                          }
+                        }}
+                        loading={isUploading}
+                        disabled={isUploading || !productCode || !scope || !version || !completionDate}
+                      >
+                        {isUploading ? '파싱 중...' : '텍스트 추출하기'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setUploadedFiles([]);
+                          setParseResult(null);
+                          setError(null);
+                          setSelectedTexts(new Set());
+                          setCurrentStep(1);
+                        }}
+                      >
+                        초기화
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </Card>
-        </div>
+              </Card>
+            </div>
+
+            {/* Step 3: Parse Results */}
+            <div className="w-full flex-shrink-0 px-4">
 
         {/* Error Display */}
         {error && (
@@ -353,23 +713,28 @@ export default function UploadPage() {
           </Card>
         )}
 
-        {/* Parse Results */}
-        {parseResult && parseResult.success && (
-          <Card>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">파싱 완료</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {parseResult.summary?.totalTexts || 0}개의 텍스트를 추출했습니다.
-                  </p>
+            {/* Step 3: Parse Results - moved inside slider */}
+            {parseResult && parseResult.success ? (
+              <Card>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#7BC96F] text-white flex items-center justify-center font-semibold">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">추출된 텍스트 확인</h3>
+                    <p className="text-sm text-gray-600">
+                      {parseResult.summary?.totalTexts || 0}개의 텍스트가 추출되었습니다
+                    </p>
+                  </div>
                 </div>
                 <Badge variant="success">완료</Badge>
-              </div>
+                  </div>
 
-              {/* Issues Created */}
-              {parseResult.issues_created && parseResult.issues_created.length > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  {/* Issues Created */}
+                  {parseResult.issues_created && parseResult.issues_created.length > 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-start gap-3">
                     <svg
                       className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
@@ -400,98 +765,166 @@ export default function UploadPage() {
                       </Button>
                     </div>
                   </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {/* Extracted Texts Preview */}
-              {(() => {
-                const allTexts: string[] = [];
-                if (parseResult.results && Array.isArray(parseResult.results)) {
-                  parseResult.results.forEach((result) => {
-                    if (result.success && result.texts && Array.isArray(result.texts)) {
-                      allTexts.push(...result.texts);
+                  {/* Extracted Texts */}
+                  {(() => {
+                    const allTexts: string[] = [];
+                    if (parseResult.results && Array.isArray(parseResult.results)) {
+                      parseResult.results.forEach((result) => {
+                        if (result.success && result.texts && Array.isArray(result.texts)) {
+                          allTexts.push(...result.texts);
+                        }
+                      });
                     }
-                  });
-                }
 
-                const allSelected = allTexts.length > 0 && selectedTexts.size === allTexts.length;
-                const toggleAll = () => {
-                  if (allSelected) {
-                    setSelectedTexts(new Set());
-                  } else {
-                    setSelectedTexts(new Set(allTexts.map((_, index) => index)));
-                  }
-                };
+                    const allSelected = allTexts.length > 0 && selectedTexts.size === allTexts.length;
+                    const toggleAll = () => {
+                      if (allSelected) {
+                        setSelectedTexts(new Set());
+                      } else {
+                        setSelectedTexts(new Set(allTexts.map((_, index) => index)));
+                      }
+                    };
 
-                const toggleText = (index: number) => {
-                  const newSelected = new Set(selectedTexts);
-                  if (newSelected.has(index)) {
-                    newSelected.delete(index);
-                  } else {
-                    newSelected.add(index);
-                  }
-                  setSelectedTexts(newSelected);
-                };
+                    const toggleText = (index: number) => {
+                      const newSelected = new Set(selectedTexts);
+                      if (newSelected.has(index)) {
+                        newSelected.delete(index);
+                      } else {
+                        newSelected.add(index);
+                      }
+                      setSelectedTexts(newSelected);
+                    };
 
-                return allTexts.length > 0 ? (
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium text-gray-700">
-                        추출된 텍스트 ({selectedTexts.size}개 선택됨)
-                      </h4>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={toggleAll}
-                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-600">전체 선택</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                      {allTexts.map((text, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedTexts.has(index)}
-                            onChange={() => toggleText(index)}
-                            className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
-                          />
-                          <p className="text-sm text-gray-900 flex-1">{text}</p>
+                    return allTexts.length > 0 ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700">
+                            텍스트 선택 ({selectedTexts.size}/{allTexts.length})
+                          </h4>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={allSelected}
+                              onChange={toggleAll}
+                              className="w-4 h-4 text-[#7BC96F] rounded border-gray-300 focus:ring-[#7BC96F]"
+                            />
+                            <span className="text-sm font-medium text-gray-700">전체 선택</span>
+                          </label>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {allTexts.map((text, index) => (
+                            <label
+                              key={index}
+                              className={`
+                                flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                ${
+                                  selectedTexts.has(index)
+                                    ? 'border-[#7BC96F] bg-green-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                }
+                              `}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedTexts.has(index)}
+                                onChange={() => toggleText(index)}
+                                className="mt-0.5 w-4 h-4 text-[#7BC96F] rounded border-gray-300 focus:ring-[#7BC96F]"
+                              />
+                              <p className="text-sm text-gray-900 flex-1">{text}</p>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button
-                  onClick={handleAddTranslations}
-                  disabled={selectedTexts.size === 0}
-                >
-                  번역 항목으로 추가 ({selectedTexts.size}개)
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setUploadedFiles([]);
-                    setParseResult(null);
-                    setError(null);
-                    setSelectedTexts(new Set());
-                  }}
-                >
-                  초기화
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-6 border-t">
+                    <Button
+                      onClick={handleAddTranslations}
+                      disabled={selectedTexts.size === 0}
+                      className="flex-1"
+                    >
+                      번역 요청 생성하기 ({selectedTexts.size}개)
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setUploadedFiles([]);
+                        setParseResult(null);
+                        setError(null);
+                        setSelectedTexts(new Set());
+                        setCurrentStep(1);
+                      }}
+                    >
+                      새로 시작
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card>
+                <div className="text-center py-12">
+                  <p className="text-gray-500">먼저 파일을 업로드하고 텍스트를 추출해주세요</p>
+                </div>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between mt-8">
+          {currentStep > 1 ? (
+            <Button
+              variant="secondary"
+              onClick={goToPrevStep}
+              className="flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              이전
+            </Button>
+          ) : (
+            <div className="w-20" />
+          )}
+
+          <div className="flex gap-2">
+            {[1, 2, 3].map((step) => (
+              <button
+                key={step}
+                onClick={() => {
+                  if (step === 1 || (step === 2 && uploadedFiles.length > 0) || (step === 3 && parseResult)) {
+                    setCurrentStep(step);
+                  }
+                }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  currentStep === step ? 'bg-[#7BC96F] w-8' : 'bg-gray-300'
+                }`}
+                aria-label={`Step ${step}`}
+              />
+            ))}
+          </div>
+
+          {currentStep < 3 ? (
+            <Button
+              onClick={goToNextStep}
+              disabled={!canGoNext()}
+              className="flex items-center gap-2"
+            >
+              다음
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Button>
+          ) : (
+            <div className="w-20" />
+          )}
+        </div>
+      </div>
       </div>
     </DashboardLayout>
   );
