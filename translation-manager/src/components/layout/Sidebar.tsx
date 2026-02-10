@@ -150,6 +150,9 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               isActive = pathname === '/';
             } else if (item.href === '/translations') {
               isActive = pathname === '/translations' || pathname.startsWith('/translations/');
+            } else if (item.href === '/settings') {
+              // Exact match for settings to avoid matching /settings/migration
+              isActive = pathname === '/settings';
             } else {
               isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             }
