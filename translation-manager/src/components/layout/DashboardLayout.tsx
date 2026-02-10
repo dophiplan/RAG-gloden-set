@@ -20,16 +20,16 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#F1F8F4]">
+    <div className="flex min-h-screen bg-[#FAFAFA]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="flex-1 overflow-auto lg:ml-0">
         {/* Header with Title and Actions */}
-        <div className="sticky top-0 z-40 bg-[#F1F8F4] h-16">
+        <div className="sticky top-0 z-40 bg-[#FAFAFA] h-16 border-b border-[#E0E7FF]">
           <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4 lg:gap-8">
             {/* Hamburger Menu Button (Mobile) */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-white rounded-lg"
+              className="lg:hidden p-2 text-[#546E7A] hover:text-[#2C3E50] hover:bg-white rounded-xl transition-all"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -39,7 +39,7 @@ export default function DashboardLayout({
             {/* Left: Page Title */}
             {title && (
               <div className="flex-1">
-                <h1 className="text-lg lg:text-xl font-bold text-[#1E293B] tracking-tight">{title}</h1>
+                <h1 className="text-lg lg:text-xl font-bold text-[#2C3E50] tracking-tight">{title}</h1>
               </div>
             )}
 
@@ -61,8 +61,8 @@ export default function DashboardLayout({
 
         {/* Subtitle Section */}
         {subtitle && (
-          <div className="bg-[#F1F8F4] px-8 py-1.5">
-            <p className="text-xs text-[#64748B]">{subtitle}</p>
+          <div className="bg-[#FAFAFA] px-8 py-2">
+            <p className="text-sm text-[#90A4AE]">{subtitle}</p>
           </div>
         )}
 
