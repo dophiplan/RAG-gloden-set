@@ -6,17 +6,19 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className = '', label, error, id, ...props }, ref) => {
+  ({ className = '', label, error, id, required, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
           <label htmlFor={id} className="block text-sm font-semibold text-[#1E293B] mb-2">
             {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <input
           ref={ref}
           id={id}
+          required={required}
           className={`
             block w-full px-4 py-2.5 border rounded-lg shadow-sm
             placeholder-[#94A3B8] text-[#1E293B] bg-white
