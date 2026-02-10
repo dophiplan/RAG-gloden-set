@@ -594,31 +594,31 @@ export default function SettingsPage() {
                     key={product.id}
                     className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="info">{product.code}</Badge>
                         <p className="font-semibold text-gray-900">{product.name}</p>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openProductModal(product)}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          삭제
+                        </Button>
+                      </div>
                     </div>
                     {product.description && (
-                      <p className="text-sm text-gray-600 mb-4">{product.description}</p>
+                      <p className="text-sm text-gray-600 mt-2">{product.description}</p>
                     )}
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openProductModal(product)}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => handleDeleteProduct(product)}
-                      >
-                        삭제
-                      </Button>
-                    </div>
                   </div>
                 ))}
                 {products.length === 0 && (
@@ -650,31 +650,31 @@ export default function SettingsPage() {
                     key={language.id}
                     className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="info">{language.code}</Badge>
                         <p className="font-semibold text-gray-900">{language.name}</p>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openLanguageModal(language)}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleDeleteLanguage(language)}
+                        >
+                          삭제
+                        </Button>
+                      </div>
                     </div>
                     {language.description && (
-                      <p className="text-sm text-gray-600 mb-4">{language.description}</p>
+                      <p className="text-sm text-gray-600 mt-2">{language.description}</p>
                     )}
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => openLanguageModal(language)}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => handleDeleteLanguage(language)}
-                      >
-                        삭제
-                      </Button>
-                    </div>
                   </div>
                 ))}
                 {languages.length === 0 && (
