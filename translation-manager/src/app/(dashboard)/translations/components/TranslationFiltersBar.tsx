@@ -58,40 +58,8 @@ export default function TranslationFiltersBar({
   return (
     <Card>
       <div className="space-y-4">
-        {/* Language column selector - moved to top */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm font-medium text-gray-700">표시할 언어:</span>
-            <button
-              onClick={() => onLanguageColumnsChange(null)}
-              className="text-xs text-blue-600 hover:text-blue-700 underline"
-            >
-              전체 선택
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {availableLanguages.map((lang) => (
-              <label
-                key={lang}
-                className="flex items-center gap-1.5 cursor-pointer select-none px-2 py-1 rounded hover:bg-gray-50 transition-colors"
-                title={SUPPORTED_LANGUAGES[lang]}
-              >
-                <input
-                  type="checkbox"
-                  checked={isLanguageSelected(lang)}
-                  onChange={() => handleLanguageToggle(lang)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  {lang.toUpperCase()}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         {/* Filters row */}
-        <div className="flex flex-wrap gap-4 border-t pt-4">
+        <div className="flex flex-wrap gap-4">
           {/* 모든 언어 */}
           <div className="w-40">
             <Select
@@ -120,6 +88,37 @@ export default function TranslationFiltersBar({
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
             />
+          </div>
+        </div>
+
+        {/* Language column selector - all in one line */}
+        <div className="border-t pt-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium text-gray-700">표시할 언어:</span>
+            <button
+              onClick={() => onLanguageColumnsChange(null)}
+              className="text-xs text-blue-600 hover:text-blue-700 underline"
+            >
+              전체 선택
+            </button>
+            <span className="text-gray-300">|</span>
+            {availableLanguages.map((lang) => (
+              <label
+                key={lang}
+                className="flex items-center gap-1.5 cursor-pointer select-none"
+                title={SUPPORTED_LANGUAGES[lang]}
+              >
+                <input
+                  type="checkbox"
+                  checked={isLanguageSelected(lang)}
+                  onChange={() => handleLanguageToggle(lang)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {lang.toUpperCase()}
+                </span>
+              </label>
+            ))}
           </div>
         </div>
       </div>
