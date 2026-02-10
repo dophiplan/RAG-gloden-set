@@ -291,6 +291,7 @@ function TranslationsContent() {
           onContextUpdate={mutations.handleContextUpdate}
           onScopeUpdate={mutations.handleScopeUpdate}
           onVersionUpdate={handleVersionUpdateWithDuplicateCheck}
+          onPriorityUpdate={mutations.handlePriorityUpdate}
           onNotesUpdate={handleNotesUpdateWithDuplicateCheck}
           onDelete={mutations.handleDelete}
           onRefresh={fetchTranslations}

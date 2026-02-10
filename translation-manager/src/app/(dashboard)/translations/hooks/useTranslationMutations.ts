@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { TranslationStatus, LanguageCode, ProductCode } from '@/types';
+import { TranslationStatus, LanguageCode, ProductCode, PriorityLevel } from '@/types';
 import { showConfirm } from '@/lib/notifications';
 import type { TranslationWithAudit } from './useTranslationData';
 
@@ -7,37 +7,76 @@ interface UseTranslationMutationsParams {
   translations: TranslationWithAudit[];
   setTranslations: React.Dispatch<React.SetStateAction<TranslationWithAudit[]>>;
   fetchTranslations: () => Promise<void>;
+  updateLocalTranslation: (id: string, updates: Partial<TranslationWithAudit>) => void;
 }
 
 export function useTranslationMutations({
   translations,
   setTranslations,
   fetchTranslations,
+  updateLocalTranslation,
 }: UseTranslationMutationsParams) {
-  const handleStatusChange = useCallback(async (id: string, status: TranslationStatus) => {
+
+  // Generic optimistic PATCH helper: update local state first, rollback on failure
+  const optimisticPatch = useCallback(async (
+    id: string,
+    localUpdates: Partial<TranslationWithAudit>,
+    body: Record<string, unknown>
+  ) => {
+    const prev = translations.find((t) => t.id === id);
+    updateLocalTranslation(id, localUpdates);
     try {
       const response = await fetch(`/api/translations/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       });
-      if (response.ok) fetchTranslations();
+      if (!response.ok && prev) {
+        updateLocalTranslation(id, prev);
+      }
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('Error updating translation:', error);
+      if (prev) updateLocalTranslation(id, prev);
     }
-  }, [fetchTranslations]);
+  }, [translations, updateLocalTranslation]);
+
+  const handleStatusChange = useCallback(async (id: string, status: TranslationStatus) => {
+    await optimisticPatch(id, { status }, { status });
+  }, [optimisticPatch]);
 
   const handleTranslationUpdate = useCallback(async (
     translationId: string,
     languageCode: LanguageCode,
     text: string
   ) => {
-    try {
-      const translation = translations.find((t) => t.id === translationId);
-      const existingResult = translation?.translation_results?.find(
-        (r) => r.language_code === languageCode
-      );
+    const translation = translations.find((t) => t.id === translationId);
+    if (!translation) return;
 
+    // Optimistic: update translation_results locally
+    const existingResult = translation.translation_results?.find(
+      (r) => r.language_code === languageCode
+    );
+    const updatedResults = existingResult
+      ? translation.translation_results.map((r) =>
+          r.language_code === languageCode ? { ...r, translated_text: text } : r
+        )
+      : [
+          ...translation.translation_results,
+          {
+            id: `temp-${Date.now()}`,
+            translation_id: translationId,
+            language_code: languageCode,
+            translated_text: text,
+            reviewer_id: null,
+            reviewed_at: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ];
+
+    updateLocalTranslation(translationId, { translation_results: updatedResults });
+
+    try {
       const response = await fetch(`/api/translations/${translationId}/results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,154 +87,63 @@ export function useTranslationMutations({
       });
 
       if (response.ok) {
+        // Record correction in background (fire-and-forget)
         if (existingResult && existingResult.translated_text !== text) {
-          await fetch('/api/ai/corrections', {
+          fetch('/api/ai/corrections', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               original_text: existingResult.translated_text,
               corrected_text: text,
-              source_text: translation?.source_text,
+              source_text: translation.source_text,
               language_code: languageCode,
             }),
-          }).catch((err) => {
-            console.error('Error recording correction:', err);
-          });
+          }).catch(() => {});
         }
-        fetchTranslations();
+      } else {
+        // Rollback
+        updateLocalTranslation(translationId, { translation_results: translation.translation_results });
       }
     } catch (error) {
       console.error('Error updating translation:', error);
+      updateLocalTranslation(translationId, { translation_results: translation.translation_results });
     }
-  }, [translations, fetchTranslations]);
+  }, [translations, updateLocalTranslation]);
 
   const handleSourceTextUpdate = useCallback(async (translationId: string, sourceText: string) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_text: sourceText }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating source text:', error);
-    }
-  }, [fetchTranslations]);
+    await optimisticPatch(translationId, { source_text: sourceText }, { source_text: sourceText });
+  }, [optimisticPatch]);
 
   const handleContextUpdate = useCallback(async (translationId: string, context: string) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: context || null }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating context:', error);
-    }
-  }, [fetchTranslations]);
+    await optimisticPatch(translationId, { context: context || null }, { context: context || null });
+  }, [optimisticPatch]);
 
   const handleScopeUpdate = useCallback(async (translationId: string, scope: 'SaaS' | 'Solution' | null) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating scope:', error);
-    }
-  }, [fetchTranslations]);
+    await optimisticPatch(translationId, { scope }, { scope });
+  }, [optimisticPatch]);
 
-  const handleWorkScopeUpdate = useCallback(async (translationId: string, workScope: string[]) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ work_scope: workScope }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating work scope:', error);
-    }
-  }, [fetchTranslations]);
-
-  const handleDevCodeUpdate = useCallback(async (translationId: string, devCode: string) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dev_code: devCode || null }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating dev code:', error);
-    }
-  }, [fetchTranslations]);
+  const handlePriorityUpdate = useCallback(async (translationId: string, priority: string) => {
+    await optimisticPatch(translationId, { priority }, { priority });
+  }, [optimisticPatch]);
 
   const handleNotesUpdate = useCallback(async (translationId: string, notes: string) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: notes || null }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating notes:', error);
-    }
-  }, [fetchTranslations]);
-
-  const handlePlatformCompletionUpdate = useCallback(async (
-    translationId: string,
-    platform: string,
-    completed: boolean
-  ) => {
-    try {
-      const translation = translations.find((t) => t.id === translationId);
-      if (!translation) return;
-
-      const updatedCompletions = {
-        ...translation.platform_completions,
-        [platform]: {
-          completed,
-          completed_at: completed ? new Date().toISOString() : undefined,
-          completed_by: completed ? 'current_user' : undefined,
-        },
-      };
-
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platform_completions: updatedCompletions }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating platform completion:', error);
-    }
-  }, [translations, fetchTranslations]);
+    await optimisticPatch(translationId, { notes: notes || null }, { notes: notes || null });
+  }, [optimisticPatch]);
 
   const handleVersionUpdate = useCallback(async (translationId: string, version: string) => {
-    try {
-      const response = await fetch(`/api/translations/${translationId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          version: version.trim() || null,
-          version_updated_at: version.trim() ? new Date().toISOString() : null,
-        }),
-      });
-      if (response.ok) fetchTranslations();
-    } catch (error) {
-      console.error('Error updating version:', error);
-    }
-  }, [fetchTranslations]);
+    const trimmed = version.trim() || null;
+    await optimisticPatch(
+      translationId,
+      { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null },
+      { version: trimmed, version_updated_at: trimmed ? new Date().toISOString() : null }
+    );
+  }, [optimisticPatch]);
 
   const handleProductsUpdate = useCallback(async (
     translationId: string,
     products: { code: ProductCode; version: string }[]
   ) => {
+    // Products update requires server response for relation, so refetch
     try {
       const response = await fetch(`/api/translations/${translationId}`, {
         method: 'PATCH',
@@ -223,13 +171,15 @@ export function useTranslationMutations({
   const handleBulkCreate = useCallback(async (
     texts: string[],
     version?: string,
-    productCode?: ProductCode
+    productCode?: ProductCode,
+    scope?: 'SaaS' | 'Solution',
+    priority?: PriorityLevel
   ) => {
     try {
       const response = await fetch('/api/translations/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texts, version, product_code: productCode }),
+        body: JSON.stringify({ texts, version, product_code: productCode, scope, priority }),
       });
       if (response.ok) {
         fetchTranslations();
@@ -244,7 +194,9 @@ export function useTranslationMutations({
     sourceText: string,
     context: string,
     version: string,
-    productCode: ProductCode | ''
+    productCode: ProductCode | '',
+    scope: 'SaaS' | 'Solution' | '',
+    priority?: PriorityLevel
   ) => {
     if (!sourceText.trim()) return;
     try {
@@ -256,6 +208,8 @@ export function useTranslationMutations({
           context: context || undefined,
           version: version || undefined,
           product_code: productCode || undefined,
+          scope: scope || undefined,
+          priority: priority,
         }),
       });
       if (response.ok) {
@@ -274,10 +228,8 @@ export function useTranslationMutations({
     handleSourceTextUpdate,
     handleContextUpdate,
     handleScopeUpdate,
-    handleWorkScopeUpdate,
-    handleDevCodeUpdate,
+    handlePriorityUpdate,
     handleNotesUpdate,
-    handlePlatformCompletionUpdate,
     handleVersionUpdate,
     handleProductsUpdate,
     handleDelete,

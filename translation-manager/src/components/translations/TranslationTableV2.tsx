@@ -21,6 +21,7 @@ interface TranslationTableV2Props {
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
   onScopeUpdate: (translationId: string, scope: 'SaaS' | 'Solution' | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
+  onPriorityUpdate: (translationId: string, priority: string) => Promise<void>;
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
   onDelete: (id: string) => void;
   onRefresh: () => void;
@@ -52,6 +53,7 @@ interface TranslationRowProps {
   onContextUpdate: TranslationTableV2Props['onContextUpdate'];
   onScopeUpdate: TranslationTableV2Props['onScopeUpdate'];
   onVersionUpdate: TranslationTableV2Props['onVersionUpdate'];
+  onPriorityUpdate: TranslationTableV2Props['onPriorityUpdate'];
   onNotesUpdate: TranslationTableV2Props['onNotesUpdate'];
   onDelete: TranslationTableV2Props['onDelete'];
 }
@@ -68,6 +70,7 @@ const TranslationRow = memo(function TranslationRow({
   onContextUpdate,
   onScopeUpdate,
   onVersionUpdate,
+  onPriorityUpdate,
   onNotesUpdate,
   onDelete,
 }: TranslationRowProps) {
@@ -156,6 +159,18 @@ const TranslationRow = memo(function TranslationRow({
             </div>
           </td>
       ))}
+      <td className="px-2 py-2 align-top">
+        <select
+          value={translation.priority || '중'}
+          onChange={(e) => onPriorityUpdate(translation.id, e.target.value)}
+          className="text-xs border rounded px-1 py-1 w-full bg-white"
+        >
+          <option value="긴급">긴급</option>
+          <option value="상">상</option>
+          <option value="중">중</option>
+          <option value="하">하</option>
+        </select>
+      </td>
       <td className="px-2 py-2 align-top">
         <select
           value={translation.status}
@@ -321,6 +336,9 @@ export default memo(function TranslationTableV2({
                     {lang}
                   </th>
                 ))}
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
+                  중요도
+                </th>
                 <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
                   번역 상태
                 </th>
@@ -357,6 +375,7 @@ export default memo(function TranslationTableV2({
                     onContextUpdate={onContextUpdate}
                     onScopeUpdate={onScopeUpdate}
                     onVersionUpdate={onVersionUpdate}
+                    onPriorityUpdate={onPriorityUpdate}
                     onNotesUpdate={onNotesUpdate}
                     onDelete={onDelete}
                   />
