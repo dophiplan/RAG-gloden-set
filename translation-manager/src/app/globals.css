@@ -1,22 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  /* Light Green Theme Colors */
-  --primary: #7BC96F;
-  --primary-hover: #5FA654;
-  --primary-light: #E8F5E9;
-  --secondary: #66BB6A;
-  --background: #F1F8F4; /* Very light mint background */
-  --background-secondary: #E8F5E9;
+  /* Soft Indigo Theme Colors - Lighter & Elegant */
+  --primary: #818CF8; /* Indigo 400 - Lighter & softer */
+  --primary-hover: #6366F1; /* Indigo 500 - Slightly deeper on hover */
+  --primary-light: #E0E7FF; /* Indigo 100 - Light backgrounds */
+  --secondary: #A5B4FC; /* Indigo 300 - Even lighter complementary */
+  --background: #FAFAFA; /* Neutral light gray for reduced eye strain */
+  --background-secondary: #F5F5F5;
   --surface: #FFFFFF;
-  --border: #C8E6C9;
-  --border-light: #D4EDD6;
-  --text-main: #1E293B;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
+  --border: #C7D2FE; /* Indigo 200 - Soft borders */
+  --border-light: #E0E7FF; /* Indigo 100 - Lighter borders */
+  --text-main: #2C3E50; /* Softer than pure black */
+  --text-secondary: #546E7A;
+  --text-muted: #90A4AE;
+
+  /* Shadow tokens - Lighter indigo shadows */
+  --shadow-sm: 0 2px 8px rgba(129, 140, 248, 0.08);
+  --shadow-md: 0 4px 16px rgba(129, 140, 248, 0.12);
+  --shadow-lg: 0 8px 24px rgba(129, 140, 248, 0.15);
+
+  /* Border radius tokens */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
 
   /* Legacy */
-  --foreground: #1E293B;
+  --foreground: #2C3E50;
 }
 
 @theme inline {
@@ -36,16 +47,17 @@
   --color-foreground: var(--foreground);
 
   /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-noto-sans-kr), var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
 }
 
 /* Input & Textarea Styles */
@@ -53,12 +65,14 @@ input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="search"],
+input[type="date"],
 textarea,
 select {
   background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
 }
 
 input:focus,
@@ -66,14 +80,15 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(123, 201, 111, 0.15);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Button Base Styles */
 button {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
 }
 
 /* Scrollbar Styles */
@@ -102,49 +117,49 @@ table {
 }
 
 table thead {
-  background: linear-gradient(135deg, #7BC96F 0%, #66BB6A 100%);
+  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(123, 201, 111, 0.25);
+  box-shadow: var(--shadow-md);
 }
 
 table thead th {
-  padding: 16px 20px;
+  padding: 18px 24px;
   text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-  color: #1E293B;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.5px;
   border-bottom: none;
   white-space: nowrap;
 }
 
 table thead th:first-child {
-  border-top-left-radius: 8px;
+  border-top-left-radius: var(--radius-md);
 }
 
 table thead th:last-child {
-  border-top-right-radius: 8px;
+  border-top-right-radius: var(--radius-md);
 }
 
 table tbody tr {
-  background: white;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 table tbody tr:hover {
-  background: #E8F5E9;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(123, 201, 111, 0.15);
+  background: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 table tbody td {
-  padding: 16px 20px;
+  padding: 18px 24px;
   font-size: 14px;
-  color: #1E293B;
-  border-bottom: 1px solid #E8F0FE;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border);
 }
 
 table tbody tr:last-child td {
@@ -152,11 +167,11 @@ table tbody tr:last-child td {
 }
 
 table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: var(--radius-md);
 }
 
 table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: var(--radius-md);
 }
 
 /* Empty state styling */
