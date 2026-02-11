@@ -26,10 +26,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // Get all glossary terms
-    const { data: allTerms, error: termsError } = await supabase
+    // Get product filter from query params
+    const { searchParams } = new URL(request.url);
+    const productCode = searchParams.get('product_code');
+
+    // Get glossary terms with optional product filter
+    let query = supabase
       .from('glossary')
-      .select('id, approval_status, hit_count, language_code, imported_at');
+      .select('id, approval_status, hit_count, language_code, imported_at, product_code');
+
+    if (productCode) {
+      query = query.eq('product_code', productCode);
+    }
+
+    const { data: allTerms, error: termsError } = await query;
 
     if (termsError) throw termsError;
 

@@ -7,7 +7,10 @@ import Card, { CardTitle } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RequestList from '@/components/dashboard/RequestList';
+import ProductTabs from '@/components/ProductTabs';
+import GlossaryStatsCard from '@/app/(dashboard)/glossary/components/GlossaryStatsCard';
 import type { DashboardRequest } from '@/types/translations';
+import type { ProductCode } from '@/types';
 
 interface DashboardStats {
   total: number;
@@ -28,6 +31,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [requests, setRequests] = useState<DashboardRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -101,7 +105,16 @@ export default function DashboardPage() {
       subtitle="번역 현황을 한눈에 확인하세요."
       quickActions={<QuickActions glossaryCount={stats?.glossaryCount} />}
     >
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {/* Product Tabs */}
+        <ProductTabs
+          selectedProduct={selectedProduct}
+          onProductChange={setSelectedProduct}
+        />
+
+        {/* Glossary Statistics */}
+        <GlossaryStatsCard selectedProduct={selectedProduct} />
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Card>
