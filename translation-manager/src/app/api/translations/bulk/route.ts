@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
         // Fetch glossary terms for the product (or all if no product)
         let glossaryQuery = db
           .from('glossary')
-          .select('term, translation, language_code, product_code')
+          .select('id, term, translation, language_code, product_code')
           .order('term', { ascending: false }); // Longer terms first for better matching
 
         if (body.product_code) {
@@ -181,7 +181,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Declare updates outside the if block so it's accessible later
-        const updates: Array<{ translation_id: string; language_code: string; translated_text: string }> = [];
+        const updates: Array<{
+          translation_id: string;
+          language_code: string;
+          translated_text: string;
+          source_type: string;
+          glossary_term_id: string | null;
+        }> = [];
 
         if (glossaryTerms && glossaryTerms.length > 0) {
           console.log('Sample glossary terms:', glossaryTerms.slice(0, 3));
@@ -191,13 +197,16 @@ export async function POST(request: NextRequest) {
             const translationId = data[i].id;
             const koText = originalTexts[i];
 
-            // Group glossary terms by language
-            const glossaryByLang = new Map<string, Map<string, string>>();
+            // Group glossary terms by language with term ID tracking
+            const glossaryByLang = new Map<string, Map<string, { translation: string; id: string }>>();
             glossaryTerms.forEach(g => {
               if (!glossaryByLang.has(g.language_code)) {
                 glossaryByLang.set(g.language_code, new Map());
               }
-              glossaryByLang.get(g.language_code)!.set(g.term, g.translation);
+              glossaryByLang.get(g.language_code)!.set(g.term, {
+                translation: g.translation,
+                id: g.id,
+              });
             });
 
             // For each language, check if the KO text matches any glossary term
@@ -208,31 +217,40 @@ export async function POST(request: NextRequest) {
               if (!glossaryForLang) continue;
 
               // Priority 1: Exact match
-              let matchedTranslation = glossaryForLang.get(koText);
+              let matchedEntry = glossaryForLang.get(koText);
+              let matchedTranslation = matchedEntry?.translation;
+              let matchedGlossaryId = matchedEntry?.id || null;
 
               // Priority 2: If KO text is a single word/term found in glossary
               if (!matchedTranslation && koText.trim().length > 0) {
-                matchedTranslation = glossaryForLang.get(koText.trim());
+                matchedEntry = glossaryForLang.get(koText.trim());
+                matchedTranslation = matchedEntry?.translation;
+                matchedGlossaryId = matchedEntry?.id || null;
               }
 
               // Priority 3: Replace all glossary terms found in the text
               if (!matchedTranslation) {
                 let translatedText = koText;
                 let foundMatch = false;
+                let firstMatchedId: string | null = null;
 
                 // Sort terms by length (longest first) to avoid partial replacements
                 const sortedTerms = Array.from(glossaryForLang.entries())
                   .sort((a, b) => b[0].length - a[0].length);
 
-                for (const [term, translation] of sortedTerms) {
+                for (const [term, entry] of sortedTerms) {
                   if (koText.includes(term)) {
-                    translatedText = translatedText.replace(new RegExp(term, 'g'), translation);
+                    translatedText = translatedText.replace(new RegExp(term, 'g'), entry.translation);
+                    if (!foundMatch) {
+                      firstMatchedId = entry.id; // Track the first matched term
+                    }
                     foundMatch = true;
                   }
                 }
 
                 if (foundMatch) {
                   matchedTranslation = translatedText;
+                  matchedGlossaryId = firstMatchedId;
                 }
               }
 
@@ -241,6 +259,14 @@ export async function POST(request: NextRequest) {
                   translation_id: translationId,
                   language_code: lang,
                   translated_text: matchedTranslation,
+                  source_type: 'glossary',
+                  glossary_term_id: matchedGlossaryId,
+                });
+
+                // Increment hit_count for matched glossary term (non-blocking)
+                void db.rpc('increment_glossary_hit_count', {
+                  p_term: koText,
+                  p_language_code: lang
                 });
               }
             }
@@ -252,7 +278,11 @@ export async function POST(request: NextRequest) {
             for (const update of updates) {
               await db
                 .from('translation_results')
-                .update({ translated_text: update.translated_text })
+                .update({
+                  translated_text: update.translated_text,
+                  source_type: update.source_type,
+                  glossary_term_id: update.glossary_term_id,
+                })
                 .eq('translation_id', update.translation_id)
                 .eq('language_code', update.language_code);
             }
@@ -350,7 +380,11 @@ export async function POST(request: NextRequest) {
                   for (const result of aiResults) {
                     await db
                       .from('translation_results')
-                      .update({ translated_text: result.translatedText })
+                      .update({
+                        translated_text: result.translatedText,
+                        source_type: 'ai',
+                        glossary_term_id: null,
+                      })
                       .eq('translation_id', item.translationId)
                       .eq('language_code', result.languageCode);
                   }
