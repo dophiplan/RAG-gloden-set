@@ -169,18 +169,9 @@ const TranslationRow = memo(function TranslationRow({
       <td className="px-2 py-2 align-top">
         <div className="text-xs truncate">
           <EditableCell
-            value={translation.source_text}
-            onSave={(newText) => onSourceTextUpdate(translation.id, newText)}
-            placeholder="KEY/id"
-          />
-        </div>
-      </td>
-      <td className="px-2 py-2 align-top">
-        <div className="text-xs truncate">
-          <EditableCell
-            value={translation.dev_code || ''}
+            value={translation.dev_code || translation.source_text}
             onSave={(newCode) => onDevCodeUpdate(translation.id, newCode)}
-            placeholder="dev_key_001"
+            placeholder="KEY/id"
             className="text-xs text-gray-600 font-mono"
           />
         </div>
@@ -371,9 +362,6 @@ export default memo(function TranslationTableV2({
                 </th>
                 <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-48">
                   KEY/id
-                </th>
-                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
-                  개발자 코드
                 </th>
                 {displayLanguages.map((lang) => (
                   <th
