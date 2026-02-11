@@ -589,7 +589,7 @@ export default function SettingsPage() {
             {loadingProducts ? (
               <div className="text-center py-8 text-gray-500">로딩 중...</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {products.map((product) => (
                   <div
                     key={product.id}
@@ -630,7 +630,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
                 {products.length === 0 && (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
+                  <div className="col-span-full text-center py-8 text-gray-500">
                     등록된 제품이 없습니다.
                   </div>
                 )}
@@ -652,7 +652,7 @@ export default function SettingsPage() {
             {loadingLanguages ? (
               <div className="text-center py-8 text-gray-500">로딩 중...</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {languages.map((language) => (
                   <div
                     key={language.id}
@@ -693,7 +693,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
                 {languages.length === 0 && (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
+                  <div className="col-span-full text-center py-8 text-gray-500">
                     등록된 언어가 없습니다.
                   </div>
                 )}
