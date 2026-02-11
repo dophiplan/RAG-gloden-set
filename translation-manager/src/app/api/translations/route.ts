@@ -232,16 +232,18 @@ export async function POST(request: NextRequest) {
     if (insertError) throw insertError;
 
     // Create audit log (non-blocking)
-    supabase.from('translation_audit_logs').insert({
+    void supabase.from('translation_audit_logs').insert({
       translation_id: translation.id,
       user_id: user.id,
       user_name: userProfile?.name,
       user_email: userProfile?.email || user.email,
       action: 'create',
       new_value: sanitizedSourceText,
-    }).catch(err => {
-      console.error('[Audit Log] Failed to log translation creation:', err);
-      // Don't throw - audit log failure should not break the main operation
+    }).then(({ error }) => {
+      if (error) {
+        console.error('[Audit Log] Failed to log translation creation:', error);
+        // Don't throw - audit log failure should not break the main operation
+      }
     });
 
     // If translations are provided, insert them (with sanitization)

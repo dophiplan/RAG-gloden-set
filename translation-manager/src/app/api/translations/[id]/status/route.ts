@@ -79,7 +79,7 @@ export async function PATCH(
       .single();
 
     // Create audit log (fire-and-forget with error handling)
-    supabase.from('translation_audit_logs').insert({
+    void supabase.from('translation_audit_logs').insert({
       translation_id: id,
       user_id: user.id,
       user_name: userData?.name,
@@ -88,9 +88,11 @@ export async function PATCH(
       field_name: 'status',
       old_value: currentStatus,
       new_value: newStatus,
-    }).catch(err => {
-      console.error('[Audit Log] Failed to log status update:', err);
-      // Don't throw - audit log failure should not break the main operation
+    }).then(({ error }) => {
+      if (error) {
+        console.error('[Audit Log] Failed to log status update:', error);
+        // Don't throw - audit log failure should not break the main operation
+      }
     });
 
     return NextResponse.json({ success: true, newStatus });

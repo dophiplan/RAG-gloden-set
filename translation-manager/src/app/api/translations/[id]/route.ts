@@ -210,7 +210,7 @@ export async function DELETE(
       .single();
 
     // Create audit log (non-blocking)
-    supabase.from('translation_audit_logs').insert({
+    void supabase.from('translation_audit_logs').insert({
       translation_id: id,
       user_id: user.id,
       user_name: userProfile?.name,
@@ -218,8 +218,10 @@ export async function DELETE(
       action: 'delete',
       old_value: translation.source_text,
       field_name: 'entire_record',
-    }).catch(err => {
-      console.error('[Audit Log] Failed to log translation deletion:', err);
+    }).then(({ error }) => {
+      if (error) {
+        console.error('[Audit Log] Failed to log translation deletion:', error);
+      }
     });
 
     return NextResponse.json({ success: true });

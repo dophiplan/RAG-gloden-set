@@ -114,7 +114,7 @@ export function useTranslationMutations({
         }
         // Record correction in background (fire-and-forget)
         if (existingResult && existingResult.translated_text !== text) {
-          fetch('/api/ai/corrections', {
+          void fetch('/api/ai/corrections', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -123,7 +123,7 @@ export function useTranslationMutations({
               source_text: translation.source_text,
               language_code: languageCode,
             }),
-          }).catch(() => {});
+          }).then(() => {}).catch(() => {});
         }
       } else {
         // Rollback
