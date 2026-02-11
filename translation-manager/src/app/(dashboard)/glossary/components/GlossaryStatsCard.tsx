@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Card from '@/components/ui/Card';
 import Tooltip from '@/components/ui/Tooltip';
-import { SUPPORTED_LANGUAGES, ProductCode, PRODUCTS } from '@/types';
+import { ProductCode } from '@/types';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface GlossaryStats {
   total_terms: number;
@@ -31,6 +32,7 @@ interface GlossaryStatsCardProps {
  * Can be filtered by product
  */
 export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCardProps) {
+  const { products, productsMap } = useProducts();
   const [stats, setStats] = useState<GlossaryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'usd' | 'krw'>('usd');
@@ -63,14 +65,14 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} padding="none">
-            <div className="p-4 animate-pulse">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                <div className="w-14 h-5 bg-gray-200 rounded"></div>
+            <div className="px-4 py-1.5 animate-pulse">
+              <div className="flex items-center justify-between mb-1">
+                <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                <div className="w-10 h-3 bg-gray-200 rounded"></div>
               </div>
-              <div className="space-y-1.5">
-                <div className="w-20 h-9 bg-gray-200 rounded"></div>
-                <div className="w-28 h-3 bg-gray-200 rounded"></div>
+              <div className="space-y-0.5">
+                <div className="w-20 h-10 bg-gray-200 rounded"></div>
+                <div className="w-20 h-2 bg-gray-200 rounded"></div>
               </div>
             </div>
           </Card>
@@ -97,14 +99,14 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
       {/* 1. Cost Savings */}
       <Card padding="none" className="bg-gradient-to-br from-purple-50 to-white">
-        <div className="p-4 flex flex-col justify-between h-full">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-purple-700">비용 절감</span>
+        <div className="px-4 py-1.5 flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between mb-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-semibold text-purple-700">절감</span>
               <div className="flex gap-0.5 bg-white rounded border border-purple-200 overflow-hidden">
                 <button
                   onClick={() => setCurrency('krw')}
-                  className={`px-2 py-0.5 text-xs font-medium transition-colors ${
+                  className={`px-1 py-0.5 text-xs font-medium transition-colors ${
                     currency === 'krw'
                       ? 'bg-purple-600 text-white'
                       : 'text-purple-600 hover:bg-purple-50'
@@ -114,7 +116,7 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
                 </button>
                 <button
                   onClick={() => setCurrency('usd')}
-                  className={`px-2 py-0.5 text-xs font-medium transition-colors ${
+                  className={`px-1 py-0.5 text-xs font-medium transition-colors ${
                     currency === 'usd'
                       ? 'bg-purple-600 text-white'
                       : 'text-purple-600 hover:bg-purple-50'
@@ -125,15 +127,15 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
               </div>
             </div>
             <Tooltip content="용어집 재사용으로 절약한 AI 번역 비용 (총 재사용 횟수 × 평균 언어 수 × 언어당 비용)">
-              <div className="text-4xl font-bold text-purple-700 cursor-help">
+              <div className="text-5xl font-bold text-purple-700 cursor-help leading-none">
                 {currency === 'usd'
-                  ? `$${stats.estimated_cost_saved.toFixed(2)}`
+                  ? `$${stats.estimated_cost_saved.toFixed(1)}`
                   : `₩${krwAmount.toLocaleString()}`
                 }
               </div>
             </Tooltip>
           </div>
-          <p className="text-xs text-gray-400 pt-1 border-t border-purple-100">
+          <p className="text-xs text-gray-400 pt-0.5 border-t border-purple-100 leading-tight">
             용어집 재사용으로 비용 절감
           </p>
         </div>
@@ -141,25 +143,25 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
 
       {/* 2. Reuse Statistics */}
       <Card padding="none" className="bg-gradient-to-br from-green-50 to-white">
-        <div className="p-4 flex flex-col justify-between h-full">
-          <div className="flex items-start justify-between mb-4">
+        <div className="px-4 py-1.5 flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between mb-1">
             <span className="text-xs font-semibold text-green-700">재사용 횟수</span>
             <Tooltip content="용어집에 저장된 번역이 실제 번역에 재사용된 총 횟수">
-              <div className="text-4xl font-bold text-green-700 cursor-help">
+              <div className="text-5xl font-bold text-green-700 cursor-help leading-none">
                 {stats.total_hits.toLocaleString()}
               </div>
             </Tooltip>
           </div>
-          <div className="flex items-center text-xs text-gray-400 gap-2 pt-1 border-t border-green-100">
+          <div className="flex items-center text-xs text-gray-400 gap-1.5 pt-0.5 border-t border-green-100">
             <span className="whitespace-nowrap">사용 용어</span>
             <Tooltip content="실제로 번역에 재사용된 용어 수 / 승인된 전체 용어 수">
               <span className="font-medium text-green-600 cursor-help whitespace-nowrap">
                 {stats.used_terms} / {stats.approved_terms}
               </span>
             </Tooltip>
-            <div className="flex-1 min-w-0 bg-gray-200 rounded-full h-1.5">
+            <div className="flex-1 min-w-0 bg-gray-200 rounded-full h-0.5">
               <div
-                className="bg-green-600 h-1.5 rounded-full transition-all"
+                className="bg-green-600 h-0.5 rounded-full transition-all"
                 style={{
                   width: `${stats.approved_terms > 0 ? (stats.used_terms / stats.approved_terms) * 100 : 0}%`,
                 }}
@@ -171,16 +173,16 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
 
       {/* 3. Trends */}
       <Card padding="none" className="bg-gradient-to-br from-blue-50 to-white">
-        <div className="p-4 flex flex-col justify-between h-full">
-          <div className="flex items-start justify-between mb-4">
+        <div className="px-4 py-1.5 flex flex-col justify-between h-full">
+          <div className="flex items-start justify-between mb-1">
             <span className="text-xs font-semibold text-blue-700">신규 용어</span>
             <Tooltip content="이번 달(1일~현재)에 용어집에 새로 추가된 용어 수">
-              <div className="text-4xl font-bold text-blue-700 cursor-help">
+              <div className="text-5xl font-bold text-blue-700 cursor-help leading-none">
                 {stats.new_terms_this_month}
               </div>
             </Tooltip>
           </div>
-          <div className="pt-1 border-t border-blue-100 space-y-1">
+          <div className="pt-0.5 border-t border-blue-100 space-y-0.5">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400">이번 주</span>
               <Tooltip content="최근 7일간 새로 추가된 용어 수">
@@ -190,7 +192,7 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
               </Tooltip>
             </div>
             {stats.pending_terms > 0 && (
-              <div className="flex items-center justify-between bg-yellow-50 px-2 py-0.5 rounded">
+              <div className="flex items-center justify-between bg-yellow-50 px-1 py-0.5 rounded">
                 <span className="text-xs text-yellow-700">⚠️ 검수 대기</span>
                 <span className="text-xs font-semibold text-yellow-700">{stats.pending_terms}개</span>
               </div>
@@ -201,14 +203,14 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
 
       {/* 4. Product Activity */}
       <Card padding="none" className="bg-gradient-to-br from-indigo-50 to-white">
-        <div className="p-4 flex flex-col justify-between h-full">
-          <div className="mb-2">
+        <div className="px-4 py-1.5 flex flex-col justify-between h-full">
+          <div className="mb-0.5">
             <span className="text-xs font-semibold text-indigo-700">제품별 활동</span>
           </div>
-          <div className="flex-1 flex items-center justify-center relative min-h-[100px]">
+          <div className="flex-1 flex items-center justify-center relative min-h-[35px]">
             {(() => {
               // 실제 등록된 제품 기준으로 Mock 데이터 생성
-              const productCodes = Object.keys(PRODUCTS) as ProductCode[];
+              const productCodes = products.map(p => p.code);
               const colors = [
                 'text-red-500', 'text-blue-500', 'text-purple-500', 'text-green-500',
                 'text-yellow-500', 'text-pink-500', 'text-indigo-500', 'text-orange-500', 'text-teal-500'
@@ -248,15 +250,12 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
 
               if (!hasAnyData) {
                 return (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
-                    <div className="text-5xl mb-3" style={{ fontFamily: '"Comic Sans MS", cursive' }}>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-1">
+                    <div className="text-2xl mb-0.5" style={{ fontFamily: '"Comic Sans MS", cursive' }}>
                       📊
                     </div>
-                    <div className="text-sm font-semibold text-gray-600" style={{ fontFamily: '"Comic Sans MS", cursive' }}>
+                    <div className="text-xs font-semibold text-gray-600" style={{ fontFamily: '"Comic Sans MS", cursive' }}>
                       아직 번역 활동이 없습니다
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1.5">
-                      번역을 시작하면 여기에 표시됩니다
                     </div>
                   </div>
                 );
@@ -316,8 +315,8 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
               );
             })()}
           </div>
-          <div className="pt-1 border-t border-indigo-100">
-            <div className="text-xs text-gray-400 text-center">
+          <div className="pt-0.5 border-t border-indigo-100">
+            <div className="text-xs text-gray-400 text-center leading-tight">
               신규 / 전체 번역
             </div>
           </div>
