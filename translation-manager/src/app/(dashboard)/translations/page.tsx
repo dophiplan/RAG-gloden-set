@@ -14,12 +14,14 @@ import { Translation, ProductCode, EmailTemplateType, LanguageCode, PriorityLeve
 import { showError, showSuccess } from '@/lib/notifications';
 import type { UploadedFile } from '@/components/FileUploader';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
+import { useProducts } from '@/hooks/useReferenceData';
 
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
 import { useTranslationMutations } from './hooks/useTranslationMutations';
 import { useDuplicateCheck } from './hooks/useDuplicateCheck';
 import { useGlossaryModal } from './hooks/useGlossaryModal';
+import { TIMEOUTS } from '@/lib/constants';
 
 import TranslationsHeader from './components/TranslationsHeader';
 import TranslationFiltersBar from './components/TranslationFiltersBar';
@@ -33,6 +35,9 @@ function TranslationsContent() {
   // Filters
   const filters = useTranslationFilters();
 
+  // Reference data
+  const { productsMap } = useProducts();
+
   // Data
   const { translations, setTranslations, loading, fetchTranslations, updateLocalTranslation } = useTranslationData({
     statusFilter: filters.statusFilter,
@@ -44,6 +49,8 @@ function TranslationsContent() {
     versionFilter: filters.versionFilter,
     page: filters.page,
     setTotalPages: filters.setTotalPages,
+    createdAfter: filters.createdAfter,
+    createdBefore: filters.createdBefore,
   });
 
   // Mutations
@@ -92,7 +99,7 @@ function TranslationsContent() {
           mutations.handleBulkCreate(texts, version || undefined, product || undefined);
         }
       } catch (e) {
-        console.error('Error parsing new texts:', e);
+        // Ignore parsing errors for legacy param
       }
     }
 
@@ -108,7 +115,7 @@ function TranslationsContent() {
           '',
           '/translations' + (product ? `?product=${product}` : '')
         );
-      }, 150);
+      }, TIMEOUTS.STATE_UPDATE_DELAY_MS);
     }
   }, [searchParams]);
 
@@ -121,13 +128,19 @@ function TranslationsContent() {
 
   // Reset language column selection when product changes
   useEffect(() => {
-    // For RC product, show all languages; for others, default to KO, EN, JA
-    if (filters.selectedProduct === 'RC') {
-      filters.setSelectedLanguageColumns(null);
+    if (filters.selectedProduct && productsMap[filters.selectedProduct]) {
+      const product = productsMap[filters.selectedProduct];
+      if (product.default_languages && product.default_languages.length > 0) {
+        filters.setSelectedLanguageColumns(product.default_languages as LanguageCode[]);
+      } else {
+        // RC or products without default languages: show all
+        filters.setSelectedLanguageColumns(null);
+      }
     } else {
-      filters.setSelectedLanguageColumns(['ko', 'en', 'ja']);
+      // No product selected: show all languages
+      filters.setSelectedLanguageColumns(null);
     }
-  }, [filters.selectedProduct]);
+  }, [filters.selectedProduct, productsMap]);
 
   const handleOpenEmailModal = (templateType: EmailTemplateType) => {
     if (selectedTranslations.length === 0) {
@@ -176,7 +189,6 @@ function TranslationsContent() {
       }
 
       const parseData = await parseResponse.json();
-      console.log('Parse response:', parseData);
 
       // Collect all extracted texts from all files
       const allTexts: string[] = [];
@@ -216,7 +228,6 @@ function TranslationsContent() {
       }
 
       const bulkData = await bulkCreateResponse.json();
-      console.log('Bulk create response:', bulkData);
 
       // Switch to selected product tab FIRST
       if (productCode) {
@@ -227,7 +238,7 @@ function TranslationsContent() {
       // React state updates are async, so we need to give it time
       setTimeout(() => {
         fetchTranslations();
-      }, 100);
+      }, TIMEOUTS.STATE_UPDATE_SHORT_DELAY_MS);
 
       showSuccess(`${bulkData.created || allTexts.length}개의 번역 항목이 저장되었습니다.`);
     } catch (error) {
@@ -272,6 +283,13 @@ function TranslationsContent() {
           selectedLanguageColumns={filters.selectedLanguageColumns}
           onLanguageColumnsChange={filters.setSelectedLanguageColumns}
           availableLanguages={availableLanguages}
+          showAdvancedFilters={filters.showAdvancedFilters}
+          onToggleAdvancedFilters={() => filters.setShowAdvancedFilters(!filters.showAdvancedFilters)}
+          createdAfter={filters.createdAfter}
+          onCreatedAfterChange={filters.setCreatedAfter}
+          createdBefore={filters.createdBefore}
+          onCreatedBeforeChange={filters.setCreatedBefore}
+          onQuickFilter={filters.setQuickFilter}
         />
 
         <TranslationsHeader onOpenCreateModal={() => setIsModalOpen(true)} />
