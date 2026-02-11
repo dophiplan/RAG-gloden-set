@@ -1,8 +1,9 @@
 import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { TranslationStatus, LanguageCode, SUPPORTED_LANGUAGES } from '@/types';
-import { LANGUAGE_SELECT_OPTIONS } from '@/lib/constants';
+import { TranslationStatus, LanguageCode } from '@/types';
+import { useLanguages } from '@/hooks/useReferenceData';
 
 interface TranslationFiltersBarProps {
   searchTerm: string;
@@ -18,6 +19,13 @@ interface TranslationFiltersBarProps {
   selectedLanguageColumns: LanguageCode[] | null;
   onLanguageColumnsChange: (languages: LanguageCode[] | null) => void;
   availableLanguages: LanguageCode[];
+  showAdvancedFilters: boolean;
+  onToggleAdvancedFilters: () => void;
+  createdAfter: string;
+  onCreatedAfterChange: (value: string) => void;
+  createdBefore: string;
+  onCreatedBeforeChange: (value: string) => void;
+  onQuickFilter: (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used') => void;
 }
 
 export default function TranslationFiltersBar({
@@ -34,7 +42,22 @@ export default function TranslationFiltersBar({
   selectedLanguageColumns,
   onLanguageColumnsChange,
   availableLanguages,
+  showAdvancedFilters,
+  onToggleAdvancedFilters,
+  createdAfter,
+  onCreatedAfterChange,
+  createdBefore,
+  onCreatedBeforeChange,
+  onQuickFilter,
 }: TranslationFiltersBarProps) {
+  const { languages, languagesMap } = useLanguages();
+
+  // Generate select options dynamically
+  const languageSelectOptions = [
+    { value: '', label: '모든 언어' },
+    ...languages.map(l => ({ value: l.code, label: l.name }))
+  ];
+
   const handleLanguageToggle = (lang: LanguageCode) => {
     if (!selectedLanguageColumns) {
       // If null (all selected), start with all available languages minus the clicked one
@@ -65,15 +88,15 @@ export default function TranslationFiltersBar({
 
   return (
     <Card>
-      <div className="space-y-4">
-        {/* Filters row */}
-        <div className="flex flex-wrap gap-4">
+      <div className="space-y-3">
+        {/* Main Filters */}
+        <div className="flex flex-wrap gap-2">
           {/* 모든 언어 */}
           <div className="w-40">
             <Select
               value={languageFilter}
               onChange={(e) => onLanguageFilterChange(e.target.value)}
-              options={LANGUAGE_SELECT_OPTIONS}
+              options={languageSelectOptions}
             />
           </div>
           {/* 모든 상태 */}
@@ -117,35 +140,94 @@ export default function TranslationFiltersBar({
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
+
+          {/* 고급 필터 토글 버튼 */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onToggleAdvancedFilters}
+          >
+            {showAdvancedFilters ? '▲ 고급 필터' : '▼ 고급 필터'}
+          </Button>
         </div>
 
-        {/* Language column selector - all in one line */}
-        <div className="border-t pt-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-gray-700">표시할 언어:</span>
+        {/* Advanced Filters */}
+        {showAdvancedFilters && (
+          <div className="pt-3 border-t border-gray-200">
+            <div className="flex flex-wrap items-end gap-2">
+              {/* Date Filters */}
+              <div className="w-52">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  추가 시작일
+                </label>
+                <Input
+                  type="date"
+                  value={createdAfter}
+                  onChange={(e) => onCreatedAfterChange(e.target.value)}
+                />
+              </div>
+              <div className="w-52">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  추가 종료일
+                </label>
+                <Input
+                  type="date"
+                  value={createdBefore}
+                  onChange={(e) => onCreatedBeforeChange(e.target.value)}
+                />
+              </div>
+
+              {/* Quick Filters */}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => onQuickFilter('today')}
+              >
+                오늘
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => onQuickFilter('this_week')}
+              >
+                이번 주 신규
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => onQuickFilter('this_month')}
+              >
+                이번 달
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Language column selector */}
+        <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3 mt-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold text-gray-600 mr-1">🌐 언어:</span>
             <button
               onClick={() => onLanguageColumnsChange(null)}
-              className="text-xs text-blue-600 hover:text-blue-700 underline"
+              className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
             >
-              전체 선택
+              전체
             </button>
-            <span className="text-gray-300">|</span>
+            <div className="w-px h-4 bg-gray-300 mx-1"></div>
             {availableLanguages.map((lang) => (
-              <label
+              <button
                 key={lang}
-                className="flex items-center gap-1.5 cursor-pointer select-none"
-                title={SUPPORTED_LANGUAGES[lang]}
+                onClick={() => handleLanguageToggle(lang)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                  isLanguageSelected(lang)
+                    ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
+                }`}
+                title={languagesMap[lang]?.name || lang}
+                aria-label={`${languagesMap[lang]?.name || lang} 표시`}
               >
-                <input
-                  type="checkbox"
-                  checked={isLanguageSelected(lang)}
-                  onChange={() => handleLanguageToggle(lang)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  {lang.toUpperCase()}
-                </span>
-              </label>
+                {lang.toUpperCase()}
+              </button>
             ))}
           </div>
         </div>
