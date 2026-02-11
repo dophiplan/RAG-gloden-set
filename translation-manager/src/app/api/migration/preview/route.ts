@@ -47,6 +47,12 @@ export async function POST(request: NextRequest) {
     const text = await file.text();
     const rows = parseCSV(text);
 
+    console.log('📄 [CSV Parse] 총 행 수:', rows.length);
+    if (rows.length > 0) {
+      console.log('📄 [CSV Parse] 첫 번째 행:', rows[0]);
+      console.log('📄 [CSV Parse] 언어 키:', Object.keys(rows[0]).filter(k => k !== 'source_text' && k !== 'context'));
+    }
+
     if (rows.length === 0) {
       return NextResponse.json({ error: '유효한 데이터가 없습니다.' }, { status: 400 });
     }
@@ -73,6 +79,14 @@ export async function POST(request: NextRequest) {
         if (row[langCode]?.trim()) {
           translations[langCode] = row[langCode]!.trim();
         }
+      }
+
+      if (Object.keys(translations).length === 1) {
+        console.log('⚠️ [Debug] 언어가 하나만 추출됨!');
+        console.log('  - Source:', sourceText);
+        console.log('  - Row keys:', Object.keys(row));
+        console.log('  - Valid languages:', validLanguages);
+        console.log('  - Translations:', translations);
       }
 
       // Calculate word count (for auto-classification)
