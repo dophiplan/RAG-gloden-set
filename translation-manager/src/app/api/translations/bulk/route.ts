@@ -164,9 +164,11 @@ export async function POST(request: NextRequest) {
         console.log('Product code:', body.product_code);
 
         // Fetch glossary terms for the product (or all if no product)
+        // Only use approved terms for auto-translation
         let glossaryQuery = db
           .from('glossary')
           .select('id, term, translation, language_code, product_code')
+          .eq('approval_status', 'approved')
           .order('term', { ascending: false }); // Longer terms first for better matching
 
         if (body.product_code) {
