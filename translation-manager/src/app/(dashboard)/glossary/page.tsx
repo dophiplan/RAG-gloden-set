@@ -14,11 +14,13 @@ import { LANGUAGE_SELECT_OPTIONS } from '@/lib/constants';
 import { useGlossaryData } from './hooks/useGlossaryData';
 import GlossaryFormModal from './components/GlossaryFormModal';
 import ExportModal from './components/ExportModal';
+import BulkActionBar from './components/BulkActionBar';
 
 export default function GlossaryPage() {
   const router = useRouter();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const {
     terms,
@@ -61,6 +63,8 @@ export default function GlossaryPage() {
     handleDelete,
     handleApprove,
     handleReject,
+    handleBulkApprove,
+    handleBulkReject,
     handleAIReview,
     openEditModal,
     groupedTerms,
@@ -93,6 +97,23 @@ export default function GlossaryPage() {
     if (status === 'rejected') return 'error';
     return 'default';
   };
+
+  // Checkbox selection handlers
+  const handleToggleAll = () => {
+    if (selectedIds.length === terms.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(terms.map(t => t.id));
+    }
+  };
+
+  const handleToggleOne = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const isAllSelected = terms.length > 0 && selectedIds.length === terms.length;
 
   return (
     <DashboardLayout
@@ -282,6 +303,14 @@ export default function GlossaryPage() {
               <table className="w-full">
                 <thead>
                   <tr>
+                    <th className="w-8">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleToggleAll}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
                     <th>용어</th>
                     <th>번역</th>
                     <th>문맥</th>
@@ -295,13 +324,21 @@ export default function GlossaryPage() {
                 <tbody>
                   {terms.length === 0 ? (
                     <tr>
-                      <td colSpan={8}>
+                      <td colSpan={9}>
                         등록된 용어가 없습니다.
                       </td>
                     </tr>
                   ) : (
                     terms.map((term) => (
                       <tr key={term.id}>
+                        <td className="px-2 py-2 align-top">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(term.id)}
+                            onChange={() => handleToggleOne(term.id)}
+                            className="rounded border-gray-300"
+                          />
+                        </td>
                         <td className="font-semibold">{term.term}</td>
                         <td>{term.translation}</td>
                         <td className="text-[#64748B]">{term.context || '-'}</td>
@@ -352,6 +389,14 @@ export default function GlossaryPage() {
               <table className="w-full">
                 <thead>
                   <tr>
+                    <th className="w-8">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleToggleAll}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
                     <th>용어</th>
                     <th>번역</th>
                     <th>문맥</th>
@@ -364,7 +409,7 @@ export default function GlossaryPage() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td colSpan={8}>
+                    <td colSpan={9}>
                       등록된 용어가 없습니다.
                     </td>
                   </tr>
@@ -388,6 +433,21 @@ export default function GlossaryPage() {
                   <table className="w-full">
                     <thead>
                       <tr>
+                        <th className="w-8">
+                          <input
+                            type="checkbox"
+                            checked={langTerms.every(t => selectedIds.includes(t.id))}
+                            onChange={() => {
+                              const allLangIds = langTerms.map(t => t.id);
+                              if (allLangIds.every(id => selectedIds.includes(id))) {
+                                setSelectedIds(prev => prev.filter(id => !allLangIds.includes(id)));
+                              } else {
+                                setSelectedIds(prev => [...new Set([...prev, ...allLangIds])]);
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                        </th>
                         <th>용어</th>
                         <th>번역</th>
                         <th>문맥</th>
@@ -399,6 +459,14 @@ export default function GlossaryPage() {
                     <tbody>
                       {langTerms.map((term) => (
                         <tr key={term.id}>
+                          <td className="px-2 py-2 align-top">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(term.id)}
+                              onChange={() => handleToggleOne(term.id)}
+                              className="rounded border-gray-300"
+                            />
+                          </td>
                           <td className="font-semibold">{term.term}</td>
                           <td>{term.translation}</td>
                           <td className="text-[#64748B]">{term.context || '-'}</td>
@@ -496,6 +564,20 @@ export default function GlossaryPage() {
             search: searchTerm || null,
           }}
           totalCount={terms.length}
+        />
+
+        {/* Bulk Action Bar */}
+        <BulkActionBar
+          selectedCount={selectedIds.length}
+          onApproveAll={() => {
+            handleBulkApprove(selectedIds);
+            setSelectedIds([]);
+          }}
+          onRejectAll={() => {
+            handleBulkReject(selectedIds);
+            setSelectedIds([]);
+          }}
+          onClearSelection={() => setSelectedIds([])}
         />
       </div>
     </DashboardLayout>

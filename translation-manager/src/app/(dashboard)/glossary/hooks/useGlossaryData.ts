@@ -195,6 +195,48 @@ export function useGlossaryData() {
     }
   };
 
+  const handleBulkApprove = async (ids: string[]) => {
+    try {
+      const response = await fetch('/api/glossary/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, action: 'approve' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        fetchTerms();
+        showSuccess(`${data.updated}개 용어가 승인되었습니다.`);
+      } else {
+        showError('일괄 승인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error bulk approving glossary terms:', error);
+      showError('일괄 승인 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleBulkReject = async (ids: string[]) => {
+    try {
+      const response = await fetch('/api/glossary/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, action: 'reject' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        fetchTerms();
+        showSuccess(`${data.updated}개 용어가 거부되었습니다.`);
+      } else {
+        showError('일괄 거부에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error bulk rejecting glossary terms:', error);
+      showError('일괄 거부 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleAIReview = async () => {
     setIsReviewing(true);
     try {
@@ -301,6 +343,8 @@ export function useGlossaryData() {
     handleDelete,
     handleApprove,
     handleReject,
+    handleBulkApprove,
+    handleBulkReject,
     handleAIReview,
     openEditModal,
     groupedTerms,
