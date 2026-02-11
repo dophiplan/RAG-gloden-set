@@ -15,6 +15,7 @@ import { useGlossaryData } from './hooks/useGlossaryData';
 import GlossaryFormModal from './components/GlossaryFormModal';
 import ExportModal from './components/ExportModal';
 import BulkActionBar from './components/BulkActionBar';
+import GlossaryStatsCard from './components/GlossaryStatsCard';
 
 export default function GlossaryPage() {
   const router = useRouter();
@@ -126,6 +127,9 @@ export default function GlossaryPage() {
           selectedProduct={selectedProduct}
           onProductChange={setSelectedProduct}
         />
+
+        {/* Statistics Dashboard */}
+        <GlossaryStatsCard />
 
         {/* Filters */}
         <Card>
