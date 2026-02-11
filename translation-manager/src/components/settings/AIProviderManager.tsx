@@ -75,6 +75,8 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     kimi: false,
     gemini: false,
   });
+  const [providerOrder, setProviderOrder] = useState<AIProvider[]>(['openai', 'claude', 'kimi', 'gemini']);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,6 +102,11 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
             kimi: !!data.settings.kimi_api_key,
             gemini: !!data.settings.gemini_api_key,
           });
+
+          // Load provider order from settings
+          if (data.settings.settings?.ai_provider_order) {
+            setProviderOrder(data.settings.settings.ai_provider_order);
+          }
         } else if (!isRsupportUser) {
           // Individual user settings - for now only OpenAI is supported
           setApiKeys(prev => ({
@@ -122,6 +129,43 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     } else {
       setSelectedProvider(provider);
       setApiKeyInput('');
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newOrder = [...providerOrder];
+    const draggedItem = newOrder[draggedIndex];
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(index, 0, draggedItem);
+
+    setProviderOrder(newOrder);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = async () => {
+    setDraggedIndex(null);
+
+    // Save order to backend
+    if (isRsupportUser) {
+      try {
+        await fetch('/api/organization/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            settings: { ai_provider_order: providerOrder }
+          }),
+        });
+      } catch (error) {
+        console.error('Error saving provider order:', error);
+      }
     }
   };
 
@@ -238,41 +282,65 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
           </span>
         )}
       </CardTitle>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
+      <p className="text-sm text-gray-500 mt-1 mb-4">
         {isRsupportUser
           ? '조직에서 사용할 AI 제공사의 API 키를 관리합니다. 여러 AI 서비스를 등록하여 필요에 따라 선택할 수 있습니다.'
           : 'AI 자동 번역 기능을 사용하려면 AI 제공사의 API 키가 필요합니다.'
         }
       </p>
+      <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <span className="text-blue-600">💡</span>
+        <p className="text-xs text-blue-700">
+          <strong>드래그하여 순서 변경:</strong> 맨 앞에 있는 AI부터 우선 사용됩니다.
+        </p>
+      </div>
 
       {/* AI Provider Badges */}
       <div className="flex flex-wrap gap-3 mb-6">
-        {AI_PROVIDERS.map((provider) => {
+        {providerOrder.map((providerId, index) => {
+          const provider = AI_PROVIDERS.find(p => p.id === providerId)!;
           const isConfigured = apiKeys[provider.id];
           const isSelected = selectedProvider === provider.id;
+          const isDragging = draggedIndex === index;
 
           return (
-            <button
+            <div
               key={provider.id}
-              onClick={() => handleSelectProvider(provider.id)}
-              className={`px-4 py-3 rounded-lg border-2 transition-all ${
-                isSelected
-                  ? provider.color + ' ring-2 ring-offset-2'
-                  : isConfigured
-                  ? provider.color + ' hover:shadow-md'
-                  : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`relative cursor-move transition-all ${
+                isDragging ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{provider.icon}</span>
-                <div className="text-left">
-                  <div className="font-semibold text-sm">{provider.displayName}</div>
-                  <div className="text-xs opacity-75">
-                    {isConfigured ? '설정됨 ✓' : '미설정'}
+              {/* Priority Badge */}
+              {index === 0 && isConfigured && (
+                <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg z-10">
+                  1
+                </div>
+              )}
+              <button
+                onClick={() => handleSelectProvider(provider.id)}
+                className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                  isSelected
+                    ? provider.color + ' ring-2 ring-offset-2'
+                    : isConfigured
+                    ? provider.color + ' hover:shadow-md'
+                    : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{provider.icon}</span>
+                  <div className="text-left">
+                    <div className="font-semibold text-sm">{provider.displayName}</div>
+                    <div className="text-xs opacity-75">
+                      {isConfigured ? '설정됨 ✓' : '미설정'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </button>
+              </button>
+            </div>
           );
         })}
       </div>
