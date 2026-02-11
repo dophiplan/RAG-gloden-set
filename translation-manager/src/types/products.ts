@@ -1,4 +1,5 @@
-// Products
+// @deprecated Use useProducts() hook instead - products are now fetched from DB
+// Keeping for backward compatibility during migration
 export const PRODUCTS = {
   RC: 'RC',
   RV: 'RV',
@@ -11,7 +12,8 @@ export const PRODUCTS = {
   marketing: '마케팅',
 } as const;
 
-export type ProductCode = keyof typeof PRODUCTS;
+// @deprecated Use string type instead - products are dynamic
+export type ProductCode = string;
 
 export interface Product {
   id: string;
@@ -19,10 +21,12 @@ export interface Product {
   name: string;
   description: string | null;
   display_order: number;
+  default_languages: string[] | null;
   created_at: string;
 }
 
-// Work scope options for translation table
+// @deprecated Use usePlatforms() hook instead - platforms are now fetched from DB
+// Keeping for backward compatibility during migration
 export const WORK_SCOPE_OPTIONS = [
   'Win',
   'Mac',
