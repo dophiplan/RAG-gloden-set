@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Read file as buffer
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await file!.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
     // Parse Excel/CSV file

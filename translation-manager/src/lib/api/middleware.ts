@@ -193,7 +193,7 @@ export function errorResponse(
     error: {
       code,
       message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
     },
   };
   return NextResponse.json(response, { status });
