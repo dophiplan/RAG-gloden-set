@@ -116,6 +116,20 @@ export default function GlossaryPage() {
 
   const isAllSelected = terms.length > 0 && selectedIds.length === terms.length;
 
+  // Determine empty state message based on filters
+  const getEmptyStateMessage = () => {
+    if (approvalStatusFilter === 'pending') {
+      return '🎉 모든 용어가 검수되었습니다!';
+    }
+    if (searchTerm) {
+      return '검색 결과가 없습니다.';
+    }
+    if (importedAfter || importedBefore) {
+      return '해당 기간에 등록된 용어가 없습니다.';
+    }
+    return '아직 등록된 용어가 없습니다. "용어 추가" 버튼을 눌러 시작하세요.';
+  };
+
   return (
     <DashboardLayout
       title="용어집"
@@ -147,9 +161,23 @@ export default function GlossaryPage() {
               <Button
                 size="sm"
                 variant="secondary"
+                onClick={() => setQuickFilter('today')}
+              >
+                오늘
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={() => setQuickFilter('this_week')}
               >
                 이번 주 신규
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setQuickFilter('this_month')}
+              >
+                이번 달
               </Button>
               <Button
                 size="sm"
@@ -320,16 +348,22 @@ export default function GlossaryPage() {
                     <th>문맥</th>
                     <th>제품</th>
                     <th>출처</th>
-                    <th>검수 상태</th>
-                    <th>사용 횟수</th>
+                    <th title="AI가 추가한 용어는 승인 후 사용됩니다">
+                      검수 상태 <span className="text-gray-400">ⓘ</span>
+                    </th>
+                    <th title="이 용어가 번역에 재사용된 횟수">
+                      사용 횟수 <span className="text-gray-400">ⓘ</span>
+                    </th>
                     <th style={{ textAlign: 'right' }}>작업</th>
                   </tr>
                 </thead>
                 <tbody>
                   {terms.length === 0 ? (
                     <tr>
-                      <td colSpan={9}>
-                        등록된 용어가 없습니다.
+                      <td colSpan={9} className="text-center py-12">
+                        <div className="text-gray-500">
+                          {getEmptyStateMessage()}
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -406,15 +440,21 @@ export default function GlossaryPage() {
                     <th>문맥</th>
                     <th>제품</th>
                     <th>출처</th>
-                    <th>검수 상태</th>
-                    <th>사용 횟수</th>
+                    <th title="AI가 추가한 용어는 승인 후 사용됩니다">
+                      검수 상태 <span className="text-gray-400">ⓘ</span>
+                    </th>
+                    <th title="이 용어가 번역에 재사용된 횟수">
+                      사용 횟수 <span className="text-gray-400">ⓘ</span>
+                    </th>
                     <th style={{ textAlign: 'right' }}>작업</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td colSpan={9}>
-                      등록된 용어가 없습니다.
+                    <td colSpan={9} className="text-center py-12">
+                      <div className="text-gray-500">
+                        {getEmptyStateMessage()}
+                      </div>
                     </td>
                   </tr>
                 </tbody>

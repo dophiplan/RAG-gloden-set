@@ -264,11 +264,23 @@ export function useGlossaryData() {
   }, {});
 
   // Quick filter functions
-  const setQuickFilter = (filterType: 'this_week' | 'frequently_used' | 'unused' | 'pending') => {
+  const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used' | 'unused' | 'pending') => {
     const now = new Date();
-    if (filterType === 'this_week') {
+    if (filterType === 'today') {
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      setImportedAfter(todayStart.toISOString().split('T')[0]);
+      setImportedBefore('');
+      setSortBy('imported_at');
+      setApprovalStatusFilter('');
+    } else if (filterType === 'this_week') {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       setImportedAfter(weekAgo.toISOString().split('T')[0]);
+      setImportedBefore('');
+      setSortBy('imported_at');
+      setApprovalStatusFilter('');
+    } else if (filterType === 'this_month') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      setImportedAfter(monthStart.toISOString().split('T')[0]);
       setImportedBefore('');
       setSortBy('imported_at');
       setApprovalStatusFilter('');
