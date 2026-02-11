@@ -1,4 +1,5 @@
 import useSWR from 'swr';
+import { Product as ProductType } from '@/types/products';
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -17,6 +18,7 @@ export interface Product {
   name: string;
   description: string | null;
   display_order: number;
+  default_languages: string[] | null;
 }
 
 export interface Language {
