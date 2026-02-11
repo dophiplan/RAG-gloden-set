@@ -28,19 +28,73 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const body = await request.json();
-    const { entries, product_code, version } = body as {
-      entries: CommitEntry[];
-      product_code: ProductCode;
-      version?: string;
-    };
+    // Check if this is simple mode (FormData) or advanced mode (JSON)
+    const conte[기밀마스킹]ype = request.headers.get('content-type');
+    const isSimpleMode = conte[기밀마스킹]ype?.includes('multipart/form-data');
 
-    if (!entries || entries.length === 0) {
-      return NextResponse.json({ error: '처리할 항목이 없습니다.' }, { status: 400 });
-    }
+    let entries: CommitEntry[];
+    let product_code: ProductCode;
+    let version: string | undefined;
 
-    if (!product_code) {
-      return NextResponse.json({ error: '제품을 선택해주세요.' }, { status: 400 });
+    if (isSimpleMode) {
+      // Simple mode: Parse file and auto-process
+      const formData = await request.formData();
+      const file = formData.get('file') as File;
+      product_code = formData.get('product_code') as ProductCode;
+
+      if (!file) {
+        return NextResponse.json({ error: '파일을 선택해주세요.' }, { status: 400 });
+      }
+
+      if (!product_code) {
+        return NextResponse.json({ error: '제품을 선택해주세요.' }, { status: 400 });
+      }
+
+      // Parse the file and create entries (reuse preview logic)
+      // For now, redirect to preview API logic
+      // TODO: This should be refactored to share code with preview API
+      const previewFormData = new FormData();
+      previewFormData.append('file', file);
+      previewFormData.append('product_code', product_code);
+
+      // Call preview internally
+      const baseUrl = request.nextUrl.origin;
+      const previewResponse = await fetch(`${baseUrl}/api/migration/preview`, {
+        method: 'POST',
+        body: previewFormData,
+        headers: {
+          // Forward auth headers
+          cookie: request.headers.get('cookie') || '',
+        },
+      });
+
+      if (!previewResponse.ok) {
+        const error = await previewResponse.json();
+        return NextResponse.json({ error: error.error || '파일 처리 중 오류가 발생했습니다.' }, { status: 400 });
+      }
+
+      const previewData = await previewResponse.json();
+
+      // Auto-process: import new items, skip exact duplicates
+      entries = previewData.entries.map((entry: any) => ({
+        ...entry,
+        category: entry.suggested_category,
+        action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+      }));
+    } else {
+      // Advanced mode: Use provided entries
+      const body = await request.json();
+      entries = body.entries;
+      product_code = body.product_code;
+      version = body.version;
+
+      if (!entries || entries.length === 0) {
+        return NextResponse.json({ error: '처리할 항목이 없습니다.' }, { status: 400 });
+      }
+
+      if (!product_code) {
+        return NextResponse.json({ error: '제품을 선택해주세요.' }, { status: 400 });
+      }
     }
 
     const results = {

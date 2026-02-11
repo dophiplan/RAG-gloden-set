@@ -36,6 +36,7 @@ type Step = 'upload' | 'preview' | 'confirm';
 
 export default function MigrationPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [productCode, setProductCode] = useState<ProductCode>('RC');
@@ -62,31 +63,60 @@ export default function MigrationPage() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('product_code', productCode);
+      if (mode === 'simple') {
+        // Simple mode: Direct import without preview
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('product_code', productCode);
+        formData.append('mode', 'simple');
 
-      const response = await fetch('/api/migration/preview', {
-        method: 'POST',
-        body: formData,
-      });
+        const response = await fetch('/api/migration/commit', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || '미리보기 중 오류가 발생했습니다.');
+        if (!response.ok) {
+          throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
+        }
+
+        // Show success message
+        alert(
+          `가져오기 완료!\n\n` +
+          `용어집: ${data.glossary.created}개 추가, ${data.glossary.skipped}개 중복\n` +
+          `번역: ${data.translations.created}개 추가, ${data.translations.updated}개 업데이트, ${data.translations.skipped}개 중복`
+        );
+
+        router.push('/glossary');
+      } else {
+        // Advanced mode: Show preview
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('product_code', productCode);
+
+        const response = await fetch('/api/migration/preview', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || '미리보기 중 오류가 발생했습니다.');
+        }
+
+        // Initialize category and action for each entry
+        const initializedEntries = data.entries.map((entry: PreviewEntry) => ({
+          ...entry,
+          category: entry.suggested_category,
+          action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+        }));
+
+        setEntries(initializedEntries);
+        setSummary(data.summary);
+        setStep('preview');
       }
-
-      // Initialize category and action for each entry
-      const initializedEntries = data.entries.map((entry: PreviewEntry) => ({
-        ...entry,
-        category: entry.suggested_category,
-        action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
-      }));
-
-      setEntries(initializedEntries);
-      setSummary(data.summary);
-      setStep('preview');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -148,12 +178,61 @@ export default function MigrationPage() {
 
   return (
     <DashboardLayout
-      title="데이터 마이그레이션"
-      subtitle="기존 번역 데이터를 Excel/CSV 파일에서 가져와 용어집 및 번역 관리에 추가합니다."
+      title="데이터 가져오기"
+      subtitle="Excel/CSV 파일에서 용어집 및 번역 데이터를 가져옵니다."
     >
       <div className="max-w-7xl mx-auto">
 
+      {/* Mode Toggle */}
+      <div className="mb-6 flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg w-fit mx-auto">
+        <button
+          onClick={() => setMode('simple')}
+          className={`px-6 py-2 rounded-md font-medium transition-all ${
+            mode === 'simple'
+              ? 'bg-white text-[#818CF8] shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span>⚡</span>
+            <span>간단 모드</span>
+          </span>
+        </button>
+        <button
+          onClick={() => setMode('advanced')}
+          className={`px-6 py-2 rounded-md font-medium transition-all ${
+            mode === 'advanced'
+              ? 'bg-white text-[#818CF8] shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span>🔧</span>
+            <span>고급 모드</span>
+          </span>
+        </button>
+      </div>
+
+      {/* Mode Description */}
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl">{mode === 'simple' ? '⚡' : '🔧'}</span>
+          <div className="flex-1">
+            <h3 className="font-semibold text-blue-900 mb-1">
+              {mode === 'simple' ? '간단 모드' : '고급 모드'}
+            </h3>
+            <p className="text-sm text-blue-700">
+              {mode === 'simple'
+                ? '파일을 선택하면 바로 가져옵니다. 중복된 항목은 자동으로 건너뜁니다. (용어집 빠른 추가용)'
+                : '미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다. (대량 데이터 마이그레이션용)'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Progress Steps */}
+      {mode === 'advanced' && (
       <div className="mb-8">
         <div className="flex items-center">
           {/* Step 1 */}
@@ -223,6 +302,7 @@ export default function MigrationPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Error Display */}
       {error && (
@@ -234,17 +314,19 @@ export default function MigrationPage() {
       {/* Step 1: Upload */}
       {step === 'upload' && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">파일 업로드</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            {mode === 'simple' ? '파일 선택' : '파일 업로드'}
+          </h2>
 
           <div className="space-y-6">
             {/* File Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                CSV 파일 선택
+                Excel/CSV 파일 선택
               </label>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileChange}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#E0E7FF] file:text-[#4F46E5] hover:file:bg-[#C7D2FE]"
               />
@@ -271,19 +353,21 @@ export default function MigrationPage() {
               </select>
             </div>
 
-            {/* Version (Optional) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                버전 (선택사항)
-              </label>
-              <input
-                type="text"
-                value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                placeholder="예: v1.0.0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
-              />
-            </div>
+            {/* Version (Optional) - Only in advanced mode */}
+            {mode === 'advanced' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  버전 (선택사항)
+                </label>
+                <input
+                  type="text"
+                  value={version}
+                  onChange={(e) => setVersion(e.target.value)}
+                  placeholder="예: v1.0.0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
+                />
+              </div>
+            )}
 
             {/* Upload Button */}
             <button
@@ -291,7 +375,10 @@ export default function MigrationPage() {
               disabled={!file || loading}
               className="w-full px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? '처리 중...' : '다음 단계'}
+              {loading
+                ? (mode === 'simple' ? '가져오는 중...' : '처리 중...')
+                : (mode === 'simple' ? '바로 가져오기' : '다음 단계')
+              }
             </button>
           </div>
         </div>

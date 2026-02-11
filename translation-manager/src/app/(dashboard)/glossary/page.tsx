@@ -296,9 +296,9 @@ export default function GlossaryPage() {
           <div className="flex gap-2">
             <Button
               variant="secondary"
-              onClick={() => router.push('/glossary/import')}
+              onClick={() => router.push('/settings/migration')}
             >
-              Excel 가져오기
+              가져오기
             </Button>
             <Button
               variant="secondary"
