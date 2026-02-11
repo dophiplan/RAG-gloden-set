@@ -16,14 +16,18 @@ export async function GET(request: NextRequest) {
     const languageCode = searchParams.get('language') as LanguageCode | null;
     const productCode = searchParams.get('product_code') as ProductCode | null;
     const search = searchParams.get('search');
+    const sourceType = searchParams.get('source_type');
+    const approvalStatus = searchParams.get('approval_status');
+    const importedAfter = searchParams.get('imported_after');
+    const importedBefore = searchParams.get('imported_before');
+    const sort = searchParams.get('sort') || 'term';
 
     let query = supabase
       .from('glossary')
       .select(`
         *,
         glossary_products (product_code)
-      `)
-      .order('term', { ascending: true });
+      `);
 
     if (languageCode) {
       query = query.eq('language_code', languageCode);
@@ -33,8 +37,33 @@ export async function GET(request: NextRequest) {
       query = query.eq('product_code', productCode);
     }
 
+    if (sourceType && ['manual', 'excel_import', 'ai_generated'].includes(sourceType)) {
+      query = query.eq('source_type', sourceType);
+    }
+
+    if (approvalStatus && ['pending', 'approved', 'rejected'].includes(approvalStatus)) {
+      query = query.eq('approval_status', approvalStatus);
+    }
+
+    if (importedAfter) {
+      query = query.gte('imported_at', importedAfter);
+    }
+
+    if (importedBefore) {
+      query = query.lte('imported_at', importedBefore);
+    }
+
     if (search) {
       query = query.or(`term.ilike.%${search}%,translation.ilike.%${search}%`);
+    }
+
+    // Apply sorting
+    if (sort === 'hit_count') {
+      query = query.order('hit_count', { ascending: false });
+    } else if (sort === 'imported_at') {
+      query = query.order('imported_at', { ascending: false, nullsFirst: false });
+    } else {
+      query = query.order('term', { ascending: true });
     }
 
     const { data, error } = await query;
@@ -101,6 +130,9 @@ export async function POST(request: NextRequest) {
         context: body.context?.trim() || null,
         product_code: body.product_code || null,
         user_id: user.id,
+        source_type: 'manual',
+        imported_at: new Date().toISOString(),
+        hit_count: 0,
       })
       .select()
       .single();

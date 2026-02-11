@@ -8,6 +8,11 @@ export function useGlossaryData() {
   const [languageFilter, setLanguageFilter] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<string>('');
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('');
+  const [importedAfter, setImportedAfter] = useState<string>('');
+  const [importedBefore, setImportedBefore] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('term');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
@@ -27,6 +32,11 @@ export function useGlossaryData() {
       if (languageFilter) params.set('language', languageFilter);
       if (selectedProduct) params.set('product_code', selectedProduct);
       if (searchTerm) params.set('search', searchTerm);
+      if (sourceTypeFilter) params.set('source_type', sourceTypeFilter);
+      if (approvalStatusFilter) params.set('approval_status', approvalStatusFilter);
+      if (importedAfter) params.set('imported_after', importedAfter);
+      if (importedBefore) params.set('imported_before', importedBefore);
+      if (sortBy) params.set('sort', sortBy);
 
       const response = await fetch(`/api/glossary?${params}`);
       if (response.ok) {
@@ -38,7 +48,7 @@ export function useGlossaryData() {
     } finally {
       setLoading(false);
     }
-  }, [languageFilter, selectedProduct, searchTerm]);
+  }, [languageFilter, selectedProduct, searchTerm, sourceTypeFilter, approvalStatusFilter, importedAfter, importedBefore, sortBy]);
 
   useEffect(() => {
     fetchTerms();
@@ -145,6 +155,46 @@ export function useGlossaryData() {
     }
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      const response = await fetch(`/api/glossary/${id}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      });
+
+      if (response.ok) {
+        fetchTerms();
+        showSuccess('용어가 승인되었습니다.');
+      } else {
+        showError('용어 승인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error approving glossary term:', error);
+      showError('용어 승인 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      const response = await fetch(`/api/glossary/${id}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      });
+
+      if (response.ok) {
+        fetchTerms();
+        showSuccess('용어가 거부되었습니다.');
+      } else {
+        showError('용어 거부에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error rejecting glossary term:', error);
+      showError('용어 거부 중 오류가 발생했습니다.');
+    }
+  };
+
   const handleAIReview = async () => {
     setIsReviewing(true);
     try {
@@ -171,6 +221,45 @@ export function useGlossaryData() {
     return acc;
   }, {});
 
+  // Quick filter functions
+  const setQuickFilter = (filterType: 'this_week' | 'frequently_used' | 'unused' | 'pending') => {
+    const now = new Date();
+    if (filterType === 'this_week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      setImportedAfter(weekAgo.toISOString().split('T')[0]);
+      setImportedBefore('');
+      setSortBy('imported_at');
+      setApprovalStatusFilter('');
+    } else if (filterType === 'frequently_used') {
+      setImportedAfter('');
+      setImportedBefore('');
+      setSortBy('hit_count');
+      setApprovalStatusFilter('');
+    } else if (filterType === 'unused') {
+      setImportedAfter('');
+      setImportedBefore('');
+      setSortBy('term');
+      setApprovalStatusFilter('');
+      // Note: We can't filter by hit_count=0 via API, but sorted view will show them first
+    } else if (filterType === 'pending') {
+      setImportedAfter('');
+      setImportedBefore('');
+      setSortBy('imported_at');
+      setApprovalStatusFilter('pending');
+    }
+  };
+
+  const resetFilters = () => {
+    setLanguageFilter('');
+    setSelectedProduct(null);
+    setSearchTerm('');
+    setSourceTypeFilter('');
+    setApprovalStatusFilter('');
+    setImportedAfter('');
+    setImportedBefore('');
+    setSortBy('term');
+  };
+
   return {
     terms,
     loading,
@@ -180,6 +269,16 @@ export function useGlossaryData() {
     setSelectedProduct,
     searchTerm,
     setSearchTerm,
+    sourceTypeFilter,
+    setSourceTypeFilter,
+    approvalStatusFilter,
+    setApprovalStatusFilter,
+    importedAfter,
+    setImportedAfter,
+    importedBefore,
+    setImportedBefore,
+    sortBy,
+    setSortBy,
     isModalOpen,
     setIsModalOpen,
     editingTerm,
@@ -200,8 +299,12 @@ export function useGlossaryData() {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleApprove,
+    handleReject,
     handleAIReview,
     openEditModal,
     groupedTerms,
+    setQuickFilter,
+    resetFilters,
   };
 }

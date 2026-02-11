@@ -12,7 +12,13 @@ export interface GlossaryTerm {
   team_id: string | null;
   created_at: string;
   updated_at: string;
+  source_type: 'manual' | 'excel_import' | 'ai_generated';
+  imported_at: string | null;
+  hit_count: number;
   glossary_products?: GlossaryProduct[];
+  approval_status: 'pending' | 'approved' | 'rejected';
+  approved_by?: string | null;
+  approved_at?: string | null;
 }
 
 export interface GlossaryProduct {
@@ -31,4 +37,19 @@ export interface GlossaryCreateInput {
   context?: string;
   product_code?: ProductCode; // Deprecated
   product_codes?: ProductCode[]; // Use this for multiple products
+}
+
+export interface GlossaryImportResponse {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: Array<{ row: number; error: string }>;
+}
+
+export interface GlossaryImportRow {
+  term: string;
+  translation: string;
+  language_code: string;
+  product_code?: string;
+  context?: string;
 }
