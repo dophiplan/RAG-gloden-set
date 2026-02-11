@@ -48,7 +48,7 @@ export default function Error({
           </Button>
           <Button
             onClick={() => window.location.href = '/'}
-            variant="outline"
+            variant="secondary"
             className="w-full"
           >
             대시보드로 돌아가기
