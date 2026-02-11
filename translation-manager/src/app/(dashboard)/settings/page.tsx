@@ -6,6 +6,7 @@ import Card, { CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import DropdownMenu from '@/components/ui/DropdownMenu';
 import { createClient } from '@/lib/supabase/client';
 import { SUPPORTED_LANGUAGES } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
@@ -499,7 +500,7 @@ export default function SettingsPage() {
       title="설정"
       subtitle="계정 및 환경 설정을 관리합니다."
     >
-      <div className="max-w-5xl space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* OpenAI API Key Settings */}
         <Card>
           <CardTitle>
@@ -599,22 +600,29 @@ export default function SettingsPage() {
                         <Badge variant="info">{product.code}</Badge>
                         <p className="font-semibold text-gray-900">{product.name}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openProductModal(product)}
-                        >
-                          수정
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleDeleteProduct(product)}
-                        >
-                          삭제
-                        </Button>
-                      </div>
+                      <DropdownMenu
+                        items={[
+                          {
+                            label: '수정',
+                            onClick: () => openProductModal(product),
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: '삭제',
+                            onClick: () => handleDeleteProduct(product),
+                            variant: 'danger' as const,
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            ),
+                          },
+                        ]}
+                      />
                     </div>
                     {product.description && (
                       <p className="text-sm text-gray-600 mt-2">{product.description}</p>
@@ -655,22 +663,29 @@ export default function SettingsPage() {
                         <Badge variant="info">{language.code}</Badge>
                         <p className="font-semibold text-gray-900">{language.name}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => openLanguageModal(language)}
-                        >
-                          수정
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleDeleteLanguage(language)}
-                        >
-                          삭제
-                        </Button>
-                      </div>
+                      <DropdownMenu
+                        items={[
+                          {
+                            label: '수정',
+                            onClick: () => openLanguageModal(language),
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: '삭제',
+                            onClick: () => handleDeleteLanguage(language),
+                            variant: 'danger' as const,
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            ),
+                          },
+                        ]}
+                      />
                     </div>
                     {language.description && (
                       <p className="text-sm text-gray-600 mt-2">{language.description}</p>
