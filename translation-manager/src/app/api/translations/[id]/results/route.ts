@@ -56,13 +56,16 @@ export async function POST(
       if (error) throw error;
       return NextResponse.json(data);
     } else {
-      // Create new
+      // Create new - mark as manually created
       const { data, error } = await supabase
         .from('translation_results')
         .insert({
           translation_id: translationId,
           language_code: body.language_code,
           translated_text: body.translated_text.trim(),
+          source_type: 'manual',
+          reviewer_id: user.id,
+          reviewed_at: new Date().toISOString(),
         })
         .select()
         .single();

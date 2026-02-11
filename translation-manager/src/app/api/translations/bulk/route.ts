@@ -3,6 +3,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { TranslationStatus, ProductCode, LanguageCode, Scope } from '@/types';
 import { getAuthUser } from '@/lib/api-auth';
 import { autoTranslate } from '@/lib/openai/auto-translate';
+import { bulkCreateSchema, bulkUpdateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
+import { enforceRateLimit } from '@/lib/api/rate-limiter';
 
 interface BulkUpdateInput {
   ids: string[];
@@ -30,15 +32,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check rate limit for bulk creation
+    const rateLimitResult = await enforceRateLimit(user.id, 'bulk_create');
+    if (!rateLimitResult.allowed) {
+      return rateLimitResult.response;
+    }
+
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(bulkCreateSchema, rawBody);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const body = validation.data;
+
     // Generate unique request ID for this batch
     const requestId = crypto.randomUUID();
 
     // Always use admin client to bypass RLS for bulk operations
-    console.log('🔧 Creating admin client for bulk operations...');
     let adminClient;
     try {
       adminClient = authAdminClient || createAdminClient();
-      console.log('✅ Admin client created successfully');
     } catch (adminError) {
       console.error('❌ Failed to create admin client:', adminError);
       throw new Error('Failed to create admin client: ' + (adminError instanceof Error ? adminError.message : 'Unknown error'));
@@ -52,24 +71,16 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const body: BulkCreateInput = await request.json();
-
-    if (!body.texts || body.texts.length === 0) {
-      return NextResponse.json(
-        { error: '텍스트 목록은 필수입니다.' },
-        { status: 400 }
-      );
-    }
-
     const versionUpdatedAt = body.version ? new Date().toISOString() : null;
 
     // Store original texts for creating KO translation results
-    const originalTexts = body.texts.filter((text) => text.trim()).map((text) => text.trim());
+    // Already validated and trimmed by schema, but sanitize for safety
+    const originalTexts = body.texts.map((text) => sanitizeText(text));
 
     const translations = originalTexts.map((text, index) => ({
       source_text: `key_${requestId.slice(0, 8)}_${index + 1}`, // Auto-generated key for developers
-      context: body.context?.trim() || null,
-      version: body.version?.trim() || null,
+      context: body.context ? sanitizeText(body.context) : null,
+      version: body.version ? sanitizeText(body.version) : null,
       version_updated_at: versionUpdatedAt,
       product_code: body.product_code || null,
       scope: body.scope || null,
@@ -79,13 +90,6 @@ export async function POST(request: NextRequest) {
       request_id: requestId,
       completion_date: body.completion_date || null,
     }));
-
-    console.log('Attempting to insert translations:', {
-      count: translations.length,
-      sample: translations[0],
-      product_code: body.product_code,
-      usingAdminClient: !!adminClient,
-    });
 
     const { data, error } = await db
       .from('translations')
@@ -105,17 +109,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Bulk insert success:', {
-      requested: translations.length,
-      created: data.length,
-    });
-
     // Create translation_products records if product_code is provided
     if (body.product_code && data && data.length > 0) {
       const translationProducts = data.map((t) => ({
         translation_id: t.id,
         product_code: body.product_code as ProductCode,
-        version: body.version?.trim() || null,
+        version: body.version ? sanitizeText(body.version) : null,
         version_updated_at: versionUpdatedAt,
       }));
 
@@ -126,8 +125,6 @@ export async function POST(request: NextRequest) {
       if (productsError) {
         console.error('Error creating translation_products:', productsError);
         // Don't fail the entire request, but log the error
-      } else {
-        console.log('Created translation_products records:', translationProducts.length);
       }
     }
 
@@ -154,14 +151,10 @@ export async function POST(request: NextRequest) {
       if (resultsError) {
         console.error('Error creating translation results:', resultsError);
         // Don't fail the whole operation, just log
-      } else {
-        console.log('Created translation_results records:', translationResults.length);
       }
 
       // Auto-translate using glossary
       try {
-        console.log('🔍 Starting glossary auto-translation...');
-        console.log('Product code:', body.product_code);
 
         // Fetch glossary terms for the product (or all if no product)
         // Only use approved terms for auto-translation
@@ -177,7 +170,6 @@ export async function POST(request: NextRequest) {
 
         const { data: glossaryTerms, error: glossaryError } = await glossaryQuery;
 
-        console.log('📚 Glossary terms fetched:', glossaryTerms?.length || 0);
         if (glossaryError) {
           console.error('Glossary fetch error:', glossaryError);
         }
@@ -191,8 +183,10 @@ export async function POST(request: NextRequest) {
           glossary_term_id: string | null;
         }> = [];
 
+        // Track hit count updates for batch processing
+        const hitCountUpdates: Array<{ term: string; language_code: string }> = [];
+
         if (glossaryTerms && glossaryTerms.length > 0) {
-          console.log('Sample glossary terms:', glossaryTerms.slice(0, 3));
           // For each translation, check for glossary matches and update
 
           for (let i = 0; i < data.length; i++) {
@@ -265,41 +259,65 @@ export async function POST(request: NextRequest) {
                   glossary_term_id: matchedGlossaryId,
                 });
 
-                // Increment hit_count for matched glossary term (non-blocking)
-                void db.rpc('increment_glossary_hit_count', {
-                  p_term: koText,
-                  p_language_code: lang
+                // Collect hit count updates for batch processing
+                hitCountUpdates.push({
+                  term: koText,
+                  language_code: lang
                 });
               }
             }
           }
 
-          // Batch update translation_results with glossary matches
+          // Batch increment hit counts in a single transaction
+          if (hitCountUpdates.length > 0) {
+            try {
+              await db.rpc('batch_increment_glossary_hit_count', {
+                p_updates: hitCountUpdates
+              });
+            } catch (hitCountError) {
+              console.error('Error batch updating hit counts:', hitCountError);
+              // Don't fail the whole operation
+            }
+          }
+
+          // Batch update translation_results with glossary matches using upsert
           if (updates.length > 0) {
-            console.log('🎯 Applying', updates.length, 'glossary matches...');
-            for (const update of updates) {
+            try {
               await db
                 .from('translation_results')
-                .update({
-                  translated_text: update.translated_text,
-                  source_type: update.source_type,
-                  glossary_term_id: update.glossary_term_id,
-                })
-                .eq('translation_id', update.translation_id)
-                .eq('language_code', update.language_code);
+                .upsert(
+                  updates.map(u => ({
+                    translation_id: u.translation_id,
+                    language_code: u.language_code,
+                    translated_text: u.translated_text,
+                    source_type: u.source_type,
+                    glossary_term_id: u.glossary_term_id,
+                  })),
+                  {
+                    onConflict: 'translation_id,language_code',
+                    ignoreDuplicates: false
+                  }
+                );
+            } catch (upsertError) {
+              console.error('Error batch upserting translation results:', upsertError);
+              // Fallback to sequential updates if upsert fails
+              for (const update of updates) {
+                await db
+                  .from('translation_results')
+                  .update({
+                    translated_text: update.translated_text,
+                    source_type: update.source_type,
+                    glossary_term_id: update.glossary_term_id,
+                  })
+                  .eq('translation_id', update.translation_id)
+                  .eq('language_code', update.language_code);
+              }
             }
-            console.log('✅ Auto-translated using glossary:', updates.length, 'matches');
-          } else {
-            console.log('⚠️ No glossary matches found');
-            console.log('Sample original texts:', originalTexts.slice(0, 3));
           }
-        } else {
-          console.log('⚠️ No glossary terms available for auto-translation');
         }
 
         // AI Translation fallback for empty translations
         try {
-          console.log('🤖 Starting AI auto-translation for remaining empty fields...');
 
           // Get OpenAI API key with priority: organization > user > environment
           let apiKey: string | null = null;
@@ -367,6 +385,15 @@ export async function POST(request: NextRequest) {
             if (aiTranslationNeeded.length > 0) {
               console.log(`🤖 AI translating ${aiTranslationNeeded.length} texts...`);
 
+              // Collect all AI translation updates for batch processing
+              const aiUpdates: Array<{
+                translation_id: string;
+                language_code: string;
+                translated_text: string;
+                source_type: string;
+                glossary_term_id: null;
+              }> = [];
+
               // Process in batches to avoid rate limits
               for (const item of aiTranslationNeeded) {
                 try {
@@ -378,17 +405,15 @@ export async function POST(request: NextRequest) {
                     apiKey,
                   });
 
-                  // Update translation_results with AI translations
+                  // Collect AI translation results for batch update
                   for (const result of aiResults) {
-                    await db
-                      .from('translation_results')
-                      .update({
-                        translated_text: result.translatedText,
-                        source_type: 'ai',
-                        glossary_term_id: null,
-                      })
-                      .eq('translation_id', item.translationId)
-                      .eq('language_code', result.languageCode);
+                    aiUpdates.push({
+                      translation_id: item.translationId,
+                      language_code: result.languageCode,
+                      translated_text: result.translatedText,
+                      source_type: 'ai',
+                      glossary_term_id: null,
+                    });
                   }
                 } catch (aiError) {
                   console.error('AI translation error for text:', item.koText.substring(0, 50), aiError);
@@ -396,12 +421,36 @@ export async function POST(request: NextRequest) {
                 }
               }
 
-              console.log('✅ AI auto-translation completed');
-            } else {
-              console.log('✓ All translations filled by glossary, no AI translation needed');
+              // Batch update all AI translations in a single upsert
+              if (aiUpdates.length > 0) {
+                try {
+                  await db
+                    .from('translation_results')
+                    .upsert(aiUpdates, {
+                      onConflict: 'translation_id,language_code',
+                      ignoreDuplicates: false
+                    });
+                } catch (aiUpdateError) {
+                  console.error('Error batch upserting AI translations:', aiUpdateError);
+                  // Fallback to sequential updates if batch fails
+                  for (const update of aiUpdates) {
+                    try {
+                      await db
+                        .from('translation_results')
+                        .update({
+                          translated_text: update.translated_text,
+                          source_type: update.source_type,
+                          glossary_term_id: update.glossary_term_id,
+                        })
+                        .eq('translation_id', update.translation_id)
+                        .eq('language_code', update.language_code);
+                    } catch (err) {
+                      console.error('Failed to update AI translation:', err);
+                    }
+                  }
+                }
+              }
             }
-          } else {
-            console.log('⚠️ No OpenAI API key available, skipping AI translation');
           }
         } catch (aiError) {
           console.error('❌ Error in AI auto-translation:', aiError);
@@ -460,28 +509,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check rate limit for bulk updates
+    const rateLimitResult = await enforceRateLimit(user.id, 'bulk_update');
+    if (!rateLimitResult.allowed) {
+      return rateLimitResult.response;
+    }
+
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(bulkUpdateSchema, rawBody);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const body = validation.data;
+
     // Get user profile for audit log
     const { data: userProfile } = await supabase
       .from('users')
       .select('name, email')
       .eq('id', user.id)
       .single();
-
-    const body: BulkUpdateInput = await request.json();
-
-    if (!body.ids || body.ids.length === 0) {
-      return NextResponse.json(
-        { error: 'ID 목록은 필수입니다.' },
-        { status: 400 }
-      );
-    }
-
-    if (!['pending', 'reviewed', 'deployed'].includes(body.status)) {
-      return NextResponse.json(
-        { error: '유효하지 않은 상태입니다.' },
-        { status: 400 }
-      );
-    }
 
     // Get old values for audit log
     const { data: oldData } = await supabase

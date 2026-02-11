@@ -104,8 +104,8 @@ export async function POST(request: NextRequest) {
               });
             }
 
-            // Create audit log
-            await supabase.from('translation_audit_logs').insert({
+            // Create audit log (non-blocking)
+            supabase.from('translation_audit_logs').insert({
               translation_id: existing.id,
               user_id: user.id,
               user_name: userProfile?.name,
@@ -114,6 +114,9 @@ export async function POST(request: NextRequest) {
               field_name: 'version',
               old_value: existing.version,
               new_value: version,
+            }).catch(err => {
+              console.error('[Audit Log] Failed to log import version update:', err);
+              // Don't throw - audit log failure should not break the main operation
             });
 
             results.updated++;
@@ -160,14 +163,17 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Create audit log
-        await supabase.from('translation_audit_logs').insert({
+        // Create audit log (non-blocking)
+        supabase.from('translation_audit_logs').insert({
           translation_id: translation.id,
           user_id: user.id,
           user_name: userProfile?.name,
           user_email: userProfile?.email || user.email,
           action: 'create',
           new_value: row.source_text.trim(),
+        }).catch(err => {
+          console.error('[Audit Log] Failed to log import creation:', err);
+          // Don't throw - audit log failure should not break the main operation
         });
 
         // Insert translation results for each language column

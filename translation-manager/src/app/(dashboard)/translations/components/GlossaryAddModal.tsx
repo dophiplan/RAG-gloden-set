@@ -2,7 +2,8 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import { LanguageCode, ProductCode, SUPPORTED_LANGUAGES, PRODUCTS } from '@/types';
+import { LanguageCode, ProductCode } from '@/types';
+import { useLanguages, useProducts } from '@/hooks/useReferenceData';
 
 interface GlossaryAddModalProps {
   isOpen: boolean;
@@ -35,6 +36,9 @@ export default function GlossaryAddModal({
   toggleGlossaryProduct,
   onSave,
 }: GlossaryAddModalProps) {
+  const { languages, languagesMap } = useLanguages();
+  const { products, productsMap } = useProducts();
+
   return (
     <Modal
       isOpen={isOpen}
@@ -52,11 +56,11 @@ export default function GlossaryAddModal({
           label="번역 언어 *"
           value={glossaryLanguage}
           onChange={(e) => setGlossaryLanguage(e.target.value as LanguageCode)}
-          options={Object.entries(SUPPORTED_LANGUAGES)
-            .filter(([code]) => code !== 'ko')
-            .map(([code, name]) => ({
-              value: code,
-              label: name,
+          options={languages
+            .filter((lang) => lang.code !== 'ko')
+            .map((lang) => ({
+              value: lang.code,
+              label: lang.name,
             }))}
         />
         <Input
@@ -82,19 +86,19 @@ export default function GlossaryAddModal({
             적용 제품 (선택사항)
           </label>
           <div className="flex flex-wrap gap-3">
-            {Object.entries(PRODUCTS).map(([code, name]) => (
+            {products.map((product) => (
               <label
-                key={code}
+                key={product.code}
                 className="inline-flex items-center cursor-pointer"
               >
                 <input
                   type="checkbox"
-                  checked={glossaryProductCodes.includes(code as ProductCode)}
-                  onChange={() => toggleGlossaryProduct(code as ProductCode)}
+                  checked={glossaryProductCodes.includes(product.code as ProductCode)}
+                  onChange={() => toggleGlossaryProduct(product.code as ProductCode)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
-                  {name}
+                  {product.name}
                 </span>
               </label>
             ))}

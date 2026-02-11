@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SUPPORTED_LANGUAGES, ProductCode } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface PreviewEntry {
   id: string;
@@ -47,12 +48,6 @@ export async function POST(request: NextRequest) {
     const text = await file.text();
     const rows = parseCSV(text);
 
-    console.log('📄 [CSV Parse] 총 행 수:', rows.length);
-    if (rows.length > 0) {
-      console.log('📄 [CSV Parse] 첫 번째 행:', rows[0]);
-      console.log('📄 [CSV Parse] 언어 키:', Object.keys(rows[0]).filter(k => k !== 'source_text' && k !== 'context'));
-    }
-
     if (rows.length === 0) {
       return NextResponse.json({ error: '유효한 데이터가 없습니다.' }, { status: 400 });
     }
@@ -79,14 +74,6 @@ export async function POST(request: NextRequest) {
         if (row[langCode]?.trim()) {
           translations[langCode] = row[langCode]!.trim();
         }
-      }
-
-      if (Object.keys(translations).length === 1) {
-        console.log('⚠️ [Debug] 언어가 하나만 추출됨!');
-        console.log('  - Source:', sourceText);
-        console.log('  - Row keys:', Object.keys(row));
-        console.log('  - Valid languages:', validLanguages);
-        console.log('  - Translations:', translations);
       }
 
       // Calculate word count (for auto-classification)
@@ -142,7 +129,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function checkDuplicates(
-  supabase: any,
+  supabase: SupabaseClient,
   sourceText: string,
   category: 'glossary' | 'translation',
   translations: Record<string, string>
@@ -167,7 +154,11 @@ async function checkDuplicates(
         .eq('term', sourceText);
 
       if (allTranslations) {
-        allTranslations.forEach((t: any) => {
+        interface GlossaryTranslation {
+          language_code: string;
+          translation: string;
+        }
+        allTranslations.forEach((t: GlossaryTranslation) => {
           existingTranslations[t.language_code] = t.translation;
         });
       }
@@ -209,7 +200,11 @@ async function checkDuplicates(
       // Exact match found
       const existingTranslations: Record<string, string> = {};
       if (existing.translation_results) {
-        existing.translation_results.forEach((tr: any) => {
+        interface TranslationResultItem {
+          language_code: string;
+          translated_text: string;
+        }
+        existing.translation_results.forEach((tr: TranslationResultItem) => {
           existingTranslations[tr.language_code] = tr.translated_text;
         });
       }

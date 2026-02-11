@@ -27,11 +27,11 @@ export default function Badge({
   }
 
   const variants = {
-    default: 'bg-white text-[#546E7A] border border-[#E0E7FF] shadow-sm',
+    default: 'bg-white text-text-secondary border border-border-light shadow-sm',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm',
     warning: 'bg-amber-50 text-amber-700 border border-amber-100 shadow-sm',
     error: 'bg-red-50 text-red-700 border border-red-100 shadow-sm',
-    info: 'bg-[#E0E7FF] text-[#6366F1] border border-[#818CF8]/20 shadow-sm',
+    info: 'bg-primary-light text-primary-hover border border-primary/20 shadow-sm',
   };
 
   return (

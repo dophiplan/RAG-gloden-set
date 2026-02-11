@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { PRODUCTS } from '@/lib/constants';
 import type { TranslationStatus, PriorityLevel } from '@/types';
 
 export async function GET() {
   try {
     const supabase = await createClient();
+
+    // Fetch products for name lookup
+    const { data: productsData } = await supabase
+      .from('products')
+      .select('code, name');
+
+    const productsMap = (productsData || []).reduce((acc, p) => {
+      acc[p.code] = p.name;
+      return acc;
+    }, {} as Record<string, string>);
 
     // Step 1: Fetch translations with request_id (grouped requests)
     const { data: groupedTranslations, error: groupedError } = await supabase
@@ -105,7 +114,7 @@ export async function GET() {
         },
         products: uniqueProducts.map(tp => ({
           code: tp.product_code,
-          name: PRODUCTS[tp.product_code as keyof typeof PRODUCTS] || tp.product_code,
+          name: productsMap[tp.product_code] || tp.product_code,
           version: tp.version || null,
           category: translations[0].scope || null,
         })),
@@ -149,7 +158,7 @@ export async function GET() {
         },
         products: (translation.translation_products || []).map(tp => ({
           code: tp.product_code,
-          name: PRODUCTS[tp.product_code as keyof typeof PRODUCTS] || tp.product_code,
+          name: productsMap[tp.product_code] || tp.product_code,
           version: tp.version || null,
           category: translation.scope || null,
         })),

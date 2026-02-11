@@ -123,6 +123,7 @@ export interface TranslationUpdateInput {
   scope?: 'SaaS' | 'Solution' | null;
   priority?: PriorityLevel;
   notes?: string | null;
+  updated_at?: string; // For optimistic locking - send current timestamp to detect conflicts
 }
 
 // Dashboard stats

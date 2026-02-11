@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
         t.imported_at && new Date(t.imported_at) >= monthStart
       ).length || 0,
       estimated_cost_saved: 0,
+      product_stats: {},
     };
 
     // Group hits by language

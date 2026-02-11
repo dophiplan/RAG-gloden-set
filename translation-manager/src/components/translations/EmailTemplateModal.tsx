@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { EmailTemplateType, Translation, SUPPORTED_LANGUAGES, LanguageCode } from '@/types';
+import { TIMEOUTS } from '@/lib/constants';
 
 interface EmailTemplateModalProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export default function EmailTemplateModal({
     if (isOpen) {
       const debounce = setTimeout(() => {
         loadPreview();
-      }, 500);
+      }, TIMEOUTS.PREVIEW_DEBOUNCE_DELAY_MS);
       return () => clearTimeout(debounce);
     }
   }, [selectedTemplateType, selectedLanguages, customMessage]);

@@ -38,13 +38,9 @@ export async function POST(request: NextRequest) {
 
     if (isSimpleMode) {
       // Simple mode: Parse file and auto-process
-      console.log('🚀 [간단 모드 API] 시작');
-
       const formData = await request.formData();
       const file = formData.get('file') as File;
       product_code = formData.get('product_code') as ProductCode;
-
-      console.log('📄 [간단 모드 API] 파일:', file?.name, '제품:', product_code);
 
       if (!file) {
         return NextResponse.json({ error: '파일을 선택해주세요.' }, { status: 400 });
@@ -55,7 +51,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Parse the file and create entries (reuse preview logic)
-      console.log('🔍 [간단 모드 API] Preview API 호출 중...');
       const previewFormData = new FormData();
       previewFormData.append('file', file);
       previewFormData.append('product_code', product_code);
@@ -78,25 +73,18 @@ export async function POST(request: NextRequest) {
       }
 
       const previewData = await previewResponse.json();
-      console.log('📊 [간단 모드 API] Preview 결과:', {
-        총항목: previewData.entries.length,
-        용어집제안: previewData.summary.glossary_suggested,
-        번역제안: previewData.summary.translation_suggested,
-      });
 
       // Auto-process: import new items, skip exact duplicates
-      entries = previewData.entries.map((entry: any) => ({
+      interface PreviewEntry {
+        suggested_category: 'glossary' | 'translation';
+        duplicate_status: { status: string };
+        [key: string]: unknown;
+      }
+      entries = previewData.entries.map((entry: PreviewEntry) => ({
         ...entry,
         category: entry.suggested_category,
         action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
       }));
-
-      console.log('📝 [간단 모드 API] 처리 결정:', {
-        가져올항목: entries.filter((e: any) => e.action === 'import').length,
-        건너뛸항목: entries.filter((e: any) => e.action === 'skip').length,
-        용어집: entries.filter((e: any) => e.category === 'glossary').length,
-        번역: entries.filter((e: any) => e.category === 'translation').length,
-      });
     } else {
       // Advanced mode: Use provided entries
       const body = await request.json();
@@ -192,11 +180,11 @@ export async function POST(request: NextRequest) {
         }
 
         results.glossary.created++;
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error importing glossary entry:', error);
         results.glossary.errors.push({
           row: i + 1,
-          message: error.message || '가져오기 실패',
+          message: error instanceof Error ? error.message : '가져오기 실패',
         });
       }
     }
@@ -221,8 +209,11 @@ export async function POST(request: NextRequest) {
         if (existing) {
           if (entry.action === 'merge' || entry.action === 'overwrite') {
             // Get existing language codes
+            interface TranslationResultItem {
+              language_code: string;
+            }
             const existingLangCodes = new Set(
-              existing.translation_results.map((tr: any) => tr.language_code)
+              existing.translation_results.map((tr: TranslationResultItem) => tr.language_code)
             );
 
             // Add or update translation results
@@ -232,8 +223,11 @@ export async function POST(request: NextRequest) {
               if (existingLangCodes.has(langCode)) {
                 if (entry.action === 'overwrite') {
                   // Update existing translation
+                  interface TranslationResultWithId extends TranslationResultItem {
+                    id: string;
+                  }
                   const existingResult = existing.translation_results.find(
-                    (tr: any) => tr.language_code === langCode
+                    (tr: TranslationResultWithId) => tr.language_code === langCode
                   );
                   await supabase
                     .from('translation_results')
@@ -257,8 +251,8 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // Create audit log for merge/overwrite
-            await supabase.from('translation_audit_logs').insert({
+            // Create audit log for merge/overwrite (non-blocking)
+            supabase.from('translation_audit_logs').insert({
               translation_id: existing.id,
               user_id: user.id,
               user_name: userProfile?.name,
@@ -266,6 +260,9 @@ export async function POST(request: NextRequest) {
               action: 'update',
               field_name: 'migration',
               new_value: `Data ${entry.action} from migration`,
+            }).catch(err => {
+              console.error('[Audit Log] Failed to log migration update:', err);
+              // Don't throw - audit log failure should not break the main operation
             });
 
             results.translations.updated++;
@@ -316,8 +313,8 @@ export async function POST(request: NextRequest) {
           version_updated_at: version ? new Date().toISOString() : null,
         });
 
-        // Create audit log
-        await supabase.from('translation_audit_logs').insert({
+        // Create audit log (non-blocking)
+        supabase.from('translation_audit_logs').insert({
           translation_id: translation.id,
           user_id: user.id,
           user_name: userProfile?.name,
@@ -325,14 +322,17 @@ export async function POST(request: NextRequest) {
           action: 'create',
           field_name: 'migration',
           new_value: 'Data migrated from Excel',
+        }).catch(err => {
+          console.error('[Audit Log] Failed to log migration creation:', err);
+          // Don't throw - audit log failure should not break the main operation
         });
 
         results.translations.created++;
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error importing translation entry:', error);
         results.translations.errors.push({
           row: i + 1,
-          message: error.message || '가져오기 실패',
+          message: error instanceof Error ? error.message : '가져오기 실패',
         });
       }
     }

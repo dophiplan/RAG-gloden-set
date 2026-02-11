@@ -2,27 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isMaster } from '@/lib/permissions';
 import { ProductCode, UserRole } from '@/types';
+import { requireMasterRole } from '@/lib/api-auth';
+import { successResponse, serverError } from '@/lib/api/middleware';
 
 // GET - List users with filters and search
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const auth = await requireMasterRole(supabase);
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
-    }
-
-    // Get current user with roles
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    // Only masters can view user list
-    if (!isMaster(currentUser)) {
-      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
+    if (auth.error) {
+      return auth.error;
     }
 
     const { searchParams } = new URL(request.url);
@@ -90,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({
+    return successResponse({
       users: users || [],
       pagination: {
         page,
@@ -102,9 +92,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Error fetching users:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
-      { status: 500 }
+    return serverError(
+      error instanceof Error ? error.message : '알 수 없는 오류'
     );
   }
 }

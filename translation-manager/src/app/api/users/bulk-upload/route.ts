@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { canManageAccounts } from '@/lib/permissions';
 import * as XLSX from 'xlsx';
 import { ProductCode, UserRole } from '@/types';
+import { validateUploadedFile, validateFileContentSize, FILE_UPLOAD_CONSTANTS } from '@/lib/validation/file-upload';
 
-const MAX_USERS = 500;
+const MAX_USERS = FILE_UPLOAD_CONSTANTS.MAX_ROWS_DEFAULT;
 
 interface UserRow {
   email: string;
@@ -40,9 +41,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
-    if (!file) {
+    // Validate file
+    const fileValidation = validateUploadedFile(file);
+    if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: '파일을 업로드해주세요.' },
+        {
+          error: fileValidation.error,
+          code: fileValidation.errorCode,
+        },
         { status: 400 }
       );
     }
@@ -62,9 +68,21 @@ export async function POST(request: NextRequest) {
       blankrows: false,
     });
 
+    // Validate row count
+    const contentValidation = validateFileContentSize(rawData.length - 1, MAX_USERS); // -1 for header
+    if (!contentValidation.valid) {
+      return NextResponse.json(
+        {
+          error: contentValidation.error,
+          code: contentValidation.errorCode,
+        },
+        { status: 400 }
+      );
+    }
+
     if (rawData.length < 2) {
       return NextResponse.json(
-        { error: '파일에 데이터가 없습니다.' },
+        { error: '파일에 데이터가 없습니다.', code: 'EMPTY_FILE' },
         { status: 400 }
       );
     }

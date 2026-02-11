@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { autoTranslate } from '@/lib/openai/auto-translate';
 import { LanguageCode } from '@/types';
+import { aiTranslateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
+import { enforceRateLimit } from '@/lib/api/rate-limiter';
 
 interface TranslateRequest {
   translationId?: string;
@@ -19,22 +21,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    const body: TranslateRequest = await request.json();
+    // Check rate limit for AI translation (most expensive operation)
+    const rateLimitResult = await enforceRateLimit(user.id, 'ai_translation');
+    if (!rateLimitResult.allowed) {
+      return rateLimitResult.response;
+    }
 
-    // Validate request
-    if (!body.sourceText?.trim()) {
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(aiTranslateSchema, rawBody);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: '원문 텍스트는 필수입니다.' },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    if (!body.targetLanguages || body.targetLanguages.length === 0) {
-      return NextResponse.json(
-        { error: '번역할 언어를 선택해주세요.' },
-        { status: 400 }
-      );
-    }
+    const body = validation.data as TranslateRequest;
 
     // Get user profile to check domain
     const { data: userProfile } = await supabase
@@ -117,10 +121,14 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(20);
 
+    // Sanitize inputs before sending to AI
+    const sanitizedSourceText = sanitizeText(body.sourceText);
+    const sanitizedContext = body.context ? sanitizeText(body.context) : null;
+
     // Call AI translation
     const translations = await autoTranslate({
-      sourceText: body.sourceText,
-      context: body.context || null,
+      sourceText: sanitizedSourceText,
+      context: sanitizedContext,
       targetLanguages: body.targetLanguages,
       glossaryTerms: glossaryTerms || [],
       translationMemory: formattedMemory,

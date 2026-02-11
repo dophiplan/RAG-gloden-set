@@ -2,6 +2,7 @@
  * Email Template Rendering Utilities
  */
 
+// @deprecated - TODO: refactor to pass products as parameter instead of using hardcoded PRODUCTS
 import { Translation, ProductCode, PRODUCTS } from '@/types';
 
 export interface TemplateVariables {
@@ -53,7 +54,7 @@ export function buildTemplateVariables(
   });
 
   const productNames = Array.from(productCodes)
-    .map(code => PRODUCTS[code] || code)
+    .map(code => PRODUCTS[code as keyof typeof PRODUCTS] || code)
     .join(', ');
 
   // Extract versions

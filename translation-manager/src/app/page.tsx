@@ -5,12 +5,13 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardTitle } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import QuickActions from '@/components/dashboard/QuickActions';
+import { DateRangePicker, ActionButtons } from '@/components/dashboard/QuickActions';
 import RequestList from '@/components/dashboard/RequestList';
 import ProductTabs from '@/components/ProductTabs';
 import GlossaryStatsCard from '@/app/(dashboard)/glossary/components/GlossaryStatsCard';
 import type { DashboardRequest } from '@/types/translations';
 import type { ProductCode } from '@/types';
+import { showError } from '@/lib/notifications';
 
 interface DashboardStats {
   total: number;
@@ -33,11 +34,24 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
 
+  // 기간 설정 - 기본값은 오늘 날짜
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const [startDate, setStartDate] = useState(getTodayDate());
+  const [endDate, setEndDate] = useState(getTodayDate());
+
   useEffect(() => {
     async function fetchDashboardData() {
       try {
+        const params = new URLSearchParams();
+        if (startDate) params.set('start_date', startDate);
+        if (endDate) params.set('end_date', endDate);
+
         const [statsRes, requestsRes] = await Promise.all([
-          fetch('/api/dashboard/stats'),
+          fetch(`/api/dashboard/stats?${params}`),
           fetch('/api/dashboard/requests'),
         ]);
 
@@ -52,13 +66,14 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
+        showError('대시보드 데이터를 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
     }
 
     fetchDashboardData();
-  }, []);
+  }, [startDate, endDate]);
 
   const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
     try {
@@ -71,6 +86,7 @@ export default function DashboardPage() {
       if (!response.ok) {
         const error = await response.json();
         console.error('Status change error:', error.error || 'Failed to update status');
+        showError('상태 변경에 실패했습니다.');
         return;
       }
 
@@ -82,6 +98,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error updating status:', error);
+      showError('상태 업데이트 중 오류가 발생했습니다.');
     }
   };
 
@@ -90,10 +107,11 @@ export default function DashboardPage() {
       <DashboardLayout
         title="대시보드"
         subtitle="번역 현황을 한눈에 확인하세요."
+        headerActions={<ActionButtons />}
       >
         <div className="flex flex-col items-center justify-center h-64">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-3 border-[#818CF8]"></div>
-          <p className="mt-4 text-[#64748B]">로딩 중...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-3 border-primary" role="status" aria-label="로딩 중"></div>
+          <p className="mt-4 text-text-muted">로딩 중...</p>
         </div>
       </DashboardLayout>
     );
@@ -103,7 +121,15 @@ export default function DashboardPage() {
     <DashboardLayout
       title="대시보드"
       subtitle="번역 현황을 한눈에 확인하세요."
-      quickActions={<QuickActions glossaryCount={stats?.glossaryCount} />}
+      headerActions={<ActionButtons />}
+      quickActions={
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+        />
+      }
     >
       <div className="space-y-6">
         {/* Product Tabs */}
@@ -120,11 +146,11 @@ export default function DashboardPage() {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">전체 번역</p>
-                <p className="text-3xl font-bold text-[#1E293B]">{stats?.total || 0}</p>
+                <p className="text-sm text-text-muted">전체 번역</p>
+                <p className="text-3xl font-bold text-text-main">{stats?.total || 0}</p>
               </div>
-              <div className="p-3 bg-[#E0E7FF] rounded-full">
-                <svg className="w-6 h-6 text-[#818CF8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="p-3 bg-primary-light rounded-full">
+                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
               </div>
@@ -134,11 +160,11 @@ export default function DashboardPage() {
           <Card className="border-l-4 border-l-amber-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">요청</p>
+                <p className="text-sm text-text-muted">요청</p>
                 <p className="text-3xl font-bold text-amber-600">{stats?.pending || 0}</p>
               </div>
               <div className="p-3 bg-amber-100 rounded-full">
-                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -148,11 +174,11 @@ export default function DashboardPage() {
           <Card className="border-l-4 border-l-blue-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">진행중</p>
+                <p className="text-sm text-text-muted">진행중</p>
                 <p className="text-3xl font-bold text-blue-600">{stats?.in_progress || 0}</p>
               </div>
               <div className="p-3 bg-blue-100 rounded-full">
-                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -162,11 +188,11 @@ export default function DashboardPage() {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">검수중</p>
+                <p className="text-sm text-text-muted">검수중</p>
                 <p className="text-3xl font-bold text-[#475569]">{stats?.reviewed || 0}</p>
               </div>
               <div className="p-3 bg-[#F8FAFC] rounded-full">
-                <svg className="w-6 h-6 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
@@ -176,11 +202,11 @@ export default function DashboardPage() {
           <Card className="border-l-4 border-l-emerald-400">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#64748B]">반영완료</p>
+                <p className="text-sm text-text-muted">반영완료</p>
                 <p className="text-3xl font-bold text-emerald-600">{stats?.deployed || 0}</p>
               </div>
               <div className="p-3 bg-emerald-100 rounded-full">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>

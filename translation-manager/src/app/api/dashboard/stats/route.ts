@@ -1,9 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/api-auth';
+import type { TranslationStatus } from '@/types';
+
+interface TranslationForStats {
+  id: string;
+  source_text: string;
+  status: TranslationStatus;
+  created_at: string;
+  request_id?: string | null;
+}
 
 // GET - Dashboard statistics
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { user } = await getAuthUser(supabase);
@@ -12,13 +21,31 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('start_date');
+    const endDate = searchParams.get('end_date');
+
+    // Build translations query with date filters
+    let translationsQuery = supabase
+      .from('translations')
+      .select('id, source_text, status, created_at, request_id')
+      .order('created_at', { ascending: false })
+      .limit(1000);
+
+    if (startDate) {
+      translationsQuery = translationsQuery.gte('created_at', startDate);
+    }
+
+    if (endDate) {
+      // Add one day to endDate to include the entire end date
+      const endDateTime = new Date(endDate);
+      endDateTime.setDate(endDateTime.getDate() + 1);
+      translationsQuery = translationsQuery.lt('created_at', endDateTime.toISOString().split('T')[0]);
+    }
+
     // Fetch all translations with request_id for grouping
     const [translationsResult, glossaryResult] = await Promise.all([
-      supabase
-        .from('translations')
-        .select('id, source_text, status, created_at, request_id')
-        .order('created_at', { ascending: false })
-        .limit(1000),
+      translationsQuery,
       supabase
         .from('glossary')
         .select('*', { count: 'exact', head: true }),
@@ -27,8 +54,8 @@ export async function GET() {
     const allTranslations = translationsResult.data || [];
 
     // Group translations by request_id to count grouped requests
-    const requestGroups = new Map<string, any[]>();
-    const individualTranslations: any[] = [];
+    const requestGroups = new Map<string, TranslationForStats[]>();
+    const individualTranslations: TranslationForStats[] = [];
 
     allTranslations.forEach(trans => {
       if (trans.request_id) {

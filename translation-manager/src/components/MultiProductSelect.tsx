@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductCode, PRODUCTS } from '@/types';
+import { ProductCode } from '@/types';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface MultiProductSelectProps {
   selectedProducts: ProductCode[];
@@ -16,6 +17,7 @@ export default function MultiProductSelect({
   disabled = false,
   className = '',
 }: MultiProductSelectProps) {
+  const { products } = useProducts();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleProduct = (productCode: ProductCode) => {
@@ -27,7 +29,7 @@ export default function MultiProductSelect({
   };
 
   const selectAll = () => {
-    onProductsChange(Object.keys(PRODUCTS) as ProductCode[]);
+    onProductsChange(products.map(p => p.code as ProductCode));
   };
 
   const clearAll = () => {
@@ -50,7 +52,7 @@ export default function MultiProductSelect({
         <span className="text-sm text-gray-700">
           {selectedProducts.length === 0
             ? '제품 선택'
-            : selectedProducts.length === Object.keys(PRODUCTS).length
+            : selectedProducts.length === products.length
             ? '전체 제품'
             : `${selectedProducts.length}개 제품 선택됨`}
         </span>
@@ -88,18 +90,18 @@ export default function MultiProductSelect({
                 전체 해제
               </button>
             </div>
-            {Object.entries(PRODUCTS).map(([code, name]) => (
+            {products.map((product) => (
               <label
-                key={code}
+                key={product.code}
                 className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
               >
                 <input
                   type="checkbox"
-                  checked={selectedProducts.includes(code as ProductCode)}
-                  onChange={() => toggleProduct(code as ProductCode)}
+                  checked={selectedProducts.includes(product.code as ProductCode)}
+                  onChange={() => toggleProduct(product.code as ProductCode)}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
                 />
-                <span className="text-sm text-gray-700">{name}</span>
+                <span className="text-sm text-gray-700">{product.name}</span>
               </label>
             ))}
           </div>

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Security: Verify user is master
-async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; userId?: string }> {
+async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized: boolean; userId?: string }> {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {

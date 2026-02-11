@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { GlossaryTerm, SUPPORTED_LANGUAGES, LanguageCode, ProductCode } from '@/types';
 import { showError, showConfirm, showSuccess } from '@/lib/notifications';
+import { PAGINATION } from '@/lib/constants';
+import { buildApiUrl } from '@/lib/api/query-builder';
 
 export function useGlossaryData() {
   const [terms, setTerms] = useState<GlossaryTerm[]>([]);
@@ -17,6 +19,8 @@ export function useGlossaryData() {
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [suggestionCount, setSuggestionCount] = useState(0);
+  // 표시할 언어 컬럼 (기본값: 한국어만)
+  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>(['ko']);
 
   // Form state
   const [formTerm, setFormTerm] = useState('');
@@ -25,47 +29,72 @@ export function useGlossaryData() {
   const [formContext, setFormContext] = useState('');
   const [formProductCode, setFormProductCode] = useState<ProductCode | ''>('');
 
-  const fetchTerms = useCallback(async () => {
+  const fetchTerms = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (languageFilter) params.set('language', languageFilter);
-      if (selectedProduct) params.set('product_code', selectedProduct);
-      if (searchTerm) params.set('search', searchTerm);
-      if (sourceTypeFilter) params.set('source_type', sourceTypeFilter);
-      if (approvalStatusFilter) params.set('approval_status', approvalStatusFilter);
-      if (importedAfter) params.set('imported_after', importedAfter);
-      if (importedBefore) params.set('imported_before', importedBefore);
-      if (sortBy) params.set('sort', sortBy);
+      const url = buildApiUrl('/api/glossary', {
+        language: languageFilter,
+        product_code: selectedProduct,
+        search: searchTerm,
+        source_type: sourceTypeFilter,
+        approval_status: approvalStatusFilter,
+        imported_after: importedAfter,
+        imported_before: importedBefore,
+        sort: sortBy,
+      });
 
-      const response = await fetch(`/api/glossary?${params}`);
+      const response = await fetch(url, { signal });
       if (response.ok) {
         const data = await response.json();
-        setTerms(data.terms);
+
+        // Only update state if not aborted
+        if (!signal?.aborted) {
+          setTerms(data.terms);
+        }
       }
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Error fetching glossary:', error);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   }, [languageFilter, selectedProduct, searchTerm, sourceTypeFilter, approvalStatusFilter, importedAfter, importedBefore, sortBy]);
 
-  useEffect(() => {
-    fetchTerms();
-    fetchSuggestionCount();
-  }, [fetchTerms]);
-
-  const fetchSuggestionCount = async () => {
+  const fetchSuggestionCount = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/glossary/suggest?limit=100');
+      const response = await fetch(`/api/glossary/suggest?limit=${PAGINATION.GLOSSARY_SUGGESTION_LIMIT}`, { signal });
       if (response.ok) {
         const data = await response.json();
-        setSuggestionCount(data.suggestions.length);
+
+        // Only update state if not aborted
+        if (!signal?.aborted) {
+          setSuggestionCount(data.suggestions.length);
+        }
       }
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Error fetching suggestion count:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchTerms(controller.signal);
+    fetchSuggestionCount(controller.signal);
+
+    return () => {
+      // Cancel fetches on unmount or dependency change
+      controller.abort();
+    };
+  }, [fetchTerms, fetchSuggestionCount]);
 
   const resetForm = () => {
     setFormTerm('');
@@ -255,13 +284,50 @@ export function useGlossaryData() {
     setFormProductCode(term.product_code || '');
   };
 
-  // Group terms by language
-  const groupedTerms = terms.reduce<Record<string, GlossaryTerm[]>>((acc, term) => {
-    const lang = term.language_code;
-    if (!acc[lang]) acc[lang] = [];
-    acc[lang].push(term);
-    return acc;
-  }, {});
+  // Group terms by language (for legacy view)
+  const groupedTerms = useMemo(() => {
+    return terms.reduce<Record<string, GlossaryTerm[]>>((acc, term) => {
+      const lang = term.language_code;
+      if (!acc[lang]) acc[lang] = [];
+      acc[lang].push(term);
+      return acc;
+    }, {});
+  }, [terms]);
+
+  // Group terms by term name (for horizontal view with all languages in one row)
+  interface GroupedByTerm {
+    term: string;
+    translations: Record<string, GlossaryTerm>;
+    context?: string;
+    product_code?: string | null;
+    source_type: string;
+    approval_status: string;
+    hit_count: number;
+    imported_at?: string;
+  }
+
+  const groupedByTerm = useMemo(() => {
+    const termsByName = terms.reduce<Record<string, GroupedByTerm>>((acc, t) => {
+      if (!acc[t.term]) {
+        acc[t.term] = {
+          term: t.term,
+          translations: {},
+          context: t.context ?? undefined,
+          product_code: t.product_code,
+          source_type: t.source_type,
+          approval_status: t.approval_status,
+          hit_count: t.hit_count || 0,
+          imported_at: t.imported_at ?? undefined,
+        };
+      }
+      acc[t.term].translations[t.language_code] = t;
+      // Update hit_count to sum of all languages
+      acc[t.term].hit_count = Math.max(acc[t.term].hit_count, t.hit_count || 0);
+      return acc;
+    }, {});
+
+    return Object.values(termsByName);
+  }, [terms]);
 
   // Quick filter functions
   const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used' | 'unused' | 'pending') => {
@@ -360,6 +426,9 @@ export function useGlossaryData() {
     handleAIReview,
     openEditModal,
     groupedTerms,
+    groupedByTerm,
+    selectedLanguageColumns,
+    setSelectedLanguageColumns,
     setQuickFilter,
     resetFilters,
   };
