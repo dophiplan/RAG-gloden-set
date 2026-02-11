@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { TranslationCreateInput, TranslationStatus, ProductCode } from '@/types';
-import { getAuthUser } from '@/lib/api-auth';
+import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
+import { PAGINATION } from '@/lib/constants';
+import { translationCreateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
+import { enforceRateLimit } from '@/lib/api/rate-limiter';
+import { successResponse, serverError, badRequest } from '@/lib/api/middleware';
 
 // GET - List translations
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { user } = await getAuthUser(supabase);
+    const { user, error: authError } = await getAuthUser(supabase);
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (authError || !user) {
+      return unauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,8 +25,10 @@ export async function GET(request: NextRequest) {
     const requestId = searchParams.get('request_id');
     const scope = searchParams.get('scope') as 'SaaS' | 'Solution' | null;
     const version = searchParams.get('version');
+    const createdAfter = searchParams.get('created_after');
+    const createdBefore = searchParams.get('created_before');
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_PAGE_SIZE));
     const offset = (page - 1) * limit;
 
     // Build select statement with inner join if filtering by product
@@ -41,7 +47,6 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('translations')
       .select(selectStatement, { count: 'exact' })
-      .order('priority_order', { ascending: false })
       .order('completion_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -72,22 +77,20 @@ export async function GET(request: NextRequest) {
       query = query.ilike('version', `%${version}%`);
     }
 
+    if (createdAfter) {
+      query = query.gte('created_at', createdAfter);
+    }
+
+    if (createdBefore) {
+      query = query.lte('created_at', createdBefore);
+    }
+
     if (search) {
       // Search in both source_text and translated_text
       query = query.or(`source_text.ilike.%${search}%,translation_results.translated_text.ilike.%${search}%`);
     }
 
     const { data, error, count } = await query;
-
-    console.log('GET /api/translations:', {
-      productCode,
-      status,
-      language,
-      search,
-      page,
-      resultCount: data?.length || 0,
-      totalCount: count,
-    });
 
     if (error) throw error;
 
@@ -123,7 +126,7 @@ export async function GET(request: NextRequest) {
       last_audit: auditsMap[t.id] || null,
     }));
 
-    return NextResponse.json({
+    return successResponse({
       translations: translationsWithAudit,
       total: count,
       page,
@@ -132,10 +135,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching translations:', error);
-    return NextResponse.json(
-      { error: '번역 목록을 불러오는데 실패했습니다.' },
-      { status: 500 }
-    );
+    return serverError('번역 목록을 불러오는데 실패했습니다.');
   }
 }
 
@@ -143,11 +143,27 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return unauthorizedResponse();
     }
+
+    // Check rate limit for API creation
+    const rateLimitResult = await enforceRateLimit(user.id, 'api_create');
+    if (!rateLimitResult.allowed) {
+      return rateLimitResult.response;
+    }
+
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(translationCreateSchema, rawBody);
+
+    if (!validation.success) {
+      return badRequest(validation.error);
+    }
+
+    const body = validation.data;
 
     // Get user profile for audit log
     const { data: userProfile } = await supabase
@@ -156,14 +172,10 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const body: TranslationCreateInput = await request.json();
-
-    if (!body.source_text?.trim()) {
-      return NextResponse.json(
-        { error: '원문 텍스트는 필수입니다.' },
-        { status: 400 }
-      );
-    }
+    // Sanitize text inputs
+    const sanitizedSourceText = sanitizeText(body.source_text);
+    const sanitizedContext = body.context ? sanitizeText(body.context) : null;
+    const sanitizedVersion = body.version ? sanitizeText(body.version) : null;
 
     // Check glossary for exact matches before creating translation
     if (body.translations && body.translations.length > 0) {
@@ -172,7 +184,8 @@ export async function POST(request: NextRequest) {
       let glossaryQuery = supabase
         .from('glossary')
         .select('term, translation, language_code, product_code')
-        .eq('term', body.source_text.trim())
+        .eq('term', sanitizedSourceText)
+        .eq('approval_status', 'approved') // Only use approved terms
         .in('language_code', languageCodes);
 
       if (body.product_code) {
@@ -203,9 +216,9 @@ export async function POST(request: NextRequest) {
     const { data: translation, error: insertError } = await supabase
       .from('translations')
       .insert({
-        source_text: body.source_text.trim(),
-        context: body.context?.trim() || null,
-        version: body.version?.trim() || null,
+        source_text: sanitizedSourceText,
+        context: sanitizedContext,
+        version: sanitizedVersion,
         version_updated_at: body.version ? new Date().toISOString() : null,
         product_code: body.product_code || null,
         scope: body.scope || null,
@@ -218,22 +231,25 @@ export async function POST(request: NextRequest) {
 
     if (insertError) throw insertError;
 
-    // Create audit log
-    await supabase.from('translation_audit_logs').insert({
+    // Create audit log (non-blocking)
+    supabase.from('translation_audit_logs').insert({
       translation_id: translation.id,
       user_id: user.id,
       user_name: userProfile?.name,
       user_email: userProfile?.email || user.email,
       action: 'create',
-      new_value: body.source_text.trim(),
+      new_value: sanitizedSourceText,
+    }).catch(err => {
+      console.error('[Audit Log] Failed to log translation creation:', err);
+      // Don't throw - audit log failure should not break the main operation
     });
 
-    // If translations are provided, insert them
+    // If translations are provided, insert them (with sanitization)
     if (body.translations && body.translations.length > 0) {
       const translationResults = body.translations.map((t) => ({
         translation_id: translation.id,
         language_code: t.language_code,
-        translated_text: t.translated_text,
+        translated_text: sanitizeText(t.translated_text),
       }));
 
       const { error: resultsError } = await supabase
@@ -245,10 +261,10 @@ export async function POST(request: NextRequest) {
 
     // Handle product_codes if provided
     if (body.product_codes && body.product_codes.length > 0) {
-      const productLinks = body.product_codes.map((item: ProductCode | { code: ProductCode; version?: string }) => ({
+      const productLinks = (body.product_codes as Array<ProductCode | { code: ProductCode; version?: string }>).map((item) => ({
         translation_id: translation.id,
         product_code: typeof item === 'string' ? item : item.code,
-        version: typeof item === 'object' && item.version ? item.version : null,
+        version: typeof item === 'object' && item.version ? sanitizeText(item.version) : null,
         version_updated_at: typeof item === 'object' && item.version ? new Date().toISOString() : null,
       }));
 
@@ -266,12 +282,9 @@ export async function POST(request: NextRequest) {
       .eq('id', translation.id)
       .single();
 
-    return NextResponse.json(completeTranslation, { status: 201 });
+    return successResponse(completeTranslation, 201);
   } catch (error) {
     console.error('Error creating translation:', error);
-    return NextResponse.json(
-      { error: '번역을 생성하는데 실패했습니다.' },
-      { status: 500 }
-    );
+    return serverError('번역을 생성하는데 실패했습니다.');
   }
 }
