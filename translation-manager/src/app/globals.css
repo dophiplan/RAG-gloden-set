@@ -117,11 +117,13 @@ table {
 }
 
 table thead {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #F5F7FF 0%, #EEF2FF 100%);
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid #6366F1;
+  border-radius: var(--radius-md);
 }
 
 table thead th {
@@ -129,7 +131,7 @@ table thead th {
   text-align: left;
   font-size: 13px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #6366F1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: none;
