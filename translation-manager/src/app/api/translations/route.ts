@@ -165,6 +165,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check glossary for exact matches before creating translation
+    if (body.translations && body.translations.length > 0) {
+      const languageCodes = body.translations.map(t => t.language_code);
+
+      let glossaryQuery = supabase
+        .from('glossary')
+        .select('term, translation, language_code, product_code')
+        .eq('term', body.source_text.trim())
+        .in('language_code', languageCodes);
+
+      if (body.product_code) {
+        glossaryQuery = glossaryQuery.or(`product_code.eq.${body.product_code},product_code.is.null`);
+      }
+
+      const { data: glossaryMatches } = await glossaryQuery;
+
+      if (glossaryMatches && glossaryMatches.length > 0) {
+        // Auto-fill from glossary if match found and translation is empty
+        body.translations = body.translations.map(tr => {
+          const match = glossaryMatches.find(g => g.language_code === tr.language_code);
+          if (match && !tr.translated_text) {
+            // Increment hit_count (non-blocking)
+            void supabase.rpc('increment_glossary_hit_count', {
+              p_term: match.term,
+              p_language_code: match.language_code
+            });
+
+            return { ...tr, translated_text: match.translation };
+          }
+          return tr;
+        });
+      }
+    }
+
     // Create translation
     const { data: translation, error: insertError } = await supabase
       .from('translations')
