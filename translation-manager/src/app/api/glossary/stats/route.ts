@@ -14,6 +14,7 @@ interface GlossaryStats {
   new_terms_this_week: number;
   new_terms_this_month: number;
   estimated_cost_saved: number;
+  product_stats: Record<string, { new_count: number; total_count: number }>;
 }
 
 // GET - Get glossary statistics
@@ -74,6 +75,25 @@ export async function GET(request: NextRequest) {
           (stats.hits_by_language[term.language_code] || 0) + term.hit_count;
       }
     });
+
+    // Calculate product stats (신규 / 전체)
+    const productStats: Record<string, { new_count: number; total_count: number }> = {};
+    allTerms?.forEach(term => {
+      if (!term.product_code) return;
+
+      if (!productStats[term.product_code]) {
+        productStats[term.product_code] = { new_count: 0, total_count: 0 };
+      }
+
+      // 전체 건수
+      productStats[term.product_code].total_count++;
+
+      // 이번 달 신규 건수
+      if (term.imported_at && new Date(term.imported_at) >= monthStart) {
+        productStats[term.product_code].new_count++;
+      }
+    });
+    stats.product_stats = productStats;
 
     // Calculate estimated cost saved
     // Assumption: AI translation costs $0.002 per language
