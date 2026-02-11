@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
         settings: {
           domain: RSUPPORT_DOMAIN,
           openai_api_key: null,
+          claude_api_key: null,
+          kimi_api_key: null,
+          gemini_api_key: null,
           settings: {},
         }
       });
@@ -51,6 +54,9 @@ export async function GET(request: NextRequest) {
         settings: {
           domain: RSUPPORT_DOMAIN,
           openai_api_key: null,
+          claude_api_key: null,
+          kimi_api_key: null,
+          gemini_api_key: null,
           settings: {},
         }
       });
@@ -90,8 +96,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { openai_api_key, settings } = body as {
+    const { openai_api_key, claude_api_key, kimi_api_key, gemini_api_key, settings } = body as {
       openai_api_key?: string | null;
+      claude_api_key?: string | null;
+      kimi_api_key?: string | null;
+      gemini_api_key?: string | null;
       settings?: Record<string, unknown>;
     };
 
@@ -112,6 +121,18 @@ export async function PATCH(request: NextRequest) {
 
     if (openai_api_key !== undefined) {
       updateData.openai_api_key = openai_api_key;
+    }
+
+    if (claude_api_key !== undefined) {
+      updateData.claude_api_key = claude_api_key;
+    }
+
+    if (kimi_api_key !== undefined) {
+      updateData.kimi_api_key = kimi_api_key;
+    }
+
+    if (gemini_api_key !== undefined) {
+      updateData.gemini_api_key = gemini_api_key;
     }
 
     if (settings !== undefined) {
