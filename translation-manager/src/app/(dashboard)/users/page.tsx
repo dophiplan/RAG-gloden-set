@@ -7,8 +7,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
-import { PRODUCTS } from '@/lib/constants';
 import { FIRST_MASTER_EMAIL } from '@/types/users';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface SystemUser {
   id: string;
@@ -26,6 +26,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([]);
+
+  // Fetch products from DB
+  const { products } = useProducts();
 
   // Filters
   const [filterProduct, setFilterProduct] = useState<string>('');
@@ -257,7 +260,7 @@ export default function UsersPage() {
     setEditingUserId(user.id);
     const isMaster = user.roles?.includes('master') || user.roles?.includes('1st_master');
     setModalData({
-      products: isMaster ? Object.keys(PRODUCTS) : (user.work_products || []),
+      products: isMaster ? products.map(p => p.code) : (user.work_products || []),
       name: user.name || '',
       email: user.email,
       password: '', // Don't pre-fill password
@@ -336,11 +339,10 @@ export default function UsersPage() {
       }
     >
       <div className="space-y-6">
-        {/* User List */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <CardTitle>등록된 사용자 ({filteredUsers.length}명)</CardTitle>
-            <div className="flex gap-2">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">등록된 사용자 ({filteredUsers.length}명)</h1>
+          <div className="flex gap-2">
               <input
                 type="file"
                 accept=".xlsx,.xls"
@@ -403,8 +405,9 @@ export default function UsersPage() {
             </div>
           </div>
 
-          {/* Filters */}
-          <div className="mb-4">
+        {/* Filters */}
+        <Card>
+          <div>
             <div className="grid grid-cols-4 gap-3">
               <Select
                 label="계정 권한"
@@ -424,9 +427,9 @@ export default function UsersPage() {
                 onChange={(e) => setFilterProduct(e.target.value)}
                 options={[
                   { value: '', label: '전체' },
-                  ...Object.keys(PRODUCTS).map(code => ({
-                    value: code,
-                    label: PRODUCTS[code as keyof typeof PRODUCTS]
+                  ...products.map(p => ({
+                    value: p.code,
+                    label: p.name
                   }))
                 ]}
               />
@@ -450,11 +453,13 @@ export default function UsersPage() {
               />
             </div>
           </div>
+        </Card>
 
-          <div className="mt-4 border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+        {/* User Table */}
+        <Card padding="none">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+                <thead>
                   <tr>
                     <th className="px-4 py-3 text-center" style={{ width: '40px' }}>
                       <input
@@ -614,21 +619,20 @@ export default function UsersPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* 선택 삭제 버튼 - 테이블 하단 */}
-          {selectedUserIds.length > 0 && (
-            <div className="mt-4 flex justify-start">
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={handleDeleteUsers}
-              >
-                🗑️ 선택 삭제 ({selectedUserIds.length})
-              </Button>
-            </div>
-          )}
         </Card>
+
+        {/* 선택 삭제 버튼 */}
+        {selectedUserIds.length > 0 && (
+          <div className="flex justify-start">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleDeleteUsers}
+            >
+              🗑️ 선택 삭제 ({selectedUserIds.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}
@@ -671,7 +675,7 @@ export default function UsersPage() {
                       setModalData({
                         ...modalData,
                         accountLevel: level,
-                        products: Object.keys(PRODUCTS),
+                        products: products.map(p => p.code),
                       });
                     } else {
                       setModalData({ ...modalData, accountLevel: level });
@@ -697,25 +701,25 @@ export default function UsersPage() {
                   담당 제품 {modalData.accountLevel !== 'master' && modalData.accountLevel !== '1st_master' && '*'}
                 </label>
                 <div className={`grid grid-cols-3 gap-2 ${(modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master') ? 'opacity-50 pointer-events-none' : ''}`}>
-                  {Object.keys(PRODUCTS).map((code) => (
+                  {products.map((product) => (
                     <label
-                      key={code}
+                      key={product.code}
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        checked={modalData.products.includes(code)}
+                        checked={modalData.products.includes(product.code)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setModalData({ ...modalData, products: [...modalData.products, code] });
+                            setModalData({ ...modalData, products: [...modalData.products, product.code] });
                           } else {
-                            setModalData({ ...modalData, products: modalData.products.filter(p => p !== code) });
+                            setModalData({ ...modalData, products: modalData.products.filter(p => p !== product.code) });
                           }
                         }}
                         disabled={modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master'}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700">{code}</span>
+                      <span className="text-sm text-gray-700">{product.name}</span>
                     </label>
                   ))}
                 </div>
