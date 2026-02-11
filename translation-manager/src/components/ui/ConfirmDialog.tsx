@@ -1,7 +1,8 @@
 'use client';
 
-import { Button } from './Button';
-import { Card } from './Card';
+import { useState } from 'react';
+import Button from './Button';
+import Card from './Card';
 
 export interface ConfirmDialogProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export function ConfirmDialog({
         <div className="flex gap-3 pt-2">
           <Button
             onClick={onClose}
-            variant="outline"
+            variant="secondary"
             disabled={isLoading}
             className="flex-1"
           >
@@ -137,6 +138,3 @@ export function useConfirmDialog() {
     config,
   };
 }
-
-// Add missing import
-import { useState } from 'react';

@@ -314,7 +314,7 @@ export default function GlossaryPage() {
                   </Button>
                   <Button
                     size="sm"
-                    variant="warning"
+                    variant="danger"
                     onClick={() => setQuickFilter('pending')}
                   >
                     ⚠️ 승인 대기 항목
