@@ -4,6 +4,7 @@ import { useState, useCallback, memo, useMemo } from 'react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
+import TranslationSourceBadge from '@/components/translations/TranslationSourceBadge';
 import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS, PriorityLevel } from '@/types';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
 import { showSuccess, showError } from '@/lib/notifications';
@@ -85,6 +86,12 @@ const TranslationRow = memo(function TranslationRow({
       (r) => r.language_code === languageCode
     );
     return result?.translated_text || '';
+  };
+
+  const getTranslationResultForLanguage = (languageCode: LanguageCode): TranslationResult | undefined => {
+    return translation.translation_results?.find(
+      (r) => r.language_code === languageCode
+    );
   };
 
   // Get product names from translation_products
@@ -176,17 +183,25 @@ const TranslationRow = memo(function TranslationRow({
           />
         </div>
       </td>
-      {displayLanguages.map((lang) => (
+      {displayLanguages.map((lang) => {
+        const result = getTranslationResultForLanguage(lang);
+        return (
           <td key={lang} className="px-2 py-2 align-top">
-            <div className="text-xs truncate">
+            <div className="text-xs">
               <EditableCell
                 value={getTranslationForLanguage(lang)}
                 onSave={(newText) => onTranslationUpdate(translation.id, lang, newText)}
                 placeholder="-"
               />
+              {result?.source_type && (
+                <div className="mt-1">
+                  <TranslationSourceBadge sourceType={result.source_type} />
+                </div>
+              )}
             </div>
           </td>
-      ))}
+        );
+      })}
       <td className="px-2 py-2 align-top">
         <select
           value={translation.status}

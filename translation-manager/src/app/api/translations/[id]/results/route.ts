@@ -39,13 +39,15 @@ export async function POST(
       .single();
 
     if (existing) {
-      // Update existing
+      // Update existing - mark as manually edited
       const { data, error } = await supabase
         .from('translation_results')
         .update({
           translated_text: body.translated_text.trim(),
           reviewer_id: user.id,
           reviewed_at: new Date().toISOString(),
+          source_type: 'manual',
+          // glossary_term_id is preserved for reference
         })
         .eq('id', existing.id)
         .select()

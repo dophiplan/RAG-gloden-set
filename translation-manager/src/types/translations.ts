@@ -76,6 +76,8 @@ export interface TranslationResult {
   reviewed_at: string | null;
   created_at: string;
   updated_at: string;
+  source_type?: 'glossary' | 'ai' | 'manual' | 'imported' | null;
+  glossary_term_id?: string | null;
 }
 
 // Audit log types
