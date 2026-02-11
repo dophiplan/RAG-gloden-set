@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
             }
 
             // Create audit log for merge/overwrite (non-blocking)
-            supabase.from('translation_audit_logs').insert({
+            void supabase.from('translation_audit_logs').insert({
               translation_id: existing.id,
               user_id: user.id,
               user_name: userProfile?.name,
@@ -260,9 +260,11 @@ export async function POST(request: NextRequest) {
               action: 'update',
               field_name: 'migration',
               new_value: `Data ${entry.action} from migration`,
-            }).catch(err => {
-              console.error('[Audit Log] Failed to log migration update:', err);
-              // Don't throw - audit log failure should not break the main operation
+            }).then(({ error }) => {
+              if (error) {
+                console.error('[Audit Log] Failed to log migration update:', error);
+                // Don't throw - audit log failure should not break the main operation
+              }
             });
 
             results.translations.updated++;
@@ -314,7 +316,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create audit log (non-blocking)
-        supabase.from('translation_audit_logs').insert({
+        void supabase.from('translation_audit_logs').insert({
           translation_id: translation.id,
           user_id: user.id,
           user_name: userProfile?.name,
@@ -322,9 +324,11 @@ export async function POST(request: NextRequest) {
           action: 'create',
           field_name: 'migration',
           new_value: 'Data migrated from Excel',
-        }).catch(err => {
-          console.error('[Audit Log] Failed to log migration creation:', err);
-          // Don't throw - audit log failure should not break the main operation
+        }).then(({ error }) => {
+          if (error) {
+            console.error('[Audit Log] Failed to log migration creation:', error);
+            // Don't throw - audit log failure should not break the main operation
+          }
         });
 
         results.translations.created++;
