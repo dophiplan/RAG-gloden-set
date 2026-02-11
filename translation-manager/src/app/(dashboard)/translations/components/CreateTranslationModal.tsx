@@ -6,8 +6,8 @@ import Button from '@/components/ui/Button';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
 import LanguageCheckboxGroup from '@/components/LanguageCheckboxGroup';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
-import { PRODUCT_SELECT_OPTIONS, SCOPE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants';
 import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
+import { useProducts, useScopes, usePriorities } from '@/hooks/useReferenceData';
 
 type TabType = 'manual' | 'pdf';
 
@@ -59,6 +59,27 @@ export default function CreateTranslationModal({
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [uploading, setUploading] = useState(false);
   const [pdfError, setPdfError] = useState<string>('');
+
+  // Fetch reference data from DB
+  const { products } = useProducts();
+  const { scopes } = useScopes();
+  const { priorities } = usePriorities();
+
+  // Generate select options dynamically
+  const productSelectOptions = [
+    { value: '', label: '제품 선택' },
+    ...products.map(p => ({ value: p.code, label: p.name }))
+  ];
+
+  const scopeOptions = [
+    { value: '', label: '제품 분류 선택 *' },
+    ...scopes.map(s => ({ value: s.code, label: s.name }))
+  ];
+
+  const priorityOptions = priorities.map(p => ({
+    value: p.code,
+    label: p.label
+  }));
 
   // Update languages when product changes - for manual form
   useEffect(() => {
@@ -189,13 +210,13 @@ export default function CreateTranslationModal({
               label="제품"
               value={newProductCode}
               onChange={(e) => setNewProductCode(e.target.value as ProductCode | '')}
-              options={PRODUCT_SELECT_OPTIONS}
+              options={productSelectOptions}
             />
             <Select
               label="제품 분류 *"
               value={newScope}
               onChange={(e) => setNewScope(e.target.value as ScopeType)}
-              options={SCOPE_OPTIONS}
+              options={scopeOptions}
             />
             <Input
               label="버전"
@@ -207,7 +228,7 @@ export default function CreateTranslationModal({
               label="중요도 *"
               value={newPriority}
               onChange={(e) => setNewPriority(e.target.value as PriorityLevel)}
-              options={PRIORITY_OPTIONS}
+              options={priorityOptions}
             />
           </div>
           <Input
@@ -248,13 +269,13 @@ export default function CreateTranslationModal({
               label="제품"
               value={pdfProductCode}
               onChange={(e) => setPdfProductCode(e.target.value as ProductCode | '')}
-              options={PRODUCT_SELECT_OPTIONS}
+              options={productSelectOptions}
             />
             <Select
               label="제품 분류 *"
               value={pdfScope}
               onChange={(e) => setPdfScope(e.target.value as ScopeType)}
-              options={SCOPE_OPTIONS}
+              options={scopeOptions}
             />
             <Input
               label="버전"
@@ -266,7 +287,7 @@ export default function CreateTranslationModal({
               label="중요도 *"
               value={pdfPriority}
               onChange={(e) => setPdfPriority(e.target.value as PriorityLevel)}
-              options={PRIORITY_OPTIONS}
+              options={priorityOptions}
             />
           </div>
 

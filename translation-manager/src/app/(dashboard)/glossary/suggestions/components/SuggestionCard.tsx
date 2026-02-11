@@ -1,6 +1,7 @@
 'use client';
 
-import { SUPPORTED_LANGUAGES, PRODUCTS, LanguageCode, ProductCode } from '@/types';
+import { LanguageCode, ProductCode } from '@/types';
+import { useLanguages, useProducts } from '@/hooks/useReferenceData';
 import { SuggestionWithUI } from '../hooks/useSuggestionData';
 
 interface SuggestionCardProps {
@@ -22,6 +23,9 @@ export default function SuggestionCard({
   onGenerateContext,
   onUpdateProducts,
 }: SuggestionCardProps) {
+  const { languages, languagesMap } = useLanguages();
+  const { products, productsMap } = useProducts();
+
   return (
     <div
       className={`p-6 ${suggestion.selected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
@@ -55,7 +59,7 @@ export default function SuggestionCard({
             <div>
               <label className="text-xs font-medium text-gray-500">언어</label>
               <div className="text-sm text-gray-700 mt-1">
-                {SUPPORTED_LANGUAGES[suggestion.language_code as LanguageCode] || suggestion.language_code}
+                {languagesMap[suggestion.language_code as LanguageCode]?.name || suggestion.language_code}
               </div>
             </div>
             <div>
@@ -133,19 +137,19 @@ export default function SuggestionCard({
               적용 제품 (선택사항)
             </label>
             <div className="flex flex-wrap gap-3">
-              {Object.entries(PRODUCTS).map(([code, name]) => (
+              {products.map((product) => (
                 <label
-                  key={code}
+                  key={product.code}
                   className="inline-flex items-center cursor-pointer"
                 >
                   <input
                     type="checkbox"
-                    checked={suggestion.product_codes.includes(code as ProductCode)}
-                    onChange={() => onUpdateProducts(actualIndex, code as ProductCode)}
+                    checked={suggestion.product_codes.includes(product.code as ProductCode)}
+                    onChange={() => onUpdateProducts(actualIndex, product.code as ProductCode)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    {name}
+                    {product.name}
                   </span>
                 </label>
               ))}

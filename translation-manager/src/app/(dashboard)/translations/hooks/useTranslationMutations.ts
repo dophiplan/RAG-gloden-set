@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { TranslationStatus, LanguageCode, ProductCode, PriorityLevel } from '@/types';
+import { TranslationStatus, LanguageCode, ProductCode, PriorityLevel, Scope } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from './useTranslationData';
 
@@ -165,7 +165,7 @@ export function useTranslationMutations({
     await optimisticPatch(translationId, { context: context || null }, { context: context || null }, '설명이 수정되었습니다.');
   }, [optimisticPatch]);
 
-  const handleScopeUpdate = useCallback(async (translationId: string, scope: 'SaaS' | 'Solution' | null) => {
+  const handleScopeUpdate = useCallback(async (translationId: string, scope: Scope | null) => {
     await optimisticPatch(translationId, { scope }, { scope }, '제품분류가 변경되었습니다.');
   }, [optimisticPatch]);
 

@@ -59,6 +59,42 @@ export async function PATCH(
     const { id } = await params;
     const body: TranslationUpdateInput & { version_updated_at?: string | null } = await request.json();
 
+    // Optimistic Locking: Check for concurrent edits if updated_at is provided
+    if (body.updated_at) {
+      const { data: currentData, error: fetchError } = await supabase
+        .from('translations')
+        .select('updated_at')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          return NextResponse.json({ error: '번역을 찾을 수 없습니다.' }, { status: 404 });
+        }
+        throw fetchError;
+      }
+
+      // Compare timestamps (allow 1 second tolerance for network delay)
+      const clie[기밀마스킹]imestamp = new Date(body.updated_at).getTime();
+      const serverTimestamp = new Date(currentData.updated_at).getTime();
+
+      if (Math.abs(serverTimestamp - clie[기밀마스킹]imestamp) > 1000) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'EDIT_CONFLICT',
+              message: '다른 사용자가 이 번역을 수정했습니다. 페이지를 새로고침하여 최신 내용을 확인하세요.',
+              details: {
+                serverUpdatedAt: currentData.updated_at,
+                clientUpdatedAt: body.updated_at,
+              },
+            },
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (body.source_text !== undefined) updateData.source_text = body.source_text.trim();
     if (body.context !== undefined) updateData.context = body.context?.trim() || null;
@@ -144,12 +180,47 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // Fetch translation data before deletion for audit log
+    const { data: translation, error: fetchError } = await supabase
+      .from('translations')
+      .select('source_text, context')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return NextResponse.json({ error: '번역을 찾을 수 없습니다.' }, { status: 404 });
+      }
+      throw fetchError;
+    }
+
+    // Delete translation
     const { error } = await supabase
       .from('translations')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
+
+    // Get user profile for audit log
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+
+    // Create audit log (non-blocking)
+    supabase.from('translation_audit_logs').insert({
+      translation_id: id,
+      user_id: user.id,
+      user_name: userProfile?.name,
+      user_email: user.email,
+      action: 'delete',
+      old_value: translation.source_text,
+      field_name: 'entire_record',
+    }).catch(err => {
+      console.error('[Audit Log] Failed to log translation deletion:', err);
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -13,15 +13,19 @@
     "@anthropic-ai/sdk": "^0.72.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.94.0",
+    "dotenv": "^17.2.4",
+    "isomorphic-dompurify": "^3.0.0-rc.2",
     "next": "16.1.6",
     "openai": "^6.17.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
     "string-similarity": "^4.0.4",
+    "swr": "^2.4.0",
     "unpdf": "^1.4.0",
     "uuid": "^13.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

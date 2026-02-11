@@ -3,8 +3,9 @@
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import MultiSelectDropdown, { MultiSelectOption } from '@/components/ui/MultiSelectDropdown';
-import { UserRole, ProductCode, PRODUCTS, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
+import { UserRole, ProductCode, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
 import { useUserManagement } from '@/components/hooks/useUserManagement';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface UserManageme[기밀마스킹]ableProps {
   onRefresh?: () => void;
@@ -23,11 +24,7 @@ const ROLE_OPTIONS: MultiSelectOption[] = [
   { value: 'reviewer_en', label: '영어 검수' },
 ];
 
-// Product options
-const PRODUCT_OPTIONS: MultiSelectOption[] = Object.entries(PRODUCTS).map(([code, name]) => ({
-  value: code,
-  label: name,
-}));
+// Empty - will be populated from hook
 
 // Work scope options
 const WORK_SCOPE_OPTIONS: MultiSelectOption[] = USER_WORK_SCOPE_OPTIONS.map((scope) => ({
@@ -42,6 +39,7 @@ const LANGUAGE_OPTIONS: MultiSelectOption[] = WORK_LANGUAGE_OPTIONS.map((lang) =
 }));
 
 export default function UserManageme[기밀마스킹]able({ onRefresh }: UserManageme[기밀마스킹]ableProps) {
+  const { products, productsMap } = useProducts();
   const {
     users,
     loading,
@@ -63,6 +61,12 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
     handleSaveEdit,
     handleDelete,
   } = useUserManagement(onRefresh);
+
+  // Product options from DB
+  const PRODUCT_OPTIONS: MultiSelectOption[] = products.map(p => ({
+    value: p.code,
+    label: p.name,
+  }));
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">로딩 중...</div>;
@@ -207,7 +211,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                                 key={product}
                                 className="inline-block px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded"
                               >
-                                {PRODUCTS[product as ProductCode]}
+                                {productsMap[product as ProductCode]?.name || product}
                               </span>
                             ))}
                           </div>

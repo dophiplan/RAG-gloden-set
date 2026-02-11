@@ -1,6 +1,7 @@
 'use client';
 
-import { LanguageCode, SUPPORTED_LANGUAGES } from '@/types';
+import { LanguageCode } from '@/types';
+import { useLanguages } from '@/hooks/useReferenceData';
 
 interface LanguageCheckboxGroupProps {
   selectedLanguages: LanguageCode[];
@@ -17,6 +18,8 @@ export default function LanguageCheckboxGroup({
   label = '번역 언어 선택',
   required = false,
 }: LanguageCheckboxGroupProps) {
+  const { languagesMap } = useLanguages();
+
   const handleToggle = (lang: LanguageCode) => {
     if (selectedLanguages.includes(lang)) {
       onChange(selectedLanguages.filter(l => l !== lang));
@@ -71,7 +74,7 @@ export default function LanguageCheckboxGroup({
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700">
-              {SUPPORTED_LANGUAGES[lang]} ({lang})
+              {languagesMap[lang]?.name || lang} ({lang})
             </span>
           </label>
         ))}

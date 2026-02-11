@@ -69,8 +69,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Prepare data for Excel
+    interface ExcelRowData {
+      term: string;
+      translation: string;
+      language_code: string;
+      product_code: string;
+      context: string;
+      source_type?: string;
+      imported_at?: string;
+      hit_count?: number;
+      approval_status?: string;
+      approved_at?: string;
+      created_at?: string;
+    }
+
     const excelData = terms.map(term => {
-      const baseData: any = {
+      const baseData: ExcelRowData = {
         term: term.term,
         translation: term.translation,
         language_code: term.language_code,

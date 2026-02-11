@@ -34,6 +34,14 @@ interface Language {
   display_order: number;
 }
 
+interface Platform {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+}
+
 export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +67,16 @@ export default function SettingsPage() {
   const [languageName, setLanguageName] = useState('');
   const [languageDescription, setLanguageDescription] = useState('');
   const [savingLanguage, setSavingLanguage] = useState(false);
+
+  // Platforms management
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [loadingPlatforms, setLoadingPlatforms] = useState(true);
+  const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
+  const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
+  const [platformCode, setPlatformCode] = useState('');
+  const [platformName, setPlatformName] = useState('');
+  const [platformDescription, setPlatformDescription] = useState('');
+  const [savingPlatform, setSavingPlatform] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -165,6 +183,25 @@ export default function SettingsPage() {
     fetchLanguages();
   }, []);
 
+  // Fetch platforms
+  useEffect(() => {
+    async function fetchPlatforms() {
+      setLoadingPlatforms(true);
+      try {
+        const response = await fetch('/api/platforms');
+        if (response.ok) {
+          const data = await response.json();
+          setPlatforms(data.platforms || []);
+        }
+      } catch (error) {
+        console.error('Error fetching platforms:', error);
+      } finally {
+        setLoadingPlatforms(false);
+      }
+    }
+
+    fetchPlatforms();
+  }, []);
 
   // Product management functions
   const openProductModal = (product?: Product) => {
@@ -384,6 +421,115 @@ export default function SettingsPage() {
     }
   };
 
+  // Platform management functions
+  const openPlatformModal = (platform?: Platform) => {
+    if (platform) {
+      setEditingPlatform(platform);
+      setPlatformCode(platform.code);
+      setPlatformName(platform.name);
+      setPlatformDescription(platform.description || '');
+    } else {
+      setEditingPlatform(null);
+      setPlatformCode('');
+      setPlatformName('');
+      setPlatformDescription('');
+    }
+    setIsPlatformModalOpen(true);
+  };
+
+  const closePlatformModal = () => {
+    setIsPlatformModalOpen(false);
+    setEditingPlatform(null);
+    setPlatformCode('');
+    setPlatformName('');
+    setPlatformDescription('');
+  };
+
+  const handleSavePlatform = async () => {
+    if (!platformCode.trim() || !platformName.trim()) {
+      showError('플랫폼 코드와 이름은 필수입니다.');
+      return;
+    }
+
+    setSavingPlatform(true);
+
+    try {
+      let response;
+
+      if (editingPlatform) {
+        // Update existing platform
+        response = await fetch(`/api/platforms/${editingPlatform.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: platformCode.trim(),
+            name: platformName.trim(),
+            description: platformDescription.trim() || null,
+          }),
+        });
+      } else {
+        // Create new platform
+        response = await fetch('/api/platforms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: platformCode.trim(),
+            name: platformName.trim(),
+            description: platformDescription.trim() || null,
+            display_order: platforms.length,
+          }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '플랫폼 저장 실패');
+      }
+
+      // Refresh platforms list
+      const platformsResponse = await fetch('/api/platforms');
+      if (platformsResponse.ok) {
+        const platformsData = await platformsResponse.json();
+        setPlatforms(platformsData.platforms || []);
+      }
+
+      showSuccess(editingPlatform ? '플랫폼이 수정되었습니다.' : '플랫폼이 추가되었습니다.');
+      closePlatformModal();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '플랫폼 저장에 실패했습니다.');
+    } finally {
+      setSavingPlatform(false);
+    }
+  };
+
+  const handleDeletePlatform = async (platform: Platform) => {
+    if (!showConfirm(`플랫폼 "${platform.name}" (${platform.code})을(를) 삭제하시겠습니까?`)) return;
+
+    try {
+      const response = await fetch(`/api/platforms/${platform.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '플랫폼 삭제 실패');
+      }
+
+      // Refresh platforms list
+      const platformsResponse = await fetch('/api/platforms');
+      if (platformsResponse.ok) {
+        const platformsData = await platformsResponse.json();
+        setPlatforms(platformsData.platforms || []);
+      }
+
+      showSuccess('플랫폼이 삭제되었습니다.');
+    } catch (error) {
+      showError(error instanceof Error ? error.message : '플랫폼 삭제에 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -529,22 +675,70 @@ export default function SettingsPage() {
             )}
           </Card>
 
-
-        {/* Data Management */}
+        {/* Platform Management */}
         <Card>
-          <CardTitle>데이터 관리</CardTitle>
-          <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">번역 Export</p>
-                <p className="text-sm text-gray-500">모든 번역 데이터를 CSV로 내보내기</p>
-              </div>
-              <Button variant="secondary" size="sm" disabled>
-                준비 중
+            <div className="flex items-center justify-between mb-4">
+              <CardTitle>플랫폼 관리</CardTitle>
+              <Button size="sm" onClick={() => openPlatformModal()}>
+                플랫폼 추가
               </Button>
             </div>
-          </div>
-        </Card>
+            <p className="text-sm text-gray-500 mb-4">
+              번역이 사용되는 플랫폼 목록을 관리합니다.
+            </p>
+            {loadingPlatforms ? (
+              <div className="text-center py-8 text-gray-500">로딩 중...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {platforms
+                  .sort((a, b) => a.code.localeCompare(b.code))
+                  .map((platform) => (
+                  <div
+                    key={platform.id}
+                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="info">{platform.code}</Badge>
+                        <p className="font-semibold text-gray-900">{platform.name}</p>
+                      </div>
+                      <DropdownMenu
+                        items={[
+                          {
+                            label: '수정',
+                            onClick: () => openPlatformModal(platform),
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: '삭제',
+                            onClick: () => handleDeletePlatform(platform),
+                            variant: 'danger' as const,
+                            icon: (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            ),
+                          },
+                        ]}
+                      />
+                    </div>
+                    {platform.description && (
+                      <p className="text-sm text-gray-600 mt-2">{platform.description}</p>
+                    )}
+                  </div>
+                ))}
+                {platforms.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-gray-500">
+                    등록된 플랫폼이 없습니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
 
         {/* About */}
         <Card>
@@ -586,7 +780,6 @@ export default function SettingsPage() {
                 value={productCode}
                 onChange={(e) => setProductCode(e.target.value)}
                 placeholder="예: RC, RV, RM"
-                disabled={!!editingProduct}
               />
               <Input
                 label="제품 이름 *"
@@ -602,7 +795,7 @@ export default function SettingsPage() {
                   value={productDescription}
                   onChange={(e) => setProductDescription(e.target.value)}
                   placeholder="제품에 대한 간단한 설명"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-[#818CF8] transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                   rows={3}
                 />
               </div>
@@ -622,6 +815,74 @@ export default function SettingsPage() {
                 disabled={!productCode.trim() || !productName.trim()}
               >
                 {editingProduct ? '수정' : '추가'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Platform Modal */}
+      {isPlatformModalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingPlatform ? '플랫폼 수정' : '플랫폼 추가'}
+              </h3>
+              <button
+                onClick={closePlatformModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <Input
+                label="플랫폼 코드 *"
+                value={platformCode}
+                onChange={(e) => setPlatformCode(e.target.value)}
+                placeholder="예: Front, Back, iOS, Android"
+              />
+              <Input
+                label="플랫폼 이름 *"
+                value={platformName}
+                onChange={(e) => setPlatformName(e.target.value)}
+                placeholder="예: 프론트엔드, 백엔드"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명 (선택)
+                </label>
+                <textarea
+                  value={platformDescription}
+                  onChange={(e) => setPlatformDescription(e.target.value)}
+                  placeholder="플랫폼에 대한 간단한 설명"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+              <Button
+                variant="secondary"
+                onClick={closePlatformModal}
+                disabled={savingPlatform}
+              >
+                취소
+              </Button>
+              <Button
+                onClick={handleSavePlatform}
+                loading={savingPlatform}
+                disabled={!platformCode.trim() || !platformName.trim()}
+              >
+                {editingPlatform ? '수정' : '추가'}
               </Button>
             </div>
           </div>
@@ -655,7 +916,6 @@ export default function SettingsPage() {
                 value={languageCode}
                 onChange={(e) => setLanguageCode(e.target.value)}
                 placeholder="예: ko, en, ja, zh-CN"
-                disabled={!!editingLanguage}
               />
               <Input
                 label="언어 이름 *"
@@ -671,7 +931,7 @@ export default function SettingsPage() {
                   value={languageDescription}
                   onChange={(e) => setLanguageDescription(e.target.value)}
                   placeholder="언어에 대한 간단한 설명"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-[#818CF8] transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                   rows={3}
                 />
               </div>

@@ -9,29 +9,32 @@ interface DashboardLayoutProps {
   title?: string;
   subtitle?: string;
   quickActions?: React.ReactNode;
+  headerActions?: React.ReactNode;
 }
 
 export default function DashboardLayout({
   children,
   title,
   subtitle,
-  quickActions
+  quickActions,
+  headerActions
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#FAFAFA]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="flex-1 overflow-auto lg:ml-0">
         {/* Header with Title and Actions */}
-        <div className="sticky top-0 z-40 bg-[#FAFAFA] h-16 border-b border-[#E0E7FF]">
+        <div className="sticky top-0 z-40 bg-background h-16 border-b border-border-light">
           <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4 lg:gap-8">
             {/* Hamburger Menu Button (Mobile) */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-[#546E7A] hover:text-[#2C3E50] hover:bg-white rounded-xl transition-all"
+              className="lg:hidden p-2 text-text-secondary hover:text-text-main hover:bg-white rounded-xl transition-all"
+              aria-label="메뉴 열기"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -39,18 +42,18 @@ export default function DashboardLayout({
             {/* Left: Page Title */}
             {title && (
               <div className="flex-1">
-                <h1 className="text-lg lg:text-xl font-bold text-[#2C3E50] tracking-tight">{title}</h1>
+                <h1 className="text-lg lg:text-xl font-bold text-text-main tracking-tight">{title}</h1>
               </div>
             )}
 
-            {/* Right: Quick Actions and Profile Menu */}
+            {/* Right: Actions and Profile Menu */}
             <div className="flex items-center gap-4">
-              {/* Quick Actions */}
-              {quickActions}
+              {/* Header Actions */}
+              {headerActions}
 
               {/* Divider */}
-              {quickActions && (
-                <div className="h-6 w-px bg-[#D4E3FC]"></div>
+              {headerActions && (
+                <div className="h-6 w-px bg-border-divider"></div>
               )}
 
               {/* Profile Menu */}
@@ -61,8 +64,13 @@ export default function DashboardLayout({
 
         {/* Subtitle Section */}
         {subtitle && (
-          <div className="bg-[#FAFAFA] px-8 py-2">
-            <p className="text-sm text-[#90A4AE]">{subtitle}</p>
+          <div className="bg-background px-8 py-2 flex items-center justify-between">
+            <p className="text-sm text-text-muted">{subtitle}</p>
+            {quickActions && (
+              <div className="flex items-center gap-2">
+                {quickActions}
+              </div>
+            )}
           </div>
         )}
 

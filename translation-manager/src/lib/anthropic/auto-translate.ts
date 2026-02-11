@@ -1,4 +1,5 @@
 import { getAnthropicClient } from './client';
+// @deprecated - TODO: refactor to pass language names as parameter instead of using hardcoded SUPPORTED_LANGUAGES
 import { SUPPORTED_LANGUAGES, LanguageCode, GlossaryTerm } from '@/types';
 
 interface TranslationMemoryEntry {
@@ -105,7 +106,7 @@ Respond ONLY in JSON format:
 }`;
 
   const targetLangNames = input.targetLanguages
-    .map((code) => `${SUPPORTED_LANGUAGES[code]} (${code})`)
+    .map((code) => `${SUPPORTED_LANGUAGES[code as keyof typeof SUPPORTED_LANGUAGES] || code} (${code})`)
     .join(', ');
 
   const userPrompt = `Translate the following Korean text to: ${targetLangNames}

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
-import { PRODUCTS } from '@/lib/constants';
 import { FIRST_MASTER_EMAIL } from '@/types/users';
 
 // PATCH - Update user
@@ -66,8 +65,19 @@ export async function PATCH(
       }
     }
 
+    // Fetch products from database
+    const { data: productsData } = await adminClient.from('products').select('code, name');
+    const productsMap = (productsData || []).reduce((acc, p) => { acc[p.code] = p.name; return acc; }, {} as Record<string, string>);
+
     // Update user profile
-    const updateData: any = {};
+    interface UserUpdateData {
+      name?: string;
+      email?: string;
+      roles?: string[];
+      work_products?: string[];
+    }
+
+    const updateData: UserUpdateData = {};
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (accountLevel !== undefined) {
@@ -76,7 +86,7 @@ export async function PATCH(
 
       // Master users should have all products
       if (accountLevel === 'master') {
-        updateData.work_products = Object.keys(PRODUCTS);
+        updateData.work_products = Object.keys(productsMap);
       } else if (products !== undefined) {
         updateData.work_products = products;
       }

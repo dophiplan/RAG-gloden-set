@@ -5,9 +5,10 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
 import TranslationSourceBadge from '@/components/translations/TranslationSourceBadge';
-import { Translation, TranslationResult, TranslationStatus, SUPPORTED_LANGUAGES, LanguageCode, STATUS_COLORS, ProductCode, PRODUCTS, PriorityLevel } from '@/types';
+import { Translation, TranslationResult, TranslationStatus, LanguageCode, STATUS_COLORS, ProductCode, PriorityLevel, Scope } from '@/types';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
 import { showSuccess, showError } from '@/lib/notifications';
+import { useProducts, useLanguages } from '@/hooks/useReferenceData';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -21,7 +22,7 @@ interface TranslationTableV2Props {
   onTranslationUpdate: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
   onSourceTextUpdate: (translationId: string, sourceText: string) => Promise<void>;
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
-  onScopeUpdate: (translationId: string, scope: 'SaaS' | 'Solution' | null) => Promise<void>;
+  onScopeUpdate: (translationId: string, scope: Scope | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
   onPriorityUpdate: (translationId: string, priority: PriorityLevel) => Promise<void>;
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
@@ -79,6 +80,7 @@ const TranslationRow = memo(function TranslationRow({
   onDevCodeUpdate,
   onDelete,
 }: TranslationRowProps) {
+  const { productsMap } = useProducts();
   const statusInfo = STATUS_COLORS[translation.status];
 
   const getTranslationForLanguage = (languageCode: LanguageCode): string => {
@@ -97,7 +99,7 @@ const TranslationRow = memo(function TranslationRow({
   // Get product names from translation_products
   const productNames = translation.translation_products?.map(tp => {
     const productCode = tp.product_code;
-    return PRODUCTS[productCode] || productCode;
+    return productsMap[productCode]?.name || productCode;
   }).join(', ') || '-';
 
   return (
@@ -122,7 +124,7 @@ const TranslationRow = memo(function TranslationRow({
             const value = e.target.value;
             onScopeUpdate(
               translation.id,
-              value === '' ? null : (value as any)
+              value === '' ? null : (value as Scope)
             );
           }}
           className="text-xs border rounded px-1 py-1 w-full bg-white"
@@ -248,6 +250,7 @@ export default memo(function TranslationTableV2({
   totalPages = 1,
   onPageChange,
 }: TranslationTableV2Props) {
+  const { languagesMap } = useLanguages();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const showProductColumn = selectedProduct === null;
 
@@ -340,50 +343,52 @@ export default memo(function TranslationTableV2({
           <table className="w-full table-auto">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-2 py-2 text-left w-8">
+                <th scope="col" className="px-2 py-2 text-left w-8">
                   <input
                     type="checkbox"
                     checked={selectedIds.length === translations.length}
                     onChange={toggleSelectAll}
                     className="rounded border-gray-300"
+                    aria-label="모든 항목 선택"
                   />
                 </th>
                 {showProductColumn && (
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-28">
+                  <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-28">
                     제품
                   </th>
                 )}
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
                   제품분류
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
                   중요도
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-20">
                   버전
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
                   설명
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-48">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-48">
                   KEY/id
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
                   개발자 코드
                 </th>
                 {displayLanguages.map((lang) => (
                   <th
+                    scope="col"
                     key={lang}
                     className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32 cursor-help"
-                    title={SUPPORTED_LANGUAGES[lang]}
+                    title={languagesMap[lang]?.name || lang}
                   >
                     {lang.toUpperCase()}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-24">
                   번역 상태
                 </th>
-                <th className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
+                <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-700 w-32">
                   비고
                 </th>
               </tr>

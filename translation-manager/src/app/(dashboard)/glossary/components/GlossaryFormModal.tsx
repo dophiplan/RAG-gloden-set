@@ -5,7 +5,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import { SUPPORTED_LANGUAGES, LanguageCode, ProductCode } from '@/types';
-import { PRODUCT_SELECT_OPTIONS } from '@/lib/constants';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface GlossaryFormModalProps {
   isOpen: boolean;
@@ -46,6 +46,15 @@ export default function GlossaryFormModal({
   showLanguageSelect = true,
   editingLanguage,
 }: GlossaryFormModalProps) {
+  // Fetch reference data from DB
+  const { products } = useProducts();
+
+  // Generate select options dynamically
+  const productSelectOptions = [
+    { value: '', label: '제품 선택' },
+    ...products.map(p => ({ value: p.code, label: p.name }))
+  ];
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="space-y-4">
@@ -53,7 +62,7 @@ export default function GlossaryFormModal({
           label="제품"
           value={formProductCode}
           onChange={(e) => setFormProductCode(e.target.value as ProductCode | '')}
-          options={PRODUCT_SELECT_OPTIONS}
+          options={productSelectOptions}
         />
         <Input
           label="용어 *"

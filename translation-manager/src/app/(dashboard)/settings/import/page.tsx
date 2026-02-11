@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { ProductCode } from '@/types';
-import { PRODUCT_SELECT_OPTIONS } from '@/lib/constants';
+import { useProducts } from '@/hooks/useReferenceData';
 
 export default function ImportPage() {
   const router = useRouter();
@@ -23,6 +23,15 @@ export default function ImportPage() {
     errors: string[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch reference data from DB
+  const { products } = useProducts();
+
+  // Generate select options dynamically
+  const productSelectOptions = [
+    { value: '', label: '제품 선택' },
+    ...products.map(p => ({ value: p.code, label: p.name }))
+  ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -98,7 +107,7 @@ export default function ImportPage() {
               label="제품 *"
               value={productCode}
               onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
-              options={PRODUCT_SELECT_OPTIONS}
+              options={productSelectOptions}
             />
             <Input
               label="버전"

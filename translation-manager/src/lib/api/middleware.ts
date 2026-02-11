@@ -62,10 +62,7 @@ export function withAuth(handler: ApiHandler) {
       } = await supabase.auth.getUser();
 
       if (error || !user) {
-        return NextResponse.json(
-          { error: '인증이 필요합니다.' },
-          { status: 401 }
-        );
+        return unauthorized();
       }
 
       // Fetch user profile
@@ -79,10 +76,7 @@ export function withAuth(handler: ApiHandler) {
       return await handler(req, ctx);
     } catch (error) {
       console.error('Auth middleware error:', error);
-      return NextResponse.json(
-        { error: '서버 오류가 발생했습니다.' },
-        { status: 500 }
-      );
+      return serverError();
     }
   };
 }
@@ -94,10 +88,7 @@ export function withAuth(handler: ApiHandler) {
 export function withMasterRole(handler: ApiHandler) {
   return withAuth(async (req, ctx) => {
     if (!isMaster(ctx.profile)) {
-      return NextResponse.json(
-        { error: '권한이 없습니다. 관리자 권한이 필요합니다.' },
-        { status: 403 }
-      );
+      return forbidden('권한이 없습니다. 관리자 권한이 필요합니다.');
     }
     return handler(req, ctx);
   });
@@ -117,21 +108,12 @@ export function withValidation<T>(
       const result = schema.safeParse(body);
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: '잘못된 요청입니다.',
-            details: result.error.issues,
-          },
-          { status: 400 }
-        );
+        return badRequest('잘못된 요청입니다.', result.error.issues, 'VALIDATION_ERROR');
       }
 
       return handler(req, ctx, result.data);
     } catch (error) {
-      return NextResponse.json(
-        { error: '요청 본문을 파싱할 수 없습니다.' },
-        { status: 400 }
-      );
+      return badRequest('요청 본문을 파싱할 수 없습니다.', undefined, 'INVALID_JSON');
     }
   });
 }
@@ -148,20 +130,12 @@ export function withErrorHandling(handler: ApiHandler) {
       console.error('API error:', error);
 
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          {
-            error: '유효성 검사 실패',
-            details: error.issues,
-          },
-          { status: 400 }
-        );
+        return badRequest('유효성 검사 실패', error.issues, 'VALIDATION_ERROR');
       }
 
-      return NextResponse.json(
-        {
-          error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
-        },
-        { status: 500 }
+      return serverError(
+        error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        'INTERNAL_ERROR'
       );
     }
   });
@@ -180,13 +154,7 @@ export function withApiMiddleware<T>(
       const result = schema.safeParse(body);
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: '잘못된 요청입니다.',
-            details: result.error.issues,
-          },
-          { status: 400 }
-        );
+        return badRequest('잘못된 요청입니다.', result.error.issues, 'VALIDATION_ERROR');
       }
 
       return handler(req, ctx, result.data);
@@ -202,12 +170,58 @@ export function successResponse<T>(data: T, status: number = 200): NextResponse 
 }
 
 /**
- * Helper to create error response
+ * Standard API error response format
+ */
+export interface ApiError {
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+}
+
+/**
+ * Helper to create standardized error response
  */
 export function errorResponse(
-  error: string,
+  code: string,
+  message: string,
   status: number = 500,
   details?: unknown
 ): NextResponse {
-  return NextResponse.json({ error, details }, { status });
+  const response: ApiError = {
+    error: {
+      code,
+      message,
+      ...(details && { details }),
+    },
+  };
+  return NextResponse.json(response, { status });
+}
+
+/**
+ * Standard error response helpers
+ */
+export function unauthorized(message = '인증이 필요합니다.', code = 'UNAUTHORIZED'): NextResponse {
+  return errorResponse(code, message, 401);
+}
+
+export function forbidden(message = '권한이 없습니다.', code = 'FORBIDDEN'): NextResponse {
+  return errorResponse(code, message, 403);
+}
+
+export function badRequest(message: string, details?: unknown, code = 'BAD_REQUEST'): NextResponse {
+  return errorResponse(code, message, 400, details);
+}
+
+export function notFound(message = '요청한 리소스를 찾을 수 없습니다.', code = 'NOT_FOUND'): NextResponse {
+  return errorResponse(code, message, 404);
+}
+
+export function conflict(message: string, code = 'CONFLICT'): NextResponse {
+  return errorResponse(code, message, 409);
+}
+
+export function serverError(message = '서버 오류가 발생했습니다.', code = 'INTERNAL_SERVER_ERROR'): NextResponse {
+  return errorResponse(code, message, 500);
 }

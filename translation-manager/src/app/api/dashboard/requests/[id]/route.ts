@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/api-auth';
+import { PAGINATION } from '@/lib/constants';
 
 // DELETE - Delete a request and all its translations
 export async function DELETE(
@@ -36,7 +37,7 @@ export async function DELETE(
       .from('translations')
       .select('id, request_id')
       .or(`id.eq.${requestId},request_id.eq.${requestId}`)
-      .limit(100);
+      .limit(PAGINATION.MAX_QUERY_LIMIT);
 
     if (fetchError) {
       console.error('❌ Error fetching translations:', fetchError);

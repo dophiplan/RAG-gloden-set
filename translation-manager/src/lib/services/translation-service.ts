@@ -310,7 +310,7 @@ export class TranslationService {
       .eq('id', this.userId)
       .single();
 
-    await this.supabase.from('translation_audit_logs').insert({
+    this.supabase.from('translation_audit_logs').insert({
       translation_id: translationId,
       user_id: this.userId,
       user_name: user?.name || null,
@@ -319,6 +319,9 @@ export class TranslationService {
       field_name: fieldName || null,
       old_value: oldValue,
       new_value: newValue,
+    }).catch(err => {
+      console.error('[Audit Log] Failed to log translation audit:', err);
+      // Don't throw - audit log failure should not break the main operation
     });
   }
 }

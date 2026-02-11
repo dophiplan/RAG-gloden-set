@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
+import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
+import { languageCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
+import { badRequest } from '@/lib/api/middleware';
 
 /**
  * GET - List all languages
@@ -31,43 +34,29 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST - Create a new language (master only)
+ * POST - Create a new language (admin only)
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Require admin permission
+    const auth = await requireAdmin();
+    if (isErrorResponse(auth)) return auth.error;
 
-    if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    const { user, supabase } = auth.context;
+
+    // Parse and validate
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(languageCreateSchema, rawBody);
+
+    if (!validation.success) {
+      return badRequest(validation.error, undefined, 'VALIDATION_ERROR');
     }
 
-    // Check if user is master
-    const adminClient = createAdminClient();
-    const { data: userProfile } = await adminClient
-      .from('users')
-      .select('roles')
-      .eq('id', user.id)
-      .single();
-
-    const isMaster = userProfile?.roles?.includes('master') || userProfile?.roles?.includes('1st_master');
-
-    if (!isMaster) {
-      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
-    }
-
-    const body = await request.json();
+    const body = validation.data;
     const { code, name, description, display_order } = body;
 
-    if (!code || !name) {
-      return NextResponse.json(
-        { error: '언어 코드와 이름은 필수입니다.' },
-        { status: 400 }
-      );
-    }
-
-    // Check if code already exists
-    const { data: existing } = await adminClient
+    // Check if code already exists (using regular client with RLS)
+    const { data: existing } = await supabase
       .from('languages')
       .select('id')
       .eq('code', code)
@@ -80,7 +69,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: language, error } = await adminClient
+    // Insert new language (RLS will allow if user is admin)
+    const { data: language, error } = await supabase
       .from('languages')
       .insert({
         code,

@@ -1,4 +1,5 @@
-// Supported languages
+// @deprecated Use useLanguages() hook instead - languages are now fetched from DB
+// Keeping for backward compatibility during migration
 export const SUPPORTED_LANGUAGES = {
   ko: '한국어',
   en: 'English',
@@ -11,7 +12,8 @@ export const SUPPORTED_LANGUAGES = {
   pt: 'Português',
 } as const;
 
-export type LanguageCode = keyof typeof SUPPORTED_LANGUAGES;
+// @deprecated Use string type instead - languages are dynamic
+export type LanguageCode = string;
 
 // Work language options
 export const WORK_LANGUAGE_OPTIONS = [

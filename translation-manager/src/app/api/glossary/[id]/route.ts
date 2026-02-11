@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
+import { successResponse, notFound, serverError } from '@/lib/api/middleware';
 
 interface GlossaryUpdateInput {
   term?: string;
   translation?: string;
   context?: string;
+  updated_at?: string; // For optimistic locking
 }
 
 // GET - Get single glossary term
@@ -14,34 +17,34 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { id } = await params;
 
     const { data, error } = await supabase
       .from('glossary')
-      .select('*')
+      .select(`
+        *,
+        glossary_products (product_code)
+      `)
       .eq('id', id)
       .single();
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: '용어를 찾을 수 없습니다.' }, { status: 404 });
+        return notFound('용어를 찾을 수 없습니다.');
       }
       throw error;
     }
 
-    return NextResponse.json(data);
+    return successResponse(data);
   } catch (error) {
     console.error('Error fetching glossary term:', error);
-    return NextResponse.json(
-      { error: '용어를 불러오는데 실패했습니다.' },
-      { status: 500 }
-    );
+    return serverError('용어를 불러오는데 실패했습니다.');
   }
 }
 
@@ -52,14 +55,50 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { id } = await params;
     const body: GlossaryUpdateInput = await request.json();
+
+    // Optimistic Locking: Check for concurrent edits if updated_at is provided
+    if (body.updated_at) {
+      const { data: currentData, error: fetchError } = await supabase
+        .from('glossary')
+        .select('updated_at')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          return notFound('용어를 찾을 수 없습니다.');
+        }
+        throw fetchError;
+      }
+
+      // Compare timestamps (allow 1 second tolerance)
+      const clie[기밀마스킹]imestamp = new Date(body.updated_at).getTime();
+      const serverTimestamp = new Date(currentData.updated_at).getTime();
+
+      if (Math.abs(serverTimestamp - clie[기밀마스킹]imestamp) > 1000) {
+        return NextResponse.json(
+          {
+            error: {
+              code: 'EDIT_CONFLICT',
+              message: '다른 사용자가 이 용어를 수정했습니다. 페이지를 새로고침하여 최신 내용을 확인하세요.',
+              details: {
+                serverUpdatedAt: currentData.updated_at,
+                clientUpdatedAt: body.updated_at,
+              },
+            },
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
     if (body.term !== undefined) updateData.term = body.term.trim();
@@ -75,18 +114,15 @@ export async function PATCH(
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: '용어를 찾을 수 없습니다.' }, { status: 404 });
+        return notFound('용어를 찾을 수 없습니다.');
       }
       throw error;
     }
 
-    return NextResponse.json(data);
+    return successResponse(data);
   } catch (error) {
     console.error('Error updating glossary term:', error);
-    return NextResponse.json(
-      { error: '용어를 업데이트하는데 실패했습니다.' },
-      { status: 500 }
-    );
+    return serverError('용어를 업데이트하는데 실패했습니다.');
   }
 }
 
@@ -97,27 +133,48 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { id } = await params;
 
-    const { error } = await supabase
+    // Fetch glossary data before deletion for logging
+    const { data: glossary, error: fetchError } = await supabase
+      .from('glossary')
+      .select('term, translation, language_code')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return notFound('용어를 찾을 수 없습니다.');
+      }
+      throw fetchError;
+    }
+
+    // Delete glossary term
+    const { error: deleteError } = await supabase
       .from('glossary')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (deleteError) throw deleteError;
 
-    return NextResponse.json({ success: true });
+    // Log deletion (console log for now - glossary doesn't have dedicated audit log table)
+    console.log(`[Glossary Delete] User ${user.email} deleted glossary term:`, {
+      id,
+      term: glossary.term,
+      translation: glossary.translation,
+      language_code: glossary.language_code,
+      timestamp: new Date().toISOString(),
+    });
+
+    return successResponse({ success: true });
   } catch (error) {
     console.error('Error deleting glossary term:', error);
-    return NextResponse.json(
-      { error: '용어를 삭제하는데 실패했습니다.' },
-      { status: 500 }
-    );
+    return serverError('용어를 삭제하는데 실패했습니다.');
   }
 }

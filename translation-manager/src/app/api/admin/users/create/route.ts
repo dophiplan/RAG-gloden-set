@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
-import { PRODUCTS } from '@/lib/constants';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Security: Verify user is master
-async function verifyMasterUser(supabase: any): Promise<{ authorized: boolean; userId?: string }> {
+async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized: boolean; userId?: string }> {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
@@ -123,13 +123,17 @@ export async function POST(request: NextRequest) {
 
     if (!authData?.user) throw new Error('Failed to create auth user');
 
+    // Fetch products from database
+    const { data: productsData } = await adminClient.from('products').select('code, name');
+    const productsMap = (productsData || []).reduce((acc, p) => { acc[p.code] = p.name; return acc; }, {} as Record<string, string>);
+
     // Create user profile
     // roles array will contain only the primary account level
     const roles = [accountLevel || 'user'];
 
     // Master and 1st_master users get all products and permissions automatically
     const workProducts = (accountLevel === 'master' || accountLevel === '1st_master')
-      ? Object.keys(PRODUCTS)
+      ? Object.keys(productsMap)
       : (products || []);
 
     const workPermissions = (accountLevel === 'master' || accountLevel === '1st_master')

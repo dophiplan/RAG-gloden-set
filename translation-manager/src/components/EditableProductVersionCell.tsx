@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ProductCode, PRODUCTS, TranslationProduct } from '@/types';
+import { ProductCode, TranslationProduct } from '@/types';
 import Badge from '@/components/ui/Badge';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface ProductWithVersion {
   code: ProductCode;
@@ -20,13 +21,14 @@ export default function EditableProductVersionCell({
   onSave,
   disabled = false,
 }: EditableProductVersionCellProps) {
+  const { products: allProducts, productsMap } = useProducts();
   const [isEditing, setIsEditing] = useState(false);
   const [editProducts, setEditProducts] = useState<ProductWithVersion[]>(
     products.map((p) => ({ code: p.product_code, version: p.version || '' }))
   );
   const [isSaving, setIsSaving] = useState(false);
   const [availableProducts, setAvailableProducts] = useState<ProductCode[]>(
-    Object.keys(PRODUCTS) as ProductCode[]
+    allProducts.map(p => p.code as ProductCode)
   );
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -94,7 +96,7 @@ export default function EditableProductVersionCell({
         {editProducts.map((product, index) => (
           <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
             <span className="text-sm font-medium text-gray-700 min-w-[60px]">
-              {PRODUCTS[product.code]}
+              {productsMap[product.code]?.name || product.code}
             </span>
             <input
               type="text"
@@ -129,7 +131,7 @@ export default function EditableProductVersionCell({
               <option value="">+ 제품 추가</option>
               {getAvailableProductsToAdd().map((code) => (
                 <option key={code} value={code}>
-                  {PRODUCTS[code]}
+                  {productsMap[code]?.name || code}
                 </option>
               ))}
             </select>
@@ -171,7 +173,7 @@ export default function EditableProductVersionCell({
         <div className="flex flex-wrap gap-2">
           {products.map((product) => (
             <div key={product.id} className="flex items-center gap-1">
-              <Badge variant="info">{PRODUCTS[product.product_code]}</Badge>
+              <Badge variant="info">{productsMap[product.product_code]?.name || product.product_code}</Badge>
               {product.version && (
                 <span className="text-xs text-blue-600 font-mono">v{product.version}</span>
               )}

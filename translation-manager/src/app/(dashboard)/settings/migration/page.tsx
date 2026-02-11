@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { ProductCode, PRODUCTS } from '@/types';
+import { ProductCode } from '@/types';
+import { useProducts } from '@/hooks/useReferenceData';
 import MigrationPreviewTable from './components/MigrationPreviewTable';
 
 interface PreviewEntry {
@@ -36,6 +37,7 @@ type Step = 'upload' | 'preview' | 'confirm';
 
 export default function MigrationPage() {
   const router = useRouter();
+  const { products, productsMap } = useProducts();
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
@@ -46,6 +48,8 @@ export default function MigrationPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasIssues, setHasIssues] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -53,6 +57,78 @@ export default function MigrationPage() {
       setError('');
     }
   };
+
+  // Page-wide drag and drop handlers
+  React.useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragCounter(prev => {
+        const newCount = prev + 1;
+        if (newCount === 1 && e.dataTransfer?.types.includes('Files')) {
+          setIsDragging(true);
+        }
+        return newCount;
+      });
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragCounter(prev => {
+        const newCount = prev - 1;
+        if (newCount <= 0) {
+          setIsDragging(false);
+          return 0;
+        }
+        return newCount;
+      });
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragCounter(0);
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer?.files || []);
+      if (files.length > 0) {
+        const file = files[0];
+        if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+          setFile(file);
+          setError('');
+        } else {
+          setError('CSV 또는 Excel 파일만 업로드 가능합니다.');
+        }
+      }
+    };
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDragCounter(0);
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter as any);
+    window.addEventListener('dragover', handleDragOver as any);
+    window.addEventListener('dragleave', handleDragLeave as any);
+    window.addEventListener('drop', handleDrop as any);
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter as any);
+      window.removeEventListener('dragover', handleDragOver as any);
+      window.removeEventListener('dragleave', handleDragLeave as any);
+      window.removeEventListener('drop', handleDrop as any);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
   const handleUpload = async () => {
     if (!file) {
@@ -66,15 +142,12 @@ export default function MigrationPage() {
     try {
       if (mode === 'simple') {
         // Simple mode: Check for issues first
-        console.log('🚀 [간단 모드] 파일 업로드 시작:', file.name);
-
         // First, get preview to check for issues
         const previewFormData = new FormData();
         previewFormData.append('file', file);
         // If "ALL" is selected, pass empty string to indicate common terms
         previewFormData.append('product_code', productCode === 'ALL' ? '' : productCode);
 
-        console.log('🔍 [간단 모드] 파일 분석 중...');
         const previewResponse = await fetch('/api/migration/preview', {
           method: 'POST',
           body: previewFormData,
@@ -86,22 +159,14 @@ export default function MigrationPage() {
           throw new Error(previewData.error || '파일 처리 중 오류가 발생했습니다.');
         }
 
-        console.log('📊 [간단 모드] 분석 결과:', previewData.summary);
-
-        // Check if there are any issues (duplicates, similar, or errors)
+        // Check if there are any issues (duplicates or similar)
         const hasDuplicates = previewData.summary.exact_matches > 0;
         const hasSimilar = previewData.summary.similar_matches > 0;
-        const hasErrors = previewData.entries.some((e: PreviewEntry) => e.duplicate_status.status === 'error');
 
-        const hasAnyIssues = hasDuplicates || hasSimilar || hasErrors;
+        const hasAnyIssues = hasDuplicates || hasSimilar;
 
         if (hasAnyIssues) {
           // Show preview for review
-          console.log('⚠️ [간단 모드] 문제 발견 - 프리뷰 표시');
-          console.log('  - 중복:', hasDuplicates);
-          console.log('  - 유사:', hasSimilar);
-          console.log('  - 오류:', hasErrors);
-
           const initializedEntries = previewData.entries.map((entry: PreviewEntry) => ({
             ...entry,
             category: entry.suggested_category,
@@ -114,8 +179,6 @@ export default function MigrationPage() {
           setStep('preview');
         } else {
           // No issues - direct import
-          console.log('✅ [간단 모드] 문제 없음 - 바로 가져오기');
-
           const formData = new FormData();
           formData.append('file', file);
           formData.append('product_code', productCode === 'ALL' ? '' : productCode);
@@ -131,8 +194,6 @@ export default function MigrationPage() {
           if (!response.ok) {
             throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
           }
-
-          console.log('✅ [간단 모드] 가져오기 완료!');
 
           alert(
             `✅ 가져오기 완료!\n\n` +
@@ -233,6 +294,31 @@ export default function MigrationPage() {
       title="데이터 가져오기"
       subtitle="Excel/CSV 파일에서 용어집 및 번역 데이터를 가져옵니다."
     >
+      {/* Page-wide drag overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 bg-blue-500 bg-opacity-20 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-lg shadow-2xl p-8 border-4 border-dashed border-blue-500">
+            <div className="flex flex-col items-center gap-4">
+              <svg
+                className="w-16 h-16 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <p className="text-xl font-semibold text-gray-900">파일을 여기에 드롭하세요</p>
+              <p className="text-sm text-gray-600">CSV, Excel 파일 지원</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
 
       {/* Mode Toggle */}
@@ -266,33 +352,22 @@ export default function MigrationPage() {
       </div>
 
       {/* Mode Description */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">{mode === 'simple' ? '⚡' : '🔧'}</span>
-          <div className="flex-1">
-            <h3 className="font-semibold text-blue-900 mb-1">
-              {mode === 'simple' ? '간단 모드' : '고급 모드'}
-            </h3>
-            <p className="text-sm text-blue-700 mb-2">
-              {mode === 'simple'
-                ? '용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
-                : '미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다. (대량 데이터 마이그레이션용)'
-              }
-            </p>
-            {mode === 'simple' && (
-              <div className="text-xs text-blue-600 bg-blue-100 rounded px-2 py-1.5 mt-2">
-                <strong>💡 용어집이란?</strong> AI 번역의 일관성을 유지하고 학습시키는 데 사용됩니다.
-                제품별로 적용하거나, 모든 제품에 공통으로 적용할 수 있습니다.
-              </div>
-            )}
-          </div>
+      <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{mode === 'simple' ? '⚡' : '🔧'}</span>
+          <p className="text-sm text-blue-900">
+            {mode === 'simple'
+              ? '간단 모드 - 용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
+              : '고급 모드 - 미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다. (대량 데이터 마이그레이션용)'
+            }
+          </p>
         </div>
       </div>
 
       {/* Progress Steps */}
       {mode === 'advanced' && (
       <div className="mb-8">
-        <div className="flex items-center">
+        <div className="flex items-center justify-center">
           {/* Step 1 */}
           <div className="flex items-center">
             <div
@@ -379,17 +454,70 @@ export default function MigrationPage() {
           <div className="space-y-6">
             {/* File Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Excel/CSV 파일 선택
               </label>
-              <input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#E0E7FF] file:text-[#4F46E5] hover:file:bg-[#C7D2FE]"
-              />
+
+              {/* File upload area */}
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileChange}
+                  id="file-upload"
+                  className="hidden"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex flex-col items-center justify-center w-full h-20 px-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-[#818CF8] transition-all"
+                >
+                  <div className="flex flex-col items-center justify-center py-3">
+                    <svg
+                      className="w-8 h-8 mb-2 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    <p className="mb-1 text-sm text-gray-600">
+                      <span className="font-semibold">클릭하여 파일 선택</span> 또는 드래그 앤 드롭
+                    </p>
+                    <p className="text-xs text-gray-500">CSV, XLSX, XLS 파일 지원</p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Selected file display */}
               {file && (
-                <p className="mt-2 text-sm text-gray-600">선택된 파일: {file.name}</p>
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-900">{file.name}</span>
+                    <span className="text-xs text-blue-600">
+                      ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFile(null);
+                      setError('');
+                    }}
+                    className="text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -406,9 +534,9 @@ export default function MigrationPage() {
                 {mode === 'simple' && (
                   <option value="ALL">전체 (모든 제품 공통)</option>
                 )}
-                {Object.entries(PRODUCTS).map(([code, name]) => (
-                  <option key={code} value={code}>
-                    {name}
+                {products.map((product) => (
+                  <option key={product.code} value={product.code}>
+                    {product.name}
                   </option>
                 ))}
               </select>

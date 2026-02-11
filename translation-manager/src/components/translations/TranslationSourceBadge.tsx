@@ -21,12 +21,16 @@ export default function TranslationSourceBadge({ sourceType, className = '' }: T
     glossary: {
       bg: 'bg-green-100',
       text: 'text-green-800',
+      icon: '💾',
       label: 'DB 검색 결과',
+      tooltip: 'DB에서 검색된 번역 (비용 절감)',
     },
     ai: {
       bg: 'bg-blue-100',
       text: 'text-blue-800',
+      icon: '🤖',
       label: '신규 AI 번역',
+      tooltip: 'AI가 새로 생성한 번역 (비용 발생)',
     },
   };
 
@@ -34,10 +38,11 @@ export default function TranslationSourceBadge({ sourceType, className = '' }: T
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${style.bg} ${style.text} ${className}`}
-      title={sourceType === 'glossary' ? '용어집에서 재사용 (비용 없음)' : 'AI가 새로 번역 (비용 발생)'}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${style.bg} ${style.text} ${className}`}
+      title={style.tooltip}
     >
-      {style.label}
+      <span className="text-xs">{style.icon}</span>
+      <span>{style.label}</span>
     </span>
   );
 }

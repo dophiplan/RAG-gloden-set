@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { glossaryBulkApproveSchema, validateAndSanitize } from '@/lib/validation/schemas';
+import { enforceRateLimit } from '@/lib/api/rate-limiter';
 
 interface BulkApproveInput {
   ids: string[];
@@ -16,41 +18,47 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    const body: BulkApproveInput = await request.json();
+    // Check rate limit for glossary bulk operations
+    const rateLimitResult = await enforceRateLimit(user.id, 'glossary_bulk');
+    if (!rateLimitResult.allowed) {
+      return rateLimitResult.response;
+    }
 
-    if (!body.ids || body.ids.length === 0) {
+    // Parse and validate request body
+    const rawBody = await request.json();
+    const validation = validateAndSanitize(glossaryBulkApproveSchema, rawBody);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'ID 목록은 필수입니다.' },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    if (!body.action || !['approve', 'reject'].includes(body.action)) {
-      return NextResponse.json(
-        { error: '유효하지 않은 작업입니다.' },
-        { status: 400 }
-      );
+    const body = validation.data;
+
+    // Use transaction-safe SQL function for atomic bulk operation
+    const functionName = body.action === 'approve'
+      ? 'bulk_approve_glossary'
+      : 'bulk_reject_glossary';
+
+    const { data, error } = await supabase.rpc(functionName, {
+      p_term_ids: body.ids,
+      p_approved_by: user.id,
+    });
+
+    if (error) {
+      console.error(`Error calling ${functionName}:`, error);
+      throw error;
     }
 
-    const newStatus = body.action === 'approve' ? 'approved' : 'rejected';
-
-    // Use batch update for performance
-    const { data, error } = await supabase
-      .from('glossary')
-      .update({
-        approval_status: newStatus,
-        approved_by: user.id,
-        approved_at: new Date().toISOString(),
-      })
-      .in('id', body.ids)
-      .select();
-
-    if (error) throw error;
+    // data is an array with a single row: [{ success_count, failed_count }]
+    const result = Array.isArray(data) && data.length > 0 ? data[0] : { success_count: 0, failed_count: 0 };
 
     return NextResponse.json({
       success: true,
-      updated: data?.length || 0,
-      failed: body.ids.length - (data?.length || 0),
+      updated: result.success_count || 0,
+      failed: result.failed_count || 0,
     });
   } catch (error) {
     console.error('Error bulk approving/rejecting glossary terms:', error);

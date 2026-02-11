@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { suggestGlossaryTerms } from '@/lib/glossary/term-detector';
 import { LanguageCode, ProductCode } from '@/types';
+import { PAGINATION } from '@/lib/constants';
 
 /**
  * GET - 제안된 용어 목록 가져오기
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const languageCode = searchParams.get('language') as LanguageCode | null;
     const productCode = searchParams.get('product_code') as ProductCode | null;
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const limit = parseInt(searchParams.get('limit') || String(PAGINATION.DEFAULT_PAGE_SIZE), 10);
 
     // 용어 제안 가져오기
     const suggestions = await suggestGlossaryTerms(

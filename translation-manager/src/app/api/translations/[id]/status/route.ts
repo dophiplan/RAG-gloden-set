@@ -24,11 +24,13 @@ export async function PATCH(
     }
 
     // Validate status transition
+    // Workflow: pending -> in_progress -> reviewed -> deployed
+    // Can also go back for corrections: deployed -> reviewed -> in_progress
     const validTransitions: Record<TranslationStatus, TranslationStatus[]> = {
-      pending: ['in_progress'],
-      in_progress: ['reviewed'],
-      reviewed: ['deployed'],
-      deployed: [],
+      pending: ['pending', 'in_progress'], // Can stay or move forward
+      in_progress: ['pending', 'in_progress', 'reviewed'], // Can go back, stay, or forward
+      reviewed: ['in_progress', 'reviewed', 'deployed'], // Can go back, stay, or forward
+      deployed: ['reviewed', 'deployed'], // Can go back for re-review or stay
     };
 
     // Fetch current translation
@@ -47,9 +49,15 @@ export async function PATCH(
 
     // Validate transition
     const currentStatus = translation.status as TranslationStatus;
-    if (!validTransitions[currentStatus]?.includes(newStatus)) {
+    const allowedStatuses = validTransitions[currentStatus] || [];
+
+    if (!allowedStatuses.includes(newStatus)) {
       return NextResponse.json({
-        error: `Invalid transition: ${currentStatus} -> ${newStatus}`
+        error: `상태를 변경할 수 없습니다: ${currentStatus} → ${newStatus}`,
+        currentStatus,
+        requestedStatus: newStatus,
+        allowedTransitions: allowedStatuses,
+        message: `현재 "${currentStatus}" 상태에서는 다음 상태로만 변경 가능합니다: ${allowedStatuses.join(', ')}`,
       }, { status: 400 });
     }
 
@@ -70,8 +78,8 @@ export async function PATCH(
       .eq('id', user.id)
       .single();
 
-    // Create audit log
-    await supabase.from('translation_audit_logs').insert({
+    // Create audit log (fire-and-forget with error handling)
+    supabase.from('translation_audit_logs').insert({
       translation_id: id,
       user_id: user.id,
       user_name: userData?.name,
@@ -80,6 +88,9 @@ export async function PATCH(
       field_name: 'status',
       old_value: currentStatus,
       new_value: newStatus,
+    }).catch(err => {
+      console.error('[Audit Log] Failed to log status update:', err);
+      // Don't throw - audit log failure should not break the main operation
     });
 
     return NextResponse.json({ success: true, newStatus });

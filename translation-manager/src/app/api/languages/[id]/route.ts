@@ -34,7 +34,77 @@ export async function PATCH(
     const body = await request.json();
     const { code, name, description, display_order } = body;
 
-    const updateData: any = {};
+    // Get current language to check if code is changing
+    const { data: currentLanguage } = await adminClient
+      .from('languages')
+      .select('code')
+      .eq('id', id)
+      .single();
+
+    if (!currentLanguage) {
+      return NextResponse.json({ error: '언어를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    // Check if code is being changed
+    const isCodeChanging = code !== undefined && code !== currentLanguage.code;
+    const is1stMaster = userProfile?.roles?.includes('1st_master');
+
+    if (isCodeChanging) {
+      // Check if code is in use (only if not 1st_master)
+      if (!is1stMaster) {
+        const [translationCheck, glossaryCheck] = await Promise.all([
+          adminClient
+            .from('translation_results')
+            .select('id')
+            .eq('language_code', currentLanguage.code)
+            .limit(1),
+          adminClient
+            .from('glossary')
+            .select('id')
+            .eq('language_code', currentLanguage.code)
+            .limit(1)
+        ]);
+
+        const isUsed = (translationCheck.data && translationCheck.data.length > 0) ||
+                       (glossaryCheck.data && glossaryCheck.data.length > 0);
+
+        if (isUsed) {
+          return NextResponse.json(
+            { error: '사용 중인 언어 코드는 수정할 수 없습니다.' },
+            { status: 400 }
+          );
+        }
+      }
+
+      // If allowed (1st_master or not in use), cascade update
+      const [translationUpdate, glossaryUpdate] = await Promise.all([
+        adminClient
+          .from('translation_results')
+          .update({ language_code: code })
+          .eq('language_code', currentLanguage.code),
+        adminClient
+          .from('glossary')
+          .update({ language_code: code })
+          .eq('language_code', currentLanguage.code)
+      ]);
+
+      if (translationUpdate.error || glossaryUpdate.error) {
+        console.error('Error cascading language code update:', translationUpdate.error || glossaryUpdate.error);
+        return NextResponse.json(
+          { error: '언어 코드 업데이트 중 오류가 발생했습니다.' },
+          { status: 500 }
+        );
+      }
+    }
+
+    interface LanguageUpdateData {
+      code?: string;
+      name?: string;
+      description?: string | null;
+      display_order?: number;
+    }
+
+    const updateData: LanguageUpdateData = {};
     if (code !== undefined) updateData.code = code;
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;

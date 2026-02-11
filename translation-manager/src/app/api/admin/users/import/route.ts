@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import * as XLSX from 'xlsx';
+import { validateUploadedFile, validateFileContentSize } from '@/lib/validation/file-upload';
 
 // Security: Verify admin secret
 function verifyAdminSecret(request: NextRequest): boolean {
@@ -39,9 +40,14 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
-    if (!file) {
+    // Validate file
+    const fileValidation = validateUploadedFile(file);
+    if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: '파일이 필요합니다.' },
+        {
+          error: fileValidation.error,
+          code: fileValidation.errorCode,
+        },
         { status: 400 }
       );
     }
@@ -52,9 +58,21 @@ export async function POST(request: NextRequest) {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data: UserImportRow[] = XLSX.utils.sheet_to_json(worksheet);
 
+    // Validate content size
+    const contentValidation = validateFileContentSize(data.length);
+    if (!contentValidation.valid) {
+      return NextResponse.json(
+        {
+          error: contentValidation.error,
+          code: contentValidation.errorCode,
+        },
+        { status: 400 }
+      );
+    }
+
     if (!data || data.length === 0) {
       return NextResponse.json(
-        { error: '엑셀 파일에 데이터가 없습니다.' },
+        { error: '엑셀 파일에 데이터가 없습니다.', code: 'EMPTY_FILE' },
         { status: 400 }
       );
     }

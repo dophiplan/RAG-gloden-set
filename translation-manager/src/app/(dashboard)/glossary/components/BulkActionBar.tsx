@@ -46,14 +46,14 @@ export default function BulkActionBar({
             <div className="flex gap-2">
               <Button
                 size="sm"
-                variant="success"
+                variant="primary"
                 onClick={handleApprove}
               >
                 ✓ 일괄 승인
               </Button>
               <Button
                 size="sm"
-                variant="error"
+                variant="danger"
                 onClick={handleReject}
               >
                 ✗ 일괄 거부

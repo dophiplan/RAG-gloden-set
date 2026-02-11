@@ -1,6 +1,6 @@
 'use client';
 
-import { SUPPORTED_LANGUAGES } from '@/types';
+import { useLanguages } from '@/hooks/useReferenceData';
 
 interface PreviewEntry {
   id: string;
@@ -26,6 +26,7 @@ interface Props {
 }
 
 export default function DuplicateConflictModal({ entry, onClose, onSelectAction }: Props) {
+  const { languagesMap } = useLanguages();
   const isExactMatch = entry.duplicate_status.status === 'exact';
   const existingTranslations = entry.duplicate_status.existing_translations || {};
 
@@ -60,7 +61,7 @@ export default function DuplicateConflictModal({ entry, onClose, onSelectAction 
               </h3>
               <div className="space-y-2">
                 {Object.entries(entry.translations).map(([langCode, text]) => {
-                  const languageName = SUPPORTED_LANGUAGES[langCode as keyof typeof SUPPORTED_LANGUAGES];
+                  const languageName = languagesMap[langCode]?.name;
                   if (!languageName) return null;
                   return (
                     <div key={langCode} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -87,7 +88,7 @@ export default function DuplicateConflictModal({ entry, onClose, onSelectAction 
               </h3>
               <div className="space-y-2">
                 {Object.entries(existingTranslations).map(([langCode, text]) => {
-                  const languageName = SUPPORTED_LANGUAGES[langCode as keyof typeof SUPPORTED_LANGUAGES];
+                  const languageName = languagesMap[langCode]?.name;
                   if (!languageName) return null;
                   const isNewLanguage = !entry.translations[langCode];
                   return (

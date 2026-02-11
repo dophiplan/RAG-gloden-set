@@ -15,6 +15,33 @@ export function useTranslationFilters() {
   // Default to show all languages
   const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[] | null>(null);
 
+  // Advanced filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [createdAfter, setCreatedAfter] = useState('');
+  const [createdBefore, setCreatedBefore] = useState('');
+
+  // Quick filter functions
+  const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used') => {
+    const now = new Date();
+    if (filterType === 'today') {
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      setCreatedAfter(todayStart.toISOString().split('T')[0]);
+      setCreatedBefore('');
+    } else if (filterType === 'this_week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      setCreatedAfter(weekAgo.toISOString().split('T')[0]);
+      setCreatedBefore('');
+    } else if (filterType === 'this_month') {
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      setCreatedAfter(monthStart.toISOString().split('T')[0]);
+      setCreatedBefore('');
+    } else if (filterType === 'frequently_used') {
+      // For translations, this might not apply, but keep for consistency
+      setCreatedAfter('');
+      setCreatedBefore('');
+    }
+  };
+
   return {
     statusFilter,
     setStatusFilter,
@@ -36,5 +63,12 @@ export function useTranslationFilters() {
     setTotalPages,
     selectedLanguageColumns,
     setSelectedLanguageColumns,
+    showAdvancedFilters,
+    setShowAdvancedFilters,
+    createdAfter,
+    setCreatedAfter,
+    createdBefore,
+    setCreatedBefore,
+    setQuickFilter,
   };
 }

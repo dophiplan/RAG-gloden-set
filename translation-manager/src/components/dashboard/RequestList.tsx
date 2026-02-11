@@ -9,6 +9,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
 import { showSuccess, showError } from '@/lib/notifications';
+import { TIMEOUTS } from '@/lib/constants';
 
 interface RequestListProps {
   requests: DashboardRequest[];
@@ -114,7 +115,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
           label: '실행 취소',
           onClick: () => handleUndo(result),
         },
-        duration: 5000,
+        duration: TIMEOUTS.UNDO_NOTIFICATION_DURATION_MS,
       });
 
       // Navigate to translations page with filter
@@ -125,7 +126,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
       router.push(`/translations?${params.toString()}`);
 
       // Auto-clear undo info after expiry
-      setTimeout(() => setUndoInfo(null), 5000);
+      setTimeout(() => setUndoInfo(null), TIMEOUTS.UNDO_NOTIFICATION_DURATION_MS);
 
     } catch (error) {
       console.error('Failed to start work:', error);
@@ -254,8 +255,8 @@ export default function RequestList({ requests, loading = false, onStatusChange 
           <CardTitle>요청 리스트</CardTitle>
         </CardHeader>
         <div className="p-12 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#818CF8]"></div>
-          <p className="mt-4 text-[#64748B]">로딩 중...</p>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary" role="status" aria-label="로딩 중"></div>
+          <p className="mt-4 text-text-secondary">로딩 중...</p>
         </div>
       </Card>
     );
@@ -294,7 +295,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
       </CardHeader>
 
       {/* Tab Navigation */}
-      <div className="px-6 flex border-b border-[#C7D2FE]">
+      <div className="px-6 flex border-b border-border">
         {tabs.map(tab => (
           <button
             key={tab.status}
@@ -303,8 +304,8 @@ export default function RequestList({ requests, loading = false, onStatusChange 
               px-4 py-2 font-semibold text-sm transition-all
               ${
                 activeTab === tab.status
-                  ? 'border-b-2 border-[#818CF8] text-[#4F46E5]'
-                  : 'text-[#64748B] hover:text-[#4F46E5]'
+                  ? 'border-b-2 border-primary text-primary-active'
+                  : 'text-text-secondary hover:text-primary-active'
               }
             `}
           >
@@ -318,23 +319,24 @@ export default function RequestList({ requests, loading = false, onStatusChange 
         <table className="w-full">
           <thead>
             <tr>
-              <th className="w-12">
+              <th scope="col" className="w-12">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleSelectAll}
                   className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  aria-label="모든 항목 선택"
                 />
               </th>
-              <th className="text-left">중요도</th>
-              <th className="text-left">제품</th>
-              <th className="text-left">제품분류</th>
-              <th className="text-left">버전</th>
-              <th className="text-left">요청자</th>
-              <th className="text-left">요청한 날짜</th>
-              <th className="text-left">요청완료일</th>
-              <th className="text-left">텍스트 수</th>
-              <th className="text-left">작업</th>
+              <th scope="col" className="text-left">중요도</th>
+              <th scope="col" className="text-left">제품</th>
+              <th scope="col" className="text-left">제품분류</th>
+              <th scope="col" className="text-left">버전</th>
+              <th scope="col" className="text-left">요청자</th>
+              <th scope="col" className="text-left">요청한 날짜</th>
+              <th scope="col" className="text-left">요청완료일</th>
+              <th scope="col" className="text-left">텍스트 수</th>
+              <th scope="col" className="text-left">작업</th>
             </tr>
           </thead>
           <tbody>
@@ -362,6 +364,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                       checked={selectedRequests.has(request.id)}
                       onChange={() => toggleSelect(request.id)}
                       className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                      aria-label={`${request.id} 선택`}
                     />
                   </td>
                   <td>
@@ -387,7 +390,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                   <td>
                     {request.deployed_at ? formatDate(request.deployed_at) : '-'}
                   </td>
-                  <td className="font-semibold text-[#4F46E5]">
+                  <td className="font-semibold text-primary-active">
                     {request.translation_count}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
@@ -406,15 +409,17 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                         disabled={deletingId === request.id}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="삭제"
+                        aria-label="삭제"
                       >
                         {deletingId === request.id ? (
-                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" role="status" aria-label="삭제 중"></div>
                         ) : (
                           <svg
                             className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            aria-hidden="true"
                           >
                             <path
                               strokeLinecap="round"

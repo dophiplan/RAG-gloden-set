@@ -11,14 +11,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-3 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-[#818CF8] text-white hover:bg-[#6366F1] hover:shadow-lg focus:ring-[#818CF8]/20 active:scale-95 shadow-md',
-      secondary: 'bg-white text-[#2C3E50] border-2 border-[#E0E7FF] hover:border-[#818CF8] hover:bg-[#E0E7FF] focus:ring-[#818CF8]/10 shadow-sm',
+      primary: 'bg-primary text-white hover:bg-primary-hover hover:shadow-lg focus:ring-primary/20 active:scale-95 shadow-md',
+      secondary: 'bg-surface text-text-main border-2 border-primary-light hover:border-primary hover:bg-primary-light focus:ring-primary/10 shadow-sm',
       danger: 'bg-red-500 text-white hover:bg-red-600 hover:shadow-lg focus:ring-red-500/20 shadow-md',
-      ghost: 'bg-transparent text-[#546E7A] hover:bg-[#E0E7FF] hover:text-[#818CF8] focus:ring-[#818CF8]/10',
+      ghost: 'bg-transparent text-text-secondary hover:bg-primary-light hover:text-primary focus:ring-primary/10',
     };
 
     const sizes = {
-      sm: 'px-4 py-2 text-sm',
+      sm: 'px-3 py-1.5 text-xs',
       md: 'px-6 py-2.5 text-sm',
       lg: 'px-8 py-3.5 text-base',
     };
@@ -36,6 +36,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            role="status"
+            aria-label="로딩 중"
           >
             <circle
               className="opacity-25"

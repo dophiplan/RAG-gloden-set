@@ -5,26 +5,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
-import { SUPPORTED_LANGUAGES, PRODUCTS } from '@/types';
+import { useLanguages, useProducts } from '@/hooks/useReferenceData';
 import { useSuggestionData } from './hooks/useSuggestionData';
 import SuggestionCard from './components/SuggestionCard';
-
-const languageOptions = [
-  { value: 'all', label: '모든 언어' },
-  ...Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => ({
-    value: code,
-    label: name,
-  })),
-];
-
-const productOptions = [
-  { value: 'all', label: '모든 제품' },
-  ...Object.entries(PRODUCTS).map(([code, name]) => ({
-    value: code,
-    label: name,
-  })),
-];
-// Note: suggestions page uses 'all' as default value instead of '', so it keeps its own options
 
 const confidenceOptions = [
   { value: 'all', label: '모든 신뢰도' },
@@ -35,6 +18,26 @@ const confidenceOptions = [
 
 export default function GlossarySuggestionsPage() {
   const router = useRouter();
+  const { languages, languagesMap } = useLanguages();
+  const { products, productsMap } = useProducts();
+
+  const languageOptions = [
+    { value: 'all', label: '모든 언어' },
+    ...languages.map((lang) => ({
+      value: lang.code,
+      label: lang.name,
+    })),
+  ];
+
+  const productOptions = [
+    { value: 'all', label: '모든 제품' },
+    ...products.map((product) => ({
+      value: product.code,
+      label: product.name,
+    })),
+  ];
+  // Note: suggestions page uses 'all' as default value instead of '', so it keeps its own options
+
   const {
     suggestions,
     loading,

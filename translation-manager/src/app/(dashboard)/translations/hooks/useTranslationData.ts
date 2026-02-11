@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { TranslationStatus, ProductCode, TranslationResult, Translation, TranslationAuditLog } from '@/types';
+import { buildApiUrl } from '@/lib/api/query-builder';
 
 export interface TranslationWithAudit extends Translation {
   translation_results: TranslationResult[];
@@ -23,6 +24,8 @@ interface UseTranslationDataParams {
   versionFilter: string;
   page: number;
   setTotalPages: (pages: number) => void;
+  createdAfter?: string;
+  createdBefore?: string;
 }
 
 export function useTranslationData({
@@ -35,6 +38,8 @@ export function useTranslationData({
   versionFilter,
   page,
   setTotalPages,
+  createdAfter,
+  createdBefore,
 }: UseTranslationDataParams) {
   const [translations, setTranslations] = useState<TranslationWithAudit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,41 +50,58 @@ export function useTranslationData({
     deployed: 0,
   });
 
-  const fetchTranslations = useCallback(async () => {
+  const fetchTranslations = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (statusFilter) params.set('status', statusFilter);
-      if (languageFilter) params.set('language', languageFilter);
-      if (searchTerm) params.set('search', searchTerm);
-      if (selectedProduct) params.set('product_code', selectedProduct);
-      if (requestIdFilter) params.set('request_id', requestIdFilter);
-      if (scopeFilter) params.set('scope', scopeFilter);
-      if (versionFilter) params.set('version', versionFilter);
-      params.set('page', page.toString());
+      const url = buildApiUrl('/api/translations', {
+        status: statusFilter,
+        language: languageFilter,
+        search: searchTerm,
+        product_code: selectedProduct,
+        request_id: requestIdFilter,
+        scope: scopeFilter,
+        version: versionFilter,
+        created_after: createdAfter,
+        created_before: createdBefore,
+        page: page.toString(),
+      });
 
-      const response = await fetch(`/api/translations?${params}`);
+      const response = await fetch(url, { signal });
       if (response.ok) {
         const data = await response.json();
-        setTranslations(data.translations);
-        setTotalPages(data.totalPages);
 
-        setStats({
-          total: data.total || 0,
-          pending: data.stats?.pending || 0,
-          reviewed: data.stats?.reviewed || 0,
-          deployed: data.stats?.deployed || 0,
-        });
+        // Only update state if not aborted
+        if (!signal?.aborted) {
+          setTranslations(data.translations);
+          setTotalPages(data.totalPages);
+
+          setStats({
+            total: data.total || 0,
+            pending: data.stats?.pending || 0,
+            reviewed: data.stats?.reviewed || 0,
+            deployed: data.stats?.deployed || 0,
+          });
+        }
       }
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Error fetching translations:', error);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, languageFilter, searchTerm, selectedProduct, requestIdFilter, scopeFilter, versionFilter, page, setTotalPages]);
+  }, [statusFilter, languageFilter, searchTerm, selectedProduct, requestIdFilter, scopeFilter, versionFilter, page, setTotalPages, createdAfter, createdBefore]);
 
   useEffect(() => {
-    fetchTranslations();
+    const controller = new AbortController();
+    fetchTranslations(controller.signal);
+
+    return () => {
+      // Cancel fetch on unmount or dependency change
+      controller.abort();
+    };
   }, [fetchTranslations]);
 
   const updateLocalTranslation = useCallback((

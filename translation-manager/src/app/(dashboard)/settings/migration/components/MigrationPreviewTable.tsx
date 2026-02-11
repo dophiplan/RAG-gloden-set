@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SUPPORTED_LANGUAGES } from '@/types';
+import { useLanguages } from '@/hooks/useReferenceData';
 import DuplicateConflictModal from './DuplicateConflictModal';
 
 interface PreviewEntry {
@@ -32,6 +32,7 @@ export default function MigrationPreviewTable({
   translationEntries,
   onUpdateEntry,
 }: Props) {
+  const { languagesMap } = useLanguages();
   const [selectedEntry, setSelectedEntry] = useState<PreviewEntry | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -149,7 +150,7 @@ export default function MigrationPreviewTable({
       {/* Translations */}
       <div className="flex flex-wrap gap-2 mb-2">
         {Object.entries(entry.translations).map(([langCode, text]) => {
-          const languageName = SUPPORTED_LANGUAGES[langCode as keyof typeof SUPPORTED_LANGUAGES];
+          const languageName = languagesMap[langCode]?.name;
           if (!languageName) return null;
           return (
             <span

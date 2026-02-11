@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ProductCode, PRODUCTS } from '@/types';
+import { ProductCode } from '@/types';
 import Badge from '@/components/ui/Badge';
 import MultiProductSelect from '@/components/MultiProductSelect';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface EditableProductsCellProps {
   products: ProductCode[];
@@ -16,6 +17,7 @@ export default function EditableProductsCell({
   onSave,
   disabled = false,
 }: EditableProductsCellProps) {
+  const { productsMap } = useProducts();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState<ProductCode[]>(products);
   const [isSaving, setIsSaving] = useState(false);
@@ -119,7 +121,7 @@ export default function EditableProductsCell({
         <div className="flex flex-wrap gap-1">
           {products.map((code) => (
             <Badge key={code} variant="info">
-              {PRODUCTS[code]}
+              {productsMap[code]?.name || code}
             </Badge>
           ))}
         </div>
