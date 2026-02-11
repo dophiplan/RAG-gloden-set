@@ -65,23 +65,31 @@ export default function MigrationPage() {
     try {
       if (mode === 'simple') {
         // Simple mode: Direct import without preview
+        console.log('🚀 [간단 모드] 파일 업로드 시작:', file.name);
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('product_code', productCode);
         formData.append('mode', 'simple');
 
+        console.log('📤 [간단 모드] API 호출 중...');
         const response = await fetch('/api/migration/commit', {
           method: 'POST',
           body: formData,
         });
 
         const data = await response.json();
+        console.log('📥 [간단 모드] API 응답:', data);
 
         if (!response.ok) {
           throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
         }
 
         // Show success message
+        console.log('✅ [간단 모드] 가져오기 완료!');
+        console.log('  - 용어집:', data.glossary);
+        console.log('  - 번역:', data.translations);
+
         alert(
           `가져오기 완료!\n\n` +
           `용어집: ${data.glossary.created}개 추가, ${data.glossary.skipped}개 중복\n` +

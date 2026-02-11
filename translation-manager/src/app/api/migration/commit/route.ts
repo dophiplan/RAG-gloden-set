@@ -38,9 +38,13 @@ export async function POST(request: NextRequest) {
 
     if (isSimpleMode) {
       // Simple mode: Parse file and auto-process
+      console.log('🚀 [간단 모드 API] 시작');
+
       const formData = await request.formData();
       const file = formData.get('file') as File;
       product_code = formData.get('product_code') as ProductCode;
+
+      console.log('📄 [간단 모드 API] 파일:', file?.name, '제품:', product_code);
 
       if (!file) {
         return NextResponse.json({ error: '파일을 선택해주세요.' }, { status: 400 });
@@ -51,8 +55,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Parse the file and create entries (reuse preview logic)
-      // For now, redirect to preview API logic
-      // TODO: This should be refactored to share code with preview API
+      console.log('🔍 [간단 모드 API] Preview API 호출 중...');
       const previewFormData = new FormData();
       previewFormData.append('file', file);
       previewFormData.append('product_code', product_code);
@@ -70,10 +73,16 @@ export async function POST(request: NextRequest) {
 
       if (!previewResponse.ok) {
         const error = await previewResponse.json();
+        console.error('❌ [간단 모드 API] Preview 실패:', error);
         return NextResponse.json({ error: error.error || '파일 처리 중 오류가 발생했습니다.' }, { status: 400 });
       }
 
       const previewData = await previewResponse.json();
+      console.log('📊 [간단 모드 API] Preview 결과:', {
+        총항목: previewData.entries.length,
+        용어집제안: previewData.summary.glossary_suggested,
+        번역제안: previewData.summary.translation_suggested,
+      });
 
       // Auto-process: import new items, skip exact duplicates
       entries = previewData.entries.map((entry: any) => ({
@@ -81,6 +90,13 @@ export async function POST(request: NextRequest) {
         category: entry.suggested_category,
         action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
       }));
+
+      console.log('📝 [간단 모드 API] 처리 결정:', {
+        가져올항목: entries.filter((e: any) => e.action === 'import').length,
+        건너뛸항목: entries.filter((e: any) => e.action === 'skip').length,
+        용어집: entries.filter((e: any) => e.category === 'glossary').length,
+        번역: entries.filter((e: any) => e.category === 'translation').length,
+      });
     } else {
       // Advanced mode: Use provided entries
       const body = await request.json();
