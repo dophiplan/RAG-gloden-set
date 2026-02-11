@@ -45,6 +45,7 @@ export default function MigrationPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasIssues, setHasIssues] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -64,39 +65,81 @@ export default function MigrationPage() {
 
     try {
       if (mode === 'simple') {
-        // Simple mode: Direct import without preview
+        // Simple mode: Check for issues first
         console.log('🚀 [간단 모드] 파일 업로드 시작:', file.name);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('product_code', productCode);
-        formData.append('mode', 'simple');
+        // First, get preview to check for issues
+        const previewFormData = new FormData();
+        previewFormData.append('file', file);
+        previewFormData.append('product_code', productCode);
 
-        console.log('📤 [간단 모드] API 호출 중...');
-        const response = await fetch('/api/migration/commit', {
+        console.log('🔍 [간단 모드] 파일 분석 중...');
+        const previewResponse = await fetch('/api/migration/preview', {
           method: 'POST',
-          body: formData,
+          body: previewFormData,
         });
 
-        const data = await response.json();
-        console.log('📥 [간단 모드] API 응답:', data);
+        const previewData = await previewResponse.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
+        if (!previewResponse.ok) {
+          throw new Error(previewData.error || '파일 처리 중 오류가 발생했습니다.');
         }
 
-        // Show success message
-        console.log('✅ [간단 모드] 가져오기 완료!');
-        console.log('  - 용어집:', data.glossary);
-        console.log('  - 번역:', data.translations);
+        console.log('📊 [간단 모드] 분석 결과:', previewData.summary);
 
-        alert(
-          `가져오기 완료!\n\n` +
-          `용어집: ${data.glossary.created}개 추가, ${data.glossary.skipped}개 중복\n` +
-          `번역: ${data.translations.created}개 추가, ${data.translations.updated}개 업데이트, ${data.translations.skipped}개 중복`
-        );
+        // Check if there are any issues (duplicates, similar, or errors)
+        const hasDuplicates = previewData.summary.exact_matches > 0;
+        const hasSimilar = previewData.summary.similar_matches > 0;
+        const hasErrors = previewData.entries.some((e: PreviewEntry) => e.duplicate_status.status === 'error');
 
-        router.push('/glossary');
+        const hasAnyIssues = hasDuplicates || hasSimilar || hasErrors;
+
+        if (hasAnyIssues) {
+          // Show preview for review
+          console.log('⚠️ [간단 모드] 문제 발견 - 프리뷰 표시');
+          console.log('  - 중복:', hasDuplicates);
+          console.log('  - 유사:', hasSimilar);
+          console.log('  - 오류:', hasErrors);
+
+          const initializedEntries = previewData.entries.map((entry: PreviewEntry) => ({
+            ...entry,
+            category: entry.suggested_category,
+            action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+          }));
+
+          setEntries(initializedEntries);
+          setSummary(previewData.summary);
+          setHasIssues(true);
+          setStep('preview');
+        } else {
+          // No issues - direct import
+          console.log('✅ [간단 모드] 문제 없음 - 바로 가져오기');
+
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('product_code', productCode);
+          formData.append('mode', 'simple');
+
+          const response = await fetch('/api/migration/commit', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
+          }
+
+          console.log('✅ [간단 모드] 가져오기 완료!');
+
+          alert(
+            `✅ 가져오기 완료!\n\n` +
+            `용어집: ${data.glossary.created}개 추가`
+          );
+
+          router.push('/glossary');
+        }
       } else {
         // Advanced mode: Show preview
         const formData = new FormData();
@@ -395,44 +438,149 @@ export default function MigrationPage() {
       {/* Step 2: Preview */}
       {step === 'preview' && summary && (
         <div>
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">미리보기 및 분류</h2>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{summary.total}</p>
-                <p className="text-sm text-gray-600">전체</p>
+          {mode === 'simple' && hasIssues ? (
+            /* Simple Mode Preview - Only show issues */
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-2">⚠️ 확인이 필요한 항목이 있습니다</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                파일에서 중복되거나 유사한 항목을 발견했습니다. 어떻게 처리할지 선택해주세요.
+              </p>
+
+              {/* Issue Summary */}
+              <div className="space-y-4 mb-6">
+                {summary.exact_matches > 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">⚠️</span>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-yellow-900 mb-1">
+                          중복 항목: {summary.exact_matches}개
+                        </h3>
+                        <p className="text-sm text-yellow-700">
+                          이미 용어집에 동일한 항목이 있습니다.
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEntries(prev => prev.map(e =>
+                                e.duplicate_status.status === 'exact' ? { ...e, action: 'overwrite' } : e
+                              ));
+                            }}
+                            className="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                          >
+                            덮어쓰기
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEntries(prev => prev.map(e =>
+                                e.duplicate_status.status === 'exact' ? { ...e, action: 'skip' } : e
+                              ));
+                            }}
+                            className="px-3 py-1 text-sm border border-yellow-600 text-yellow-700 rounded hover:bg-yellow-50"
+                          >
+                            건너뛰기
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {summary.similar_matches > 0 && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">ℹ️</span>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-blue-900 mb-1">
+                          유사 항목: {summary.similar_matches}개
+                        </h3>
+                        <p className="text-sm text-blue-700">
+                          비슷한 항목이 있습니다. 새로운 항목으로 추가됩니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {summary.new_entries > 0 && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">✅</span>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-green-900 mb-1">
+                          신규 항목: {summary.new_entries}개
+                        </h3>
+                        <p className="text-sm text-green-700">
+                          새로운 항목이 용어집에 추가됩니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[#818CF8]">{glossaryEntries.length}</p>
-                <p className="text-sm text-gray-600">용어집</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[#6366F1]">{translationEntries.length}</p>
-                <p className="text-sm text-gray-600">번역</p>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setStep('upload');
+                    setHasIssues(false);
+                  }}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => setStep('confirm')}
+                  className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]"
+                >
+                  확인하고 가져오기
+                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            /* Advanced Mode Preview - Full preview */
+            <>
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-xl font-semibold mb-4">미리보기 및 분류</h2>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-gray-900">{summary.total}</p>
+                    <p className="text-sm text-gray-600">전체</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#818CF8]">{glossaryEntries.length}</p>
+                    <p className="text-sm text-gray-600">용어집</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-[#6366F1]">{translationEntries.length}</p>
+                    <p className="text-sm text-gray-600">번역</p>
+                  </div>
+                </div>
+              </div>
 
-          <MigrationPreviewTable
-            glossaryEntries={glossaryEntries}
-            translationEntries={translationEntries}
-            onUpdateEntry={updateEntry}
-          />
+              <MigrationPreviewTable
+                glossaryEntries={glossaryEntries}
+                translationEntries={translationEntries}
+                onUpdateEntry={updateEntry}
+              />
 
-          <div className="flex gap-4 mt-6">
-            <button
-              onClick={() => setStep('upload')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
-            >
-              이전
-            </button>
-            <button
-              onClick={() => setStep('confirm')}
-              className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]"
-            >
-              다음 단계
-            </button>
-          </div>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => setStep('upload')}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+                >
+                  이전
+                </button>
+                <button
+                  onClick={() => setStep('confirm')}
+                  className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]"
+                >
+                  다음 단계
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
