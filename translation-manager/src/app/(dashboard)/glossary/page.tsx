@@ -105,7 +105,8 @@ export default function GlossaryPage() {
         setSelectedLanguageColumns(product.default_languages as LanguageCode[]);
       }
     }
-  }, [selectedProduct, productsMap, setSelectedLanguageColumns]);
+    // Note: When no product is selected, keep the default ['ko'] from useState
+  }, [selectedProduct, productsMap]);
 
   const getSourceTypeBadgeVariant = (sourceType: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
     if (sourceType === 'manual') return 'default';
@@ -331,12 +332,6 @@ export default function GlossaryPage() {
                   className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
                 >
                   전체
-                </button>
-                <button
-                  onClick={() => setSelectedLanguageColumns(['ko'])}
-                  className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
-                >
-                  한국어만
                 </button>
                 <div className="w-px h-4 bg-gray-300 mx-1"></div>
                 {languages.map((lang) => (
