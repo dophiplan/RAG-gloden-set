@@ -39,7 +39,7 @@ export default function MigrationPage() {
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
-  const [productCode, setProductCode] = useState<ProductCode>('RC');
+  const [productCode, setProductCode] = useState<ProductCode | 'ALL'>('ALL');
   const [version, setVersion] = useState('');
   const [entries, setEntries] = useState<PreviewEntry[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -71,7 +71,8 @@ export default function MigrationPage() {
         // First, get preview to check for issues
         const previewFormData = new FormData();
         previewFormData.append('file', file);
-        previewFormData.append('product_code', productCode);
+        // If "ALL" is selected, pass empty string to indicate common terms
+        previewFormData.append('product_code', productCode === 'ALL' ? '' : productCode);
 
         console.log('🔍 [간단 모드] 파일 분석 중...');
         const previewResponse = await fetch('/api/migration/preview', {
@@ -117,7 +118,7 @@ export default function MigrationPage() {
 
           const formData = new FormData();
           formData.append('file', file);
-          formData.append('product_code', productCode);
+          formData.append('product_code', productCode === 'ALL' ? '' : productCode);
           formData.append('mode', 'simple');
 
           const response = await fetch('/api/migration/commit', {
@@ -144,7 +145,7 @@ export default function MigrationPage() {
         // Advanced mode: Show preview
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('product_code', productCode);
+        formData.append('product_code', productCode === 'ALL' ? '' : productCode);
 
         const response = await fetch('/api/migration/preview', {
           method: 'POST',
@@ -272,12 +273,18 @@ export default function MigrationPage() {
             <h3 className="font-semibold text-blue-900 mb-1">
               {mode === 'simple' ? '간단 모드' : '고급 모드'}
             </h3>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm text-blue-700 mb-2">
               {mode === 'simple'
-                ? '파일을 선택하면 바로 가져옵니다. 중복된 항목은 자동으로 건너뜁니다. (용어집 빠른 추가용)'
+                ? '용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
                 : '미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다. (대량 데이터 마이그레이션용)'
               }
             </p>
+            {mode === 'simple' && (
+              <div className="text-xs text-blue-600 bg-blue-100 rounded px-2 py-1.5 mt-2">
+                <strong>💡 용어집이란?</strong> AI 번역의 일관성을 유지하고 학습시키는 데 사용됩니다.
+                제품별로 적용하거나, 모든 제품에 공통으로 적용할 수 있습니다.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -393,15 +400,23 @@ export default function MigrationPage() {
               </label>
               <select
                 value={productCode}
-                onChange={(e) => setProductCode(e.target.value as ProductCode)}
+                onChange={(e) => setProductCode(e.target.value as ProductCode | 'ALL')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8] focus:border-transparent"
               >
+                {mode === 'simple' && (
+                  <option value="ALL">전체 (모든 제품 공통)</option>
+                )}
                 {Object.entries(PRODUCTS).map(([code, name]) => (
                   <option key={code} value={code}>
                     {name}
                   </option>
                 ))}
               </select>
+              {mode === 'simple' && productCode === 'ALL' && (
+                <p className="mt-2 text-xs text-gray-500">
+                  💡 모든 제품에서 공통으로 사용되는 용어입니다. (예: 로그인, 저장, 취소 등)
+                </p>
+              )}
             </div>
 
             {/* Version (Optional) - Only in advanced mode */}

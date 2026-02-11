@@ -36,14 +36,12 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const productCode = formData.get('product_code') as ProductCode | null;
+    const productCodeRaw = formData.get('product_code') as string | null;
+    // Empty string means "ALL" products (common terms)
+    const productCode = productCodeRaw && productCodeRaw.trim() !== '' ? productCodeRaw as ProductCode : null;
 
     if (!file) {
       return NextResponse.json({ error: 'CSV 파일을 업로드해주세요.' }, { status: 400 });
-    }
-
-    if (!productCode) {
-      return NextResponse.json({ error: '제품을 선택해주세요.' }, { status: 400 });
     }
 
     const text = await file.text();
