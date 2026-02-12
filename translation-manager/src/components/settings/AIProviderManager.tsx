@@ -26,19 +26,19 @@ const AI_PROVIDERS: AIProviderConfig[] = [
     name: 'OpenAI',
     displayName: 'OpenAI',
     keyField: 'openai_api_key',
-    icon: '🤖',
+    icon: '',
     color: 'bg-green-50 border-green-200 text-green-700',
-    description: 'GPT-4, GPT-3.5 등 OpenAI 모델',
+    description: 'GPT-4, GPT-3.5',
     websiteUrl: 'https://platform.openai.com/api-keys',
   },
   {
     id: 'claude',
     name: 'Claude',
-    displayName: 'Claude (Anthropic)',
+    displayName: 'Claude',
     keyField: 'claude_api_key',
-    icon: '🧠',
+    icon: '',
     color: 'bg-purple-50 border-purple-200 text-purple-700',
-    description: 'Claude 3.5 Sonnet, Opus 등',
+    description: 'Claude 3.5 Sonnet',
     websiteUrl: 'https://console.anthropic.com/settings/keys',
   },
   {
@@ -46,28 +46,30 @@ const AI_PROVIDERS: AIProviderConfig[] = [
     name: 'Kimi',
     displayName: 'Kimi',
     keyField: 'kimi_api_key',
-    icon: '🌙',
+    icon: '',
     color: 'bg-blue-50 border-blue-200 text-blue-700',
-    description: 'Moonshot AI의 Kimi 모델',
+    description: 'Moonshot AI',
     websiteUrl: 'https://platform.moonshot.cn/',
   },
   {
     id: 'gemini',
     name: 'Gemini',
-    displayName: 'Gemini (Google)',
+    displayName: 'Gemini',
     keyField: 'gemini_api_key',
-    icon: '✨',
+    icon: '',
     color: 'bg-amber-50 border-amber-200 text-amber-700',
-    description: 'Google Gemini Pro, Ultra 등',
+    description: 'Google Gemini',
     websiteUrl: 'https://makersuite.google.com/app/apikey',
   },
 ];
 
 interface AIProviderManagerProps {
   isRsupportUser: boolean;
+  isAdmin?: boolean;
 }
 
-export default function AIProviderManager({ isRsupportUser }: AIProviderManagerProps) {
+export default function AIProviderManager({ isRsupportUser, isAdmin = false }: AIProviderManagerProps) {
+  const canUseAllProviders = isRsupportUser || isAdmin;
   const [selectedProvider, setSelectedProvider] = useState<AIProvider | null>(null);
   const [apiKeys, setApiKeys] = useState<Record<AIProvider, boolean>>({
     openai: false,
@@ -80,6 +82,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     fetchAPIKeys();
@@ -88,13 +91,13 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
   const fetchAPIKeys = async () => {
     setLoading(true);
     try {
-      const endpoint = isRsupportUser ? '/api/organization/settings' : '/api/settings/openai-key';
+      const endpoint = canUseAllProviders ? '/api/organization/settings' : '/api/settings/openai-key';
       const response = await fetch(endpoint);
 
       if (response.ok) {
         const data = await response.json();
 
-        if (isRsupportUser && data.settings) {
+        if (canUseAllProviders && data.settings) {
           // Organization settings
           setApiKeys({
             openai: !!data.settings.openai_api_key,
@@ -107,7 +110,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
           if (data.settings.settings?.ai_provider_order) {
             setProviderOrder(data.settings.settings.ai_provider_order);
           }
-        } else if (!isRsupportUser) {
+        } else if (!canUseAllProviders) {
           // Individual user settings - for now only OpenAI is supported
           setApiKeys(prev => ({
             ...prev,
@@ -126,9 +129,11 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     if (selectedProvider === provider) {
       setSelectedProvider(null);
       setApiKeyInput('');
+      setIsEditing(false);
     } else {
       setSelectedProvider(provider);
       setApiKeyInput('');
+      setIsEditing(false);
     }
   };
 
@@ -154,7 +159,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     setDraggedIndex(null);
 
     // Save order to backend
-    if (isRsupportUser) {
+    if (canUseAllProviders) {
       try {
         await fetch('/api/organization/settings', {
           method: 'PATCH',
@@ -181,8 +186,8 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
       const config = AI_PROVIDERS.find(p => p.id === selectedProvider);
       let response;
 
-      if (isRsupportUser) {
-        // Organization settings
+      if (canUseAllProviders) {
+        // Organization settings or admin user
         response = await fetch('/api/organization/settings', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -191,7 +196,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
       } else {
         // Individual user settings - currently only supports OpenAI
         if (selectedProvider !== 'openai') {
-          showError('개인 계정은 현재 OpenAI만 지원합니다.');
+          showError('일반 사용자는 현재 OpenAI만 지원합니다.');
           return;
         }
         response = await fetch('/api/settings/openai-key', {
@@ -208,6 +213,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
 
       setApiKeys(prev => ({ ...prev, [selectedProvider]: true }));
       setApiKeyInput('');
+      setIsEditing(false);
       setSelectedProvider(null);
       showSuccess(`${config!.displayName} API 키가 저장되었습니다.`);
     } catch (error) {
@@ -221,7 +227,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     if (!selectedProvider) return;
 
     const config = AI_PROVIDERS.find(p => p.id === selectedProvider);
-    if (!showConfirm(`${config!.displayName} API 키를 삭제하시겠습니까?${isRsupportUser ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) {
+    if (!showConfirm(`${config!.displayName} API 키를 삭제하시겠습니까?${canUseAllProviders ? ' (조직 전체에 영향을 미칩니다)' : ''}`)) {
       return;
     }
 
@@ -230,8 +236,8 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     try {
       let response;
 
-      if (isRsupportUser) {
-        // Organization settings
+      if (canUseAllProviders) {
+        // Organization settings or admin user
         response = await fetch('/api/organization/settings', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -240,7 +246,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
       } else {
         // Individual user settings
         if (selectedProvider !== 'openai') {
-          showError('개인 계정은 현재 OpenAI만 지원합니다.');
+          showError('일반 사용자는 현재 OpenAI만 지원합니다.');
           return;
         }
         response = await fetch('/api/settings/openai-key', {
@@ -253,6 +259,7 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
       }
 
       setApiKeys(prev => ({ ...prev, [selectedProvider]: false }));
+      setIsEditing(false);
       setSelectedProvider(null);
       showSuccess(`${config!.displayName} API 키가 삭제되었습니다.`);
     } catch (error) {
@@ -272,150 +279,123 @@ export default function AIProviderManager({ isRsupportUser }: AIProviderManagerP
     );
   }
 
+  const selectedProviderConfig = selectedProvider
+    ? AI_PROVIDERS.find(p => p.id === selectedProvider)
+    : null;
+
   return (
     <Card>
-      <CardTitle>
-        AI 제공사 API 키 관리
-        {isRsupportUser && (
-          <span className="ml-2 text-xs font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded">
-            조직 전체 공유
-          </span>
+      <div className="flex items-center justify-between mb-4">
+        <CardTitle>
+          {selectedProviderConfig
+            ? `${selectedProviderConfig.displayName} API 키 설정`
+            : 'AI 제공사 API 키'}
+        </CardTitle>
+        {selectedProvider && (
+          <button
+            onClick={() => {
+              setSelectedProvider(null);
+              setApiKeyInput('');
+              setIsEditing(false);
+            }}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         )}
-      </CardTitle>
-      <p className="text-sm text-gray-500 mt-1 mb-4">
-        {isRsupportUser
-          ? '조직에서 사용할 AI 제공사의 API 키를 관리합니다. 여러 AI 서비스를 등록하여 필요에 따라 선택할 수 있습니다.'
-          : 'AI 자동 번역 기능을 사용하려면 AI 제공사의 API 키가 필요합니다.'
-        }
-      </p>
-      <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <span className="text-blue-600">💡</span>
-        <p className="text-xs text-blue-700">
-          <strong>드래그하여 순서 변경:</strong> 맨 앞에 있는 AI부터 우선 사용됩니다.
-        </p>
       </div>
 
-      {/* AI Provider Badges */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        {providerOrder.map((providerId, index) => {
-          const provider = AI_PROVIDERS.find(p => p.id === providerId)!;
-          const isConfigured = apiKeys[provider.id];
-          const isSelected = selectedProvider === provider.id;
-          const isDragging = draggedIndex === index;
-
-          return (
-            <div
-              key={provider.id}
-              draggable
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              className={`relative cursor-move transition-all ${
-                isDragging ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-              }`}
-            >
-              {/* Priority Badge */}
-              {index === 0 && isConfigured && (
-                <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg z-10">
-                  1
-                </div>
-              )}
-              <button
-                onClick={() => handleSelectProvider(provider.id)}
-                className={`px-4 py-3 rounded-lg border-2 transition-all ${
-                  isSelected
-                    ? provider.color + ' ring-2 ring-offset-2'
-                    : isConfigured
-                    ? provider.color + ' hover:shadow-md'
-                    : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{provider.icon}</span>
-                  <div className="text-left">
-                    <div className="font-semibold text-sm">{provider.displayName}</div>
-                    <div className="text-xs opacity-75">
-                      {isConfigured ? '설정됨 ✓' : '미설정'}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Selected Provider Details */}
-      {selectedProvider && (
-        <div className="border-t pt-6 animate-in fade-in duration-200">
-          {(() => {
-            const config = AI_PROVIDERS.find(p => p.id === selectedProvider)!;
-            const isConfigured = apiKeys[selectedProvider];
+      {/* Show only selected or all cards */}
+      {selectedProvider ? (
+        // Selected card - edit mode
+        <div>
+          {AI_PROVIDERS.filter(p => p.id === selectedProvider).map((provider) => {
+            const isConfigured = apiKeys[provider.id];
+            const showMasked = isConfigured && !isEditing;
 
             return (
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-4xl">{config.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">{config.displayName}</h3>
-                    <p className="text-sm text-gray-600">{config.description}</p>
+              <div key={provider.id}>
+                <div>
+                  <div className="flex gap-2">
+                    <input
+                      type={showMasked ? 'text' : 'password'}
+                      value={showMasked ? 'sk-•••••••••••••••••••••••' : apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      placeholder="API 키를 입력하세요"
+                      disabled={showMasked}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-colors disabled:bg-gray-50 disabled:text-gray-700"
+                    />
+                    {showMasked ? (
+                      <>
+                        <Button
+                          onClick={() => setIsEditing(true)}
+                        >
+                          변경
+                        </Button>
+                        <Button
+                          variant="danger"
+                          onClick={handleDeleteKey}
+                          loading={saving}
+                        >
+                          삭제
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        onClick={handleSaveKey}
+                        loading={saving}
+                        disabled={!apiKeyInput.trim()}
+                      >
+                        저장
+                      </Button>
+                    )}
                   </div>
-                  <Badge variant={isConfigured ? 'success' : 'warning'}>
-                    {isConfigured ? '설정됨' : '미설정'}
-                  </Badge>
                 </div>
-
-                <Input
-                  label={isConfigured ? '새 API 키 (변경시에만 입력)' : 'API 키 *'}
-                  type="password"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder={`${config.name} API 키를 입력하세요`}
-                />
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleSaveKey}
-                    loading={saving}
-                    disabled={!apiKeyInput.trim()}
-                  >
-                    {isConfigured ? 'API 키 변경' : 'API 키 저장'}
-                  </Button>
-                  {isConfigured && (
-                    <Button
-                      variant="danger"
-                      onClick={handleDeleteKey}
-                      loading={saving}
-                    >
-                      API 키 삭제
-                    </Button>
-                  )}
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setSelectedProvider(null);
-                      setApiKeyInput('');
-                    }}
-                  >
-                    취소
-                  </Button>
-                </div>
-
-                <p className="text-xs text-gray-400">
-                  API 키는 암호화되어 안전하게 저장됩니다.{' '}
-                  <a
-                    href={config.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    {config.name} 대시보드
-                  </a>
-                  에서 API 키를 발급받을 수 있습니다.
-                </p>
               </div>
             );
-          })()}
+          })}
+        </div>
+      ) : (
+        // All cards - grid view (same style as other management sections)
+        <div>
+          <p className="text-xs text-gray-500 mb-2">
+            드래그하여 사용 우선순위를 변경할 수 있습니다.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {providerOrder.map((providerId, index) => {
+              const provider = AI_PROVIDERS.find(p => p.id === providerId);
+              if (!provider) return null;
+
+              const isConfigured = apiKeys[provider.id];
+              const isDragging = draggedIndex === index;
+
+              return (
+                <div
+                  key={provider.id}
+                  draggable={canUseAllProviders}
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all ${
+                    canUseAllProviders ? 'cursor-move' : 'cursor-pointer'
+                  } ${isDragging ? 'opacity-50' : ''}`}
+                  onClick={() => handleSelectProvider(provider.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-400">#{index + 1}</span>
+                      <p className="font-semibold text-gray-900">{provider.displayName}</p>
+                    </div>
+                    <Badge variant={isConfigured ? 'success' : 'warning'}>
+                      {isConfigured ? '✓' : '○'}
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </Card>

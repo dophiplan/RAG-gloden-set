@@ -20,8 +20,8 @@ export const translationCreateSchema = z.object({
     .max(MAX_VERSION_LENGTH, `버전은 최대 ${MAX_VERSION_LENGTH}자까지 입력할 수 있습니다.`)
     .optional(),
   product_code: z.string().optional(),
-  scope: z.enum(['SaaS', 'Solution']).optional(),
-  priority: z.enum(['상', '중', '하']).optional(),
+  scope: z.enum(['SaaS', 'Solution', 'saas', 'solution']).optional(),
+  priority: z.enum(['긴급', '상', '중', '하']).optional(),
   translations: z.array(
     z.object({
       language_code: z.string(),
@@ -44,8 +44,8 @@ export const bulkCreateSchema = z.object({
     .max(MAX_VERSION_LENGTH)
     .optional(),
   product_code: z.string().optional(),
-  scope: z.enum(['SaaS', 'Solution']).optional(),
-  priority: z.enum(['상', '중', '하']).optional(),
+  scope: z.enum(['SaaS', 'Solution', 'saas', 'solution']).optional(),
+  priority: z.enum(['긴급', '상', '중', '하']).optional(),
   languages: z.array(z.string()).optional(),
   completion_date: z.string().optional(),
 });

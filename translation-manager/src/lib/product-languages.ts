@@ -5,8 +5,8 @@ import { ProductCode, LanguageCode } from '@/types';
  * This config defines which languages are DEFAULT CHECKED for each product.
  */
 export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
-  // RC defaults to ALL 9 languages
-  RC: ['ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
+  // RC defaults to ALL 8 languages (excluding Korean source language)
+  RC: ['en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'],
 
   // All other products default to en, ja (but can select any)
   RV: ['en', 'ja'],
@@ -20,10 +20,11 @@ export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
 };
 
 /**
- * All languages available for selection (9 languages total)
+ * All languages available for selection (8 languages total)
+ * Note: Korean (ko) is excluded as it's the source language
  */
 export const ALL_LANGUAGES: LanguageCode[] = [
-  'ko', 'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
+  'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
 ];
 
 /**

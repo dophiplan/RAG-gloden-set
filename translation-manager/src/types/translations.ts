@@ -2,16 +2,19 @@ import type { LanguageCode } from './languages';
 import type { ProductCode } from './products';
 
 // Translation status
-export type TranslationStatus = 'pending' | 'in_progress' | 'reviewed' | 'deployed';
+export type TranslationStatus = 'pending' | 'in_progress' | 'reviewed' | 'deployed' | 're_request' | 'not_used' | 're_deploy_request';
 
 // Scope types (제품 분류)
 export type Scope = 'SaaS' | 'Solution' | '정부과제' | '기타';
 
 export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string; label: string }> = {
-  pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '번역 요청' },
-  in_progress: { bg: 'bg-[#E0E7FF]', text: 'text-[#4F46E5]', label: '진행 중' },
-  reviewed: { bg: 'bg-white', text: 'text-gray-800', label: '검수 완료' },
-  deployed: { bg: 'bg-gray-100', text: 'text-gray-500', label: '반영 완료' },
+  re_request: { bg: 'bg-amber-100', text: 'text-amber-800', label: '재요청' },           // 노란색
+  re_deploy_request: { bg: 'bg-amber-100', text: 'text-amber-800', label: '재반영요청' }, // 노란색
+  pending: { bg: 'bg-amber-100', text: 'text-amber-800', label: '번역 요청' },           // 노란색
+  in_progress: { bg: 'bg-blue-100', text: 'text-blue-600', label: '진행 중' },          // 파란색
+  reviewed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '검수 완료' },           // 회색
+  deployed: { bg: 'bg-emerald-100', text: 'text-emerald-600', label: '반영 완료' },     // 연두색
+  not_used: { bg: 'bg-gray-900', text: 'text-white', label: '사용안함' },               // 검은색+흰글씨
 };
 
 // Priority levels
@@ -43,6 +46,7 @@ export interface Translation {
   user_id: string;
   team_id: string | null;
   translation_products?: TranslationProduct[];
+  translation_platforms?: TranslationPlatform[];
   // New fields from Phase 1
   scope: Scope | null;
   work_scope: string[];
@@ -64,6 +68,13 @@ export interface TranslationProduct {
   product_code: ProductCode;
   version: string | null;
   version_updated_at: string | null;
+  created_at: string;
+}
+
+export interface TranslationPlatform {
+  id: string;
+  translation_id: string;
+  platform_code: string;
   created_at: string;
 }
 

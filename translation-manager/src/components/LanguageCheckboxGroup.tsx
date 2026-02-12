@@ -61,22 +61,21 @@ export default function LanguageCheckboxGroup({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg border">
+      <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
         {availableLanguages.map((lang) => (
-          <label
+          <button
             key={lang}
-            className="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded"
+            type="button"
+            onClick={() => handleToggle(lang)}
+            title={languagesMap[lang]?.name || lang}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              selectedLanguages.includes(lang)
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            }`}
           >
-            <input
-              type="checkbox"
-              checked={selectedLanguages.includes(lang)}
-              onChange={() => handleToggle(lang)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">
-              {languagesMap[lang]?.name || lang} ({lang})
-            </span>
-          </label>
+            {lang.toUpperCase()}
+          </button>
         ))}
       </div>
 
