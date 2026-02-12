@@ -39,11 +39,32 @@ export async function POST(
       .single();
 
     if (existing) {
+      // 기존 값 가져오기
+      const { data: existingResult } = await supabase
+        .from('translation_results')
+        .select('translated_text')
+        .eq('id', existing.id)
+        .single();
+
+      const previousText = existingResult?.translated_text || '';
+      const newText = body.translated_text.trim();
+
+      // 값이 변경된 경우에만 로그 생성
+      if (previousText !== newText) {
+        // 로그 저장
+        await supabase.from('translation_logs').insert({
+          translation_result_id: existing.id,
+          previous_text: previousText,
+          new_text: newText,
+          changed_by: user.id,
+        });
+      }
+
       // Update existing - mark as manually edited
       const { data, error } = await supabase
         .from('translation_results')
         .update({
-          translated_text: body.translated_text.trim(),
+          translated_text: newText,
           reviewer_id: user.id,
           reviewed_at: new Date().toISOString(),
           source_type: 'manual',
