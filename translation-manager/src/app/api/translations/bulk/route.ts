@@ -19,6 +19,7 @@ interface BulkCreateInput {
   scope?: Scope;
   priority?: string;
   languages?: LanguageCode[];
+  platform_codes?: string[];
   completion_date?: string;
 }
 
@@ -124,6 +125,25 @@ export async function POST(request: NextRequest) {
 
       if (productsError) {
         console.error('Error creating translation_products:', productsError);
+        // Don't fail the entire request, but log the error
+      }
+    }
+
+    // Create translation_platforms records if platform_codes are provided
+    if (body.platform_codes && body.platform_codes.length > 0 && data && data.length > 0) {
+      const translationPlatforms = data.flatMap((t) =>
+        body.platform_codes!.map((platformCode) => ({
+          translation_id: t.id,
+          platform_code: platformCode,
+        }))
+      );
+
+      const { error: platformsError } = await db
+        .from('translation_platforms')
+        .insert(translationPlatforms);
+
+      if (platformsError) {
+        console.error('Error creating translation_platforms:', platformsError);
         // Don't fail the entire request, but log the error
       }
     }
@@ -317,45 +337,64 @@ export async function POST(request: NextRequest) {
         }
 
         // AI Translation fallback for empty translations
+        let aiTranslationWarning: string | null = null;
+
         try {
 
-          // Get OpenAI API key with priority: organization > user > environment
-          let apiKey: string | null = null;
+          // Get AI provider settings with priority order
+          const { data: orgSettings } = await db
+            .from('organization_settings')
+            .select('openai_api_key, claude_api_key, kimi_api_key, gemini_api_key, settings')
+            .eq('domain', 'rsupport.com')
+            .maybeSingle();
 
-          // Priority 1: Organization API key
-          const { data: userProfile } = await db
-            .from('users')
-            .select('email')
-            .eq('id', user.id)
-            .single();
+          // Get provider priority order (defaults to ['openai', 'claude', 'kimi', 'gemini'])
+          const providerOrder = orgSettings?.settings?.ai_provider_order || ['openai', 'claude', 'kimi', 'gemini'];
 
-          if (userProfile?.email?.endsWith('@rsupport.com')) {
-            const { data: orgSettings } = await db
-              .from('organization_settings')
-              .select('openai_api_key')
-              .eq('domain', 'rsupport.com')
-              .single();
+          // Collect available API keys by provider
+          const availableKeys: Record<string, string> = {};
 
-            apiKey = orgSettings?.openai_api_key || null;
-          }
+          if (orgSettings?.openai_api_key) availableKeys['openai'] = orgSettings.openai_api_key;
+          if (orgSettings?.claude_api_key) availableKeys['claude'] = orgSettings.claude_api_key;
+          if (orgSettings?.kimi_api_key) availableKeys['kimi'] = orgSettings.kimi_api_key;
+          if (orgSettings?.gemini_api_key) availableKeys['gemini'] = orgSettings.gemini_api_key;
 
-          // Priority 2: Individual user API key
-          if (!apiKey) {
+          // Fallback: Check individual user settings (currently only OpenAI)
+          if (!availableKeys['openai']) {
             const { data: userSettings } = await db
               .from('user_settings')
               .select('openai_api_key')
               .eq('user_id', user.id)
-              .single();
+              .maybeSingle();
 
-            apiKey = userSettings?.openai_api_key || null;
+            if (userSettings?.openai_api_key) {
+              availableKeys['openai'] = userSettings.openai_api_key;
+            }
           }
 
-          // Priority 3: Environment variable
-          if (!apiKey) {
-            apiKey = process.env.OPENAI_API_KEY || null;
+          // Fallback: Environment variable (OpenAI only)
+          if (!availableKeys['openai'] && process.env.OPENAI_API_KEY) {
+            availableKeys['openai'] = process.env.OPENAI_API_KEY;
           }
 
-          if (apiKey) {
+          // Find first available provider based on priority
+          let apiKey: string | null = null;
+          let selectedProvider: string | null = null;
+
+          for (const provider of providerOrder) {
+            if (availableKeys[provider]) {
+              // Currently only OpenAI is supported for translation
+              if (provider === 'openai') {
+                apiKey = availableKeys[provider];
+                selectedProvider = provider;
+                break;
+              }
+            }
+          }
+
+          if (apiKey && selectedProvider) {
+            console.log(`🤖 Using ${selectedProvider.toUpperCase()} for AI translation`);
+
             // Group updates by translation_id to track which were filled
             const filledTranslations = new Set(updates.map(u => `${u.translation_id}_${u.language_code}`));
 
@@ -383,7 +422,7 @@ export async function POST(request: NextRequest) {
             }
 
             if (aiTranslationNeeded.length > 0) {
-              console.log(`🤖 AI translating ${aiTranslationNeeded.length} texts...`);
+              console.log(`🤖 AI translating ${aiTranslationNeeded.length} texts using ${selectedProvider}...`);
 
               // Collect all AI translation updates for batch processing
               const aiUpdates: Array<{
@@ -393,6 +432,9 @@ export async function POST(request: NextRequest) {
                 source_type: string;
                 glossary_term_id: null;
               }> = [];
+
+              let translationFailed = false;
+              let translationError: Error | null = null;
 
               // Process in batches to avoid rate limits
               for (const item of aiTranslationNeeded) {
@@ -416,9 +458,18 @@ export async function POST(request: NextRequest) {
                     });
                   }
                 } catch (aiError) {
-                  console.error('AI translation error for text:', item.koText.substring(0, 50), aiError);
+                  console.error(`❌ ${selectedProvider.toUpperCase()} translation error:`, aiError);
+                  translationFailed = true;
+                  translationError = aiError instanceof Error ? aiError : new Error(String(aiError));
                   // Continue with other texts even if one fails
                 }
+              }
+
+              // If translation failed, show warning but don't fail the whole request
+              if (translationFailed && translationError) {
+                const providerName = selectedProvider.toUpperCase();
+                aiTranslationWarning = `${providerName} API 키가 유효하지 않습니다. 설정 페이지에서 확인해주세요.`;
+                console.warn(`⚠️ ${aiTranslationWarning}`);
               }
 
               // Batch update all AI translations in a single upsert
@@ -451,6 +502,22 @@ export async function POST(request: NextRequest) {
                 }
               }
             }
+          } else {
+            // No valid API key found
+            const providerNames: Record<string, string> = {
+              openai: 'OpenAI',
+              claude: 'Claude',
+              kimi: 'Kimi',
+              gemini: 'Gemini'
+            };
+
+            const checkedProviders = providerOrder
+              .filter(p => ['openai', 'claude', 'kimi', 'gemini'].includes(p))
+              .map(p => providerNames[p] || p)
+              .join(', ');
+
+            aiTranslationWarning = `AI 번역을 사용할 수 없습니다. 설정 페이지에서 AI 제공사의 API 키를 등록해주세요. (확인한 제공사: ${checkedProviders})`;
+            console.warn(`⚠️ ${aiTranslationWarning}`);
           }
         } catch (aiError) {
           console.error('❌ Error in AI auto-translation:', aiError);
@@ -476,12 +543,26 @@ export async function POST(request: NextRequest) {
       await db.from('translation_audit_logs').insert(auditLogs);
     }
 
-    return NextResponse.json({
+    // Prepare response with warnings if AI translation failed
+    const response: {
+      success: boolean;
+      created: number;
+      translations: typeof data;
+      request_id: string;
+      warning?: string;
+    } = {
       success: true,
       created: data.length,
       translations: data,
       request_id: requestId,
-    }, { status: 201 });
+    };
+
+    // Add warning if AI translation had issues
+    if (aiTranslationWarning) {
+      response.warning = aiTranslationWarning;
+    }
+
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error('❌ Error bulk creating translations:', error);
     console.error('Error details:', {

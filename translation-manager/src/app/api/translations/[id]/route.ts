@@ -21,7 +21,8 @@ export async function GET(
       .from('translations')
       .select(`
         *,
-        translation_results (*)
+        translation_results (*),
+        translation_platforms (*)
       `)
       .eq('id', id)
       .single();
@@ -57,7 +58,7 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body: TranslationUpdateInput & { version_updated_at?: string | null } = await request.json();
+    const body: TranslationUpdateInput & { version_updated_at?: string | null; platform_codes?: string[] } = await request.json();
 
     // Optimistic Locking: Check for concurrent edits if updated_at is provided
     if (body.updated_at) {
@@ -144,13 +145,33 @@ export async function PATCH(
       }
     }
 
-    // Fetch updated translation with products
+    // Handle platform_codes update if provided
+    if (body.platform_codes !== undefined) {
+      // Delete existing platform associations
+      await supabase
+        .from('translation_platforms')
+        .delete()
+        .eq('translation_id', id);
+
+      // Insert new platform associations
+      if (body.platform_codes.length > 0) {
+        const platformLinks = body.platform_codes.map((platformCode) => ({
+          translation_id: id,
+          platform_code: platformCode,
+        }));
+
+        await supabase.from('translation_platforms').insert(platformLinks);
+      }
+    }
+
+    // Fetch updated translation with products and platforms
     const { data: updatedTranslation } = await supabase
       .from('translations')
       .select(`
         *,
         translation_results (*),
-        translation_products (*)
+        translation_products (*),
+        translation_platforms (*)
       `)
       .eq('id', id)
       .single();
