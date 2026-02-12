@@ -27,10 +27,15 @@ import TranslationsHeader from './components/TranslationsHeader';
 import TranslationFiltersBar from './components/TranslationFiltersBar';
 import CreateTranslationModal from './components/CreateTranslationModal';
 import GlossaryAddModal from './components/GlossaryAddModal';
+import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
+import { BulkVersionHistoryPanel } from './components/VersionHistory';
 
 function TranslationsContent() {
   const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 버전 히스토리 사이드바 상태
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
 
   // Filters
   const filters = useTranslationFilters();
@@ -119,28 +124,32 @@ function TranslationsContent() {
     }
   }, [searchParams]);
 
-  // Update selected translations when translations change
+  // 선택된 번역 ID 관리
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  // 선택된 번역 객체로 변환
   useEffect(() => {
-    setSelectedTranslations((prev) =>
-      prev.filter((selected) => translations.some((t) => t.id === selected.id))
-    );
-  }, [translations]);
+    const selected = translations.filter((t) => selectedIds.includes(t.id));
+    setSelectedTranslations(selected);
+  }, [selectedIds, translations]);
 
   // Reset language column selection when product changes
+  // Only reset when product actually changes, not when productsMap updates
   useEffect(() => {
     if (filters.selectedProduct && productsMap[filters.selectedProduct]) {
       const product = productsMap[filters.selectedProduct];
       if (product.default_languages && product.default_languages.length > 0) {
         filters.setSelectedLanguageColumns(product.default_languages as LanguageCode[]);
       } else {
-        // RC or products without default languages: show all
-        filters.setSelectedLanguageColumns(null);
+        // RC or products without default languages: show default (EN, JA, ZH-CN)
+        filters.setSelectedLanguageColumns(['en', 'ja', 'zh-CN']);
       }
     } else {
-      // No product selected: show all languages
-      filters.setSelectedLanguageColumns(null);
+      // No product selected: show default languages (EN, JA, ZH-CN)
+      filters.setSelectedLanguageColumns(['en', 'ja', 'zh-CN']);
     }
-  }, [filters.selectedProduct, productsMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.selectedProduct]); // Only depend on selectedProduct, not productsMap
 
   const handleOpenEmailModal = (templateType: EmailTemplateType) => {
     if (selectedTranslations.length === 0) {
@@ -165,7 +174,9 @@ function TranslationsContent() {
     productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
-    languages: LanguageCode[]
+    languages: LanguageCode[],
+    platformCodes: string[],
+    completionDate: string
   ) => {
     try {
       const formData = new FormData();
@@ -218,6 +229,8 @@ function TranslationsContent() {
           scope: scope || undefined,
           priority: priority,
           languages: languages,
+          platform_codes: platformCodes,
+          completion_date: completionDate || undefined,
         }),
       });
 
@@ -292,7 +305,17 @@ function TranslationsContent() {
           onQuickFilter={filters.setQuickFilter}
         />
 
-        <TranslationsHeader onOpenCreateModal={() => setIsModalOpen(true)} />
+        <TranslationsHeader
+          onOpenCreateModal={() => setIsModalOpen(true)}
+          selectedCount={selectedTranslations.length}
+          onShowHistory={() => {
+            if (selectedIds.length > 0) {
+              setHistoryPanelOpen(true);
+            }
+          }}
+          translations={translations}
+          versionFilter={filters.versionFilter}
+        />
 
         {/* Bulk Actions */}
         {selectedTranslations.length > 0 && (
@@ -331,8 +354,11 @@ function TranslationsContent() {
           onPriorityUpdate={mutations.handlePriorityUpdate}
           onNotesUpdate={handleNotesUpdateWithDuplicateCheck}
           onDevCodeUpdate={mutations.handleDevCodeUpdate}
+          onPlatformsUpdate={mutations.handlePlatformsUpdate}
           onDelete={mutations.handleDelete}
           onRefresh={fetchTranslations}
+          onSelectionChange={setSelectedIds}
+          selectedIds={selectedIds}
           loading={loading}
           currentPage={filters.page}
           totalPages={filters.totalPages}
@@ -350,7 +376,9 @@ function TranslationsContent() {
             productCode: ProductCode | '',
             scope: ScopeType,
             priority: PriorityLevel,
-            languages: LanguageCode[]
+            languages: LanguageCode[],
+            platformCodes: string[],
+            completionDate: string
           ) => {
             // Create translation with initial empty translation_results for each language
             const translationsArray = languages.map(lang => ({
@@ -369,6 +397,8 @@ function TranslationsContent() {
                 scope: scope || undefined,
                 priority,
                 translations: translationsArray,
+                platform_codes: platformCodes,
+                completion_date: completionDate || undefined,
               }),
             });
 
@@ -428,6 +458,41 @@ function TranslationsContent() {
           fieldName={duplicateCheck.pendingEdit?.fieldName || ''}
           newValue={String(duplicateCheck.pendingEdit?.value || '')}
           onConfirm={duplicateCheck.handleDuplicateEditConfirm}
+        />
+
+        {/* 버전 히스토리 사이드바 */}
+        {historyPanelOpen && selectedIds.length > 0 && (
+          <div className="fixed inset-y-0 right-0 w-96 bg-white border-l shadow-xl z-50 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="font-semibold text-gray-900">버전 기록</h3>
+              <button
+                onClick={() => setHistoryPanelOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <BulkVersionHistoryPanel
+                translationIds={selectedIds}
+                languageCode={filters.selectedLanguageColumns?.[0] || 'ko'}
+                onRevert={() => {
+                  // 복구 완료 후 테이블 새로고침
+                  fetchTranslations();
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 일괄 작업 바 */}
+        <TranslationBulkActionBar
+          selectedCount={selectedIds.length}
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
+          onRefresh={fetchTranslations}
         />
       </div>
     </DashboardLayout>

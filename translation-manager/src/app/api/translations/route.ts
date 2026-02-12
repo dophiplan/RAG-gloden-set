@@ -92,7 +92,15 @@ export async function GET(request: NextRequest) {
 
     const { data, error, count } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database query error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
+      throw error;
+    }
 
     // Fetch last audit log for each translation
     const translationIds = data?.map((t) => t.id) || [];
@@ -143,10 +151,35 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { user, error: authError } = await getAuthUser(supabase);
 
-    if (authError || !user) {
-      return unauthorizedResponse();
+    // Get user directly from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log('[Translation POST] Direct auth check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message,
+    });
+
+    if (authError || !user || !user.id) {
+      console.error('[Translation POST] Authentication failed:', {
+        authError: authError?.message,
+        hasUser: !!user,
+        userId: user?.id,
+      });
+
+      return NextResponse.json(
+        {
+          error: '인증이 필요합니다.',
+          details: process.env.NODE_ENV === 'development' ? {
+            authError: authError?.message,
+            hasUser: !!user,
+            userId: user?.id,
+          } : undefined,
+        },
+        { status: 401 }
+      );
     }
 
     // Check rate limit for API creation
@@ -157,9 +190,13 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate request body
     const rawBody = await request.json();
+    console.log('[Translation POST] Received body:', JSON.stringify(rawBody, null, 2));
+
     const validation = validateAndSanitize(translationCreateSchema, rawBody);
 
     if (!validation.success) {
+      console.error('[Translation POST] Validation failed:', validation.error);
+      console.error('[Translation POST] Raw body was:', rawBody);
       return badRequest(validation.error);
     }
 
@@ -212,20 +249,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create translation
+    // Create translation with safe defaults
+    const translationData = {
+      source_text: sanitizedSourceText,
+      context: sanitizedContext || null,
+      version: sanitizedVersion || null,
+      version_updated_at: sanitizedVersion ? new Date().toISOString() : null,
+      product_code: body.product_code || null,
+      scope: body.scope || null,
+      priority: body.priority || '중',
+      completion_date: body.completion_date || null,
+      user_id: user.id,
+      status: 'pending' as const,
+    };
+
+    console.log('[Translation POST] Inserting translation:', translationData);
+
     const { data: translation, error: insertError } = await supabase
       .from('translations')
-      .insert({
-        source_text: sanitizedSourceText,
-        context: sanitizedContext,
-        version: sanitizedVersion,
-        version_updated_at: body.version ? new Date().toISOString() : null,
-        product_code: body.product_code || null,
-        scope: body.scope || null,
-        priority: body.priority || '중',
-        user_id: user.id,
-        status: 'pending',
-      })
+      .insert(translationData)
       .select()
       .single();
 
@@ -247,18 +289,26 @@ export async function POST(request: NextRequest) {
     });
 
     // If translations are provided, insert them (with sanitization)
+    // Filter out empty translations
     if (body.translations && body.translations.length > 0) {
-      const translationResults = body.translations.map((t) => ({
-        translation_id: translation.id,
-        language_code: t.language_code,
-        translated_text: sanitizeText(t.translated_text),
-      }));
+      const translationResults = body.translations
+        .filter((t) => t.translated_text && t.translated_text.trim().length > 0)
+        .map((t) => ({
+          translation_id: translation.id,
+          language_code: t.language_code,
+          translated_text: sanitizeText(t.translated_text),
+          reviewer_id: user.id,
+          reviewed_at: new Date().toISOString(),
+        }));
 
-      const { error: resultsError } = await supabase
-        .from('translation_results')
-        .insert(translationResults);
+      // Only insert if there are non-empty translations
+      if (translationResults.length > 0) {
+        const { error: resultsError } = await supabase
+          .from('translation_results')
+          .insert(translationResults);
 
-      if (resultsError) throw resultsError;
+        if (resultsError) throw resultsError;
+      }
     }
 
     // Handle product_codes if provided
@@ -270,7 +320,25 @@ export async function POST(request: NextRequest) {
         version_updated_at: typeof item === 'object' && item.version ? new Date().toISOString() : null,
       }));
 
-      await supabase.from('translation_products').insert(productLinks);
+      const { error: productError } = await supabase.from('translation_products').insert(productLinks);
+      if (productError) {
+        console.error('Error inserting translation_products:', productError);
+        throw productError;
+      }
+    }
+
+    // Handle platform_codes if provided
+    if ((body as any).platform_codes && (body as any).platform_codes.length > 0) {
+      const platformLinks = (body as any).platform_codes.map((platformCode: string) => ({
+        translation_id: translation.id,
+        platform_code: platformCode,
+      }));
+
+      const { error: platformError } = await supabase.from('translation_platforms').insert(platformLinks);
+      if (platformError) {
+        console.error('Error inserting translation_platforms:', platformError);
+        throw platformError;
+      }
     }
 
     // Fetch complete translation with results
@@ -279,7 +347,8 @@ export async function POST(request: NextRequest) {
       .select(`
         *,
         translation_results (*),
-        translation_products (product_code)
+        translation_products (product_code),
+        translation_platforms (*)
       `)
       .eq('id', translation.id)
       .single();
@@ -287,6 +356,39 @@ export async function POST(request: NextRequest) {
     return successResponse(completeTranslation, 201);
   } catch (error) {
     console.error('Error creating translation:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Development: Return detailed error
+    if (process.env.NODE_ENV === 'development') {
+      let errorMessage = 'Unknown error';
+      let errorStack = '';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        errorStack = error.stack?.split('\n').slice(0, 3).join(' | ') || '';
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error);
+      } else {
+        errorMessage = String(error);
+      }
+
+      return NextResponse.json(
+        {
+          error: {
+            code: 'INTERNAL_SERVER_ERROR',
+            message: '번역을 생성하는데 실패했습니다.',
+            details: errorMessage,
+            stack: errorStack,
+          }
+        },
+        { status: 500 }
+      );
+    }
+
     return serverError('번역을 생성하는데 실패했습니다.');
   }
 }
