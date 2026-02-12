@@ -16,6 +16,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string | null;
+  roles?: string[];
 }
 
 interface Product {
@@ -46,6 +47,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isRsupportUser, setIsRsupportUser] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const supabase = createClient();
 
   // Products management
@@ -94,12 +96,17 @@ export default function SettingsPage() {
               id: data.user.id,
               email: data.user.email,
               name: data.user.name || null,
+              roles: data.user.roles || [],
             });
 
-            // Check if user is from rsupport.com domain
+            // Check if user is from rsupport.com domain or has admin/owner role
             const email = data.user.email || '';
+            const roles = data.user.roles || [];
             const isRsupport = email.endsWith('@rsupport.com');
+            const hasAdminRole = roles.includes('admin') || roles.includes('owner');
+
             setIsRsupportUser(isRsupport);
+            setIsAdmin(hasAdminRole);
           }
         }
       } catch (error) {
@@ -546,8 +553,8 @@ export default function SettingsPage() {
       subtitle="계정 및 환경 설정을 관리합니다."
     >
       <div className="max-w-5xl mx-auto space-y-8">
-        {/* AI Provider API Keys */}
-        <AIProviderManager isRsupportUser={isRsupportUser} />
+        {/* AI Provider API Keys - Only visible to admins or rsupport users */}
+        {(isAdmin || isRsupportUser) && <AIProviderManager isRsupportUser={isRsupportUser} isAdmin={isAdmin} />}
 
         {/* Product Management */}
         <Card>

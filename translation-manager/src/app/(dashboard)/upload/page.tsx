@@ -6,13 +6,11 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
+import TranslationFormFields from '@/components/translations/TranslationFormFields';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { Holiday } from '@/types/api';
-import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
-import { useProducts, useScopes, usePriorities } from '@/hooks/useReferenceData';
+import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
 import { calculateDeadline, formatDeadline } from '@/lib/utils/holidays';
 
@@ -90,96 +88,6 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
   );
 }
 
-// Language name mapping
-const LANGUAGE_NAMES: Record<LanguageCode, string> = {
-  ko: '한국어',
-  en: 'English',
-  ja: '日本語',
-  'zh-CN': '中文简体',
-  'zh-TW': '中文繁體',
-  fr: 'Français',
-  es: 'Español',
-  pt: 'Português',
-  de: 'Deutsch',
-};
-
-// Language chip selector
-function LanguageChipSelector({
-  selectedLanguages,
-  onChange,
-  availableLanguages,
-}: {
-  selectedLanguages: LanguageCode[];
-  onChange: (languages: LanguageCode[]) => void;
-  availableLanguages: LanguageCode[];
-}) {
-  const toggleLanguage = (code: LanguageCode) => {
-    if (selectedLanguages.includes(code)) {
-      onChange(selectedLanguages.filter((l) => l !== code));
-    } else {
-      onChange([...selectedLanguages, code]);
-    }
-  };
-
-  const selectAll = () => {
-    onChange(availableLanguages);
-  };
-
-  const deselectAll = () => {
-    onChange([]);
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-semibold text-gray-900">
-          번역 언어 선택 <span className="text-red-500">*</span>
-        </label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={selectAll}
-            className="text-xs text-primary-active hover:text-[#4A8F42] font-medium"
-          >
-            전체 선택
-          </button>
-          <span className="text-gray-300">|</span>
-          <button
-            type="button"
-            onClick={deselectAll}
-            className="text-xs text-gray-600 hover:text-gray-800 font-medium"
-          >
-            전체 해제
-          </button>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {availableLanguages.map((code) => {
-          const isSelected = selectedLanguages.includes(code);
-          return (
-            <button
-              key={code}
-              type="button"
-              onClick={() => toggleLanguage(code)}
-              title={LANGUAGE_NAMES[code]} // 툴팁으로 풀네임 표시
-              className={`
-                px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                ${
-                  isSelected
-                    ? 'bg-primary text-white shadow-md hover:bg-primary-hover'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }
-              `}
-            >
-              {code.toUpperCase()}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function UploadPage() {
   const router = useRouter();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -188,6 +96,7 @@ export default function UploadPage() {
   const [version, setVersion] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('중');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -200,26 +109,6 @@ export default function UploadPage() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [isInvalidDate, setIsInvalidDate] = useState(false);
 
-  // Fetch reference data from DB
-  const { products } = useProducts();
-  const { scopes } = useScopes();
-  const { priorities } = usePriorities();
-
-  // Generate select options dynamically
-  const productSelectOptions = [
-    { value: '', label: '제품 선택' },
-    ...products.map(p => ({ value: p.code, label: p.name }))
-  ];
-
-  const scopeOptions = [
-    { value: '', label: '제품 분류 선택 *' },
-    ...scopes.map(s => ({ value: s.code, label: s.name }))
-  ];
-
-  const priorityOptions = priorities.map(p => ({
-    value: p.code,
-    label: p.label
-  }));
 
   // Navigation handlers
   const goToNextStep = () => {
@@ -227,7 +116,7 @@ export default function UploadPage() {
       showError('파일을 먼저 업로드해주세요.');
       return;
     }
-    if (currentStep === 2 && (!productCode || !scope || !version || !completionDate)) {
+    if (currentStep === 2 && (!priority || !productCode || !scope || selectedLanguages.length === 0)) {
       showError('필수 정보를 입력해주세요.');
       return;
     }
@@ -244,7 +133,7 @@ export default function UploadPage() {
 
   const canGoNext = () => {
     if (currentStep === 1) return uploadedFiles.length > 0;
-    if (currentStep === 2) return productCode && scope && version && completionDate;
+    if (currentStep === 2) return priority && productCode && scope && selectedLanguages.length > 0;
     return false;
   };
 
@@ -481,6 +370,7 @@ export default function UploadPage() {
           scope: scope || undefined,
           priority: priority,
           languages: selectedLanguages,
+          platform_codes: selectedPlatforms,
           completion_date: completionDate || undefined,
         }),
       });
@@ -497,6 +387,12 @@ export default function UploadPage() {
 
       const data = await response.json();
       console.log('Bulk create success:', data);
+
+      // Show warning if AI translation failed
+      if (data.warning) {
+        showError(data.warning);
+      }
+
       showSuccess(`${data.created}개의 번역 항목이 추가되었습니다.`);
 
       if (productCode) {
@@ -594,100 +490,58 @@ export default function UploadPage() {
                   {/* Basic Information */}
                   <div>
                     <h4 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Select
-                        label="제품"
-                        value={productCode}
-                        onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
-                        options={productSelectOptions}
-                        required
-                      />
-                      <Select
-                        label="제품 분류"
-                        value={scope}
-                        onChange={(e) => setScope(e.target.value as ScopeType)}
-                        options={scopeOptions}
-                        required
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          버전 <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={version}
-                          onChange={(e) => setVersion(e.target.value)}
-                          placeholder="예: 2.0.0"
-                          pattern="[A-Za-z0-9.\-_]+"
-                          title="숫자, 영문, 점(.), 하이픈(-), 언더스코어(_)만 입력 가능합니다"
-                          required
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                      </div>
-                      <Select
-                        label="중요도"
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                        options={priorityOptions}
-                        required
-                      />
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          요청 완료일 <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          value={completionDate}
-                          onChange={(e) => {
-                            const selectedDate = new Date(e.target.value);
-                            setCompletionDate(e.target.value);
+                    <TranslationFormFields
+                      priority={priority}
+                      productCode={productCode}
+                      scope={scope}
+                      selectedLanguages={selectedLanguages}
+                      completionDate={completionDate}
+                      selectedPlatforms={selectedPlatforms}
+                      version={version}
+                      onPriorityChange={setPriority}
+                      onProductCodeChange={setProductCode}
+                      onScopeChange={setScope}
+                      onLanguagesChange={setSelectedLanguages}
+                      onCompletionDateChange={(date) => {
+                        const selectedDate = new Date(date);
+                        setCompletionDate(date);
 
-                            // Check if weekend or holiday
-                            const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
-                            const isHoliday = holidays.some(h => h.holiday_date === e.target.value);
-                            const invalid = isWeekend || isHoliday;
+                        // Check if weekend or holiday
+                        const isWeekend = selectedDate.getDay() === 0 || selectedDate.getDay() === 6;
+                        const isHoliday = holidays.some(h => h.holiday_date === date);
+                        const invalid = isWeekend || isHoliday;
 
-                            setIsInvalidDate(invalid);
+                        setIsInvalidDate(invalid);
 
-                            if (invalid) {
-                              const holidayName = holidays.find(h => h.holiday_date === e.target.value)?.name;
-                              setDateWarning(
-                                isHoliday
-                                  ? `⚠️ ${holidayName} - 휴일입니다. 완료일로 선택하시겠습니까?`
-                                  : '⚠️ 주말입니다. 완료일로 선택하시겠습니까?'
-                              );
-                            } else {
-                              setDateWarning('');
-                            }
-                          }}
-                          required
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
-                            isInvalidDate
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-primary'
-                          }`}
-                        />
-                        {dateWarning && (
-                          <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
-                            {dateWarning}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                        if (invalid) {
+                          const holidayName = holidays.find(h => h.holiday_date === date)?.name;
+                          setDateWarning(
+                            isHoliday
+                              ? `⚠️ ${holidayName} - 휴일입니다. 완료일로 선택하시겠습니까?`
+                              : '⚠️ 주말입니다. 완료일로 선택하시겠습니까?'
+                          );
+                        } else {
+                          setDateWarning('');
+                        }
+                      }}
+                      onPlatformsChange={setSelectedPlatforms}
+                      onVersionChange={setVersion}
+                      showDateWarning={!!dateWarning}
+                      dateWarning={dateWarning}
+                      isInvalidDate={isInvalidDate}
+                    />
                   </div>
-
-                  {/* Language Selection */}
-                  <LanguageChipSelector
-                    selectedLanguages={selectedLanguages}
-                    onChange={setSelectedLanguages}
-                    availableLanguages={getAllSelectableLanguages()}
-                  />
 
                   {/* Action Buttons with Language Counter */}
                   <div className="flex items-center justify-between pt-4 border-t">
-                    <p className="text-sm text-gray-600">
-                      {selectedLanguages.length}개 언어 선택됨
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">
+                        {selectedLanguages.length}개 언어 선택됨
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {selectedPlatforms.length}개 플랫폼 선택됨
+                      </p>
+                    </div>
                     <div className="flex items-center gap-3">
                       <Button
                         onClick={async () => {
@@ -697,7 +551,7 @@ export default function UploadPage() {
                           }
                         }}
                         loading={isUploading}
-                        disabled={isUploading || !productCode || !scope || !version || !completionDate}
+                        disabled={isUploading || !priority || !productCode || !scope || selectedLanguages.length === 0}
                       >
                         {isUploading ? '파싱 중...' : '텍스트 추출하기'}
                       </Button>

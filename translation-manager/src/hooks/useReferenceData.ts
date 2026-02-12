@@ -4,9 +4,20 @@ import { Product as ProductType } from '@/types/products';
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
-    const error = new Error('API 요청 실패');
+    const errorData = await res.json().catch(() => ({}));
+    const errorMessage = errorData.error || 'API 요청 실패';
+    const error = new Error(
+      res.status === 401
+        ? '인증이 필요합니다. 다시 로그인해주세요.'
+        : `${errorMessage} (${res.status})`
+    );
     (error as any).status = res.status;
-    (error as any).info = await res.json().catch(() => ({}));
+    (error as any).info = errorData;
+    console.error(`[fetcher] Failed to fetch ${url}:`, {
+      status: res.status,
+      error: errorMessage,
+      data: errorData
+    });
     throw error;
   }
   return res.json();
