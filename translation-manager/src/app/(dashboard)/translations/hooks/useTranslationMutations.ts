@@ -101,6 +101,18 @@ export function useTranslationMutations({
       });
 
       if (response.ok) {
+        const savedResult = await response.json();
+        console.log('[Translation Update] Success:', savedResult);
+
+        // Update with actual server response
+        const finalResults = existingResult
+          ? translation.translation_results.map((r) =>
+              r.language_code === languageCode ? savedResult : r
+            )
+          : [...translation.translation_results, savedResult];
+
+        updateLocalTranslation(translationId, { translation_results: finalResults });
+
         // If status was reverted, also update it on the server and show appropriate message
         if (needsStatusRevert) {
           await fetch(`/api/translations/${translationId}`, {
@@ -126,13 +138,28 @@ export function useTranslationMutations({
           }).then(() => {}).catch(() => {});
         }
       } else {
-        // Rollback
+        // Rollback with detailed error
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[Translation Update] Failed:', {
+          status: response.status,
+          error: errorData,
+          translationId,
+          languageCode,
+        });
+
         updateLocalTranslation(translationId, { translation_results: translation.translation_results });
-        showError('번역 저장에 실패했습니다.');
+        if (needsStatusRevert) {
+          updateLocalTranslation(translationId, { status: translation.status });
+        }
+
+        showError(errorData.error || '번역 저장에 실패했습니다.');
       }
     } catch (error) {
-      console.error('Error updating translation:', error);
+      console.error('[Translation Update] Error:', error);
       updateLocalTranslation(translationId, { translation_results: translation.translation_results });
+      if (needsStatusRevert) {
+        updateLocalTranslation(translationId, { status: translation.status });
+      }
       showError('번역 저장 중 오류가 발생했습니다.');
     }
   }, [translations, updateLocalTranslation]);
@@ -216,6 +243,29 @@ export function useTranslationMutations({
     } catch (error) {
       console.error('Error updating products:', error);
       showError('제품 변경 중 오류가 발생했습니다.');
+    }
+  }, [fetchTranslations]);
+
+  const handlePlatformsUpdate = useCallback(async (
+    translationId: string,
+    platformCodes: string[]
+  ) => {
+    // Platforms update requires server response for relation, so refetch
+    try {
+      const response = await fetch(`/api/translations/${translationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform_codes: platformCodes }),
+      });
+      if (response.ok) {
+        fetchTranslations();
+        showSuccess('플랫폼이 변경되었습니다.');
+      } else {
+        showError('플랫폼 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating platforms:', error);
+      showError('플랫폼 변경 중 오류가 발생했습니다.');
     }
   }, [fetchTranslations]);
 
@@ -308,6 +358,7 @@ export function useTranslationMutations({
     handleVersionUpdate,
     handleDevCodeUpdate,
     handleProductsUpdate,
+    handlePlatformsUpdate,
     handleDelete,
     handleBulkCreate,
     handleCreate,

@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
-import LanguageCheckboxGroup from '@/components/LanguageCheckboxGroup';
+import TranslationFormFields from '@/components/translations/TranslationFormFields';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
-import { getDefaultLanguagesForProduct, getAllSelectableLanguages } from '@/lib/product-languages';
-import { useProducts, useScopes, usePriorities } from '@/hooks/useReferenceData';
+import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 
 type TabType = 'manual' | 'pdf';
 
@@ -21,7 +19,9 @@ interface CreateTranslationModalProps {
     productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
-    languages: LanguageCode[]
+    languages: LanguageCode[],
+    platformCodes: string[],
+    completionDate: string
   ) => Promise<boolean | undefined>;
   onPDFUpload?: (
     files: UploadedFile[],
@@ -29,7 +29,9 @@ interface CreateTranslationModalProps {
     productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
-    languages: LanguageCode[]
+    languages: LanguageCode[],
+    platformCodes: string[],
+    completionDate: string
   ) => Promise<void>;
 }
 
@@ -49,6 +51,8 @@ export default function CreateTranslationModal({
   const [newScope, setNewScope] = useState<ScopeType>('');
   const [newPriority, setNewPriority] = useState<PriorityLevel>('중');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [newCompletionDate, setNewCompletionDate] = useState('');
 
   // PDF upload states
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
@@ -57,29 +61,11 @@ export default function CreateTranslationModal({
   const [pdfScope, setPdfScope] = useState<ScopeType>('');
   const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('중');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
+  const [pdfSelectedPlatforms, setPdfSelectedPlatforms] = useState<string[]>([]);
+  const [pdfCompletionDate, setPdfCompletionDate] = useState('');
   const [uploading, setUploading] = useState(false);
   const [pdfError, setPdfError] = useState<string>('');
 
-  // Fetch reference data from DB
-  const { products } = useProducts();
-  const { scopes } = useScopes();
-  const { priorities } = usePriorities();
-
-  // Generate select options dynamically
-  const productSelectOptions = [
-    { value: '', label: '제품 선택' },
-    ...products.map(p => ({ value: p.code, label: p.name }))
-  ];
-
-  const scopeOptions = [
-    { value: '', label: '제품 분류 선택 *' },
-    ...scopes.map(s => ({ value: s.code, label: s.name }))
-  ];
-
-  const priorityOptions = priorities.map(p => ({
-    value: p.code,
-    label: p.label
-  }));
 
   // Update languages when product changes - for manual form
   useEffect(() => {
@@ -107,7 +93,7 @@ export default function CreateTranslationModal({
       return;
     }
 
-    const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages);
+    const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
     if (success) {
       resetManualForm();
       onClose();
@@ -125,7 +111,7 @@ export default function CreateTranslationModal({
     setPdfError('');  // 에러 초기화
     setUploading(true);
     try {
-      await onPDFUpload(pdfFiles, pdfVersion, pdfProductCode, pdfScope, pdfPriority, pdfSelectedLanguages);
+      await onPDFUpload(pdfFiles, pdfVersion, pdfProductCode, pdfScope, pdfPriority, pdfSelectedLanguages, pdfSelectedPlatforms, pdfCompletionDate);
       resetPDFForm();
       onClose();
     } catch (error) {
@@ -145,6 +131,8 @@ export default function CreateTranslationModal({
     setNewScope('');
     setNewPriority('중');
     setSelectedLanguages(['en', 'ja']);
+    setSelectedPlatforms([]);
+    setNewCompletionDate('');
   };
 
   const resetPDFForm = () => {
@@ -154,6 +142,8 @@ export default function CreateTranslationModal({
     setPdfScope('');
     setPdfPriority('중');
     setPdfSelectedLanguages(['en', 'ja']);
+    setPdfSelectedPlatforms([]);
+    setPdfCompletionDate('');
     setPdfError('');
   };
 
@@ -169,6 +159,7 @@ export default function CreateTranslationModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="새 번역 추가"
+      size="3xl"
     >
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-4">
@@ -205,37 +196,28 @@ export default function CreateTranslationModal({
       {/* Manual Tab Content */}
       {activeTab === 'manual' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
-            <Select
-              label="제품"
-              value={newProductCode}
-              onChange={(e) => setNewProductCode(e.target.value as ProductCode | '')}
-              options={productSelectOptions}
-            />
-            <Select
-              label="제품 분류 *"
-              value={newScope}
-              onChange={(e) => setNewScope(e.target.value as ScopeType)}
-              options={scopeOptions}
-            />
-            <Input
-              label="버전"
-              value={newVersion}
-              onChange={(e) => setNewVersion(e.target.value)}
-              placeholder="예: 2.0.0"
-            />
-            <Select
-              label="중요도 *"
-              value={newPriority}
-              onChange={(e) => setNewPriority(e.target.value as PriorityLevel)}
-              options={priorityOptions}
-            />
-          </div>
+          <TranslationFormFields
+            priority={newPriority}
+            productCode={newProductCode}
+            scope={newScope}
+            selectedLanguages={selectedLanguages}
+            completionDate={newCompletionDate}
+            selectedPlatforms={selectedPlatforms}
+            version={newVersion}
+            onPriorityChange={setNewPriority}
+            onProductCodeChange={setNewProductCode}
+            onScopeChange={setNewScope}
+            onLanguagesChange={setSelectedLanguages}
+            onCompletionDateChange={setNewCompletionDate}
+            onPlatformsChange={setSelectedPlatforms}
+            onVersionChange={setNewVersion}
+          />
           <Input
-            label="원문 *"
+            label="원문"
             value={newSourceText}
             onChange={(e) => setNewSourceText(e.target.value)}
             placeholder="번역할 텍스트를 입력하세요"
+            required
           />
           <Input
             label="문맥/설명"
@@ -243,13 +225,7 @@ export default function CreateTranslationModal({
             onChange={(e) => setNewContext(e.target.value)}
             placeholder="이 텍스트가 사용되는 화면이나 상황을 설명하세요"
           />
-          <LanguageCheckboxGroup
-            selectedLanguages={selectedLanguages}
-            onChange={setSelectedLanguages}
-            availableLanguages={getAllSelectableLanguages()}
-            label="번역 언어 선택"
-            required={true}
-          />
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={handleClose}>
               취소
@@ -264,45 +240,32 @@ export default function CreateTranslationModal({
       {/* PDF Tab Content */}
       {activeTab === 'pdf' && (
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
-            <Select
-              label="제품"
-              value={pdfProductCode}
-              onChange={(e) => setPdfProductCode(e.target.value as ProductCode | '')}
-              options={productSelectOptions}
-            />
-            <Select
-              label="제품 분류 *"
-              value={pdfScope}
-              onChange={(e) => setPdfScope(e.target.value as ScopeType)}
-              options={scopeOptions}
-            />
-            <Input
-              label="버전"
-              value={pdfVersion}
-              onChange={(e) => setPdfVersion(e.target.value)}
-              placeholder="예: 2.0.0"
-            />
-            <Select
-              label="중요도 *"
-              value={pdfPriority}
-              onChange={(e) => setPdfPriority(e.target.value as PriorityLevel)}
-              options={priorityOptions}
+          <TranslationFormFields
+            priority={pdfPriority}
+            productCode={pdfProductCode}
+            scope={pdfScope}
+            selectedLanguages={pdfSelectedLanguages}
+            completionDate={pdfCompletionDate}
+            selectedPlatforms={pdfSelectedPlatforms}
+            version={pdfVersion}
+            onPriorityChange={setPdfPriority}
+            onProductCodeChange={setPdfProductCode}
+            onScopeChange={setPdfScope}
+            onLanguagesChange={setPdfSelectedLanguages}
+            onCompletionDateChange={setPdfCompletionDate}
+            onPlatformsChange={setPdfSelectedPlatforms}
+            onVersionChange={setPdfVersion}
+          />
+
+          <div>
+            <label className="block text-sm font-semibold text-text-main mb-2">
+              PDF 파일<span className="text-red-500 ml-1">*</span>
+            </label>
+            <FileUploader
+              onFilesChange={setPdfFiles}
+              maxFiles={5}
             />
           </div>
-
-          <LanguageCheckboxGroup
-            selectedLanguages={pdfSelectedLanguages}
-            onChange={setPdfSelectedLanguages}
-            availableLanguages={getAllSelectableLanguages()}
-            label="번역 언어 선택"
-            required={true}
-          />
-
-          <FileUploader
-            onFilesChange={setPdfFiles}
-            maxFiles={5}
-          />
 
           {pdfError && (
             <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">

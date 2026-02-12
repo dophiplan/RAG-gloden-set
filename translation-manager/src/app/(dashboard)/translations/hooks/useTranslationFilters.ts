@@ -12,8 +12,8 @@ export function useTranslationFilters() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   // Languages to display in table columns (null = show all available for product)
-  // Default to show all languages
-  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[] | null>(null);
+  // Default to show English, Japanese, Chinese only
+  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[] | null>(['en', 'ja', 'zh-CN']);
 
   // Advanced filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);

@@ -82,6 +82,8 @@ export function useTranslationData({
             deployed: data.stats?.deployed || 0,
           });
         }
+      } else {
+        console.error('API Error:', response.status, response.statusText);
       }
     } catch (error) {
       // Ignore abort errors
