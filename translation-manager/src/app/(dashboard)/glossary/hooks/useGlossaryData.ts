@@ -300,6 +300,7 @@ export function useGlossaryData() {
     translations: Record<string, GlossaryTerm>;
     context?: string;
     product_code?: string | null;
+    glossary_products?: { product_code: string }[];
     source_type: string;
     approval_status: string;
     hit_count: number;
@@ -314,6 +315,7 @@ export function useGlossaryData() {
           translations: {},
           context: t.context ?? undefined,
           product_code: t.product_code,
+          glossary_products: t.glossary_products,
           source_type: t.source_type,
           approval_status: t.approval_status,
           hit_count: t.hit_count || 0,
@@ -380,6 +382,91 @@ export function useGlossaryData() {
     setSortBy('term');
   };
 
+  // Direct update handlers for inline editing
+  const handleTermInlineUpdate = useCallback(async (id: string, newTerm: string) => {
+    const term = terms.find(t => t.id === id);
+    if (!term) return;
+
+    // Optimistic update
+    setTerms(prev => prev.map(t => t.id === id ? { ...t, term: newTerm } : t));
+
+    try {
+      const response = await fetch(`/api/glossary/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ term: newTerm }),
+      });
+
+      if (response.ok) {
+        showSuccess('용어가 수정되었습니다.');
+      } else {
+        // Rollback on failure
+        setTerms(prev => prev.map(t => t.id === id ? term : t));
+        showError('용어 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating term:', error);
+      setTerms(prev => prev.map(t => t.id === id ? term : t));
+      showError('용어 수정 중 오류가 발생했습니다.');
+    }
+  }, [terms]);
+
+  const handleTranslationInlineUpdate = useCallback(async (id: string, newTranslation: string) => {
+    const term = terms.find(t => t.id === id);
+    if (!term) return;
+
+    // Optimistic update
+    setTerms(prev => prev.map(t => t.id === id ? { ...t, translation: newTranslation } : t));
+
+    try {
+      const response = await fetch(`/api/glossary/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ translation: newTranslation }),
+      });
+
+      if (response.ok) {
+        showSuccess('번역이 수정되었습니다.');
+      } else {
+        // Rollback on failure
+        setTerms(prev => prev.map(t => t.id === id ? term : t));
+        showError('번역 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating translation:', error);
+      setTerms(prev => prev.map(t => t.id === id ? term : t));
+      showError('번역 수정 중 오류가 발생했습니다.');
+    }
+  }, [terms]);
+
+  const handleContextInlineUpdate = useCallback(async (id: string, newContext: string) => {
+    const term = terms.find(t => t.id === id);
+    if (!term) return;
+
+    // Optimistic update
+    setTerms(prev => prev.map(t => t.id === id ? { ...t, context: newContext || null } : t));
+
+    try {
+      const response = await fetch(`/api/glossary/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: newContext || null }),
+      });
+
+      if (response.ok) {
+        showSuccess('문맥이 수정되었습니다.');
+      } else {
+        // Rollback on failure
+        setTerms(prev => prev.map(t => t.id === id ? term : t));
+        showError('문맥 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating context:', error);
+      setTerms(prev => prev.map(t => t.id === id ? term : t));
+      showError('문맥 수정 중 오류가 발생했습니다.');
+    }
+  }, [terms]);
+
   return {
     terms,
     loading,
@@ -431,5 +518,8 @@ export function useGlossaryData() {
     setSelectedLanguageColumns,
     setQuickFilter,
     resetFilters,
+    handleTermInlineUpdate,
+    handleTranslationInlineUpdate,
+    handleContextInlineUpdate,
   };
 }
