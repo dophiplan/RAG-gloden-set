@@ -31,20 +31,28 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from('glossary')
-      .select(`
+    // Build select statement with inner join if filtering by product
+    const selectStatement = productCode
+      ? `
+        *,
+        glossary_products!inner (product_code)
+      `
+      : `
         *,
         glossary_products (product_code)
-      `, { count: 'exact' });
+      `;
+
+    let query = supabase
+      .from('glossary')
+      .select(selectStatement, { count: 'exact' });
 
     if (languageCode) {
       query = query.eq('language_code', languageCode);
     }
 
     if (productCode) {
-      // Include both specific product terms AND common terms (product_code=null)
-      query = query.or(`product_code.eq.${productCode},product_code.is.null`);
+      // Filter by glossary_products table
+      query = query.eq('glossary_products.product_code', productCode);
     }
 
     if (sourceType && ['manual', 'excel_import', 'ai_generated'].includes(sourceType)) {

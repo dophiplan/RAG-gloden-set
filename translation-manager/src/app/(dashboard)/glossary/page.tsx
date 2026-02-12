@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Badge from '@/components/ui/Badge';
 import ProductTabs from '@/components/ProductTabs';
+import EditableCell from '@/components/EditableCell';
 import { LanguageCode } from '@/types';
 import { useGlossaryData } from './hooks/useGlossaryData';
 import { useProducts, useLanguages } from '@/hooks/useReferenceData';
@@ -83,6 +84,9 @@ export default function GlossaryPage() {
     setSelectedLanguageColumns,
     setQuickFilter,
     resetFilters,
+    handleTermInlineUpdate,
+    handleTranslationInlineUpdate,
+    handleContextInlineUpdate,
   } = useGlossaryData();
 
   const sourceTypeLabels: Record<string, string> = {
@@ -440,14 +444,43 @@ export default function GlossaryPage() {
                             className="rounded border-gray-300"
                           />
                         </td>
-                        <td className="font-semibold">{term.term}</td>
-                        <td>{term.translation}</td>
-                        <td className="text-[#64748B]">{term.context || '-'}</td>
+                        <td className="font-semibold">
+                          <EditableCell
+                            value={term.term}
+                            onSave={(newValue) => handleTermInlineUpdate(term.id, newValue)}
+                            placeholder="용어"
+                          />
+                        </td>
                         <td>
-                          {term.product_code ? (
+                          <EditableCell
+                            value={term.translation}
+                            onSave={(newValue) => handleTranslationInlineUpdate(term.id, newValue)}
+                            placeholder="번역"
+                          />
+                        </td>
+                        <td className="text-[#64748B]">
+                          <EditableCell
+                            value={term.context || ''}
+                            onSave={(newValue) => handleContextInlineUpdate(term.id, newValue)}
+                            placeholder="문맥"
+                          />
+                        </td>
+                        <td>
+                          {term.glossary_products && term.glossary_products.length > 0 ? (
+                            term.glossary_products.length === 1 ? (
+                              <Badge variant="info">
+                                {productsMap[term.glossary_products[0].product_code]?.name || term.glossary_products[0].product_code}
+                              </Badge>
+                            ) : (
+                              <Badge variant="info">
+                                {productsMap[term.glossary_products[0].product_code]?.name || term.glossary_products[0].product_code}
+                                +{term.glossary_products.length - 1}
+                              </Badge>
+                            )
+                          ) : term.product_code ? (
                             <Badge variant="info">{productsMap[term.product_code]?.name || term.product_code}</Badge>
                           ) : (
-                            <span className="text-xs text-gray-400">-</span>
+                            <Badge variant="default">전체</Badge>
                           )}
                         </td>
                         <td>
@@ -589,15 +622,59 @@ export default function GlossaryPage() {
                               className="rounded border-gray-300"
                             />
                           </td>
-                          <td className="font-semibold">{group.term}</td>
-                          {selectedLanguageColumns.map((langCode) => (
-                            <td key={langCode} className="text-[#64748B]">
-                              {group.translations[langCode]?.translation || '-'}
-                            </td>
-                          ))}
-                          <td className="text-[#64748B]">{group.context || '-'}</td>
+                          <td className="font-semibold">
+                            <EditableCell
+                              value={group.term}
+                              onSave={async (newValue) => {
+                                // Update all translations with the same term
+                                for (const id of allIds) {
+                                  await handleTermInlineUpdate(id, newValue);
+                                }
+                              }}
+                              placeholder="용어"
+                            />
+                          </td>
+                          {selectedLanguageColumns.map((langCode) => {
+                            const translation = group.translations[langCode];
+                            return (
+                              <td key={langCode} className="text-[#64748B]">
+                                {translation ? (
+                                  <EditableCell
+                                    value={translation.translation}
+                                    onSave={(newValue) => handleTranslationInlineUpdate(translation.id, newValue)}
+                                    placeholder="번역"
+                                  />
+                                ) : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="text-[#64748B]">
+                            <EditableCell
+                              value={group.context || ''}
+                              onSave={async (newValue) => {
+                                // Update context for all translations
+                                for (const id of allIds) {
+                                  await handleContextInlineUpdate(id, newValue);
+                                }
+                              }}
+                              placeholder="문맥"
+                            />
+                          </td>
                           <td>
-                            {group.product_code ? (
+                            {group.glossary_products && group.glossary_products.length > 0 ? (
+                              group.glossary_products.length === 1 ? (
+                                <Badge variant="info">
+                                  {productsMap[group.glossary_products[0].product_code]?.name || group.glossary_products[0].product_code}
+                                </Badge>
+                              ) : (
+                                <Badge variant="info">
+                                  {productsMap[group.glossary_products[0].product_code]?.name || group.glossary_products[0].product_code}
+                                  +{group.glossary_products.length - 1}
+                                </Badge>
+                              )
+                            ) : group.product_code ? (
                               <Badge variant="info">{productsMap[group.product_code]?.name || group.product_code}</Badge>
                             ) : (
                               <Badge variant="default">전체</Badge>
@@ -714,6 +791,7 @@ export default function GlossaryPage() {
         {/* Bulk Action Bar */}
         <BulkActionBar
           selectedCount={selectedIds.length}
+          selectedIds={selectedIds}
           onApproveAll={() => {
             handleBulkApprove(selectedIds);
             setSelectedIds([]);
@@ -723,6 +801,7 @@ export default function GlossaryPage() {
             setSelectedIds([]);
           }}
           onClearSelection={() => setSelectedIds([])}
+          onRefresh={() => window.location.reload()}
         />
       </div>
     </DashboardLayout>
