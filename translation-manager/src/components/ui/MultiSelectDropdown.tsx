@@ -14,6 +14,7 @@ export interface MultiSelectDropdownProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  openUpward?: boolean;
 }
 
 export default function MultiSelectDropdown({
@@ -23,6 +24,7 @@ export default function MultiSelectDropdown({
   placeholder = 'Select options...',
   disabled = false,
   className = '',
+  openUpward = false,
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -123,56 +125,33 @@ export default function MultiSelectDropdown({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         className={`
-          w-full min-h-[42px] px-3 py-2 text-left bg-white border rounded-lg
-          transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500
-          ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'hover:border-gray-400 cursor-pointer'}
-          ${isOpen ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-300'}
+          block w-full px-3 py-1.5 text-sm text-left bg-white border rounded-lg shadow-sm
+          focus:outline-none focus:ring-2 transition-all duration-200
+          ${disabled ? 'bg-gray-100 cursor-not-allowed opacity-60' : 'cursor-pointer'}
+          ${isOpen ? 'border-primary ring-2 ring-primary/15' : 'border-border-light'}
+          hover:border-border-light
         `}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={placeholder}
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 flex flex-wrap gap-1.5 min-h-[26px] items-center">
+          <div className="flex-1 flex flex-wrap gap-1.5 items-center text-text-main">
             {selectedLabels.length > 0 ? (
-              selectedLabels.map((label, index) => {
-                const value = selected[index];
-                return (
-                  <span
-                    key={value}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-800 text-sm rounded-md"
-                  >
-                    <span>{label}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemoveTag(value, e)}
-                      disabled={disabled}
-                      className="hover:bg-blue-200 rounded-full p-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      aria-label={`Remove ${label}`}
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+              <>
+                <span className="text-sm">{selectedLabels[0]}</span>
+                {selectedLabels.length > 1 && (
+                  <span className="text-sm text-gray-600">
+                    +{selectedLabels.length - 1}
                   </span>
-                );
-              })
+                )}
+              </>
             ) : (
-              <span className="text-gray-500">{placeholder}</span>
+              <span className="text-sm text-text-muted">{placeholder}</span>
             )}
           </div>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+            className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
               isOpen ? 'transform rotate-180' : ''
             }`}
             fill="none"
@@ -191,7 +170,9 @@ export default function MultiSelectDropdown({
 
       {isOpen && (
         <div
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+          className={`absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto ${
+            openUpward ? 'bottom-full mb-1' : 'mt-1'
+          }`}
           role="listbox"
           aria-multiselectable="true"
         >
