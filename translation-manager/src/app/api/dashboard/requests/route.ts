@@ -25,6 +25,7 @@ export async function GET() {
         status,
         priority,
         scope,
+        version,
         created_at,
         user_id,
         users!inner(id, name, email),
@@ -115,7 +116,7 @@ export async function GET() {
         products: uniqueProducts.map(tp => ({
           code: tp.product_code,
           name: productsMap[tp.product_code] || tp.product_code,
-          version: tp.version || null,
+          version: translations[0].version || tp.version || null,
           category: translations[0].scope || null,
         })),
       };
@@ -129,6 +130,7 @@ export async function GET() {
         status,
         priority,
         scope,
+        version,
         created_at,
         user_id,
         users!inner(id, name, email),
@@ -159,7 +161,7 @@ export async function GET() {
         products: (translation.translation_products || []).map(tp => ({
           code: tp.product_code,
           name: productsMap[tp.product_code] || tp.product_code,
-          version: tp.version || null,
+          version: translation.version || tp.version || null,
           category: translation.scope || null,
         })),
       };

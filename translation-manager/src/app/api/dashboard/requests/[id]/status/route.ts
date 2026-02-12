@@ -44,10 +44,13 @@ export async function PATCH(
 
     // Validate transition
     const validTransitions: Record<TranslationStatus, TranslationStatus[]> = {
-      pending: ['in_progress'],
-      in_progress: ['reviewed'],
-      reviewed: ['deployed'],
-      deployed: [],
+      pending: ['in_progress', 're_request', 'not_used'],
+      in_progress: ['reviewed', 're_request', 'not_used'],
+      reviewed: ['deployed', 're_deploy_request', 'not_used'],
+      deployed: ['re_deploy_request', 'not_used'],
+      re_request: ['in_progress', 'pending', 'not_used'],
+      re_deploy_request: ['reviewed', 'deployed', 'not_used'],
+      not_used: ['pending', 're_request'],
     };
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
