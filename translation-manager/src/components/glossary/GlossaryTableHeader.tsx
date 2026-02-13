@@ -55,18 +55,18 @@ const GlossaryTableHeader = memo(function GlossaryTableHeader({
   ];
 
   return (
-    <thead>
+    <thead className="bg-gray-50 border-b">
       <tr>
         {columns.map((column) => {
           const width = columnWidths[column.key];
           const style = {
-            ...(width ? { width: `${width}px`, minWidth: `${width}px` } : {}),
+            ...(width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {}),
             ...(column.style || {}),
           };
 
           if (column.key === 'checkbox') {
             return (
-              <th key={column.key} scope="col" className="w-8" style={style}>
+              <th key={column.key} scope="col" className="px-2 py-3 w-8" style={style}>
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -82,7 +82,7 @@ const GlossaryTableHeader = memo(function GlossaryTableHeader({
             <th
               key={column.key}
               scope="col"
-              className="relative group"
+              className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group"
               style={style}
               title={
                 column.key === 'approval'
