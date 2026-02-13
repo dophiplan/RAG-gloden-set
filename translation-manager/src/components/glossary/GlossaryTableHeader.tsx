@@ -51,7 +51,7 @@ const GlossaryTableHeader = memo(function GlossaryTableHeader({
       ),
       resizable: true,
     },
-    { key: 'actions', label: '작업', resizable: true, style: { textAlign: 'right' } },
+    { key: 'actions', label: '작업', resizable: false, style: { textAlign: 'right', width: '80px', minWidth: '80px', maxWidth: '80px' } },
   ];
 
   return (
