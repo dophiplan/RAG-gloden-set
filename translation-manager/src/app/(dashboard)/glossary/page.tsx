@@ -538,7 +538,7 @@ export default function GlossaryPage() {
                             {term.hit_count}
                           </span>
                         </td>
-                        <td style={getCellStyle('actions', { textAlign: 'right' })}>
+                        <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'right' }}>
                           <div className="flex justify-end gap-2">
                             {term.approval_status === 'pending' && (
                               <>
@@ -796,7 +796,7 @@ export default function GlossaryPage() {
                               {group.hit_count}
                             </span>
                           </td>
-                          <td className="px-4 py-2" style={getCellStyle('actions', { textAlign: 'right' })}>
+                          <td className="px-4 py-2" style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'right' }}>
                             <div className="flex justify-end gap-2">
                               {group.approval_status === 'pending' && (
                                 <>
