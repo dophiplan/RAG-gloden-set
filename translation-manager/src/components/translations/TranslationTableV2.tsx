@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import TranslationRow from '@/components/translations/table/TranslationRow';
-import TranslationTableHeader from '@/components/translations/table/TranslationTableHeader';
+import ResizableTableHeader from '@/components/translations/table/ResizableTableHeader';
 import TranslationTablePagination from '@/components/translations/table/TranslationTablePagination';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 import {
   Translation,
   TranslationResult,
@@ -78,6 +79,70 @@ export default memo(function TranslationTableV2({
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
   const showProductColumn = selectedProduct === null;
 
+  // Calculate which languages to display (needed for column widths)
+  const displayLanguagesForWidth = useMemo(() => {
+    const allLanguages = getAllDisplayableLanguages();
+    if (selectedLanguageColumns && selectedLanguageColumns.length > 0) {
+      return allLanguages.filter((lang) => selectedLanguageColumns.includes(lang));
+    }
+    return allLanguages;
+  }, [selectedLanguageColumns]);
+
+  // Resizable columns setup
+  const defaultWidths: { [key: string]: number } = {
+    checkbox: 32,
+    priority: 80,
+    ...(showProductColumn && { product: 120 }),
+    scope: 100,
+    platform: 150,
+    version: 100,
+    sourceText: 250, // Wider for source text
+    context: 220, // Wider for description
+    devCode: 120,
+    ...Object.fromEntries(
+      displayLanguagesForWidth.map((lang) => [`lang_${lang}`, 150])
+    ),
+    status: 120,
+    notes: 180,
+  };
+
+  const minWidths: { [key: string]: number } = {
+    checkbox: 32,
+    priority: 60,
+    product: 80,
+    scope: 80,
+    platform: 100,
+    version: 80,
+    sourceText: 150, // Minimum width for source text
+    context: 120, // Minimum width for description
+    devCode: 80,
+    ...Object.fromEntries(
+      displayLanguagesForWidth.map((lang) => [`lang_${lang}`, 100])
+    ),
+    status: 100,
+    notes: 120,
+  };
+
+  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
+    defaultWidths,
+    minWidths,
+    storageKey: 'translation-table-column-widths',
+  });
+
+  // Global mouse handlers for column resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
+    const handleMouseUp = () => stopResize();
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resize, stopResize]);
+
   // Use external selectedIds if provided, otherwise use internal state
   const selectedIds =
     externalSelectedIds !== undefined ? externalSelectedIds : internalSelectedIds;
@@ -135,11 +200,13 @@ export default memo(function TranslationTableV2({
       <div className="bg-white border rounded-lg overflow-hidden">
         <div className="overflow-auto">
           <table className="w-full table-auto text-xs">
-            <TranslationTableHeader
+            <ResizableTableHeader
               showProductColumn={showProductColumn}
               displayLanguages={displayLanguages}
               allSelected={selectedIds.length === translations.length}
               onToggleSelectAll={toggleSelectAll}
+              columnWidths={columnWidths}
+              onResizeStart={startResize}
             />
             <tbody className="divide-y">
               {loading ? (
@@ -168,6 +235,7 @@ export default memo(function TranslationTableV2({
                     isSelected={selectedIds.includes(translation.id)}
                     showProductColumn={showProductColumn}
                     displayLanguages={displayLanguages}
+                    columnWidths={columnWidths}
                     onToggleSelect={toggleSelect}
                     onStatusChange={onStatusChange}
                     onTranslationUpdate={onTranslationUpdate}
