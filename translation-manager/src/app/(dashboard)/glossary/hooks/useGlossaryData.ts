@@ -19,8 +19,8 @@ export function useGlossaryData() {
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [suggestionCount, setSuggestionCount] = useState(0);
-  // 표시할 언어 컬럼 (기본값: 한국어만)
-  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>(['ko']);
+  // 표시할 언어 컬럼 (기본값: 없음, 제품 선택 시 자동 설정됨)
+  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>([]);
 
   // Form state
   const [formTerm, setFormTerm] = useState('');
