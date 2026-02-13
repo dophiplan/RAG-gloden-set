@@ -95,7 +95,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
-  const { products } = useProducts();
+  const { products = [] } = useProducts();
 
   useEffect(() => {
     // Fetch current user with roles
@@ -235,7 +235,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                       </Link>
 
                       {/* Product items */}
-                      {products.map((product) => {
+                      {products && products.length > 0 && products.map((product) => {
                         const productPath = `/${item.submenuKey}/${product.code}`;
                         const isProductActive = pathname === productPath || pathname.startsWith(productPath + '/');
 
