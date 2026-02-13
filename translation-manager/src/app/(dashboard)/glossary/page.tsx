@@ -29,10 +29,10 @@ export default function GlossaryPage() {
   const { productsMap } = useProducts();
   const { languages, languagesMap } = useLanguages();
 
-  // Generate select options dynamically
+  // Generate select options dynamically (exclude Korean since terms are in Korean)
   const languageSelectOptions = [
     { value: '', label: '모든 언어' },
-    ...languages.map(l => ({ value: l.code, label: l.name }))
+    ...languages.filter(l => l.code !== 'ko').map(l => ({ value: l.code, label: l.name }))
   ];
 
   const {
@@ -103,15 +103,15 @@ export default function GlossaryPage() {
     rejected: '거부됨',
   };
 
-  // Auto-select default languages when product changes
+  // Auto-select default languages when product changes (exclude Korean)
   useEffect(() => {
     if (selectedProduct && productsMap[selectedProduct]) {
       const product = productsMap[selectedProduct];
       if (product.default_languages && product.default_languages.length > 0) {
-        setSelectedLanguageColumns(product.default_languages as LanguageCode[]);
+        const filteredLanguages = (product.default_languages as LanguageCode[]).filter(lang => lang !== 'ko');
+        setSelectedLanguageColumns(filteredLanguages);
       }
     }
-    // Note: When no product is selected, keep the default ['ko'] from useState
   }, [selectedProduct, productsMap]);
 
   const getSourceTypeBadgeVariant = (sourceType: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
@@ -216,6 +216,9 @@ export default function GlossaryPage() {
   const isLanguageSelected = (lang: LanguageCode) => {
     return selectedLanguageColumns.includes(lang);
   };
+
+  // Filter out Korean from display (terms are already in Korean)
+  const displayLanguageColumns = selectedLanguageColumns.filter(lang => lang !== 'ko');
 
   // Determine empty state message based on filters
   const getEmptyStateMessage = () => {
@@ -383,18 +386,18 @@ export default function GlossaryPage() {
               </div>
             )}
 
-            {/* 표시할 언어 필터 */}
+            {/* 표시할 언어 필터 (한국어 제외 - 용어가 이미 한국어임) */}
             <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3 mt-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-gray-600 mr-1">🌐 언어:</span>
                 <button
-                  onClick={() => setSelectedLanguageColumns(languages.map(l => l.code as LanguageCode))}
+                  onClick={() => setSelectedLanguageColumns(languages.filter(l => l.code !== 'ko').map(l => l.code as LanguageCode))}
                   className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
                 >
                   전체
                 </button>
                 <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                {languages.map((lang) => (
+                {languages.filter(l => l.code !== 'ko').map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => handleLanguageToggle(lang.code as LanguageCode)}
@@ -601,7 +604,7 @@ export default function GlossaryPage() {
                         }}
                       />
                     </th>
-                    {selectedLanguageColumns.map((langCode) => (
+                    {displayLanguageColumns.map((langCode) => (
                       <th
                         scope="col"
                         key={langCode}
@@ -683,7 +686,7 @@ export default function GlossaryPage() {
                 <tbody>
                   {groupedByTerm.length === 0 ? (
                     <tr>
-                      <td colSpan={9 + selectedLanguageColumns.length} className="text-center py-12">
+                      <td colSpan={8 + displayLanguageColumns.length} className="text-center py-12">
                         <div className="text-gray-500">
                           {getEmptyStateMessage()}
                         </div>
@@ -725,7 +728,7 @@ export default function GlossaryPage() {
                               placeholder="용어"
                             />
                           </td>
-                          {selectedLanguageColumns.map((langCode) => {
+                          {displayLanguageColumns.map((langCode) => {
                             const translation = group.translations[langCode];
                             return (
                               <td key={langCode} className="px-4 py-2 text-[#64748B]" style={getCellStyle('translation')}>
