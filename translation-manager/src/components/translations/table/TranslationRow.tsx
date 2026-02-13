@@ -33,6 +33,7 @@ export interface TranslationRowProps {
   isSelected: boolean;
   showProductColumn: boolean;
   displayLanguages: LanguageCode[];
+  columnWidths?: { [key: string]: number };
   onToggleSelect: (id: string) => void;
   onStatusChange: (id: string, status: TranslationStatus) => Promise<void>;
   onTranslationUpdate: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
@@ -56,6 +57,7 @@ const TranslationRow = memo(function TranslationRow({
   isSelected,
   showProductColumn,
   displayLanguages,
+  columnWidths = {},
   onToggleSelect,
   onStatusChange,
   onTranslationUpdate,
@@ -123,6 +125,12 @@ const TranslationRow = memo(function TranslationRow({
     onPlatformsUpdate(translation.id, newCodes);
   };
 
+  // Helper to get cell style with width
+  const getCellStyle = (columnKey: string) => {
+    const width = columnWidths[columnKey];
+    return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+  };
+
   return (
     <tr
       style={{ backgroundColor: isHovered ? colors.hover : colors.bg }}
@@ -132,7 +140,7 @@ const TranslationRow = memo(function TranslationRow({
         isNotUsed ? 'text-white line-through' : ''
       }`}
     >
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('checkbox')}>
         <input
           type="checkbox"
           checked={isSelected}
@@ -140,7 +148,7 @@ const TranslationRow = memo(function TranslationRow({
           className="rounded border-gray-300"
         />
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('priority')}>
         <select
           value={translation.priority || '중'}
           onChange={(e) =>
@@ -155,11 +163,11 @@ const TranslationRow = memo(function TranslationRow({
         </select>
       </td>
       {showProductColumn && (
-        <td className="px-0.5 py-0.5 align-top">
+        <td className="px-0.5 py-0.5 align-top" style={getCellStyle('product')}>
           <div className="text-xs truncate">{productNames}</div>
         </td>
       )}
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('scope')}>
         <select
           value={translation.scope || ''}
           onChange={(e) => {
@@ -178,7 +186,7 @@ const TranslationRow = memo(function TranslationRow({
           <option value="기타">기타</option>
         </select>
       </td>
-      <td className="px-2 py-2 align-top relative">
+      <td className="px-2 py-2 align-top relative" style={getCellStyle('platform')}>
         <div className="relative group">
           <button
             onClick={() => setShowPlatformDropdown(!showPlatformDropdown)}
@@ -270,7 +278,7 @@ const TranslationRow = memo(function TranslationRow({
           )}
         </div>
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('version')}>
         <div className="text-xs">
           <EditableCell
             value={translation.version || ''}
@@ -279,7 +287,7 @@ const TranslationRow = memo(function TranslationRow({
           />
         </div>
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('sourceText')}>
         <div className="text-xs">
           <EditableCell
             value={translation.source_text}
@@ -290,7 +298,7 @@ const TranslationRow = memo(function TranslationRow({
           />
         </div>
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('context')}>
         <div className="text-xs truncate">
           <EditableCell
             value={translation.context || ''}
@@ -299,7 +307,7 @@ const TranslationRow = memo(function TranslationRow({
           />
         </div>
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('devCode')}>
         <div className="text-xs truncate">
           <EditableCell
             value={translation.dev_code || ''}
@@ -313,7 +321,7 @@ const TranslationRow = memo(function TranslationRow({
         const result = getTranslationResultForLanguage(lang);
         const curre[기밀마스킹]ext = getTranslationForLanguage(lang);
         return (
-          <td key={lang} className="px-0.5 py-0.5 align-top">
+          <td key={lang} className="px-0.5 py-0.5 align-top" style={getCellStyle(`lang_${lang}`)}>
             <div className="text-xs">
               <EditableCell
                 value={curre[기밀마스킹]ext}
@@ -332,7 +340,7 @@ const TranslationRow = memo(function TranslationRow({
         );
       })}
 
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('status')}>
         <select
           value={translation.status}
           onChange={(e) =>
@@ -349,7 +357,7 @@ const TranslationRow = memo(function TranslationRow({
           <option value="not_used">사용안함</option>
         </select>
       </td>
-      <td className="px-0.5 py-0.5 align-top">
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('notes')}>
         <div className="text-xs truncate">
           <EditableCell
             value={translation.notes || ''}
