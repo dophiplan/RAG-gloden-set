@@ -457,7 +457,7 @@ export default function GlossaryPage() {
         ) : languageFilter ? (
           <Card padding="none">
             <div className="overflow-auto">
-              <table className="w-full table-auto">
+              <table className="w-full table-fixed">
                 <GlossaryTableHeader
                   isAllSelected={isAllSelected}
                   onToggleAll={handleToggleAll}
@@ -567,7 +567,7 @@ export default function GlossaryPage() {
         ) : terms.length === 0 ? (
           <Card padding="none">
             <div className="overflow-auto">
-              <table className="w-full table-auto">
+              <table className="w-full table-fixed">
                 <GlossaryTableHeader
                   isAllSelected={isAllSelected}
                   onToggleAll={handleToggleAll}
@@ -589,7 +589,7 @@ export default function GlossaryPage() {
         ) : (
           <Card padding="none">
             <div className="overflow-auto">
-              <table className="w-full table-auto">
+              <table className="w-full table-fixed">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th scope="col" className="px-2 py-3 w-8" style={getCellStyle('checkbox')}>
