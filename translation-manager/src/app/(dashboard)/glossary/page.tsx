@@ -678,15 +678,8 @@ export default function GlossaryPage() {
                         }}
                       />
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-700 relative group" style={getCellStyle('actions')}>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-700" style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}>
                       작업
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('actions', e.clientX);
-                        }}
-                      />
                     </th>
                   </tr>
                 </thead>
