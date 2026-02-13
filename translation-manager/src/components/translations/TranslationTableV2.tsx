@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import Button from '@/components/ui/Button';
 import TranslationRow from '@/components/translations/table/TranslationRow';
+import TranslationTableHeader from '@/components/translations/table/TranslationTableHeader';
+import TranslationTablePagination from '@/components/translations/table/TranslationTablePagination';
 import {
   Translation,
   TranslationResult,
@@ -13,7 +14,6 @@ import {
   Scope,
 } from '@/types';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
-import { useLanguages } from '@/hooks/useReferenceData';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -75,7 +75,6 @@ export default memo(function TranslationTableV2({
   totalPages = 1,
   onPageChange,
 }: TranslationTableV2Props) {
-  const { languagesMap } = useLanguages();
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
   const showProductColumn = selectedProduct === null;
 
@@ -136,91 +135,12 @@ export default memo(function TranslationTableV2({
       <div className="bg-white border rounded-lg overflow-hidden">
         <div className="overflow-auto">
           <table className="w-full table-auto text-xs">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th scope="col" className="px-0.5 py-0.5 text-left w-8">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length === translations.length}
-                    onChange={toggleSelectAll}
-                    className="rounded border-gray-300"
-                    aria-label="모든 항목 선택"
-                  />
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  중요도
-                </th>
-                {showProductColumn && (
-                  <th
-                    scope="col"
-                    className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                  >
-                    제품
-                  </th>
-                )}
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  제품분류
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  플랫폼
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  버전
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  원문
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  설명
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  KEY/id
-                </th>
-                {displayLanguages.map((lang) => (
-                  <th
-                    scope="col"
-                    key={lang}
-                    className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700 cursor-help"
-                    title={languagesMap[lang]?.name || lang}
-                  >
-                    {lang.toUpperCase()}
-                  </th>
-                ))}
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  번역 상태
-                </th>
-                <th
-                  scope="col"
-                  className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700"
-                >
-                  비고
-                </th>
-              </tr>
-            </thead>
+            <TranslationTableHeader
+              showProductColumn={showProductColumn}
+              displayLanguages={displayLanguages}
+              allSelected={selectedIds.length === translations.length}
+              onToggleSelectAll={toggleSelectAll}
+            />
             <tbody className="divide-y">
               {loading ? (
                 <tr>
@@ -269,30 +189,12 @@ export default memo(function TranslationTableV2({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && onPageChange && (
-        <div className="bg-white border rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(currentPage - 1)}
-            >
-              이전
-            </Button>
-            <span className="text-sm text-gray-600">
-              {currentPage} / {totalPages}
-            </span>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={currentPage === totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-            >
-              다음
-            </Button>
-          </div>
-        </div>
+      {onPageChange && (
+        <TranslationTablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
       )}
     </div>
   );
