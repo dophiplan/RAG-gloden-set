@@ -159,12 +159,6 @@ export default function GlossaryPage() {
     storageKey: 'glossary-table-column-widths',
   });
 
-  // Debug: Log columnWidths
-  useEffect(() => {
-    console.log('[Glossary] columnWidths:', columnWidths);
-    console.log('[Glossary] startResize:', typeof startResize);
-  }, [columnWidths, startResize]);
-
   // Global mouse handlers for column resizing
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
