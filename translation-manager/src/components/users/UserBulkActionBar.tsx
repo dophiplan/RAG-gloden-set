@@ -61,34 +61,6 @@ export default function UserBulkActionBar({
   // Generate product options
   const productOptions = products.map(p => ({ value: p.code, label: p.name }));
 
-  const handleBulkDelete = async () => {
-    if (!showConfirm(`정말 ${selectedCount}명의 사용자를 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const response = await fetch('/api/admin/users/bulk-delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_ids: selectedIds }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '사용자 삭제에 실패했습니다.');
-      }
-
-      showSuccess(`${selectedCount}명의 사용자가 삭제되었습니다.`);
-      onClearSelection();
-      onRefresh();
-    } catch (error) {
-      console.error('Bulk delete error:', error);
-      showError(error instanceof Error ? error.message : '사용자 삭제 중 오류가 발생했습니다.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleBulkRolesChange = async () => {
     if (selectedRoles.length === 0) {
@@ -267,19 +239,6 @@ export default function UserBulkActionBar({
 
           {/* 오른쪽: 액션 버튼들 */}
           <div className="flex items-center gap-3">
-            {/* 삭제 */}
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={handleBulkDelete}
-              disabled={isProcessing}
-              loading={isProcessing}
-            >
-              삭제
-            </Button>
-
-            <div className="w-px h-6 bg-gray-300 mx-1"></div>
-
             {/* 권한 일괄 변경 */}
             <div className="flex items-center gap-2">
               <MultiSelectDropdown
