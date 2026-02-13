@@ -25,10 +25,18 @@ export function isMaster(user: User | null): boolean {
 
 /**
  * Check if user can manage other users (1st Master or Master account level)
+ * Falls back to checking roles if account_level is not set
  */
 export function canManageUsers(user: User | null): boolean {
   if (!user) return false;
-  return user.account_level === '1st_master' || user.account_level === 'master';
+
+  // Check account_level if available
+  if (user.account_level) {
+    return user.account_level === '1st_master' || user.account_level === 'master';
+  }
+
+  // Fallback: check roles for backwards compatibility
+  return isMaster(user) || hasRole(user, '1st_master');
 }
 
 /**
