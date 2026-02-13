@@ -671,8 +671,15 @@ function GlossaryProductContent() {
         <ExportModal
           isOpen={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
-          selectedLanguageColumns={selectedLanguageColumns}
-          onLanguageColumnsChange={setSelectedLanguageColumns}
+          currentFilters={{
+            language: (languageFilter as LanguageCode) || null,
+            product_code: selectedProduct,
+            source_type: sourceTypeFilter || null,
+            imported_after: importedAfter || null,
+            imported_before: importedBefore || null,
+            search: searchTerm || null,
+          }}
+          totalCount={terms.length}
         />
       </div>
     </DashboardLayout>
