@@ -3,13 +3,23 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useProducts } from '@/hooks/useReferenceData';
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
 }
 
-const navigation = [
+interface NavigationItem {
+  name: string;
+  href?: string;
+  icon: React.ReactNode;
+  masterOnly?: boolean;
+  hasSubmenu?: boolean;
+  submenuKey?: string;
+}
+
+const baseNavigation: NavigationItem[] = [
   {
     name: '대시보드',
     href: '/',
@@ -21,21 +31,23 @@ const navigation = [
   },
   {
     name: '번역 관리',
-    href: '/translations',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
       </svg>
     ),
+    hasSubmenu: true,
+    submenuKey: 'translations',
   },
   {
     name: '용어집',
-    href: '/glossary',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
       </svg>
     ),
+    hasSubmenu: true,
+    submenuKey: 'glossary',
   },
   {
     name: '번역 요청하기',
@@ -82,6 +94,8 @@ const navigation = [
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const { products } = useProducts();
 
   useEffect(() => {
     // Fetch current user with roles
@@ -95,14 +109,36 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       .catch(console.error);
   }, []);
 
+  // Auto-expand accordion if current path matches
+  useEffect(() => {
+    const newExpanded = new Set(expandedMenus);
+    if (pathname.startsWith('/translations')) {
+      newExpanded.add('translations');
+    }
+    if (pathname.startsWith('/glossary')) {
+      newExpanded.add('glossary');
+    }
+    setExpandedMenus(newExpanded);
+  }, [pathname]);
+
   // Filter navigation based on user role
-  const filteredNavigation = navigation.filter(item => {
+  const filteredNavigation = baseNavigation.filter(item => {
     if (item.masterOnly) {
       // Show to master and 1st_master users
       return userRoles.includes('master') || userRoles.includes('1st_master');
     }
     return true;
   });
+
+  const toggleMenu = (menuKey: string) => {
+    const newExpanded = new Set(expandedMenus);
+    if (newExpanded.has(menuKey)) {
+      newExpanded.delete(menuKey);
+    } else {
+      newExpanded.add(menuKey);
+    }
+    setExpandedMenus(newExpanded);
+  };
 
   return (
     <>
@@ -143,25 +179,106 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 bg-white">
+        <nav className="flex-1 px-4 py-6 space-y-2 bg-white overflow-y-auto">
           {filteredNavigation.map((item) => {
-            // Exact match for root and translations, prefix match for others
+            // For items with submenu
+            if (item.hasSubmenu && item.submenuKey) {
+              const isExpanded = expandedMenus.has(item.submenuKey);
+              const isInSection = pathname.startsWith(`/${item.submenuKey}`);
+
+              return (
+                <div key={item.name} className="space-y-1">
+                  {/* Accordion Header */}
+                  <button
+                    onClick={() => toggleMenu(item.submenuKey!)}
+                    className={`
+                      w-full flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
+                      ${isInSection
+                        ? 'bg-gradient-to-r from-primary-hover to-primary-active text-white shadow-md'
+                        : 'text-text-secondary hover:bg-primary-light hover:text-primary-hover'
+                      }
+                    `}
+                    style={isInSection ? {
+                      boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
+                    } : undefined}
+                  >
+                    <div className="flex items-center">
+                      <span className="mr-3">{item.icon}</span>
+                      {item.name}
+                    </div>
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Submenu */}
+                  {isExpanded && (
+                    <div className="ml-4 space-y-1">
+                      {/* "전체" item */}
+                      <Link
+                        href={`/${item.submenuKey}`}
+                        onClick={onClose}
+                        className={`
+                          block px-4 py-2 text-sm rounded-lg transition-all duration-200
+                          ${pathname === `/${item.submenuKey}`
+                            ? 'bg-primary-light text-primary-active font-semibold'
+                            : 'text-text-secondary hover:bg-gray-50 hover:text-primary-hover'
+                          }
+                        `}
+                      >
+                        전체
+                      </Link>
+
+                      {/* Product items */}
+                      {products.map((product) => {
+                        const productPath = `/${item.submenuKey}/${product.code}`;
+                        const isProductActive = pathname === productPath || pathname.startsWith(productPath + '/');
+
+                        return (
+                          <Link
+                            key={product.code}
+                            href={productPath}
+                            onClick={onClose}
+                            className={`
+                              block px-4 py-2 text-sm rounded-lg transition-all duration-200
+                              ${isProductActive
+                                ? 'bg-primary-light text-primary-active font-semibold'
+                                : 'text-text-secondary hover:bg-gray-50 hover:text-primary-hover'
+                              }
+                            `}
+                          >
+                            {product.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Regular navigation items
             let isActive;
             if (item.href === '/') {
               isActive = pathname === '/';
-            } else if (item.href === '/translations') {
-              isActive = pathname === '/translations' || pathname.startsWith('/translations/');
             } else if (item.href === '/settings') {
               // Exact match for settings to avoid matching /settings/migration
               isActive = pathname === '/settings';
-            } else {
+            } else if (item.href) {
               isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            } else {
+              isActive = false;
             }
 
             return (
               <Link
                 key={item.name}
-                href={item.href}
+                href={item.href || '#'}
                 onClick={onClose}
                 className={`
                   flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
