@@ -620,19 +620,6 @@ export default function UsersPage() {
               </table>
             </div>
         </Card>
-
-        {/* 선택 삭제 버튼 */}
-        {selectedUserIds.length > 0 && (
-          <div className="flex justify-start">
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleDeleteUsers}
-            >
-              🗑️ 선택 삭제 ({selectedUserIds.length})
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Add User Modal */}
