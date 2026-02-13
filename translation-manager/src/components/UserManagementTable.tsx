@@ -192,8 +192,8 @@ export default function UserManagementTable({ onRefresh }: UserManagementTablePr
 
       {/* Table */}
       <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-auto">
+          <table className="w-full table-auto">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-2 py-3 text-left w-8">

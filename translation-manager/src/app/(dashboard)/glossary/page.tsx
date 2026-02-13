@@ -453,8 +453,8 @@ export default function GlossaryPage() {
           </Card>
         ) : languageFilter ? (
           <Card padding="none">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-auto">
+              <table className="w-full table-auto">
                 <GlossaryTableHeader
                   isAllSelected={isAllSelected}
                   onToggleAll={handleToggleAll}
@@ -556,8 +556,8 @@ export default function GlossaryPage() {
           </Card>
         ) : terms.length === 0 ? (
           <Card padding="none">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-auto">
+              <table className="w-full table-auto">
                 <GlossaryTableHeader
                   isAllSelected={isAllSelected}
                   onToggleAll={handleToggleAll}
@@ -578,8 +578,8 @@ export default function GlossaryPage() {
           </Card>
         ) : (
           <Card padding="none">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-auto">
+              <table className="w-full table-auto">
                 <thead>
                   <tr>
                     <th scope="col" className="w-8">
