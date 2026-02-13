@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
 import { UserRole, ProductCode, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 
 interface UserBulkActionBarProps {
   selectedCount: number;
@@ -43,12 +44,39 @@ export default function UserBulkActionBar({
   onClearSelection,
   onRefresh,
 }: UserBulkActionBarProps) {
+  const supabase = createClient();
   const { products } = useProducts();
   const [selectedAccountLevel, setSelectedAccountLevel] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedWorkScope, setSelectedWorkScope] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [has1stMaster, setHas1stMaster] = useState(false);
+
+  // Check if any selected user is 1st_master
+  useEffect(() => {
+    const checkFor1stMaster = async () => {
+      if (selectedIds.length === 0) {
+        setHas1stMaster(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('users')
+          .select('account_level')
+          .in('id', selectedIds);
+
+        const hasFirstMaster = data?.some(u => u.account_level === '1st_master');
+        setHas1stMaster(hasFirstMaster || false);
+      } catch (error) {
+        console.error('Error checking for 1st master:', error);
+        setHas1stMaster(false);
+      }
+    };
+
+    checkFor1stMaster();
+  }, [selectedIds, supabase]);
 
   if (selectedCount === 0) {
     return null;
@@ -233,29 +261,35 @@ export default function UserBulkActionBar({
 
           {/* 오른쪽: 액션 버튼들 */}
           <div className="flex items-center gap-3">
-            {/* 계정 권한 일괄 변경 */}
-            <div className="flex items-center gap-2">
-              <Select
-                value={selectedAccountLevel}
-                onChange={(e) => setSelectedAccountLevel(e.target.value)}
-                options={[
-                  { value: '', label: '계정 권한 선택...' },
-                  ...ACCOUNT_LEVEL_OPTIONS
-                ]}
-                disabled={isProcessing}
-                className="w-48"
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleBulkAccountLevelChange}
-                disabled={!selectedAccountLevel || isProcessing}
-                loading={isProcessing}
-                className="whitespace-nowrap"
-              >
-                변경
-              </Button>
-            </div>
+            {/* 계정 권한 일괄 변경 (1st master 선택 시 숨김) */}
+            {!has1stMaster && (
+              <>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedAccountLevel}
+                    onChange={(e) => setSelectedAccountLevel(e.target.value)}
+                    options={[
+                      { value: '', label: '계정 권한 선택...' },
+                      ...ACCOUNT_LEVEL_OPTIONS
+                    ]}
+                    disabled={isProcessing}
+                    className="w-48"
+                  />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={handleBulkAccountLevelChange}
+                    disabled={!selectedAccountLevel || isProcessing}
+                    loading={isProcessing}
+                    className="whitespace-nowrap"
+                  >
+                    변경
+                  </Button>
+                </div>
+
+                <div className="w-px h-6 bg-gray-300 mx-1"></div>
+              </>
+            )}
 
             {/* 제품 일괄 변경 */}
             <div className="flex items-center gap-2">
