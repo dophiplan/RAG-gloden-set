@@ -30,7 +30,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_ids, roles, work_products, work_scope, work_languages } = body;
+    const { user_ids, account_level, roles, work_products, work_scope, work_languages } = body;
 
     if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
       return NextResponse.json(
@@ -41,6 +41,7 @@ export async function PATCH(request: NextRequest) {
 
     // Build update object with only provided fields
     const updates: any = {};
+    if (account_level !== undefined) updates.account_level = account_level;
     if (roles !== undefined) updates.roles = roles;
     if (work_products !== undefined) updates.work_products = work_products;
     if (work_scope !== undefined) updates.work_scope = work_scope;
