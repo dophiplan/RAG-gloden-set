@@ -311,107 +311,22 @@ function GlossaryProductContent() {
           </div>
         </div>
 
-        {/* Glossary Content */}
-        <Card padding="none">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-text-main">용어집</h2>
-              <p className="text-sm text-text-muted mt-1">
-                등록된 용어: {terms.length}개
-                {suggestionCount > 0 && (
-                  <span className="ml-2 text-amber-600">· AI 제안: {suggestionCount}개</span>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleAIReview}
-                loading={isReviewing}
-              >
-                AI 용어 검수
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setIsExportModalOpen(true)}
-              >
-                내보내기
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  resetForm();
-                  setIsModalOpen(true);
-                }}
-              >
-                + 용어 추가
-              </Button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="px-6 py-4 bg-background space-y-4">
-            {/* Search and Quick Filters */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  placeholder="용어 또는 번역 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+        {/* Filters */}
+        <Card>
+          <div className="space-y-3">
+            {/* Main Filters */}
+            <div className="flex flex-wrap gap-2">
+              {/* 언어 */}
+              <div className="w-40">
+                <Select
+                  value={languageFilter}
+                  onChange={(e) => setLanguageFilter(e.target.value)}
+                  options={languageSelectOptions}
                 />
               </div>
 
-              <Select
-                value={languageFilter}
-                onChange={(e) => setLanguageFilter(e.target.value as LanguageCode | '')}
-                options={languageSelectOptions}
-                className="w-48"
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={approvalStatusFilter === 'pending' ? 'primary' : 'ghost'}
-                  onClick={() => setQuickFilter('pending')}
-                >
-                  검수 대기 ({terms.filter(t => t.approval_status === 'pending').length})
-                </Button>
-                <Button
-                  size="sm"
-                  variant={approvalStatusFilter === 'approved' ? 'primary' : 'ghost'}
-                  onClick={() => setQuickFilter('approved')}
-                >
-                  승인 ({terms.filter(t => t.approval_status === 'approved').length})
-                </Button>
-              </div>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              >
-                {showAdvancedFilters ? '간단히' : '고급 필터'}
-              </Button>
-
-              {(languageFilter || sourceTypeFilter || approvalStatusFilter || importedAfter || importedBefore) && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={resetFilters}
-                >
-                  초기화
-                </Button>
-              )}
-            </div>
-
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <div className="flex items-center gap-4 pt-4 border-t border-border">
+              {/* 출처 */}
+              <div className="w-40">
                 <Select
                   value={sourceTypeFilter}
                   onChange={(e) => setSourceTypeFilter(e.target.value)}
@@ -421,41 +336,84 @@ function GlossaryProductContent() {
                     { value: 'excel_import', label: 'Excel' },
                     { value: 'ai_generated', label: 'AI' },
                   ]}
-                  className="w-48"
                 />
+              </div>
 
-                <Input
-                  type="date"
-                  placeholder="등록일 시작"
-                  value={importedAfter}
-                  onChange={(e) => setImportedAfter(e.target.value)}
-                  className="w-48"
+              {/* 승인 상태 */}
+              <div className="w-40">
+                <Select
+                  value={approvalStatusFilter}
+                  onChange={(e) => setApprovalStatusFilter(e.target.value)}
+                  options={[
+                    { value: '', label: '모든 상태' },
+                    { value: 'pending', label: '승인 대기' },
+                    { value: 'approved', label: '승인됨' },
+                    { value: 'rejected', label: '거부됨' },
+                  ]}
                 />
+              </div>
 
-                <Input
-                  type="date"
-                  placeholder="등록일 종료"
-                  value={importedBefore}
-                  onChange={(e) => setImportedBefore(e.target.value)}
-                  className="w-48"
-                />
-
+              {/* 정렬 */}
+              <div className="w-40">
                 <Select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   options={[
-                    { value: 'created_desc', label: '최신순' },
-                    { value: 'created_asc', label: '오래된순' },
-                    { value: 'term_asc', label: '가나다순' },
-                    { value: 'hits_desc', label: '사용 횟수 높은순' },
+                    { value: 'term', label: '용어순' },
+                    { value: 'hit_count', label: '사용 빈도순' },
+                    { value: 'imported_at', label: '최근 추가순' },
                   ]}
-                  className="w-48"
                 />
+              </div>
+
+              {/* 검색 */}
+              <div className="flex-1 min-w-[200px]">
+                <Input
+                  placeholder="용어 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {/* 고급 필터 토글 버튼 */}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                {showAdvancedFilters ? '▲ 고급 필터' : '▼ 고급 필터'}
+              </Button>
+            </div>
+
+            {/* Advanced Filters */}
+            {showAdvancedFilters && (
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                <div className="w-40">
+                  <Input
+                    type="date"
+                    value={importedAfter}
+                    onChange={(e) => setImportedAfter(e.target.value)}
+                    placeholder="시작일"
+                  />
+                </div>
+                <div className="w-40">
+                  <Input
+                    type="date"
+                    value={importedBefore}
+                    onChange={(e) => setImportedBefore(e.target.value)}
+                    placeholder="종료일"
+                  />
+                </div>
+                {(languageFilter || sourceTypeFilter || approvalStatusFilter || importedAfter || importedBefore) && (
+                  <Button size="sm" variant="ghost" onClick={resetFilters}>
+                    초기화
+                  </Button>
+                )}
               </div>
             )}
 
-            {/* Language Toggle Buttons (Korean excluded - terms are already in Korean) */}
-            <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3 mt-3">
+            {/* Language Toggle Buttons */}
+            <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-gray-600 mr-1">🌐 언어:</span>
                 <button
@@ -483,6 +441,42 @@ function GlossaryProductContent() {
               </div>
             </div>
           </div>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            총 <strong>{terms.length}</strong>개 용어
+            {suggestionCount > 0 && (
+              <span className="ml-2 text-amber-600">· AI 제안: {suggestionCount}개</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => window.location.href = '/settings/migration'}
+            >
+              가져오기
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setIsExportModalOpen(true)}
+            >
+              Excel 내보내기
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleAIReview}
+              loading={isReviewing}
+            >
+              AI 일관성 검사
+            </Button>
+            <Button onClick={() => setIsModalOpen(true)}>용어 추가</Button>
+          </div>
+        </div>
+
+        {/* Glossary Content */}
+        <Card padding="none">
 
           {/* Table */}
           <div className="overflow-x-auto">
