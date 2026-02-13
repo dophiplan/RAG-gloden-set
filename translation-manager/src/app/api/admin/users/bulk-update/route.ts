@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { createClient } from '@/lib/supabase/server';
-import { isMaster } from '@/lib/permissions';
+import { canManageUsers } from '@/lib/permissions';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -22,9 +22,9 @@ export async function PATCH(request: NextRequest) {
       .eq('id', authUser.id)
       .single();
 
-    if (!currentUser || !isMaster(currentUser)) {
+    if (!currentUser || !canManageUsers(currentUser)) {
       return NextResponse.json(
-        { error: '권한이 없습니다.' },
+        { error: '권한이 없습니다. 1st Master 또는 Master만 사용자를 관리할 수 있습니다.' },
         { status: 403 }
       );
     }
@@ -37,6 +37,23 @@ export async function PATCH(request: NextRequest) {
         { error: '사용자 ID가 필요합니다.' },
         { status: 400 }
       );
+    }
+
+    // Protect 1st master from account level changes
+    if (account_level !== undefined) {
+      const adminClient = createAdminClient();
+      const { data: selectedUsers } = await adminClient
+        .from('users')
+        .select('account_level')
+        .in('id', user_ids);
+
+      const has1stMaster = selectedUsers?.some(u => u.account_level === '1st_master');
+      if (has1stMaster) {
+        return NextResponse.json(
+          { error: '1st Master의 계정 권한은 변경할 수 없습니다.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Build update object with only provided fields

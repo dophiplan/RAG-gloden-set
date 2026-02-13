@@ -29,12 +29,16 @@ export type UserRole =
 // Special protected user email
 export const FIRST_MASTER_EMAIL = 'nhkim@rsupport.com';
 
+export type AccountLevel = '1st_master' | 'master' | 'manager' | 'user';
+
 export interface User {
   id: string;
   email: string;
   name: string | null;
   avatar_url: string | null;
   created_at: string;
+  // Account level (permission tier)
+  account_level: AccountLevel;
   // New fields from Phase 1
   roles: UserRole[];
   work_products: ProductCode[];
