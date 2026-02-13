@@ -138,7 +138,7 @@ export default function GlossaryPage() {
     source: 100,
     approval: 120,
     hitCount: 100,
-    actions: 180,
+    actions: 80,
   };
 
   const minWidths = {
@@ -150,7 +150,7 @@ export default function GlossaryPage() {
     source: 80,
     approval: 100,
     hitCount: 80,
-    actions: 120,
+    actions: 60,
   };
 
   const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
