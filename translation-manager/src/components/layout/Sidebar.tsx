@@ -188,52 +188,57 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
               return (
                 <div key={item.name} className="space-y-1">
-                  {/* Accordion Header */}
-                  <button
-                    onClick={() => toggleMenu(item.submenuKey!)}
-                    className={`
-                      w-full flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
-                      ${isInSection
-                        ? 'bg-gradient-to-r from-primary-hover to-primary-active text-white shadow-md'
-                        : 'text-text-secondary hover:bg-primary-light hover:text-primary-hover'
-                      }
-                    `}
-                    style={isInSection ? {
-                      boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
-                    } : undefined}
-                  >
-                    <div className="flex items-center">
-                      <span className="mr-3">{item.icon}</span>
-                      {item.name}
-                    </div>
-                    <svg
-                      className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  {/* Accordion Header - Clickable to go to main page */}
+                  <div className="relative">
+                    <Link
+                      href={`/${item.submenuKey}`}
+                      onClick={(e) => {
+                        // Expand menu when clicking
+                        if (!isExpanded) {
+                          e.preventDefault();
+                          toggleMenu(item.submenuKey!);
+                        } else {
+                          onClose?.();
+                        }
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
+                        ${isInSection
+                          ? 'bg-gradient-to-r from-primary-hover to-primary-active text-white shadow-md'
+                          : 'text-text-secondary hover:bg-primary-light hover:text-primary-hover'
+                        }
+                      `}
+                      style={isInSection ? {
+                        boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
+                      } : undefined}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      <div className="flex items-center">
+                        <span className="mr-3">{item.icon}</span>
+                        {item.name}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleMenu(item.submenuKey!);
+                        }}
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                      >
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </Link>
+                  </div>
 
-                  {/* Submenu */}
+                  {/* Submenu - No "전체" item, only products */}
                   {isExpanded && (
                     <div className="ml-4 space-y-1">
-                      {/* "전체" item */}
-                      <Link
-                        href={`/${item.submenuKey}`}
-                        onClick={onClose}
-                        className={`
-                          block px-4 py-2 text-sm rounded-lg transition-all duration-200
-                          ${pathname === `/${item.submenuKey}`
-                            ? 'bg-primary-light text-primary-active font-semibold'
-                            : 'text-text-secondary hover:bg-gray-50 hover:text-primary-hover'
-                          }
-                        `}
-                      >
-                        전체
-                      </Link>
-
                       {/* Product items */}
                       {products && products.length > 0 && products.map((product) => {
                         const productPath = `/${item.submenuKey}/${product.code}`;
