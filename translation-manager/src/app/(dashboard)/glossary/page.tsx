@@ -156,7 +156,7 @@ export default function GlossaryPage() {
   const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
     defaultWidths,
     minWidths,
-    storageKey: 'glossary-table-column-widths',
+    storageKey: 'glossary-table-column-widths-v2',
   });
 
   // Global mouse handlers for column resizing
