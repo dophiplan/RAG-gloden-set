@@ -23,8 +23,14 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (!currentUser || !canManageUsers(currentUser)) {
+      console.log('User permission check failed:', {
+        userId: currentUser?.id,
+        email: currentUser?.email,
+        account_level: currentUser?.account_level,
+        roles: currentUser?.roles
+      });
       return NextResponse.json(
-        { error: '권한이 없습니다. 1st Master 또는 Master만 사용자를 관리할 수 있습니다.' },
+        { error: '권한이 없습니다. Master 권한이 필요합니다.' },
         { status: 403 }
       );
     }
