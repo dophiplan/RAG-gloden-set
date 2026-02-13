@@ -202,6 +202,24 @@ function GlossaryProductContent() {
 
   const displayLanguageColumns = selectedLanguageColumns.filter(lang => lang !== 'ko');
 
+  // Language toggle functions
+  const isLanguageSelected = (lang: LanguageCode) => {
+    return selectedLanguageColumns.includes(lang);
+  };
+
+  const handleLanguageToggle = (lang: LanguageCode) => {
+    const newSelection = selectedLanguageColumns.includes(lang)
+      ? selectedLanguageColumns.filter(l => l !== lang)
+      : [...selectedLanguageColumns, lang];
+
+    // 최소 1개 언어는 선택되어야 함
+    if (newSelection.length === 0) {
+      return;
+    }
+
+    setSelectedLanguageColumns(newSelection);
+  };
+
   // Request list data
   const [requests, setRequests] = useState<DashboardRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
@@ -435,6 +453,35 @@ function GlossaryProductContent() {
                 />
               </div>
             )}
+
+            {/* Language Toggle Buttons (Korean excluded - terms are already in Korean) */}
+            <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3 mt-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-gray-600 mr-1">🌐 언어:</span>
+                <button
+                  onClick={() => setSelectedLanguageColumns(languages.filter(l => l.code !== 'ko').map(l => l.code as LanguageCode))}
+                  className="px-2 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  전체
+                </button>
+                <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                {languages.filter(l => l.code !== 'ko').map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => handleLanguageToggle(lang.code as LanguageCode)}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                      isLanguageSelected(lang.code as LanguageCode)
+                        ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                    title={lang.name}
+                    aria-label={`${lang.name} 표시`}
+                  >
+                    {lang.code.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Table */}
