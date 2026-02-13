@@ -89,6 +89,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
                 className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700 cursor-help relative group"
                 style={style}
                 title={languagesMap[lang]?.name || lang}
+                suppressHydrationWarning
               >
                 <span>{column.label}</span>
                 {column.resizable && (
@@ -110,6 +111,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
               scope="col"
               className="px-0.5 py-0.5 text-left text-xs font-medium text-gray-700 relative group"
               style={style}
+              suppressHydrationWarning
             >
               <span>{column.label}</span>
               {column.resizable && (
