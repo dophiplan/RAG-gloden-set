@@ -394,7 +394,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                     {request.translation_count}
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-4">
                       {activeTab === 'pending' && (
                         <Button
                           size="sm"
@@ -407,7 +407,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
                       <button
                         onClick={() => handleDelete(request)}
                         disabled={deletingId === request.id}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
                         title="삭제"
                         aria-label="삭제"
                       >
