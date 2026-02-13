@@ -272,12 +272,17 @@ function TranslationsProductContent() {
           onSend={handlers.handleSendEmail}
         />
 
-        <DeploymentCheckModal
-          isOpen={modals.isDeploymentModalOpen}
-          onClose={modals.closeDeploymentModal}
-          selectedTranslations={modals.selectedTranslations}
-          onConfirm={mutations.handleDeploymentConfirm}
-        />
+        {modals.isDeploymentModalOpen && modals.selectedTranslations.length > 0 && (
+          <DeploymentCheckModal
+            isOpen={modals.isDeploymentModalOpen}
+            onClose={modals.closeDeploymentModal}
+            translation={modals.selectedTranslations[0]}
+            onUpdate={() => {
+              fetchTranslations();
+              modals.clearSelection();
+            }}
+          />
+        )}
 
         <DuplicateEditModal
           isOpen={duplicateCheck.showDuplicateModal}
