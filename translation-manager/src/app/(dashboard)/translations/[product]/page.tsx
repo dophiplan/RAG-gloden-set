@@ -203,6 +203,9 @@ function TranslationsProductContent() {
           versionFilter={filters.versionFilter}
           createdAfter={filters.createdAfter}
           createdBefore={filters.createdBefore}
+          selectedLanguageColumns={filters.selectedLanguageColumns}
+          availableLanguages={availableLanguages}
+          showAdvancedFilters={filters.showAdvancedFilters}
           onStatusFilterChange={filters.setStatusFilter}
           onLanguageFilterChange={filters.setLanguageFilter}
           onSearchChange={filters.setSearchTerm}
@@ -211,6 +214,9 @@ function TranslationsProductContent() {
           onVersionChange={filters.setVersionFilter}
           onCreatedAfterChange={filters.setCreatedAfter}
           onCreatedBeforeChange={filters.setCreatedBefore}
+          onLanguageColumnsChange={filters.setSelectedLanguageColumns}
+          onToggleAdvancedFilters={filters.toggleAdvancedFilters}
+          onQuickFilter={filters.applyQuickFilter}
           onClearAllFilters={filters.clearAllFilters}
         />
 
