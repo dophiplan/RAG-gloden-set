@@ -24,6 +24,14 @@ export function isMaster(user: User | null): boolean {
 }
 
 /**
+ * Check if user can manage other users (1st Master or Master account level)
+ */
+export function canManageUsers(user: User | null): boolean {
+  if (!user) return false;
+  return user.account_level === '1st_master' || user.account_level === 'master';
+}
+
+/**
  * Check if user can translate for a specific language
  */
 export function canTranslate(user: User | null, languageCode: LanguageCode): boolean {
