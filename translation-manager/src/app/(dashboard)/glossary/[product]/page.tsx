@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import RequestList from '@/components/dashboard/RequestList';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -267,12 +266,32 @@ function GlossaryProductContent() {
   return (
     <DashboardLayout title={`용어집 - ${productCode?.toUpperCase()}`}>
       <div className="space-y-6">
-        {/* Request List */}
-        <RequestList
-          requests={requests}
-          loading={requestsLoading}
-          onStatusChange={handleStatusChange}
-        />
+        {/* Status Tabs */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {['pending', 'in_progress', 'reviewed', 'deployed'].map((status) => {
+              const count = requests.filter(r => r.status === status).length;
+              const labels = {
+                pending: '요청',
+                in_progress: '진행중',
+                reviewed: '검수중',
+                deployed: '반영완료'
+              };
+              return (
+                <button
+                  key={status}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    count > 0
+                      ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {labels[status as keyof typeof labels]} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Glossary Content */}
         <Card padding="none">
