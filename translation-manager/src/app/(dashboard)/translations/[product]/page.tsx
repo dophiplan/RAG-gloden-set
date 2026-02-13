@@ -293,9 +293,19 @@ function TranslationsProductContent() {
         />
 
         <GlossaryAddModal
-          isOpen={glossary.isModalOpen}
-          onClose={glossary.handleCloseModal}
-          term={glossary.selectedTerm}
+          isOpen={glossary.isGlossaryModalOpen}
+          onClose={glossary.closeGlossaryModal}
+          glossaryTerm={glossary.glossaryTerm}
+          setGlossaryTerm={glossary.setGlossaryTerm}
+          glossaryTranslation={glossary.glossaryTranslation}
+          setGlossaryTranslation={glossary.setGlossaryTranslation}
+          glossaryLanguage={glossary.glossaryLanguage}
+          setGlossaryLanguage={glossary.setGlossaryLanguage}
+          glossaryContext={glossary.glossaryContext}
+          setGlossaryContext={glossary.setGlossaryContext}
+          glossaryProductCodes={glossary.glossaryProductCodes}
+          toggleGlossaryProduct={glossary.toggleGlossaryProduct}
+          onSave={glossary.handleGlossaryCreate}
         />
 
         {/* Version History Sidebar */}
