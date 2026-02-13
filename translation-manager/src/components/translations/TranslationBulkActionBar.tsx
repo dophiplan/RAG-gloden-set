@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
-import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 import { ProductCode, TranslationStatus } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
@@ -35,7 +34,7 @@ export default function TranslationBulkActionBar({
   onOpenDeploymentModal,
 }: TranslationBulkActionBarProps) {
   const { products } = useProducts();
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductCode | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<TranslationStatus | ''>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -43,8 +42,11 @@ export default function TranslationBulkActionBar({
     return null;
   }
 
-  // Generate product options for multi-select
-  const productOptions = products.map(p => ({ value: p.code, label: p.name }));
+  // Generate product options for select
+  const productOptions = [
+    { value: '', label: '제품 선택...' },
+    ...products.map(p => ({ value: p.code, label: p.name }))
+  ];
 
   // Status options
   const statusOptions = [
@@ -56,16 +58,14 @@ export default function TranslationBulkActionBar({
   ];
 
   const handleBulkProductChange = async () => {
-    if (selectedProducts.length === 0) {
+    if (!selectedProduct) {
       showError('제품을 선택해주세요.');
       return;
     }
 
-    const productNames = selectedProducts
-      .map(code => products.find(p => p.code === code)?.name || code)
-      .join(', ');
+    const productName = products.find(p => p.code === selectedProduct)?.name || selectedProduct;
 
-    if (!showConfirm(`${selectedCount}개 항목의 제품을 "${productNames}"(으)로 변경하시겠습니까?`)) {
+    if (!showConfirm(`${selectedCount}개 항목의 제품을 "${productName}"(으)로 변경하시겠습니까?`)) {
       return;
     }
 
@@ -76,7 +76,7 @@ export default function TranslationBulkActionBar({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           translation_ids: selectedIds,
-          product_codes: selectedProducts,
+          product_code: selectedProduct,
         }),
       });
 
@@ -86,7 +86,7 @@ export default function TranslationBulkActionBar({
       }
 
       showSuccess(`${selectedCount}개 항목의 제품이 변경되었습니다.`);
-      setSelectedProducts([]);
+      setSelectedProduct('');
       onClearSelection();
       onRefresh();
     } catch (error) {
@@ -209,20 +209,18 @@ export default function TranslationBulkActionBar({
 
             {/* 제품 일괄 변경 */}
             <div className="flex items-center gap-2">
-              <MultiSelectDropdown
+              <Select
+                value={selectedProduct}
+                onChange={(e) => setSelectedProduct(e.target.value as ProductCode | '')}
                 options={productOptions}
-                selected={selectedProducts}
-                onChange={setSelectedProducts}
-                placeholder="제품 선택..."
-                disabled={isProcessing}
                 className="w-48"
-                openUpward={true}
+                disabled={isProcessing}
               />
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={handleBulkProductChange}
-                disabled={selectedProducts.length === 0 || isProcessing}
+                disabled={!selectedProduct || isProcessing}
                 loading={isProcessing}
                 className="whitespace-nowrap"
               >
