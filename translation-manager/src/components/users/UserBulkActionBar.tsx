@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
@@ -12,17 +13,12 @@ interface UserBulkActionBarProps {
   onRefresh: () => void;
 }
 
-// Role options
-const ROLE_OPTIONS = [
-  { value: 'master', label: '마스터' },
-  { value: 'translator_ja', label: '일본어 번역' },
-  { value: 'translator_zh', label: '중국어 번역' },
-  { value: 'translator_en', label: '영어 번역' },
-  { value: 'requester', label: '요청' },
-  { value: 'deployer', label: '반영' },
-  { value: 'reviewer_ja', label: '일본어 검수' },
-  { value: 'reviewer_zh', label: '중국어 검수' },
-  { value: 'reviewer_en', label: '영어 검수' },
+// Account level options (matches user edit modal)
+const ACCOUNT_LEVEL_OPTIONS = [
+  { value: '1st_master', label: '1st Master' },
+  { value: 'master', label: 'Master' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'user', label: 'User' },
 ];
 
 // Work scope options
@@ -48,7 +44,7 @@ export default function UserBulkActionBar({
   onRefresh,
 }: UserBulkActionBarProps) {
   const { products } = useProducts();
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedAccountLevel, setSelectedAccountLevel] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedWorkScope, setSelectedWorkScope] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
@@ -62,17 +58,15 @@ export default function UserBulkActionBar({
   const productOptions = products.map(p => ({ value: p.code, label: p.name }));
 
 
-  const handleBulkRolesChange = async () => {
-    if (selectedRoles.length === 0) {
-      showError('권한을 선택해주세요.');
+  const handleBulkAccountLevelChange = async () => {
+    if (!selectedAccountLevel) {
+      showError('계정 권한을 선택해주세요.');
       return;
     }
 
-    const roleLabels = selectedRoles
-      .map(role => ROLE_OPTIONS.find(r => r.value === role)?.label || role)
-      .join(', ');
+    const accountLevelLabel = ACCOUNT_LEVEL_OPTIONS.find(a => a.value === selectedAccountLevel)?.label || selectedAccountLevel;
 
-    if (!showConfirm(`${selectedCount}명의 권한을 "${roleLabels}"(으)로 변경하시겠습니까?`)) {
+    if (!showConfirm(`${selectedCount}명의 계정 권한을 "${accountLevelLabel}"(으)로 변경하시겠습니까?`)) {
       return;
     }
 
@@ -83,22 +77,22 @@ export default function UserBulkActionBar({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_ids: selectedIds,
-          roles: selectedRoles,
+          account_level: selectedAccountLevel,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || '권한 변경에 실패했습니다.');
+        throw new Error(error.error || '계정 권한 변경에 실패했습니다.');
       }
 
-      showSuccess(`${selectedCount}명의 권한이 변경되었습니다.`);
-      setSelectedRoles([]);
+      showSuccess(`${selectedCount}명의 계정 권한이 변경되었습니다.`);
+      setSelectedAccountLevel('');
       onClearSelection();
       onRefresh();
     } catch (error) {
-      console.error('Bulk roles change error:', error);
-      showError(error instanceof Error ? error.message : '권한 변경 중 오류가 발생했습니다.');
+      console.error('Bulk account level change error:', error);
+      showError(error instanceof Error ? error.message : '계정 권한 변경 중 오류가 발생했습니다.');
     } finally {
       setIsProcessing(false);
     }
@@ -239,22 +233,23 @@ export default function UserBulkActionBar({
 
           {/* 오른쪽: 액션 버튼들 */}
           <div className="flex items-center gap-3">
-            {/* 권한 일괄 변경 */}
+            {/* 계정 권한 일괄 변경 */}
             <div className="flex items-center gap-2">
-              <MultiSelectDropdown
-                options={ROLE_OPTIONS}
-                selected={selectedRoles}
-                onChange={setSelectedRoles}
-                placeholder="권한 선택..."
+              <Select
+                value={selectedAccountLevel}
+                onChange={(e) => setSelectedAccountLevel(e.target.value)}
+                options={[
+                  { value: '', label: '계정 권한 선택...' },
+                  ...ACCOUNT_LEVEL_OPTIONS
+                ]}
                 disabled={isProcessing}
                 className="w-48"
-                openUpward={true}
               />
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={handleBulkRolesChange}
-                disabled={selectedRoles.length === 0 || isProcessing}
+                onClick={handleBulkAccountLevelChange}
+                disabled={!selectedAccountLevel || isProcessing}
                 loading={isProcessing}
                 className="whitespace-nowrap"
               >
