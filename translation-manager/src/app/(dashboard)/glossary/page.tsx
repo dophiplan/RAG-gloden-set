@@ -13,9 +13,11 @@ import EditableCell from '@/components/EditableCell';
 import { LanguageCode } from '@/types';
 import { useGlossaryData } from './hooks/useGlossaryData';
 import { useProducts, useLanguages } from '@/hooks/useReferenceData';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 import GlossaryFormModal from './components/GlossaryFormModal';
 import ExportModal from './components/ExportModal';
 import BulkActionBar from './components/BulkActionBar';
+import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
 
 export default function GlossaryPage() {
   const router = useRouter();
@@ -124,6 +126,60 @@ export default function GlossaryPage() {
     if (status === 'approved') return 'success';
     if (status === 'rejected') return 'error';
     return 'default';
+  };
+
+  // Resizable columns setup
+  const defaultWidths = {
+    checkbox: 32,
+    term: 200,
+    translation: 200,
+    context: 220,
+    product: 120,
+    source: 100,
+    approval: 120,
+    hitCount: 100,
+    actions: 180,
+  };
+
+  const minWidths = {
+    checkbox: 32,
+    term: 120,
+    translation: 120,
+    context: 120,
+    product: 80,
+    source: 80,
+    approval: 100,
+    hitCount: 80,
+    actions: 120,
+  };
+
+  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
+    defaultWidths,
+    minWidths,
+    storageKey: 'glossary-table-column-widths',
+  });
+
+  // Global mouse handlers for column resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
+    const handleMouseUp = () => stopResize();
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resize, stopResize]);
+
+  // Helper to get cell style with width
+  const getCellStyle = (columnKey: string, additionalStyle?: React.CSSProperties) => {
+    const width = columnWidths[columnKey];
+    return {
+      ...(width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {}),
+      ...(additionalStyle || {}),
+    };
   };
 
   // Checkbox selection handlers
@@ -399,31 +455,12 @@ export default function GlossaryPage() {
           <Card padding="none">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr>
-                    <th scope="col" className="w-8">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={handleToggleAll}
-                        className="rounded border-gray-300"
-                        aria-label="모든 항목 선택"
-                      />
-                    </th>
-                    <th scope="col">용어</th>
-                    <th scope="col">번역</th>
-                    <th scope="col">문맥</th>
-                    <th scope="col">제품</th>
-                    <th scope="col">출처</th>
-                    <th scope="col" title="AI가 추가한 용어는 승인 후 사용됩니다">
-                      검수 상태 <span className="text-gray-400">ⓘ</span>
-                    </th>
-                    <th scope="col" title="이 용어가 번역에 재사용된 횟수">
-                      사용 횟수 <span className="text-gray-400">ⓘ</span>
-                    </th>
-                    <th scope="col" style={{ textAlign: 'right' }}>작업</th>
-                  </tr>
-                </thead>
+                <GlossaryTableHeader
+                  isAllSelected={isAllSelected}
+                  onToggleAll={handleToggleAll}
+                  columnWidths={columnWidths}
+                  onResizeStart={startResize}
+                />
                 <tbody>
                   {terms.length === 0 ? (
                     <tr>
@@ -436,7 +473,7 @@ export default function GlossaryPage() {
                   ) : (
                     terms.map((term) => (
                       <tr key={term.id}>
-                        <td className="px-2 py-2 align-top">
+                        <td className="px-2 py-2 align-top" style={getCellStyle('checkbox')}>
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(term.id)}
@@ -444,28 +481,28 @@ export default function GlossaryPage() {
                             className="rounded border-gray-300"
                           />
                         </td>
-                        <td className="font-semibold">
+                        <td className="font-semibold" style={getCellStyle('term')}>
                           <EditableCell
                             value={term.term}
                             onSave={(newValue) => handleTermInlineUpdate(term.id, newValue)}
                             placeholder="용어"
                           />
                         </td>
-                        <td>
+                        <td style={getCellStyle('translation')}>
                           <EditableCell
                             value={term.translation}
                             onSave={(newValue) => handleTranslationInlineUpdate(term.id, newValue)}
                             placeholder="번역"
                           />
                         </td>
-                        <td className="text-[#64748B]">
+                        <td className="text-[#64748B]" style={getCellStyle('context')}>
                           <EditableCell
                             value={term.context || ''}
                             onSave={(newValue) => handleContextInlineUpdate(term.id, newValue)}
                             placeholder="문맥"
                           />
                         </td>
-                        <td>
+                        <td style={getCellStyle('product')}>
                           {term.glossary_products && term.glossary_products.length > 0 ? (
                             term.glossary_products.length === 1 ? (
                               <Badge variant="info">
@@ -483,22 +520,22 @@ export default function GlossaryPage() {
                             <Badge variant="default">전체</Badge>
                           )}
                         </td>
-                        <td>
+                        <td style={getCellStyle('source')}>
                           <Badge variant={getSourceTypeBadgeVariant(term.source_type)}>
                             {sourceTypeLabels[term.source_type] || term.source_type}
                           </Badge>
                         </td>
-                        <td>
+                        <td style={getCellStyle('approval')}>
                           <Badge variant={getApprovalStatusBadgeVariant(term.approval_status)}>
                             {approvalStatusLabels[term.approval_status] || term.approval_status}
                           </Badge>
                         </td>
-                        <td className="text-center">
+                        <td className="text-center" style={getCellStyle('hitCount')}>
                           <span className={term.hit_count > 0 ? 'font-semibold text-indigo-600' : 'text-gray-400'}>
                             {term.hit_count}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'right' }}>
+                        <td style={getCellStyle('actions', { textAlign: 'right' })}>
                           <div className="flex justify-end gap-2">
                             {term.approval_status === 'pending' && (
                               <>
@@ -521,31 +558,12 @@ export default function GlossaryPage() {
           <Card padding="none">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr>
-                    <th scope="col" className="w-8">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={handleToggleAll}
-                        className="rounded border-gray-300"
-                        aria-label="모든 항목 선택"
-                      />
-                    </th>
-                    <th scope="col">용어</th>
-                    <th scope="col">번역</th>
-                    <th scope="col">문맥</th>
-                    <th scope="col">제품</th>
-                    <th scope="col">출처</th>
-                    <th scope="col" title="AI가 추가한 용어는 승인 후 사용됩니다">
-                      검수 상태 <span className="text-gray-400">ⓘ</span>
-                    </th>
-                    <th scope="col" title="이 용어가 번역에 재사용된 횟수">
-                      사용 횟수 <span className="text-gray-400">ⓘ</span>
-                    </th>
-                    <th scope="col" style={{ textAlign: 'right' }}>작업</th>
-                  </tr>
-                </thead>
+                <GlossaryTableHeader
+                  isAllSelected={isAllSelected}
+                  onToggleAll={handleToggleAll}
+                  columnWidths={columnWidths}
+                  onResizeStart={startResize}
+                />
                 <tbody>
                   <tr>
                     <td colSpan={9} className="text-center py-12">

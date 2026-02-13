@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { isMaster } from '@/lib/permissions';
 import { formatDateTimeKR } from '@/shared/date_time/date_formatter';
 import { showError, showConfirm } from '@/lib/notifications';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 
 const ISSUE_TYPE_LABELS: Record<IssueType, string> = {
   pdf_parse_error: 'PDF 파싱 오류',
@@ -116,6 +117,51 @@ export default function IssuesPage() {
     }
   };
 
+  // Resizable columns setup
+  const defaultWidths = {
+    type: 140,
+    description: 280,
+    fileNames: 240,
+    createdAt: 180,
+    resolved: 100,
+    actions: 120,
+  };
+
+  const minWidths = {
+    type: 100,
+    description: 180,
+    fileNames: 150,
+    createdAt: 120,
+    resolved: 80,
+    actions: 100,
+  };
+
+  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
+    defaultWidths,
+    minWidths,
+    storageKey: 'issues-table-column-widths',
+  });
+
+  // Global mouse handlers for column resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
+    const handleMouseUp = () => stopResize();
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resize, stopResize]);
+
+  // Helper to get cell style with width
+  const getCellStyle = (columnKey: string) => {
+    const width = columnWidths[columnKey];
+    return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -148,23 +194,29 @@ export default function IssuesPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-32">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('type')}>
                       타입
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('type', e.clientX); }} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[250px]">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('description')}>
                       설명
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('description', e.clientX); }} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[200px]">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('fileNames')}>
                       파일 이름
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('fileNames', e.clientX); }} />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-40">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('createdAt')}>
                       생성일
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('createdAt', e.clientX); }} />
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-24">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 relative group" style={getCellStyle('resolved')}>
                       해결됨
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('resolved', e.clientX); }} />
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 w-24">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 relative group" style={getCellStyle('actions')}>
                       작업
+                      <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20" onMouseDown={(e) => { e.preventDefault(); startResize('actions', e.clientX); }} />
                     </th>
                   </tr>
                 </thead>
@@ -176,7 +228,7 @@ export default function IssuesPage() {
                         issue.resolved ? 'opacity-60' : ''
                       }`}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('type')}>
                         <span
                           className={`inline-block px-2 py-1 text-xs rounded ${
                             issue.issue_type === 'pdf_parse_error'
@@ -191,12 +243,12 @@ export default function IssuesPage() {
                           {ISSUE_TYPE_LABELS[issue.issue_type]}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('description')}>
                         <p className="text-sm text-gray-900 whitespace-pre-wrap">
                           {issue.description}
                         </p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('fileNames')}>
                         <div className="text-sm text-gray-700">
                           {issue.file_names && issue.file_names.length > 0 ? (
                             <ul className="list-disc list-inside">
@@ -211,12 +263,12 @@ export default function IssuesPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('createdAt')}>
                         <span className="text-sm text-gray-600">
                           {formatDateTimeKR(issue.created_at)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center" style={getCellStyle('resolved')}>
                         <input
                           type="checkbox"
                           checked={issue.resolved}
@@ -226,7 +278,7 @@ export default function IssuesPage() {
                           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" style={getCellStyle('actions')}>
                         <Button
                           size="sm"
                           variant="danger"

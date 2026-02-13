@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import MultiSelectDropdown, { MultiSelectOption } from '@/components/ui/MultiSelectDropdown';
 import { UserRole, ProductCode, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
 import { useUserManagement } from '@/components/hooks/useUserManagement';
 import { useProducts } from '@/hooks/useReferenceData';
+import { useResizableColumns } from '@/hooks/useResizableColumns';
 
 interface UserManageme[기밀마스킹]ableProps {
   onRefresh?: () => void;
@@ -68,6 +70,53 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
     label: p.name,
   }));
 
+  // Resizable columns setup
+  const defaultWidths = {
+    name: 180,
+    email: 220,
+    roles: 220,
+    workProducts: 180,
+    workScope: 180,
+    workLanguages: 180,
+    actions: 140,
+  };
+
+  const minWidths = {
+    name: 120,
+    email: 150,
+    roles: 150,
+    workProducts: 120,
+    workScope: 120,
+    workLanguages: 120,
+    actions: 100,
+  };
+
+  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
+    defaultWidths,
+    minWidths,
+    storageKey: 'user-management-table-column-widths',
+  });
+
+  // Global mouse handlers for column resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
+    const handleMouseUp = () => stopResize();
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resize, stopResize]);
+
+  // Helper to get cell style with width
+  const getCellStyle = (columnKey: string) => {
+    const width = columnWidths[columnKey];
+    return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-gray-500">로딩 중...</div>;
   }
@@ -115,26 +164,75 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('name')}>
                   이름
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('name', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[200px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('email')}>
                   이메일
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('email', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[200px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('roles')}>
                   권한
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('roles', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('workProducts')}>
                   제품
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('workProducts', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('workScope')}>
                   작업 범위
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('workScope', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('workLanguages')}>
                   언어
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('workLanguages', e.clientX);
+                    }}
+                  />
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 w-32">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 relative group" style={getCellStyle('actions')}>
                   작업
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      startResize('actions', e.clientX);
+                    }}
+                  />
                 </th>
               </tr>
             </thead>
@@ -150,7 +248,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                   const isEditing = editingId === user.id;
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('name')}>
                         {isEditing ? (
                           <Input
                             value={editData.name || ''}
@@ -165,10 +263,10 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('email')}>
                         <span className="text-sm text-gray-900">{user.email}</span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('roles')}>
                         {isEditing ? (
                           <MultiSelectDropdown
                             options={ROLE_OPTIONS}
@@ -191,7 +289,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('workProducts')}>
                         {isEditing ? (
                           <MultiSelectDropdown
                             options={PRODUCT_OPTIONS}
@@ -217,7 +315,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('workScope')}>
                         {isEditing ? (
                           <MultiSelectDropdown
                             options={WORK_SCOPE_OPTIONS}
@@ -240,7 +338,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" style={getCellStyle('workLanguages')}>
                         {isEditing ? (
                           <MultiSelectDropdown
                             options={LANGUAGE_OPTIONS}
@@ -263,7 +361,7 @@ export default function UserManageme[기밀마스킹]able({ onRefresh }: UserMan
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right" style={getCellStyle('actions')}>
                         {isEditing ? (
                           <div className="flex gap-2 justify-end">
                             <Button
