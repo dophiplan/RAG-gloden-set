@@ -148,6 +148,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // AI Translation warning storage (needs to be in outer scope for response)
+    let aiTranslationWarning: string | null = null;
+
     // Create translation_results for selected languages
     // Always include KO with the original text
     if (data && data.length > 0) {
@@ -337,8 +340,6 @@ export async function POST(request: NextRequest) {
         }
 
         // AI Translation fallback for empty translations
-        let aiTranslationWarning: string | null = null;
-
         try {
 
           // Get AI provider settings with priority order
@@ -349,7 +350,7 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
           // Get provider priority order (defaults to ['openai', 'claude', 'kimi', 'gemini'])
-          const providerOrder = orgSettings?.settings?.ai_provider_order || ['openai', 'claude', 'kimi', 'gemini'];
+          const providerOrder: string[] = orgSettings?.settings?.ai_provider_order || ['openai', 'claude', 'kimi', 'gemini'];
 
           // Collect available API keys by provider
           const availableKeys: Record<string, string> = {};

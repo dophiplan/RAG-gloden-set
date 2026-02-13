@@ -44,6 +44,8 @@ export const bulkCreateSchema = z.object({
     .max(MAX_VERSION_LENGTH)
     .optional(),
   product_code: z.string().optional(),
+  product_codes: z.array(z.string()).optional(),
+  platform_codes: z.array(z.string()).optional(),
   scope: z.enum(['SaaS', 'Solution', 'saas', 'solution']).optional(),
   priority: z.enum(['긴급', '상', '중', '하']).optional(),
   languages: z.array(z.string()).optional(),

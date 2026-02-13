@@ -30,7 +30,10 @@ export async function PATCH(
       pending: ['pending', 'in_progress'], // Can stay or move forward
       in_progress: ['pending', 'in_progress', 'reviewed'], // Can go back, stay, or forward
       reviewed: ['in_progress', 'reviewed', 'deployed'], // Can go back, stay, or forward
-      deployed: ['reviewed', 'deployed'], // Can go back for re-review or stay
+      deployed: ['reviewed', 'deployed', 're_deploy_request'], // Can go back for re-review or stay
+      re_request: ['pending', 're_request', 'in_progress'], // Can restart workflow
+      re_deploy_request: ['reviewed', 're_deploy_request', 'deployed'], // Can re-deploy or go back
+      not_used: ['not_used', 'pending'], // Can reactivate
     };
 
     // Fetch current translation
