@@ -190,8 +190,8 @@ export default function IssuesPage() {
               이슈가 없습니다.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-auto">
+              <table className="w-full table-auto">
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('type')}>
