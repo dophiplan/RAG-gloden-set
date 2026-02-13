@@ -200,6 +200,62 @@ source_text,context,status,ko,en
 
 **중요**: 현재 버전은 4.5MB PDF를 지원합니다. 더 큰 파일은 Phase 2 업데이트에서 지원 예정입니다.
 
+## 아키텍처
+
+이 프로젝트는 **AI-Friendly 구조**와 **유지보수성**을 위해 리팩토링되었습니다.
+
+### Backend: 3-Tier Architecture
+
+```
+/api/translations/
+  ├── handlers/           # HTTP 요청/응답 처리
+  ├── services/           # 비즈니스 로직
+  ├── repositories/       # 데이터베이스 접근
+  └── route.ts           # 라우팅 (21줄)
+```
+
+**계층별 책임:**
+- **Handler**: HTTP 요청 파싱 + 응답 반환만
+- **Service**: 비즈니스 로직 (여러 Repository 조합)
+- **Repository**: DB CRUD만 (Supabase 쿼리)
+
+### Frontend: Component & Hook Decomposition
+
+```
+/components/translations/
+  └── table/
+      ├── TranslationTableV2.tsx        # 테이블 컨테이너
+      ├── TranslationRow.tsx            # 개별 행 (memoized)
+      ├── TranslationTableHeader.tsx    # 헤더 (memoized)
+      └── TranslationTablePagination.tsx # 페이지네이션
+
+/hooks/
+  ├── mutations/          # 데이터 변경 훅 (6개)
+  ├── useModalStates.ts   # 모달 상태 관리
+  ├── useTranslationEventHandlers.ts  # 이벤트 핸들러
+  └── ...                 # 기타 전문화된 훅
+```
+
+**설계 원칙:**
+- 각 파일 150줄 이하
+- 단일 책임 원칙
+- React.memo로 성능 최적화
+- AI-Friendly 파일명 (파일명만으로 내용 파악 가능)
+
+### 테스트
+
+```
+tests/
+  └── characterization/units/
+      ├── validation_schemas.test.ts    # 37 tests
+      ├── format_functions.test.ts      # 10 tests
+      └── similarity_functions.test.ts  # 26 tests
+```
+
+**75개 테스트**로 리팩토링 중 안전성 보장
+
+자세한 내용은 [REFACTORING_REPORT.md](./REFACTORING_REPORT.md)를 참고하세요.
+
 ## 라이선스
 
 MIT
