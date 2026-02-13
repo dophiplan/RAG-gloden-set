@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { EmailTemplateType } from '@/types';
 import { renderTemplate, buildTemplateVariables, buildLanguageList } from '@/lib/emails/template-renderer';
 import { determineRecipients } from '@/lib/emails/recipients';
-import { calculateDeadline, formatDeadlineWithDay } from '@/lib/utils/holidays';
+import { calculateDeadline, formatDeadlineWithDay } from '@/shared/date_time/holiday_checker';
 
 // POST - Preview email before sending
 export async function POST(request: NextRequest) {

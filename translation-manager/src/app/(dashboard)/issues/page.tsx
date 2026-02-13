@@ -8,7 +8,7 @@ import ProductTabs from '@/components/ProductTabs';
 import { Issue, ProductCode, IssueType, User } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { isMaster } from '@/lib/permissions';
-import { formatDateTimeKR } from '@/lib/format';
+import { formatDateTimeKR } from '@/shared/date_time/date_formatter';
 import { showError, showConfirm } from '@/lib/notifications';
 
 const ISSUE_TYPE_LABELS: Record<IssueType, string> = {

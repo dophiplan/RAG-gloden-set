@@ -3,7 +3,7 @@ import {
   calculateSimilarity,
   findSimilarTexts,
   isExactMatch,
-} from '@/lib/similarity';
+} from '@/shared/text_processing/text_similarity_calculator';
 
 describe('Similarity Functions', () => {
   describe('calculateSimilarity', () => {

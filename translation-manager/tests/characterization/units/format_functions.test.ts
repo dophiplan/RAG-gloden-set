@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDateKR, formatDateTimeKR } from '@/lib/format';
+import { formatDateKR, formatDateTimeKR } from '@/shared/date_time/date_formatter';
 
 describe('Format Functions', () => {
   describe('formatDateKR', () => {
