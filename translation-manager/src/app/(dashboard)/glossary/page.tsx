@@ -538,8 +538,8 @@ export default function GlossaryPage() {
                             {term.hit_count}
                           </span>
                         </td>
-                        <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'right' }}>
-                          <div className="flex justify-end gap-2">
+                        <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
+                          <div className="flex justify-center gap-2">
                             {term.approval_status === 'pending' && (
                               <>
                                 <Button size="sm" variant="primary" onClick={() => handleApprove(term.id)}>✓ 승인</Button>
@@ -678,7 +678,7 @@ export default function GlossaryPage() {
                         }}
                       />
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-700" style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}>
+                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-700" style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}>
                       작업
                     </th>
                   </tr>
@@ -789,8 +789,8 @@ export default function GlossaryPage() {
                               {group.hit_count}
                             </span>
                           </td>
-                          <td className="px-4 py-2" style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'right' }}>
-                            <div className="flex justify-end gap-2">
+                          <td className="px-4 py-2" style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
+                            <div className="flex justify-center gap-2">
                               {group.approval_status === 'pending' && (
                                 <>
                                   <Button size="sm" variant="primary" onClick={() => {
