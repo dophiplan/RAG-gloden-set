@@ -12,7 +12,7 @@ import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { Holiday } from '@/types/api';
 import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
-import { calculateDeadline, formatDeadline } from '@/lib/utils/holidays';
+import { calculateDeadline, formatDeadline } from '@/shared/date_time/holiday_checker';
 
 interface ParseResult {
   success: boolean;

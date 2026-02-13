@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Translation } from '@/types';
-import { calculateSimilarity } from '@/lib/similarity';
+import { calculateSimilarity } from '@/shared/text_processing/text_similarity_calculator';
 
 export interface DuplicateMatch {
   translation: Translation;

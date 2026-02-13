@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { calculateSimilarity, isExactMatch } from '@/lib/similarity';
+import { calculateSimilarity, isExactMatch } from '@/shared/text_processing/text_similarity_calculator';
 import { DuplicateCheckResult, Translation, TranslationResult } from '@/types';
 
 interface CheckDuplicatesInput {

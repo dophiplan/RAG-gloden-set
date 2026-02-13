@@ -5,7 +5,7 @@ import { canSendEmail } from '@/lib/permissions';
 import { getEmailService } from '@/lib/emails/email-service';
 import { determineRecipients } from '@/lib/emails/recipients';
 import { renderTemplate, buildTemplateVariables, buildLanguageList } from '@/lib/emails/template-renderer';
-import { calculateDeadline, formatDeadlineWithDay } from '@/lib/utils/holidays';
+import { calculateDeadline, formatDeadlineWithDay } from '@/shared/date_time/holiday_checker';
 
 export async function POST(request: NextRequest) {
   try {
