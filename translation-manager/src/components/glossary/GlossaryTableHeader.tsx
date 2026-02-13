@@ -84,6 +84,7 @@ const GlossaryTableHeader = memo(function GlossaryTableHeader({
               scope="col"
               className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group"
               style={style}
+              suppressHydrationWarning
               title={
                 column.key === 'approval'
                   ? 'AI가 추가한 용어는 승인 후 사용됩니다'
