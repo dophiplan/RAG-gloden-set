@@ -2,8 +2,6 @@
 
 import { useMemo, Suspense } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import ProductTabs from '@/components/ProductTabs';
 import TranslationTableV2 from '@/components/translations/TranslationTableV2';
 import EmailTemplateModal from '@/components/translations/EmailTemplateModal';
@@ -146,30 +144,6 @@ function TranslationsContent() {
           versionFilter={filters.versionFilter}
         />
 
-        {/* Bulk Actions */}
-        {modals.selectedTranslations.length > 0 && (
-          <Card>
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-sm text-gray-700 font-medium">
-                {modals.selectedTranslations.length}개 선택됨
-              </span>
-              <Button
-                size="sm"
-                onClick={() => handlers.handleOpenEmailModal('translation_request')}
-              >
-                메일 발송
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handlers.handleOpenDeploymentModal}
-              >
-                반영 완료 체크
-              </Button>
-            </div>
-          </Card>
-        )}
-
         <TranslationTableV2
           translations={translations}
           selectedProduct={filters.selectedProduct}
@@ -281,6 +255,8 @@ function TranslationsContent() {
           selectedIds={modals.selectedIds}
           onClearSelection={modals.clearSelection}
           onRefresh={fetchTranslations}
+          onOpenEmailModal={handlers.handleOpenEmailModal}
+          onOpenDeploymentModal={handlers.handleOpenDeploymentModal}
         />
       </div>
     </DashboardLayout>

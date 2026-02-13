@@ -10,6 +10,8 @@ interface TranslationBulkActionBarProps {
   selectedIds: string[];
   onClearSelection: () => void;
   onRefresh: () => void;
+  onOpenEmailModal?: (templateType: 'translation_request') => void;
+  onOpenDeploymentModal?: () => void;
 }
 
 /**
@@ -28,6 +30,8 @@ export default function TranslationBulkActionBar({
   selectedIds,
   onClearSelection,
   onRefresh,
+  onOpenEmailModal,
+  onOpenDeploymentModal,
 }: TranslationBulkActionBarProps) {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | ''>('');
@@ -145,16 +149,42 @@ export default function TranslationBulkActionBar({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          {/* 왼쪽: 선택 개수 */}
+          <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">
               {selectedCount}개 선택됨
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* 빠른 상태 변경 버튼 */}
+          {/* 오른쪽: 액션 버튼들 */}
+          <div className="flex items-center gap-2">
+            {/* 메일/배포 액션 */}
+            {onOpenEmailModal && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => onOpenEmailModal('translation_request')}
+                disabled={isProcessing}
+              >
+                메일 발송
+              </Button>
+            )}
+            {onOpenDeploymentModal && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={onOpenDeploymentModal}
+                disabled={isProcessing}
+              >
+                반영 완료 체크
+              </Button>
+            )}
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 빠른 상태 변경 */}
             <Button
               size="sm"
               variant="secondary"
@@ -182,7 +212,7 @@ export default function TranslationBulkActionBar({
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value as ProductCode | '')}
                 options={productOptions}
-                className="w-48"
+                className="w-40"
               />
               <Button
                 size="sm"
@@ -201,7 +231,7 @@ export default function TranslationBulkActionBar({
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value as TranslationStatus | '')}
                 options={statusOptions}
-                className="w-48"
+                className="w-40"
               />
               <Button
                 size="sm"
@@ -213,6 +243,8 @@ export default function TranslationBulkActionBar({
                 변경
               </Button>
             </div>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
 
             {/* 선택 해제 */}
             <Button
