@@ -9,6 +9,7 @@ import Select from '@/components/ui/Select';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
 import { FIRST_MASTER_EMAIL } from '@/types/users';
 import { useProducts } from '@/hooks/useReferenceData';
+import UserBulkActionBar from '@/components/users/UserBulkActionBar';
 
 interface SystemUser {
   id: string;
@@ -840,6 +841,14 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Action Bar */}
+      <UserBulkActionBar
+        selectedCount={selectedUserIds.length}
+        selectedIds={selectedUserIds}
+        onClearSelection={() => setSelectedUserIds([])}
+        onRefresh={fetchSystemUsers}
+      />
     </DashboardLayout>
   );
 }
