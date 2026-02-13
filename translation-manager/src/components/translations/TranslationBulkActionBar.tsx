@@ -224,6 +224,7 @@ export default function TranslationBulkActionBar({
                 onClick={handleBulkProductChange}
                 disabled={selectedProducts.length === 0 || isProcessing}
                 loading={isProcessing}
+                className="whitespace-nowrap"
               >
                 변경
               </Button>
@@ -235,7 +236,7 @@ export default function TranslationBulkActionBar({
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value as TranslationStatus | '')}
                 options={statusOptions}
-                className="w-40"
+                className="w-48"
               />
               <Button
                 size="sm"
@@ -243,6 +244,7 @@ export default function TranslationBulkActionBar({
                 onClick={() => handleBulkStatusChange()}
                 disabled={!selectedStatus || isProcessing}
                 loading={isProcessing}
+                className="whitespace-nowrap"
               >
                 변경
               </Button>
