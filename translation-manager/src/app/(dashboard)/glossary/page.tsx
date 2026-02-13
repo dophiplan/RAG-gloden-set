@@ -159,6 +159,12 @@ export default function GlossaryPage() {
     storageKey: 'glossary-table-column-widths',
   });
 
+  // Debug: Log columnWidths
+  useEffect(() => {
+    console.log('[Glossary] columnWidths:', columnWidths);
+    console.log('[Glossary] startResize:', typeof startResize);
+  }, [columnWidths, startResize]);
+
   // Global mouse handlers for column resizing
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
@@ -580,9 +586,9 @@ export default function GlossaryPage() {
           <Card padding="none">
             <div className="overflow-auto">
               <table className="w-full table-auto">
-                <thead>
+                <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th scope="col" className="w-8">
+                    <th scope="col" className="px-2 py-3 w-8" style={getCellStyle('checkbox')}>
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -591,20 +597,93 @@ export default function GlossaryPage() {
                         aria-label="모든 항목 선택"
                       />
                     </th>
-                    <th scope="col">용어</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('term')}>
+                      용어
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('term', e.clientX);
+                        }}
+                      />
+                    </th>
                     {selectedLanguageColumns.map((langCode) => (
-                      <th scope="col" key={langCode}>{languagesMap[langCode]?.name || langCode}</th>
+                      <th
+                        scope="col"
+                        key={langCode}
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group"
+                        style={getCellStyle('translation')}
+                      >
+                        {languagesMap[langCode]?.name || langCode}
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            startResize('translation', e.clientX);
+                          }}
+                        />
+                      </th>
                     ))}
-                    <th scope="col">문맥</th>
-                    <th scope="col">제품</th>
-                    <th scope="col">출처</th>
-                    <th scope="col" title="AI가 추가한 용어는 승인 후 사용됩니다">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('context')}>
+                      문맥
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('context', e.clientX);
+                        }}
+                      />
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('product')}>
+                      제품
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('product', e.clientX);
+                        }}
+                      />
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('source')}>
+                      출처
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('source', e.clientX);
+                        }}
+                      />
+                    </th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('approval')} title="AI가 추가한 용어는 승인 후 사용됩니다">
                       검수 상태 <span className="text-gray-400">ⓘ</span>
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('approval', e.clientX);
+                        }}
+                      />
                     </th>
-                    <th scope="col" title="이 용어가 번역에 재사용된 횟수">
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('hitCount')} title="이 용어가 번역에 재사용된 횟수">
                       사용 횟수 <span className="text-gray-400">ⓘ</span>
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('hitCount', e.clientX);
+                        }}
+                      />
                     </th>
-                    <th scope="col" style={{ textAlign: 'right' }}>작업</th>
+                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-700 relative group" style={getCellStyle('actions')}>
+                      작업
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          startResize('actions', e.clientX);
+                        }}
+                      />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -626,7 +705,7 @@ export default function GlossaryPage() {
 
                       return (
                         <tr key={group.term}>
-                          <td className="px-2 py-2 align-top">
+                          <td className="px-2 py-2 align-top" style={getCellStyle('checkbox')}>
                             <input
                               type="checkbox"
                               checked={isGroupSelected}
@@ -640,7 +719,7 @@ export default function GlossaryPage() {
                               className="rounded border-gray-300"
                             />
                           </td>
-                          <td className="font-semibold">
+                          <td className="px-4 py-2 font-semibold" style={getCellStyle('term')}>
                             <EditableCell
                               value={group.term}
                               onSave={async (newValue) => {
@@ -655,7 +734,7 @@ export default function GlossaryPage() {
                           {selectedLanguageColumns.map((langCode) => {
                             const translation = group.translations[langCode];
                             return (
-                              <td key={langCode} className="text-[#64748B]">
+                              <td key={langCode} className="px-4 py-2 text-[#64748B]" style={getCellStyle('translation')}>
                                 {translation ? (
                                   <EditableCell
                                     value={translation.translation}
@@ -668,7 +747,7 @@ export default function GlossaryPage() {
                               </td>
                             );
                           })}
-                          <td className="text-[#64748B]">
+                          <td className="px-4 py-2 text-[#64748B]" style={getCellStyle('context')}>
                             <EditableCell
                               value={group.context || ''}
                               onSave={async (newValue) => {
@@ -680,7 +759,7 @@ export default function GlossaryPage() {
                               placeholder="문맥"
                             />
                           </td>
-                          <td>
+                          <td className="px-4 py-2" style={getCellStyle('product')}>
                             {group.glossary_products && group.glossary_products.length > 0 ? (
                               group.glossary_products.length === 1 ? (
                                 <Badge variant="info">
@@ -698,22 +777,22 @@ export default function GlossaryPage() {
                               <Badge variant="default">전체</Badge>
                             )}
                           </td>
-                          <td>
+                          <td className="px-4 py-2" style={getCellStyle('source')}>
                             <Badge variant={getSourceTypeBadgeVariant(group.source_type)}>
                               {sourceTypeLabels[group.source_type] || group.source_type}
                             </Badge>
                           </td>
-                          <td>
+                          <td className="px-4 py-2" style={getCellStyle('approval')}>
                             <Badge variant={getApprovalStatusBadgeVariant(group.approval_status)}>
                               {approvalStatusLabels[group.approval_status] || group.approval_status}
                             </Badge>
                           </td>
-                          <td className="text-center">
+                          <td className="px-4 py-2 text-center" style={getCellStyle('hitCount')}>
                             <span className={group.hit_count > 0 ? 'font-semibold text-indigo-600' : 'text-gray-400'}>
                               {group.hit_count}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td className="px-4 py-2" style={getCellStyle('actions', { textAlign: 'right' })}>
                             <div className="flex justify-end gap-2">
                               {group.approval_status === 'pending' && (
                                 <>
