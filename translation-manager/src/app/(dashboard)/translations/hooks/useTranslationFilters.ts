@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TranslationStatus, ProductCode, LanguageCode } from '@/types';
+import { TranslationStatus, ProductCode, LanguageCode, ScopeType } from '@/types';
 
 export function useTranslationFilters() {
   const [statusFilter, setStatusFilter] = useState<TranslationStatus | ''>('');
@@ -7,7 +7,7 @@ export function useTranslationFilters() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
   const [requestIdFilter, setRequestIdFilter] = useState<string | null>(null);
-  const [scopeFilter, setScopeFilter] = useState<'SaaS' | 'Solution' | ''>('');
+  const [scopeFilter, setScopeFilter] = useState<ScopeType>('');
   const [versionFilter, setVersionFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -19,6 +19,20 @@ export function useTranslationFilters() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [createdAfter, setCreatedAfter] = useState('');
   const [createdBefore, setCreatedBefore] = useState('');
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setStatusFilter('');
+    setLanguageFilter('');
+    setSearchTerm('');
+    setSelectedProduct(null);
+    setRequestIdFilter(null);
+    setScopeFilter('');
+    setVersionFilter('');
+    setCreatedAfter('');
+    setCreatedBefore('');
+    setPage(1);
+  };
 
   // Quick filter functions
   const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used') => {
@@ -65,10 +79,13 @@ export function useTranslationFilters() {
     setSelectedLanguageColumns,
     showAdvancedFilters,
     setShowAdvancedFilters,
+    toggleAdvancedFilters: () => setShowAdvancedFilters(prev => !prev),
     createdAfter,
     setCreatedAfter,
     createdBefore,
     setCreatedBefore,
     setQuickFilter,
+    applyQuickFilter: setQuickFilter, // Alias for backward compatibility
+    clearAllFilters,
   };
 }

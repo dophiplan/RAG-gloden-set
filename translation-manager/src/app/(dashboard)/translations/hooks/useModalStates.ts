@@ -47,6 +47,24 @@ export function useModalStates(translations: Translation[]) {
 
   const clearSelection = () => setSelectedIds([]);
 
+  const toggleSelectAll = () => {
+    if (selectedIds.length === translations.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(translations.map(t => t.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  // Computed values
+  const canEmail = selectedTranslations.length > 0;
+  const isAllSelected = selectedIds.length > 0 && selectedIds.length === translations.length;
+
   return {
     // Create modal
     isCreateModalOpen,
@@ -66,13 +84,22 @@ export function useModalStates(translations: Translation[]) {
 
     // History panel
     historyPanelOpen,
+    isVersionHistoryPanelOpen: historyPanelOpen, // Alias
     openHistoryPanel,
+    openVersionHistoryPanel: openHistoryPanel, // Alias
     closeHistoryPanel,
+    closeVersionHistoryPanel: closeHistoryPanel, // Alias
 
     // Selection
     selectedIds,
     setSelectedIds,
     selectedTranslations,
     clearSelection,
+    toggleSelectAll,
+    toggleSelect,
+
+    // Computed
+    canEmail,
+    isAllSelected,
   };
 }

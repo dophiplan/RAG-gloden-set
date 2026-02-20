@@ -9,7 +9,7 @@ import {
   TranslationResultCreateData,
   TranslationProductCreateData,
 } from '@/repositories';
-import { Translation, TranslationStatus, ProductCode, LanguageCode } from '@/types';
+import { Translation, TranslationStatus, ProductCode, LanguageCode, PriorityLevel } from '@/types';
 import { GlossaryAutoMatcher } from './glossary_auto_matcher';
 import { TranslationAuditLogger } from './translation_audit_logger';
 
@@ -20,7 +20,7 @@ export interface TranslationCreateInput {
   productCode?: ProductCode;
   productCodes?: ProductCode[];
   scope?: 'SaaS' | 'Solution';
-  priority?: '긴급' | '상' | '중' | '하';
+  priority?: PriorityLevel;
   completionDate?: string;
   userId: string;
   translations?: Array<{
@@ -144,7 +144,7 @@ export class TranslationCrudService {
       version_updated_at: version ? new Date().toISOString() : null,
       product_code: productCode || null,
       scope: scope || null,
-      priority: priority || '중',
+      priority: priority || 'medium',
       completion_date: completionDate || null,
       user_id: userId,
       status: 'pending',

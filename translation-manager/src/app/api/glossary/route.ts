@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GlossaryCreateInput, LanguageCode, ProductCode } from '@/types';
-import { glossaryCreateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
+import { LanguageCode, ProductCode } from '@/types';
+import { sanitizeText } from '@/lib/validation/schemas';
 import { enforceRateLimit } from '@/lib/api/rate-limiter';
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
 import { successResponse, serverError, badRequest, conflict } from '@/lib/api/middleware';
+import { GlossaryRepository } from '@/repositories';
+// AI translation is done dynamically to avoid top-level import issues
 
 // GET - List glossary terms
 export async function GET(request: NextRequest) {
@@ -107,7 +109,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create glossary term
+// POST - Create glossary term with AI translation for all languages
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -123,66 +125,109 @@ export async function POST(request: NextRequest) {
       return rateLimitResult.response;
     }
 
-    // Parse and validate request body
-    const rawBody = await request.json();
-    const validation = validateAndSanitize(glossaryCreateSchema, rawBody);
+    // Parse request body
+    const body = await request.json();
+    const { 
+      sourceText, 
+      context, 
+      product_code, 
+      product_codes,
+      targetLanguages 
+    } = body;
 
-    if (!validation.success) {
-      return badRequest(validation.error);
+    // Validate required fields
+    if (!sourceText || !sourceText.trim()) {
+      return badRequest('원문을 입력해주세요.');
     }
 
-    const body = validation.data;
+    if (!targetLanguages || !Array.isArray(targetLanguages) || targetLanguages.length === 0) {
+      return badRequest('번역할 언어를 선택해주세요.');
+    }
 
     // Sanitize text inputs
-    const sanitizedTerm = sanitizeText(body.term);
-    const sanitizedTranslation = sanitizeText(body.translation);
-    const sanitizedContext = body.context ? sanitizeText(body.context) : null;
+    const sanitizedSourceText = sanitizeText(sourceText);
+    const sanitizedContext = context ? sanitizeText(context) : null;
 
-    // Check for duplicate term (same term, language, and product)
+    // Check for duplicate term (same term and product)
     let duplicateQuery = supabase
       .from('glossary')
       .select('id')
-      .eq('term', sanitizedTerm)
-      .eq('language_code', body.language_code);
+      .eq('term', sanitizedSourceText);
 
-    if (body.product_code) {
-      duplicateQuery = duplicateQuery.eq('product_code', body.product_code);
+    if (product_code) {
+      duplicateQuery = duplicateQuery.eq('product_code', product_code);
     } else {
       duplicateQuery = duplicateQuery.is('product_code', null);
     }
 
-    const { data: existing } = await duplicateQuery.single();
+    const { data: existing } = await duplicateQuery.limit(1).single();
 
     if (existing) {
       return conflict('이미 등록된 용어입니다.');
     }
 
-    // Use transaction-safe SQL function to create glossary with products
-    const { data, error } = await supabase.rpc('create_glossary_with_products', {
-      p_term: sanitizedTerm,
-      p_translation: sanitizedTranslation,
-      p_product_code: body.product_code || null,
-      p_user_id: user.id,
-      p_source_type: 'manual',
-      p_product_codes: body.product_codes || null,
-    });
-
-    if (error) {
-      console.error('Error calling create_glossary_with_products:', error);
-      throw error;
-    }
-
-    // Fetch complete glossary with products
-    const { data: completeGlossary } = await supabase
-      .from('glossary')
-      .select(`
-        *,
-        glossary_products (product_code)
-      `)
-      .eq('id', data.id)
+    // Get user profile for audit log
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
       .single();
 
-    return successResponse(completeGlossary, 201);
+    const repository = new GlossaryRepository(supabase);
+    const createdTerms = [];
+
+    // Translate for each target language using AI
+    for (const langCode of targetLanguages) {
+      try {
+        // Call Kimi AI for translation
+        // Note: Using the translateWithProvider pattern
+        const { translateWithProvider } = await import('@/lib/ai');
+        const aiTranslations = await translateWithProvider('kimi', {
+          sourceText: sanitizedSourceText,
+          context: sanitizedContext,
+          targetLanguages: [langCode],
+          glossaryTerms: [],
+          translationMemory: [],
+          corrections: [],
+          apiKey: process.env.KIMI_API_KEY || '',
+        });
+
+        const translatedText = aiTranslations[0]?.translatedText || sanitizedSourceText;
+
+        // Create glossary term for this language
+        const term = await repository.create(
+          {
+            term: sanitizedSourceText,
+            translation: translatedText,
+            context: sanitizedContext,
+            language_code: langCode as LanguageCode,
+            product_code: product_code,
+            product_codes: product_codes,
+            source_type: 'ai_generated',
+            approval_status: 'pending', // All new terms start as pending
+          },
+          {
+            id: user.id,
+            name: userProfile?.name,
+            email: user.email,
+          }
+        );
+
+        createdTerms.push(term);
+      } catch (translationError) {
+        console.error(`Error translating to ${langCode}:`, translationError);
+        // Continue with other languages even if one fails
+      }
+    }
+
+    if (createdTerms.length === 0) {
+      return serverError('용어 생성에 실패했습니다.');
+    }
+
+    return successResponse({
+      terms: createdTerms,
+      message: `${createdTerms.length}개 언어로 용어가 추가되었습니다.`,
+    }, 201);
   } catch (error) {
     console.error('Error creating glossary term:', error);
     return serverError('용어를 추가하는데 실패했습니다.');

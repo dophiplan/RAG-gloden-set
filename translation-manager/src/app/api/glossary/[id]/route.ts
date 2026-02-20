@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
 import { successResponse, notFound, serverError } from '@/lib/api/middleware';
+import { GlossaryRepository } from '@/repositories';
 
 interface GlossaryUpdateInput {
   term?: string;
@@ -100,26 +101,32 @@ export async function PATCH(
       }
     }
 
+    // Use repository with audit logging
+    const repository = new GlossaryRepository(supabase);
+    
+    // Get user profile for audit log
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+
     const updateData: Record<string, unknown> = {};
     if (body.term !== undefined) updateData.term = body.term.trim();
     if (body.translation !== undefined) updateData.translation = body.translation.trim();
     if (body.context !== undefined) updateData.context = body.context?.trim() || null;
 
-    const { data, error } = await supabase
-      .from('glossary')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return notFound('용어를 찾을 수 없습니다.');
+    const term = await repository.updateWithAudit(
+      id,
+      updateData as any,
+      {
+        id: user.id,
+        name: userProfile?.name,
+        email: user.email,
       }
-      throw error;
-    }
+    );
 
-    return successResponse(data);
+    return successResponse(term);
   } catch (error) {
     console.error('Error updating glossary term:', error);
     return serverError('용어를 업데이트하는데 실패했습니다.');
@@ -141,35 +148,20 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Fetch glossary data before deletion for logging
-    const { data: glossary, error: fetchError } = await supabase
-      .from('glossary')
-      .select('term, translation, language_code')
-      .eq('id', id)
+    // Use repository with audit logging
+    const repository = new GlossaryRepository(supabase);
+    
+    // Get user profile for audit log
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
       .single();
 
-    if (fetchError) {
-      if (fetchError.code === 'PGRST116') {
-        return notFound('용어를 찾을 수 없습니다.');
-      }
-      throw fetchError;
-    }
-
-    // Delete glossary term
-    const { error: deleteError } = await supabase
-      .from('glossary')
-      .delete()
-      .eq('id', id);
-
-    if (deleteError) throw deleteError;
-
-    // Log deletion (console log for now - glossary doesn't have dedicated audit log table)
-    console.log(`[Glossary Delete] User ${user.email} deleted glossary term:`, {
-      id,
-      term: glossary.term,
-      translation: glossary.translation,
-      language_code: glossary.language_code,
-      timestamp: new Date().toISOString(),
+    await repository.deleteWithAudit(id, {
+      id: user.id,
+      name: userProfile?.name,
+      email: user.email,
     });
 
     return successResponse({ success: true });

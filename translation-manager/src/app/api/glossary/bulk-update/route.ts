@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest) {
       const { error: updateError, count } = await supabase
         .from('glossary')
         .update({
-          approval_status: approval_status as 'approved' | 'rejected' | 'pending',
+          approval_status: approval_status as 'approved' | 'rejected' | 'pending' | 'not_used',
           updated_at: new Date().toISOString(),
         })
         .in('id', glossary_ids);

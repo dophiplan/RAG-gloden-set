@@ -4,6 +4,7 @@ import { TranslationCrudService } from '@/services';
 import { translationCreateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
 import { enforceRateLimit } from '@/lib/api/rate-limiter';
 import { successResponse, serverError, badRequest } from '@/lib/api/middleware';
+import { getAuthUser } from '@/lib/api-auth';
 
 /**
  * Handler for POST /api/translations
@@ -13,19 +14,20 @@ export async function handleCreateTranslation(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get user directly from Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated user (with bypass support for development)
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
-    console.log('[Translation POST] Direct auth check:', {
+    console.log('[Translation POST] Auth check:', {
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
-      authError: authError?.message,
+      authError: authError,
+      bypassed: !!adminClient,
     });
 
     if (authError || !user || !user.id) {
       console.error('[Translation POST] Authentication failed:', {
-        authError: authError?.message,
+        authError,
         hasUser: !!user,
         userId: user?.id,
       });
@@ -34,7 +36,7 @@ export async function handleCreateTranslation(request: NextRequest) {
         {
           error: '인증이 필요합니다.',
           details: process.env.NODE_ENV === 'development' ? {
-            authError: authError?.message,
+            authError,
             hasUser: !!user,
             userId: user?.id,
           } : undefined,
@@ -63,8 +65,9 @@ export async function handleCreateTranslation(request: NextRequest) {
 
     const body = validation.data;
 
-    // Get user profile for audit log
-    const { data: userProfile } = await supabase
+    // Get user profile for audit log (use adminClient if available for bypass mode)
+    const dbClient = adminClient || supabase;
+    const { data: userProfile } = await dbClient
       .from('users')
       .select('name, email')
       .eq('id', user.id)
@@ -81,8 +84,8 @@ export async function handleCreateTranslation(request: NextRequest) {
       translatedText: sanitizeText(t.translated_text),
     }));
 
-    // Call service to create translation
-    const service = new TranslationCrudService(supabase);
+    // Call service to create translation (use adminClient if available for bypass mode)
+    const service = new TranslationCrudService(dbClient);
     const translation = await service.createTranslation(
       {
         sourceText: sanitizedSourceText,

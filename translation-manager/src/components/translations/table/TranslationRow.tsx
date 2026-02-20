@@ -41,10 +41,10 @@ export interface TranslationRowProps {
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
   onScopeUpdate: (translationId: string, scope: Scope | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
-  onPriorityUpdate: (translationId: string, priority: PriorityLevel) => Promise<void>;
-  onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
-  onDevCodeUpdate: (translationId: string, devCode: string) => Promise<void>;
-  onPlatformsUpdate: (translationId: string, platformCodes: string[]) => Promise<void>;
+  onPriorityUpdate?: (translationId: string, priority: PriorityLevel) => Promise<void>;
+  onNotesUpdate?: (translationId: string, notes: string) => Promise<void>;
+  onDevCodeUpdate?: (translationId: string, devCode: string) => Promise<void>;
+  onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
   onDelete: (id: string) => void;
 }
 
@@ -122,12 +122,16 @@ const TranslationRow = memo(function TranslationRow({
     const newCodes = selectedPlatformCodes.includes(platformCode)
       ? selectedPlatformCodes.filter((code) => code !== platformCode)
       : [...selectedPlatformCodes, platformCode];
-    onPlatformsUpdate(translation.id, newCodes);
+    onPlatformsUpdate?.(translation.id, newCodes);
   };
 
   // Helper to get cell style with width
   const getCellStyle = (columnKey: string) => {
     const width = columnWidths[columnKey];
+    // Default width for actions column if not in columnWidths
+    if (columnKey === 'actions' && !width) {
+      return { width: '50px', minWidth: '50px', maxWidth: '50px' };
+    }
     return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
   };
 
@@ -150,16 +154,16 @@ const TranslationRow = memo(function TranslationRow({
       </td>
       <td className="px-0.5 py-0.5 align-top" style={getCellStyle('priority')}>
         <select
-          value={translation.priority || '중'}
+          value={translation.priority || 'medium'}
           onChange={(e) =>
-            onPriorityUpdate(translation.id, e.target.value as PriorityLevel)
+            onPriorityUpdate?.(translation.id, e.target.value as PriorityLevel)
           }
           className="text-xs border rounded px-1 py-0.5 w-full bg-white"
         >
-          <option value="긴급">긴급</option>
-          <option value="상">상</option>
-          <option value="중">중</option>
-          <option value="하">하</option>
+          <option value="urgent">긴급</option>
+          <option value="high">상</option>
+          <option value="medium">중</option>
+          <option value="low">하</option>
         </select>
       </td>
       {showProductColumn && (
@@ -311,7 +315,7 @@ const TranslationRow = memo(function TranslationRow({
         <div className="text-xs truncate">
           <EditableCell
             value={translation.dev_code || ''}
-            onSave={(newCode) => onDevCodeUpdate(translation.id, newCode)}
+            onSave={(newCode) => onDevCodeUpdate?.(translation.id, newCode)}
             placeholder="KEY/id"
             className="text-xs text-gray-600 font-mono"
           />
@@ -361,10 +365,21 @@ const TranslationRow = memo(function TranslationRow({
         <div className="text-xs truncate">
           <EditableCell
             value={translation.notes || ''}
-            onSave={(newNotes) => onNotesUpdate(translation.id, newNotes)}
+            onSave={(newNotes) => onNotesUpdate?.(translation.id, newNotes)}
             placeholder="-"
           />
         </div>
+      </td>
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('actions')}>
+        <button
+          onClick={() => onDelete(translation.id)}
+          className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+          title="삭제"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
       </td>
     </tr>
   );

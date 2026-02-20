@@ -34,12 +34,12 @@ export const SCOPE_OPTIONS = [
   { value: '기타', label: '기타' },
 ];
 
-// Priority select dropdown options
+// Priority select dropdown options (database codes with Korean labels)
 export const PRIORITY_OPTIONS = [
-  { value: '긴급', label: '긴급' },
-  { value: '상', label: '상' },
-  { value: '중', label: '중' },
-  { value: '하', label: '하' },
+  { value: 'urgent', label: '긴급' },
+  { value: 'high', label: '상' },
+  { value: 'medium', label: '중' },
+  { value: 'low', label: '하' },
 ];
 
 // Work scope options - convert to MultiSelectOption format

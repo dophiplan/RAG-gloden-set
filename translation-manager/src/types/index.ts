@@ -8,3 +8,4 @@ export * from './users';
 export * from './emails';
 export * from './issues';
 export * from './api';
+export * from './optimistic_lock';

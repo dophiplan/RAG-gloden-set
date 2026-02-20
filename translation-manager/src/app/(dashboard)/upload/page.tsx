@@ -94,7 +94,7 @@ export default function UploadPage() {
   const [scope, setScope] = useState<ScopeType>('');
   const [productCode, setProductCode] = useState<ProductCode | ''>('');
   const [version, setVersion] = useState('');
-  const [priority, setPriority] = useState<PriorityLevel>('중');
+  const [priority, setPriority] = useState<PriorityLevel>('medium');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);

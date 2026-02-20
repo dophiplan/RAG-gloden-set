@@ -2,12 +2,16 @@
 
 import { memo } from 'react';
 import type { ReactElement } from 'react';
+import { LanguageCode } from '@/types';
 
 export interface GlossaryTableHeaderProps {
   isAllSelected: boolean;
   onToggleAll: () => void;
   columnWidths: { [key: string]: number };
   onResizeStart: (columnKey: string, clientX: number) => void;
+  // Language columns support
+  displayLanguages: LanguageCode[];
+  languagesMap: Record<string, { name: string }>;
 }
 
 interface ColumnDef {
@@ -18,18 +22,26 @@ interface ColumnDef {
 }
 
 /**
- * Resizable table header for glossary table
+ * Resizable table header for glossary table with multi-language support
  */
 const GlossaryTableHeader = memo(function GlossaryTableHeader({
   isAllSelected,
   onToggleAll,
   columnWidths,
   onResizeStart,
+  displayLanguages,
+  languagesMap,
 }: GlossaryTableHeaderProps) {
+  // Build columns dynamically based on selected languages
   const columns: ColumnDef[] = [
     { key: 'checkbox', label: '', resizable: false },
     { key: 'term', label: '용어', resizable: true },
-    { key: 'translation', label: '번역', resizable: true },
+    // Dynamic language columns
+    ...displayLanguages.map((langCode) => ({
+      key: `lang_${langCode}`,
+      label: languagesMap[langCode]?.name || langCode.toUpperCase(),
+      resizable: true,
+    })),
     { key: 'context', label: '문맥', resizable: true },
     { key: 'product', label: '제품', resizable: true },
     { key: 'source', label: '출처', resizable: true },
@@ -51,7 +63,7 @@ const GlossaryTableHeader = memo(function GlossaryTableHeader({
       ),
       resizable: true,
     },
-    { key: 'actions', label: '작업', resizable: false, style: { textAlign: 'center', width: '80px', minWidth: '80px', maxWidth: '80px' } },
+    { key: 'actions', label: '작업', resizable: false, style: { textAlign: 'center', width: '100px', minWidth: '100px', maxWidth: '100px', backgroundColor: '#f8fafc' } },
   ];
 
   return (

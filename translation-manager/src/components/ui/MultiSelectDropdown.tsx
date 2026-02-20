@@ -170,9 +170,10 @@ export default function MultiSelectDropdown({
 
       {isOpen && (
         <div
-          className={`absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto ${
+          className={`absolute z-[100] w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto ${
             openUpward ? 'bottom-full mb-1' : 'mt-1'
           }`}
+          style={{ minWidth: '200px' }}
           role="listbox"
           aria-multiselectable="true"
         >

@@ -7,11 +7,16 @@ import { useProducts } from '@/hooks/useReferenceData';
 
 interface TranslationBulkActionBarProps {
   selectedCount: number;
-  selectedIds: string[];
+  selectedIds?: string[];
   onClearSelection: () => void;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   onOpenEmailModal?: (templateType: 'translation_request') => void;
   onOpenDeploymentModal?: () => void;
+  // Additional handlers for backward compatibility
+  onBulkStatusChange?: (status: string) => Promise<void>;
+  onBulkDelete?: (ids: string[]) => Promise<void>;
+  onBulkExport?: () => Promise<void>;
+  onVersionHistoryClick?: () => void;
 }
 
 /**
@@ -32,11 +37,15 @@ export default function TranslationBulkActionBar({
   onRefresh,
   onOpenEmailModal,
   onOpenDeploymentModal,
+  onBulkDelete,
 }: TranslationBulkActionBarProps) {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | ''>('');
   const [selectedStatus, setSelectedStatus] = useState<TranslationStatus | ''>('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Debug log
+  console.log('TranslationBulkActionBar - selectedCount:', selectedCount, 'selectedIds:', selectedIds);
 
   if (selectedCount === 0) {
     return null;
@@ -88,7 +97,7 @@ export default function TranslationBulkActionBar({
       showSuccess(`${selectedCount}개 항목의 제품이 변경되었습니다.`);
       setSelectedProduct('');
       onClearSelection();
-      onRefresh();
+      onRefresh?.();
     } catch (error) {
       console.error('Bulk product change error:', error);
       showError(error instanceof Error ? error.message : '제품 변경 중 오류가 발생했습니다.');
@@ -139,12 +148,52 @@ export default function TranslationBulkActionBar({
       showSuccess(`${selectedCount}개 항목의 상태가 변경되었습니다.`);
       setSelectedStatus('');
       onClearSelection();
-      onRefresh();
+      onRefresh?.();
     } catch (error) {
       console.error('Bulk status change error:', error);
       showError(error instanceof Error ? error.message : '상태 변경 중 오류가 발생했습니다.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds || selectedIds.length === 0) {
+      showError('삭제할 항목을 선택해주세요.');
+      return;
+    }
+
+    if (!showConfirm(`${selectedCount}개 항목을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    if (onBulkDelete) {
+      await onBulkDelete(selectedIds);
+    } else {
+      // Direct API call if handler not provided
+      setIsProcessing(true);
+      try {
+        const response = await fetch('/api/translations/bulk', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: selectedIds }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || '삭제에 실패했습니다.');
+        }
+
+        const result = await response.json();
+        showSuccess(`${result.deleted}개 항목이 삭제되었습니다.`);
+        onClearSelection();
+        onRefresh?.();
+      } catch (error) {
+        console.error('Bulk delete error:', error);
+        showError(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다.');
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -247,6 +296,20 @@ export default function TranslationBulkActionBar({
                 변경
               </Button>
             </div>
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 일괄 삭제 */}
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={handleBulkDelete}
+              disabled={isProcessing}
+              loading={isProcessing}
+              className="bg-red-700 hover:bg-red-800"
+            >
+              🗑 삭제
+            </Button>
 
             <div className="w-px h-6 bg-gray-300 mx-1"></div>
 

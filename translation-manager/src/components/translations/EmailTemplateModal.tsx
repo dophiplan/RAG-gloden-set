@@ -10,8 +10,9 @@ import { TIMEOUTS } from '@/lib/constants';
 interface EmailTemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  templateType: EmailTemplateType;
+  templateType?: EmailTemplateType;
   selectedTranslations: Translation[];
+  onSend?: () => Promise<void>;
 }
 
 interface EmailPreview {
@@ -37,7 +38,7 @@ export default function EmailTemplateModal({
   templateType,
   selectedTranslations,
 }: EmailTemplateModalProps) {
-  const [selectedTemplateType, setSelectedTemplateType] = useState<EmailTemplateType>(templateType);
+  const [selectedTemplateType, setSelectedTemplateType] = useState<EmailTemplateType>(templateType || 'translation_request');
   const [recipients, setRecipients] = useState({ to: '', cc: '' });
   const [customMessage, setCustomMessage] = useState('');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>([]);
@@ -64,7 +65,7 @@ export default function EmailTemplateModal({
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedTemplateType(templateType);
+      setSelectedTemplateType(templateType || 'translation_request');
       setCustomMessage('');
       setError(null);
       setPreview(null);

@@ -22,7 +22,7 @@ interface TranslationWithResults extends Translation {
 
 interface TranslationTableV2Props {
   translations: TranslationWithResults[];
-  selectedProduct: ProductCode | null;
+  selectedProduct?: ProductCode | null;
   selectedLanguageColumns: LanguageCode[] | null;
   onStatusChange: (id: string, status: TranslationStatus) => Promise<void>;
   onTranslationUpdate: (
@@ -34,18 +34,29 @@ interface TranslationTableV2Props {
   onContextUpdate: (translationId: string, context: string) => Promise<void>;
   onScopeUpdate: (translationId: string, scope: Scope | null) => Promise<void>;
   onVersionUpdate: (translationId: string, version: string) => Promise<void>;
-  onPriorityUpdate: (translationId: string, priority: PriorityLevel) => Promise<void>;
+  onPriorityUpdate?: (translationId: string, priority: PriorityLevel) => Promise<void>;
+  onPriorityChange?: (translationId: string, priority: PriorityLevel) => Promise<void>; // Alias
   onNotesUpdate: (translationId: string, notes: string) => Promise<void>;
-  onDevCodeUpdate: (translationId: string, devCode: string) => Promise<void>;
-  onPlatformsUpdate: (translationId: string, platformCodes: string[]) => Promise<void>;
+  onDevCodeUpdate?: (translationId: string, devCode: string) => Promise<void>;
+  onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
+  onPlatformUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>; // Alias
+  onScreenUpdate?: (translationId: string, screenCode: string) => Promise<void>;
   onDelete: (id: string) => void;
-  onRefresh: () => void;
+  onAddToGlossary?: (translation: any) => void;
+  onRefresh?: () => void;
   onSelectionChange?: (selectedIds: string[]) => void;
+  onToggleSelectAll?: () => void;
+  onToggleSelect?: (id: string) => void;
   selectedIds?: string[];
+  selectedTranslations?: any[];
+  isAllSelected?: boolean;
   loading?: boolean;
+  page?: number;
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  availableLanguages?: LanguageCode[];
+  onLanguageColumnsChange?: (languages: LanguageCode[] | null) => void;
 }
 
 /**
@@ -104,6 +115,7 @@ export default memo(function TranslationTableV2({
     ),
     status: 120,
     notes: 180,
+    actions: 50,
   };
 
   const minWidths: { [key: string]: number } = {
@@ -121,6 +133,7 @@ export default memo(function TranslationTableV2({
     ),
     status: 100,
     notes: 120,
+    actions: 40,
   };
 
   const { columnWidths, startResize, resize, stopResize } = useResizableColumns({

@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/api-auth';
+import { validateApiKeyWithTestCall } from '@/lib/ai';
 
 const RSUPPORT_DOMAIN = 'rsupport.com';
+
+interface OrgSettings {
+  domain: string;
+  openai_api_key?: string | null;
+  claude_api_key?: string | null;
+  kimi_api_key?: string | null;
+  gemini_api_key?: string | null;
+  settings?: Record<string, unknown>;
+}
 
 // GET - Retrieve organization settings
 export async function GET(request: NextRequest) {
@@ -14,61 +24,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get current user with email to check domain (skip check for test users)
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('email')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    // Skip domain check for test users
-    if (currentUser && !currentUser.email?.endsWith('@rsupport.com') && user.id !== 'test-user-id') {
-      return NextResponse.json({ error: '@rsupport.com 계정만 조직 API 키를 관리할 수 있습니다.' }, { status: 403 });
+    // Get user email for domain check (use auth user email as primary source)
+    const userEmail = user.email || '';
+    
+    // Only rsupport.com users can access org settings
+    if (!userEmail.endsWith('@rsupport.com') && user.id !== 'test-user-id') {
+      return NextResponse.json({ error: '@rsupport.com 계정만 조직 설정을 볼 수 있습니다.' }, { status: 403 });
     }
 
-    // Get organization settings for rsupport.com
-    const { data: orgSettings, error } = await supabase
+    // Use admin client to bypass RLS
+    const adminClient = createAdminClient();
+    
+    const { data: orgSettings, error } = await adminClient
       .from('organization_settings')
       .select('*')
       .eq('domain', RSUPPORT_DOMAIN)
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching organization settings:', error);
-      // Return empty settings if table doesn't exist or other error
-      return NextResponse.json({
-        settings: {
-          domain: RSUPPORT_DOMAIN,
-          openai_api_key: null,
-          claude_api_key: null,
-          kimi_api_key: null,
-          gemini_api_key: null,
-          settings: {},
-        }
-      });
+      console.error('Error fetching org settings:', error);
+      return NextResponse.json(
+        { settings: getDefaultSettings() },
+        { status: 200 }
+      );
     }
 
-    // If not found, return default settings without creating
-    if (!orgSettings) {
-      return NextResponse.json({
-        settings: {
-          domain: RSUPPORT_DOMAIN,
-          openai_api_key: null,
-          claude_api_key: null,
-          kimi_api_key: null,
-          gemini_api_key: null,
-          settings: {},
-        }
-      });
-    }
+    return NextResponse.json({ settings: orgSettings || getDefaultSettings() });
 
-    return NextResponse.json({ settings: orgSettings });
-
-  } catch (error: unknown) {
-    console.error('Error fetching organization settings:', error);
+  } catch (error) {
+    console.error('Unexpected error in GET:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
-      { status: 500 }
+      { settings: getDefaultSettings() },
+      { status: 200 }
     );
   }
 }
@@ -83,110 +70,109 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get current user with email to check domain (skip check for test users)
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('email')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    // Skip domain check for test users
-    if (currentUser && !currentUser.email?.endsWith('@rsupport.com') && user.id !== 'test-user-id') {
-      return NextResponse.json({ error: '@rsupport.com 계정만 조직 API 키를 관리할 수 있습니다.' }, { status: 403 });
+    // Get user email for domain check (use auth user email as primary source)
+    const userEmail = user.email || '';
+    
+    // Only rsupport.com users can update org settings
+    if (!userEmail.endsWith('@rsupport.com') && user.id !== 'test-user-id') {
+      return NextResponse.json({ error: '@rsupport.com 계정만 조직 설정을 변경할 수 있습니다.' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { openai_api_key, claude_api_key, kimi_api_key, gemini_api_key, settings } = body as {
-      openai_api_key?: string | null;
-      claude_api_key?: string | null;
-      kimi_api_key?: string | null;
-      gemini_api_key?: string | null;
-      settings?: Record<string, unknown>;
-    };
-
-    // Validate OpenAI API key format if provided
-    if (openai_api_key !== undefined && openai_api_key !== null) {
-      if (typeof openai_api_key !== 'string' || !openai_api_key.startsWith('sk-')) {
+    
+    // Validate API keys if requested
+    if (body.validate_key) {
+      const provider = body.validate_key.provider;
+      const apiKey = body.validate_key.apiKey;
+      
+      const validation = await validateApiKeyWithTestCall(provider, apiKey);
+      if (!validation.valid) {
         return NextResponse.json(
-          { error: '유효한 OpenAI API 키 형식이 아닙니다.' },
+          { error: validation.error, code: 'INVALID_API_KEY' },
           { status: 400 }
         );
       }
+      
+      return NextResponse.json({ valid: true, message: 'API 키가 유효합니다.' });
+    }
+    
+    const updateData = buildUpdateData(body);
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: '업데이트할 데이터가 없습니다.' }, { status: 400 });
     }
 
-    // Build update data
-    const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
+    // Use admin client to bypass RLS
+    const adminClient = createAdminClient();
 
-    if (openai_api_key !== undefined) {
-      updateData.openai_api_key = openai_api_key;
-    }
-
-    if (claude_api_key !== undefined) {
-      updateData.claude_api_key = claude_api_key;
-    }
-
-    if (kimi_api_key !== undefined) {
-      updateData.kimi_api_key = kimi_api_key;
-    }
-
-    if (gemini_api_key !== undefined) {
-      updateData.gemini_api_key = gemini_api_key;
-    }
-
-    if (settings !== undefined) {
-      // Merge with existing settings
-      const { data: existingSettings } = await supabase
-        .from('organization_settings')
-        .select('settings')
-        .eq('domain', RSUPPORT_DOMAIN)
-        .maybeSingle();
-
-      updateData.settings = {
-        ...(existingSettings?.settings || {}),
-        ...settings,
-      };
-    }
-
-    // Prevent empty updates
-    if (Object.keys(updateData).length === 1) {
-      return NextResponse.json(
-        { error: '업데이트할 데이터가 없습니다.' },
-        { status: 400 }
-      );
-    }
-
-    // Upsert organization settings
-    const { data: updatedSettings, error } = await supabase
+    // Try upsert
+    const { data: updatedSettings, error } = await adminClient
       .from('organization_settings')
       .upsert(
-        {
-          domain: RSUPPORT_DOMAIN,
-          ...updateData,
-        },
-        {
-          onConflict: 'domain',
-        }
+        { domain: RSUPPORT_DOMAIN, ...updateData, updated_at: new Date().toISOString() },
+        { onConflict: 'domain' }
       )
       .select()
       .single();
 
     if (error) {
-      console.error('Error upserting organization settings:', error);
+      console.error('Error upserting org settings:', error);
       return NextResponse.json(
-        { error: '조직 설정 업데이트에 실패했습니다. 테이블이 존재하지 않을 수 있습니다.' },
+        { error: '설정 저장에 실패했습니다.', details: error.message },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ settings: updatedSettings });
 
-  } catch (error: unknown) {
-    console.error('Error updating organization settings:', error);
+  } catch (error) {
+    console.error('Unexpected error in PATCH:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : '알 수 없는 오류' },
+      { error: '설정 저장 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }
+}
+
+// Helper functions
+function getDefaultSettings(): OrgSettings {
+  return {
+    domain: RSUPPORT_DOMAIN,
+    openai_api_key: null,
+    claude_api_key: null,
+    kimi_api_key: null,
+    gemini_api_key: null,
+    settings: {},
+  };
+}
+
+function buildUpdateData(body: Record<string, unknown>): Record<string, unknown> {
+  const updateData: Record<string, unknown> = {};
+  
+  const keyFields = ['openai_api_key', 'claude_api_key', 'kimi_api_key', 'gemini_api_key'];
+  
+  for (const field of keyFields) {
+    if (field in body) {
+      const value = body[field];
+      // Validate API key format (should start with sk-)
+      if (value !== null && value !== undefined && value !== '') {
+        if (typeof value === 'string' && value.startsWith('sk-')) {
+          updateData[field] = value;
+        } else if (value !== null) {
+          // Invalid format, skip
+          console.warn(`Invalid API key format for ${field}`);
+        }
+      } else {
+        // Explicitly set to null for deletion
+        updateData[field] = null;
+      }
+    }
+  }
+  
+  // Handle settings (priority order, etc.)
+  if ('settings' in body && typeof body.settings === 'object') {
+    updateData.settings = body.settings;
+  }
+  
+  return updateData;
 }

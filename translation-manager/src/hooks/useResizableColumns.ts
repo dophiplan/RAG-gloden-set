@@ -89,9 +89,13 @@ export function useResizableColumns({
     setColumnWidths(defaultWidths);
   }, [defaultWidths]);
 
+  // Alias for backward compatibility
+  const onResizeStart = startResize;
+
   return {
     columnWidths,
     startResize,
+    onResizeStart,
     resize,
     stopResize,
     resetWidths,
