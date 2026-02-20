@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import Card from '@/components/ui/Card';
 import Tooltip from '@/components/ui/Tooltip';
 import { ProductCode } from '@/types';
@@ -24,6 +24,13 @@ interface GlossaryStats {
 
 interface GlossaryStatsCardProps {
   selectedProduct?: ProductCode | null;
+  stats?: {
+    total_terms: number;
+    approved_terms: number;
+    pending_terms: number;
+    rejected_terms: number;
+    not_used_terms?: number;
+  } | null;
 }
 
 /**
@@ -31,16 +38,23 @@ interface GlossaryStatsCardProps {
  * Displays 4 key sections: Cost savings, Reuse stats, Trends, Language breakdown
  * Can be filtered by product
  */
-export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCardProps) {
+function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossaryStatsCardProps) {
   const { products, productsMap } = useProducts();
   const [stats, setStats] = useState<GlossaryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [currency, setCurrency] = useState<'usd' | 'krw'>('usd');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
+  // 외부에서 stats가 제공되면 사용, 아니면 API에서 가져옴
   useEffect(() => {
-    fetchStats();
-  }, [selectedProduct]);
+    if (externalStats) {
+      // 외부 stats가 변경되면 날씨 데이터와 병합
+      setStats(prev => prev ? { ...prev, ...externalStats } : externalStats as GlossaryStats);
+      setLoading(false);
+    } else {
+      fetchStats();
+    }
+  }, [selectedProduct, externalStats]);
 
   const fetchStats = async () => {
     try {
@@ -325,3 +339,5 @@ export default function GlossaryStatsCard({ selectedProduct }: GlossaryStatsCard
     </div>
   );
 }
+
+export default memo(GlossaryStatsCard);

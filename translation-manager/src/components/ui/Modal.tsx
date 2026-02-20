@@ -42,7 +42,7 @@ export default function Modal({
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
           <div
-            className={`relative bg-white rounded-lg shadow-2xl w-full ${sizes[size]} transform transition-all border border-gray-200`}
+            className={`relative bg-white rounded-lg shadow-2xl w-full ${sizes[size]} transform transition-all border border-gray-200 overflow-visible`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -72,7 +72,7 @@ export default function Modal({
             )}
 
             {/* Content */}
-            <div className="p-4">{children}</div>
+            <div className="p-4 overflow-visible">{children}</div>
           </div>
         </div>
       </div>

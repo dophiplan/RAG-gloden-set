@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { autoTranslate } from '@/lib/openai/auto-translate';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { translateWithProvider, AIProvider } from '@/lib/ai';
 import { LanguageCode } from '@/types';
 import { aiTranslateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
-import { enforceRateLimit } from '@/lib/api/rate-limiter';
 
 interface TranslateRequest {
   translationId?: string;
   sourceText: string;
   context?: string;
   targetLanguages: LanguageCode[];
+  provider?: AIProvider;
 }
+
+const RSUPPORT_DOMAIN = 'rsupport.com';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,64 +23,76 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // Check rate limit for AI translation (most expensive operation)
-    const rateLimitResult = await enforceRateLimit(user.id, 'ai_translation');
-    if (!rateLimitResult.allowed) {
-      return rateLimitResult.response;
-    }
-
-    // Parse and validate request body
+    // Parse and validate request
     const rawBody = await request.json();
     const validation = validateAndSanitize(aiTranslateSchema, rawBody);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     const body = validation.data as TranslateRequest;
+    const sanitizedSourceText = sanitizeText(body.sourceText);
+    const sanitizedContext = body.context ? sanitizeText(body.context) : null;
 
-    // Get user profile to check domain
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('email')
-      .eq('id', user.id)
-      .single();
+    // Get AI provider settings
+    const adminClient = createAdminClient();
+    const { data: orgSettings } = await adminClient
+      .from('organization_settings')
+      .select('*')
+      .eq('domain', RSUPPORT_DOMAIN)
+      .maybeSingle();
 
+    // Build available providers map
+    const availableProviders: Record<string, string> = {};
+    
+    if (orgSettings?.openai_api_key) availableProviders.openai = orgSettings.openai_api_key;
+    if (orgSettings?.claude_api_key) availableProviders.claude = orgSettings.claude_api_key;
+    if (orgSettings?.kimi_api_key) availableProviders.kimi = orgSettings.kimi_api_key;
+    if (orgSettings?.gemini_api_key) availableProviders.gemini = orgSettings.gemini_api_key;
+
+    // Fallback: Environment variable for OpenAI
+    if (!availableProviders.openai && process.env.OPENAI_API_KEY) {
+      availableProviders.openai = process.env.OPENAI_API_KEY;
+    }
+
+    // Fallback: Environment variable for Kimi (Moonshot AI)
+    if (!availableProviders.kimi && process.env.KIMI_API_KEY) {
+      availableProviders.kimi = process.env.KIMI_API_KEY;
+    }
+
+    // Determine provider to use
+    let selectedProvider: AIProvider | null = null;
     let apiKey: string | null = null;
 
-    // Priority 1: Organization API key for @rsupport.com users
-    if (userProfile?.email?.endsWith('@rsupport.com')) {
-      const { data: orgSettings } = await supabase
-        .from('organization_settings')
-        .select('openai_api_key')
-        .eq('domain', 'rsupport.com')
-        .single();
-
-      apiKey = orgSettings?.openai_api_key || null;
+    if (body.provider) {
+      // Specific provider requested
+      if (availableProviders[body.provider]) {
+        selectedProvider = body.provider;
+        apiKey = availableProviders[body.provider];
+      } else {
+        return NextResponse.json(
+          { error: `${body.provider.toUpperCase()} API 키가 설정되지 않았습니다.` },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Auto-select based on priority order
+      const providerOrder: AIProvider[] = orgSettings?.settings?.ai_provider_order || 
+        ['openai', 'claude', 'kimi', 'gemini'];
+      
+      for (const provider of providerOrder) {
+        if (availableProviders[provider]) {
+          selectedProvider = provider;
+          apiKey = availableProviders[provider];
+          break;
+        }
+      }
     }
 
-    // Priority 2: Individual user API key
-    if (!apiKey) {
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('openai_api_key')
-        .eq('user_id', user.id)
-        .single();
-
-      apiKey = userSettings?.openai_api_key || null;
-    }
-
-    // Priority 3: Environment variable
-    if (!apiKey) {
-      apiKey = process.env.OPENAI_API_KEY || null;
-    }
-
-    if (!apiKey) {
+    if (!apiKey || !selectedProvider) {
       return NextResponse.json(
-        { error: 'OpenAI API 키가 설정되지 않았습니다. 설정 페이지에서 API 키를 입력해주세요.' },
+        { error: '사용 가능한 AI API 키가 없습니다. 설정 페이지에서 API 키를 등록해주세요.' },
         { status: 400 }
       );
     }
@@ -89,31 +103,28 @@ export async function POST(request: NextRequest) {
       .select('*')
       .in('language_code', body.targetLanguages);
 
-    // Fetch similar translations for translation memory
+    // Fetch translation memory
     const { data: translationMemory } = await supabase
       .from('translations')
       .select(`
         source_text,
-        translation_results (
-          language_code,
-          translated_text
-        )
+        translation_results (language_code, translated_text)
       `)
-      .neq('source_text', body.sourceText)
+      .neq('source_text', sanitizedSourceText)
       .limit(20);
 
     // Format translation memory
-    const formattedMemory = translationMemory?.flatMap((t) =>
-      (t.translation_results as { language_code: string; translated_text: string }[])
-        ?.filter((r) => body.targetLanguages.includes(r.language_code as LanguageCode))
-        .map((r) => ({
+    const formattedMemory = translationMemory?.flatMap((t: any) =>
+      t.translation_results
+        ?.filter((r: any) => body.targetLanguages.includes(r.language_code as LanguageCode))
+        .map((r: any) => ({
           source_text: t.source_text,
           translated_text: r.translated_text,
           language_code: r.language_code,
         })) || []
     ) || [];
 
-    // Fetch corrections for learning
+    // Fetch corrections
     const { data: corrections } = await supabase
       .from('translation_corrections')
       .select('*')
@@ -121,12 +132,10 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    // Sanitize inputs before sending to AI
-    const sanitizedSourceText = sanitizeText(body.sourceText);
-    const sanitizedContext = body.context ? sanitizeText(body.context) : null;
-
     // Call AI translation
-    const translations = await autoTranslate({
+    console.log(`🤖 AI Translation: ${selectedProvider.toUpperCase()}`);
+    
+    const translations = await translateWithProvider(selectedProvider, {
       sourceText: sanitizedSourceText,
       context: sanitizedContext,
       targetLanguages: body.targetLanguages,
@@ -136,19 +145,17 @@ export async function POST(request: NextRequest) {
       apiKey,
     });
 
-    // If translationId is provided, save results to database
+    // Save results if translationId provided
     if (body.translationId) {
       for (const translation of translations) {
-        // Check if result already exists
         const { data: existing } = await supabase
           .from('translation_results')
-          .select('id, translated_text')
+          .select('id')
           .eq('translation_id', body.translationId)
           .eq('language_code', translation.languageCode)
-          .single();
+          .maybeSingle();
 
         if (existing) {
-          // Update existing
           await supabase
             .from('translation_results')
             .update({
@@ -157,7 +164,6 @@ export async function POST(request: NextRequest) {
             })
             .eq('id', existing.id);
         } else {
-          // Create new
           await supabase
             .from('translation_results')
             .insert({
@@ -170,23 +176,27 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      translations: translations.map((t) => ({
+      translations: translations.map(t => ({
         languageCode: t.languageCode,
         translatedText: t.translatedText,
       })),
+      provider: selectedProvider,
     });
+
   } catch (error) {
     console.error('Error in AI translate:', error);
-
-    if (error instanceof Error && error.message.includes('OPENAI_API_KEY')) {
-      return NextResponse.json(
-        { error: 'OpenAI API 키가 설정되지 않았습니다.' },
-        { status: 500 }
-      );
+    
+    if (error instanceof Error) {
+      if (error.message.includes('401') || error.message.includes('Authentication')) {
+        return NextResponse.json(
+          { error: 'AI API 키가 유효하지 않습니다. 설정에서 확인해주세요.' },
+          { status: 401 }
+        );
+      }
     }
-
+    
     return NextResponse.json(
-      { error: 'AI 번역 중 오류가 발생했습니다.' },
+      { error: '번역 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }

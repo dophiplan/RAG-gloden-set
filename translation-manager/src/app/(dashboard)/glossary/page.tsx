@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
@@ -13,17 +13,46 @@ import EditableCell from '@/components/EditableCell';
 import { LanguageCode } from '@/types';
 import { useGlossaryData } from './hooks/useGlossaryData';
 import { useProducts, useLanguages } from '@/hooks/useReferenceData';
-import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { showSuccess, showError } from '@/lib/notifications';
+
 import GlossaryFormModal from './components/GlossaryFormModal';
 import ExportModal from './components/ExportModal';
 import BulkActionBar from './components/BulkActionBar';
-import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
+import GlossaryStatsCard from './components/GlossaryStatsCard';
+import GlossaryHistoryPanel from './components/GlossaryHistoryPanel';
+import ConflictResolutionModal from './components/ConflictResolutionModal';
+import { useGlossaryRollback } from './hooks/useGlossaryRollback';
+
 
 export default function GlossaryPage() {
   const router = useRouter();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  // History panel state
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+  const [selectedHistoryTerm, setSelectedHistoryTerm] = useState<{ id: string; term: string; version?: number } | null>(null);
+  
+  // Rollback hook
+  const {
+    isLoading: isRollbackLoading,
+    isHistoryLoading,
+    auditHistory,
+    conflicts,
+    showConflictModal,
+    fetchAuditHistory,
+    rollbackField,
+    bulkRollback,
+    resolveConflicts,
+    closeConflictModal,
+  } = useGlossaryRollback(() => {
+    // On success callback - refresh data
+    fetchTerms();
+    if (selectedHistoryTerm) {
+      fetchAuditHistory(selectedHistoryTerm.id);
+    }
+  });
 
   // Fetch reference data from DB
   const { productsMap } = useProducts();
@@ -60,28 +89,27 @@ export default function GlossaryPage() {
     setEditingTerm,
     isReviewing,
     suggestionCount,
-    formTerm,
-    setFormTerm,
-    formTranslation,
-    setFormTranslation,
-    formLanguage,
-    setFormLanguage,
+    formSourceText,
+    setFormSourceText,
     formContext,
     setFormContext,
-    formProductCode,
-    setFormProductCode,
+    formProductCodes,
+    setFormProductCodes,
+    isSubmitting,
     resetForm,
     handleCreate,
     handleUpdate,
     handleDelete,
     handleApprove,
     handleReject,
+    handleStatusChange,
+    handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
     handleAIReview,
     openEditModal,
-    groupedTerms,
-    groupedByTerm,
+    fetchTerms,
+
     selectedLanguageColumns,
     setSelectedLanguageColumns,
     setQuickFilter,
@@ -89,6 +117,11 @@ export default function GlossaryPage() {
     handleTermInlineUpdate,
     handleTranslationInlineUpdate,
     handleContextInlineUpdate,
+    stats,
+    isDeleting,
+    isStatusChanging,
+    isRetranslating,
+    isBulkProcessing,
   } = useGlossaryData();
 
   const sourceTypeLabels: Record<string, string> = {
@@ -103,16 +136,7 @@ export default function GlossaryPage() {
     rejected: '거부됨',
   };
 
-  // Auto-select default languages when product changes (exclude Korean)
-  useEffect(() => {
-    if (selectedProduct && productsMap[selectedProduct]) {
-      const product = productsMap[selectedProduct];
-      if (product.default_languages && product.default_languages.length > 0) {
-        const filteredLanguages = (product.default_languages as LanguageCode[]).filter(lang => lang !== 'ko');
-        setSelectedLanguageColumns(filteredLanguages);
-      }
-    }
-  }, [selectedProduct, productsMap]);
+  // Note: Language auto-selection moved to ProductTabs onChange handler to avoid infinite loop
 
   const getSourceTypeBadgeVariant = (sourceType: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
     if (sourceType === 'manual') return 'default';
@@ -128,68 +152,7 @@ export default function GlossaryPage() {
     return 'default';
   };
 
-  // Resizable columns setup
-  const defaultWidths = {
-    checkbox: 32,
-    term: 200,
-    translation: 200,
-    context: 220,
-    product: 120,
-    source: 100,
-    approval: 120,
-    hitCount: 100,
-    actions: 80,
-  };
-
-  const minWidths = {
-    checkbox: 32,
-    term: 120,
-    translation: 120,
-    context: 120,
-    product: 80,
-    source: 80,
-    approval: 100,
-    hitCount: 80,
-    actions: 60,
-  };
-
-  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
-    defaultWidths,
-    minWidths,
-    storageKey: 'glossary-table-column-widths-v2',
-  });
-
-  // Global mouse handlers for column resizing
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => resize(e.clientX);
-    const handleMouseUp = () => stopResize();
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [resize, stopResize]);
-
-  // Helper to get cell style with width
-  const getCellStyle = (columnKey: string, additionalStyle?: React.CSSProperties) => {
-    const width = columnWidths[columnKey];
-    return {
-      ...(width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {}),
-      ...(additionalStyle || {}),
-    };
-  };
-
-  // Checkbox selection handlers
-  const handleToggleAll = () => {
-    if (selectedIds.length === terms.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(terms.map(t => t.id));
-    }
-  };
+  // Checkbox selection handler
 
   const handleToggleOne = (id: string) => {
     setSelectedIds(prev =>
@@ -197,7 +160,7 @@ export default function GlossaryPage() {
     );
   };
 
-  const isAllSelected = terms.length > 0 && selectedIds.length === terms.length;
+
 
   // 표시할 언어 토글 함수
   const handleLanguageToggle = (lang: LanguageCode) => {
@@ -217,8 +180,15 @@ export default function GlossaryPage() {
     return selectedLanguageColumns.includes(lang);
   };
 
+  // Define fixed language order
+  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'];
+  
   // Filter out Korean from display (terms are already in Korean)
-  const displayLanguageColumns = selectedLanguageColumns.filter(lang => lang !== 'ko');
+  // Default: English only if nothing selected
+  // Maintain fixed order for selected languages
+  const displayLanguageColumns = selectedLanguageColumns.length > 0 
+    ? LANGUAGE_ORDER.filter(lang => selectedLanguageColumns.includes(lang) && lang !== 'ko')
+    : ['en' as LanguageCode];
 
   // Determine empty state message based on filters
   const getEmptyStateMessage = () => {
@@ -243,8 +213,21 @@ export default function GlossaryPage() {
         {/* Product Tabs */}
         <ProductTabs
           selectedProduct={selectedProduct}
-          onProductChange={setSelectedProduct}
+          onProductChange={(product) => {
+            setSelectedProduct(product);
+            // Auto-select default languages when product changes (exclude Korean)
+            if (product && productsMap[product]) {
+              const prod = productsMap[product];
+              if (prod.default_languages && prod.default_languages.length > 0) {
+                const filteredLanguages = (prod.default_languages as LanguageCode[]).filter(lang => lang !== 'ko');
+                setSelectedLanguageColumns(filteredLanguages);
+              }
+            }
+          }}
         />
+
+        {/* Statistics Cards - 실시간 통계 */}
+        <GlossaryStatsCard selectedProduct={selectedProduct} stats={stats} />
 
         {/* Filters */}
         <Card>
@@ -446,7 +429,7 @@ export default function GlossaryPage() {
           </div>
         </div>
 
-        {/* Terms List */}
+        {/* Terms List - Single table with multiple language columns */}
         {loading ? (
           <Card>
             <div className="p-12 text-center">
@@ -454,255 +437,82 @@ export default function GlossaryPage() {
               <p className="mt-4 text-[#64748B]">로딩 중...</p>
             </div>
           </Card>
-        ) : languageFilter ? (
-          <Card padding="none">
-            <div className="overflow-auto">
-              <table className="w-full table-fixed">
-                <GlossaryTableHeader
-                  isAllSelected={isAllSelected}
-                  onToggleAll={handleToggleAll}
-                  columnWidths={columnWidths}
-                  onResizeStart={startResize}
-                />
-                <tbody>
-                  {terms.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="text-center py-12">
-                        <div className="text-gray-500">
-                          {getEmptyStateMessage()}
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    terms.map((term) => (
-                      <tr key={term.id}>
-                        <td className="px-2 py-2 align-top" style={getCellStyle('checkbox')}>
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(term.id)}
-                            onChange={() => handleToggleOne(term.id)}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="font-semibold" style={getCellStyle('term')}>
-                          <EditableCell
-                            value={term.term}
-                            onSave={(newValue) => handleTermInlineUpdate(term.id, newValue)}
-                            placeholder="용어"
-                          />
-                        </td>
-                        <td style={getCellStyle('translation')}>
-                          <EditableCell
-                            value={term.translation}
-                            onSave={(newValue) => handleTranslationInlineUpdate(term.id, newValue)}
-                            placeholder="번역"
-                          />
-                        </td>
-                        <td className="text-[#64748B]" style={getCellStyle('context')}>
-                          <EditableCell
-                            value={term.context || ''}
-                            onSave={(newValue) => handleContextInlineUpdate(term.id, newValue)}
-                            placeholder="문맥"
-                          />
-                        </td>
-                        <td style={getCellStyle('product')}>
-                          {term.glossary_products && term.glossary_products.length > 0 ? (
-                            term.glossary_products.length === 1 ? (
-                              <Badge variant="info">
-                                {productsMap[term.glossary_products[0].product_code]?.name || term.glossary_products[0].product_code}
-                              </Badge>
-                            ) : (
-                              <Badge variant="info">
-                                {productsMap[term.glossary_products[0].product_code]?.name || term.glossary_products[0].product_code}
-                                +{term.glossary_products.length - 1}
-                              </Badge>
-                            )
-                          ) : term.product_code ? (
-                            <Badge variant="info">{productsMap[term.product_code]?.name || term.product_code}</Badge>
-                          ) : (
-                            <Badge variant="default">전체</Badge>
-                          )}
-                        </td>
-                        <td style={getCellStyle('source')}>
-                          <Badge variant={getSourceTypeBadgeVariant(term.source_type)}>
-                            {sourceTypeLabels[term.source_type] || term.source_type}
-                          </Badge>
-                        </td>
-                        <td style={getCellStyle('approval')}>
-                          <Badge variant={getApprovalStatusBadgeVariant(term.approval_status)}>
-                            {approvalStatusLabels[term.approval_status] || term.approval_status}
-                          </Badge>
-                        </td>
-                        <td className="text-center" style={getCellStyle('hitCount')}>
-                          <span className={term.hit_count > 0 ? 'font-semibold text-indigo-600' : 'text-gray-400'}>
-                            {term.hit_count}
-                          </span>
-                        </td>
-                        <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
-                          <div className="flex justify-center gap-2">
-                            {term.approval_status === 'pending' && (
-                              <>
-                                <Button size="sm" variant="primary" onClick={() => handleApprove(term.id)}>✓ 승인</Button>
-                                <Button size="sm" variant="danger" onClick={() => handleReject(term.id)}>✗ 거부</Button>
-                              </>
-                            )}
-                            <button
-                              onClick={() => handleDelete(term.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                              title="삭제"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
         ) : terms.length === 0 ? (
-          <Card padding="none">
-            <div className="overflow-auto">
-              <table className="w-full table-fixed">
-                <GlossaryTableHeader
-                  isAllSelected={isAllSelected}
-                  onToggleAll={handleToggleAll}
-                  columnWidths={columnWidths}
-                  onResizeStart={startResize}
-                />
-                <tbody>
-                  <tr>
-                    <td colSpan={9} className="text-center py-12">
-                      <div className="text-gray-500">
-                        {getEmptyStateMessage()}
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <Card>
+            <div className="text-center py-12">
+              <div className="text-gray-500">
+                {getEmptyStateMessage()}
+              </div>
             </div>
           </Card>
         ) : (
           <Card padding="none">
             <div className="overflow-auto">
-              <table className="w-full table-fixed">
+              <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th scope="col" className="px-2 py-3 w-8" style={getCellStyle('checkbox')}>
+                    <th className="px-2 py-3 w-8">
                       <input
                         type="checkbox"
-                        checked={isAllSelected}
-                        onChange={handleToggleAll}
-                        className="rounded border-gray-300"
-                        aria-label="모든 항목 선택"
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('term')}>
-                      용어
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('term', e.clientX);
+                        checked={selectedIds.length === terms.length && terms.length > 0}
+                        onChange={() => {
+                          if (selectedIds.length === terms.length) {
+                            setSelectedIds([]);
+                          } else {
+                            setSelectedIds(terms.map(t => t.id));
+                          }
                         }}
+                        className="rounded border-gray-300"
                       />
                     </th>
-                    {displayLanguageColumns.map((langCode) => (
-                      <th
-                        scope="col"
-                        key={langCode}
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group"
-                        style={getCellStyle('translation')}
-                      >
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">용어</th>
+                    {/* 언어별 번역 컬럼 */}
+                    {(languageFilter ? [languageFilter] : displayLanguageColumns).map((langCode) => (
+                      <th key={langCode} className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
                         {languagesMap[langCode]?.name || langCode}
-                        <div
-                          className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            startResize('translation', e.clientX);
-                          }}
-                        />
                       </th>
                     ))}
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('context')}>
-                      문맥
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('context', e.clientX);
-                        }}
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('product')}>
-                      제품
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('product', e.clientX);
-                        }}
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('source')}>
-                      출처
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('source', e.clientX);
-                        }}
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('approval')} title="AI가 추가한 용어는 승인 후 사용됩니다">
-                      검수 상태 <span className="text-gray-400">ⓘ</span>
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('approval', e.clientX);
-                        }}
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-700 relative group" style={getCellStyle('hitCount')} title="이 용어가 번역에 재사용된 횟수">
-                      사용 횟수 <span className="text-gray-400">ⓘ</span>
-                      <div
-                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 group-hover:bg-primary/20"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          startResize('hitCount', e.clientX);
-                        }}
-                      />
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-700" style={{ width: '80px', minWidth: '80px', maxWidth: '80px' }}>
-                      작업
-                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">문맥</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[100px]">제품</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[80px]">출처</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[100px]">검수 상태</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[80px]">사용 횟수</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[100px]">작업</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {groupedByTerm.length === 0 ? (
-                    <tr>
-                      <td colSpan={8 + displayLanguageColumns.length} className="text-center py-12">
-                        <div className="text-gray-500">
-                          {getEmptyStateMessage()}
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    groupedByTerm.map((group) => {
-                      // Get all IDs for checkbox selection
-                      const allIds = Object.values(group.translations).map(t => t.id);
-                      const isGroupSelected = allIds.every(id => selectedIds.includes(id));
-                      // Get first translation for approval buttons (all translations share same approval status)
-                      const firstTranslation = Object.values(group.translations)[0];
+                <tbody className="divide-y divide-gray-100">
+                  {/* 용어별로 그룹화 */}
+                  {(() => {
+                    console.log('Glossary table - terms count:', terms.length);
+                    // 용어명으로 그룹화
+                    const grouped = terms.reduce((acc, term) => {
+                      if (!acc[term.term]) {
+                        acc[term.term] = {
+                          term: term.term,
+                          context: term.context,
+                          glossary_products: term.glossary_products,
+                          product_code: term.product_code,
+                          source_type: term.source_type,
+                          approval_status: term.approval_status,
+                          hit_count: term.hit_count,
+                          translations: {} as Record<string, { id: string; translation: string; language_code: string }>,
+                        };
+                      }
+                      acc[term.term].translations[term.language_code] = {
+                        id: term.id,
+                        translation: term.translation,
+                        language_code: term.language_code,
+                      };
+                      return acc;
+                    }, {} as Record<string, any>);
+
+                    return Object.values(grouped).map((group: any) => {
+                      const allIds = Object.values(group.translations).map((t: any) => t.id);
+                      const isGroupSelected = allIds.every((id: string) => selectedIds.includes(id));
 
                       return (
-                        <tr key={group.term}>
-                          <td className="px-2 py-2 align-top" style={getCellStyle('checkbox')}>
+                        <tr key={group.term} className="hover:bg-gray-50/50">
+                          <td className="px-2 py-2">
                             <input
                               type="checkbox"
                               checked={isGroupSelected}
@@ -716,11 +526,10 @@ export default function GlossaryPage() {
                               className="rounded border-gray-300"
                             />
                           </td>
-                          <td className="px-4 py-2 font-semibold" style={getCellStyle('term')}>
+                          <td className="px-4 py-2 font-semibold">
                             <EditableCell
                               value={group.term}
                               onSave={async (newValue) => {
-                                // Update all translations with the same term
                                 for (const id of allIds) {
                                   await handleTermInlineUpdate(id, newValue);
                                 }
@@ -728,10 +537,11 @@ export default function GlossaryPage() {
                               placeholder="용어"
                             />
                           </td>
-                          {displayLanguageColumns.map((langCode) => {
+                          {/* 언어별 번역 셀 */}
+                          {(languageFilter ? [languageFilter] : displayLanguageColumns).map((langCode) => {
                             const translation = group.translations[langCode];
                             return (
-                              <td key={langCode} className="px-4 py-2 text-[#64748B]" style={getCellStyle('translation')}>
+                              <td key={langCode} className="px-4 py-2 text-[#64748B]">
                                 {translation ? (
                                   <EditableCell
                                     value={translation.translation}
@@ -744,11 +554,10 @@ export default function GlossaryPage() {
                               </td>
                             );
                           })}
-                          <td className="px-4 py-2 text-[#64748B]" style={getCellStyle('context')}>
+                          <td className="px-4 py-2 text-[#64748B]">
                             <EditableCell
                               value={group.context || ''}
                               onSave={async (newValue) => {
-                                // Update context for all translations
                                 for (const id of allIds) {
                                   await handleContextInlineUpdate(id, newValue);
                                 }
@@ -756,7 +565,7 @@ export default function GlossaryPage() {
                               placeholder="문맥"
                             />
                           </td>
-                          <td className="px-4 py-2" style={getCellStyle('product')}>
+                          <td className="px-4 py-2">
                             {group.glossary_products && group.glossary_products.length > 0 ? (
                               group.glossary_products.length === 1 ? (
                                 <Badge variant="info">
@@ -774,53 +583,104 @@ export default function GlossaryPage() {
                               <Badge variant="default">전체</Badge>
                             )}
                           </td>
-                          <td className="px-4 py-2" style={getCellStyle('source')}>
+                          <td className="px-4 py-2">
                             <Badge variant={getSourceTypeBadgeVariant(group.source_type)}>
                               {sourceTypeLabels[group.source_type] || group.source_type}
                             </Badge>
                           </td>
-                          <td className="px-4 py-2" style={getCellStyle('approval')}>
-                            <Badge variant={getApprovalStatusBadgeVariant(group.approval_status)}>
-                              {approvalStatusLabels[group.approval_status] || group.approval_status}
-                            </Badge>
+                          <td className="px-4 py-2">
+                            <select
+                              value={group.approval_status}
+                              onChange={(e) => {
+                                const newStatus = e.target.value as 'pending' | 'approved' | 'rejected' | 'not_used';
+                                allIds.forEach((id: string) => handleStatusChange(id, newStatus));
+                              }}
+                              disabled={isStatusChanging}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="pending">검수대기</option>
+                              <option value="approved">검수완료</option>
+                              <option value="rejected">보류</option>
+                              <option value="not_used">사용안함</option>
+                            </select>
                           </td>
-                          <td className="px-4 py-2 text-center" style={getCellStyle('hitCount')}>
+                          <td className="px-4 py-2 text-center">
                             <span className={group.hit_count > 0 ? 'font-semibold text-indigo-600' : 'text-gray-400'}>
                               {group.hit_count}
                             </span>
                           </td>
-                          <td className="px-4 py-2" style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
-                            <div className="flex justify-center gap-2">
-                              {group.approval_status === 'pending' && (
-                                <>
-                                  <Button size="sm" variant="primary" onClick={() => {
-                                    // Approve all translations for this term
-                                    allIds.forEach(id => handleApprove(id));
-                                  }}>✓ 승인</Button>
-                                  <Button size="sm" variant="danger" onClick={() => {
-                                    // Reject all translations for this term
-                                    allIds.forEach(id => handleReject(id));
-                                  }}>✗ 거부</Button>
-                                </>
-                              )}
+                          <td className="px-4 py-2">
+                            <div className="flex justify-center gap-1">
+                              {/* AI 재번역 버튼 (개별) */}
                               <button
-                                onClick={() => {
-                                  // Delete all translations for this term
-                                  allIds.forEach(id => handleDelete(id));
+                                onClick={async () => {
+                                  try {
+                                    const languages = displayLanguageColumns;
+                                    await handleRetranslate(group.term, group.context || '', languages);
+                                    showSuccess(`${languages.length}개 언어로 재번역되었습니다.`);
+                                  } catch (error) {
+                                    console.error('Retranslate error:', error);
+                                    showError('재번역에 실패했습니다.');
+                                  }
                                 }}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                disabled={isRetranslating}
+                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="AI 재번역"
+                              >
+                                {isRetranslating ? (
+                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.101 5.79 2.929 7.907l3.032-3.032z"></path>
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => allIds.forEach((id: string) => handleDelete(id))}
+                                disabled={isDeleting}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="삭제"
                               >
+                                {isDeleting ? (
+                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.101 5.79 2.929 7.907l3.032-3.032z"></path>
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                )}
+                              </button>
+                              {/* 변경 이력 버튼 */}
+                              <button
+                                onClick={() => {
+                                  const firstId = allIds[0];
+                                  const termData = terms.find(t => t.id === firstId);
+                                  setSelectedHistoryTerm({
+                                    id: firstId,
+                                    term: group.term,
+                                    version: termData?.version,
+                                  });
+                                  fetchAuditHistory(firstId);
+                                  setHistoryPanelOpen(true);
+                                }}
+                                className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                title="변경 이력 보기"
+                              >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </button>
                             </div>
                           </td>
                         </tr>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
@@ -835,22 +695,20 @@ export default function GlossaryPage() {
             resetForm();
           }}
           title="용어 추가"
-          formTerm={formTerm}
-          setFormTerm={setFormTerm}
-          formTranslation={formTranslation}
-          setFormTranslation={setFormTranslation}
-          formLanguage={formLanguage}
-          setFormLanguage={setFormLanguage}
-          formContext={formContext}
-          setFormContext={setFormContext}
-          formProductCode={formProductCode}
-          setFormProductCode={setFormProductCode}
+          sourceText={formSourceText}
+          onSourceTextChange={setFormSourceText}
+          context={formContext}
+          onContextChange={setFormContext}
+          productCodes={formProductCodes}
+          onProductCodesChange={setFormProductCodes}
           onSubmit={handleCreate}
           submitLabel="추가"
-          showLanguageSelect={true}
+          isSubmitting={isSubmitting}
+          selectedLanguages={displayLanguageColumns}
+          onRetranslate={handleRetranslate}
         />
 
-        {/* Edit Modal */}
+        {/* Edit Modal - Note: Edit functionality simplified for single language */}
         <GlossaryFormModal
           isOpen={!!editingTerm}
           onClose={() => {
@@ -858,20 +716,16 @@ export default function GlossaryPage() {
             resetForm();
           }}
           title="용어 수정"
-          formTerm={formTerm}
-          setFormTerm={setFormTerm}
-          formTranslation={formTranslation}
-          setFormTranslation={setFormTranslation}
-          formLanguage={formLanguage}
-          setFormLanguage={setFormLanguage}
-          formContext={formContext}
-          setFormContext={setFormContext}
-          formProductCode={formProductCode}
-          setFormProductCode={setFormProductCode}
+          sourceText={formSourceText}
+          onSourceTextChange={setFormSourceText}
+          context={formContext}
+          onContextChange={setFormContext}
+          productCodes={formProductCodes}
+          onProductCodesChange={setFormProductCodes}
           onSubmit={handleUpdate}
           submitLabel="저장"
-          showLanguageSelect={false}
-          editingLanguage={editingTerm ? languagesMap[editingTerm.language_code as LanguageCode]?.name : undefined}
+          selectedLanguages={displayLanguageColumns}
+          onRetranslate={handleRetranslate}
         />
 
         {/* Export Modal */}
@@ -901,8 +755,73 @@ export default function GlossaryPage() {
             handleBulkReject(selectedIds);
             setSelectedIds([]);
           }}
+          onBulkRetranslate={async (ids) => {
+            // Get terms info for retranslation
+            const selectedTerms = terms.filter(t => ids.includes(t.id));
+            const uniqueTerms = [...new Set(selectedTerms.map(t => t.term))];
+            
+            for (const term of uniqueTerms) {
+              const termData = selectedTerms.find(t => t.term === term);
+              if (termData) {
+                await handleRetranslate(term, termData.context || '', displayLanguageColumns);
+              }
+            }
+          }}
+          onBulkViewHistory={(ids) => {
+            // Show history for the first selected term
+            const firstId = ids[0];
+            const termData = terms.find(t => t.id === firstId);
+            if (termData) {
+              setSelectedHistoryTerm({
+                id: firstId,
+                term: termData.term,
+                version: termData.version,
+              });
+              fetchAuditHistory(firstId);
+              setHistoryPanelOpen(true);
+            }
+          }}
           onClearSelection={() => setSelectedIds([])}
-          onRefresh={() => window.location.reload()}
+          onRefresh={() => {
+            setSelectedIds([]);
+          }}
+        />
+
+        {/* History Panel */}
+        {selectedHistoryTerm && (
+          <GlossaryHistoryPanel
+            glossaryId={selectedHistoryTerm.id}
+            term={selectedHistoryTerm.term}
+            isOpen={historyPanelOpen}
+            onClose={() => {
+              setHistoryPanelOpen(false);
+              setSelectedHistoryTerm(null);
+            }}
+            auditHistory={auditHistory}
+            isLoading={isHistoryLoading}
+            currentVersion={selectedHistoryTerm.version}
+            onRevert={async (auditLogId, fieldName) => {
+              const success = await rollbackField(
+                selectedHistoryTerm.id,
+                auditLogId,
+                selectedHistoryTerm.version,
+                fieldName || undefined
+              );
+              if (success) {
+                setHistoryPanelOpen(false);
+                setSelectedHistoryTerm(null);
+              }
+            }}
+          />
+        )}
+
+        {/* Conflict Resolution Modal */}
+        <ConflictResolutionModal
+          isOpen={showConflictModal}
+          onClose={closeConflictModal}
+          conflicts={conflicts}
+          onResolve={resolveConflicts}
+          isLoading={isRollbackLoading}
         />
       </div>
     </DashboardLayout>

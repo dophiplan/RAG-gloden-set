@@ -14,10 +14,13 @@ interface DuplicateInfo {
 interface DuplicateEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  duplicateInfo: DuplicateInfo | null;
-  fieldName: string;
-  newValue: string;
-  onConfirm: (updateAll: boolean) => Promise<void>;
+  duplicateInfo?: DuplicateInfo | null;
+  fieldName?: string;
+  newValue?: string;
+  onConfirm?: (updateAll: boolean) => Promise<void>;
+  // Aliases for backward compatibility
+  duplicates?: string[];
+  newVersion?: string;
 }
 
 export default function DuplicateEditModal({
@@ -33,6 +36,7 @@ export default function DuplicateEditModal({
   if (!duplicateInfo) return null;
 
   const handleConfirm = async (updateAll: boolean) => {
+    if (!onConfirm) return;
     setIsUpdating(true);
     try {
       await onConfirm(updateAll);

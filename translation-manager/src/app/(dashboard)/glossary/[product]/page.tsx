@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card from '@/components/ui/Card';
@@ -18,7 +18,7 @@ import GlossaryFormModal from '../components/GlossaryFormModal';
 import ExportModal from '../components/ExportModal';
 import BulkActionBar from '../components/BulkActionBar';
 import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
-import { showError } from '@/lib/notifications';
+import { showError, showSuccess } from '@/lib/notifications';
 
 function GlossaryProductContent() {
   const params = useParams();
@@ -63,22 +63,27 @@ function GlossaryProductContent() {
     setEditingTerm,
     isReviewing,
     suggestionCount,
+    fetchTerms,
+    formSourceText,
+    setFormSourceText,
+    formContext,
+    setFormContext,
+    formProductCodes,
+    setFormProductCodes,
     formTerm,
     setFormTerm,
     formTranslation,
     setFormTranslation,
     formLanguage,
     setFormLanguage,
-    formContext,
-    setFormContext,
-    formProductCode,
-    setFormProductCode,
+    isSubmitting,
     resetForm,
     handleCreate,
     handleUpdate,
     handleDelete,
     handleApprove,
     handleReject,
+    handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
     handleAIReview,
@@ -113,16 +118,7 @@ function GlossaryProductContent() {
     rejected: '거부됨',
   };
 
-  // Auto-select default languages when product changes (exclude Korean)
-  useEffect(() => {
-    if (selectedProduct && productsMap[selectedProduct]) {
-      const product = productsMap[selectedProduct];
-      if (product.default_languages && product.default_languages.length > 0) {
-        const filteredLanguages = (product.default_languages as LanguageCode[]).filter(lang => lang !== 'ko');
-        setSelectedLanguageColumns(filteredLanguages);
-      }
-    }
-  }, [selectedProduct, productsMap]);
+  // Note: Language auto-selection moved to initial data load to avoid infinite loop
 
   const getSourceTypeBadgeVariant = (sourceType: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
     if (sourceType === 'manual') return 'default';
@@ -200,7 +196,14 @@ function GlossaryProductContent() {
     } : {};
   };
 
-  const displayLanguageColumns = selectedLanguageColumns.filter(lang => lang !== 'ko');
+  // Define fixed language order
+  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'];
+  
+  // Default: English only if nothing selected
+  // Maintain fixed order for selected languages
+  const displayLanguageColumns = selectedLanguageColumns.length > 0 
+    ? LANGUAGE_ORDER.filter(lang => selectedLanguageColumns.includes(lang) && lang !== 'ko')
+    : ['en' as LanguageCode];
 
   // Language toggle functions
   const isLanguageSelected = (lang: LanguageCode) => {
@@ -248,6 +251,31 @@ function GlossaryProductContent() {
 
     fetchRequests();
   }, [productCode]);
+
+  const handleGlossaryStatusChange = async (ids: string[], newStatus: 'pending' | 'approved' | 'rejected' | 'not_used') => {
+    try {
+      const response = await fetch('/api/glossary/bulk-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          glossary_ids: ids,
+          approval_status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '상태 변경에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      showSuccess(`${result.updated}개 용어의 상태가 변경되었습니다.`);
+      fetchTerms();
+    } catch (error) {
+      console.error('Status change error:', error);
+      showError('상태 변경에 실패했습니다.');
+    }
+  };
 
   const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
     try {
@@ -486,6 +514,8 @@ function GlossaryProductContent() {
                 onToggleAll={toggleSelectAll}
                 columnWidths={columnWidths}
                 onResizeStart={onResizeStart}
+                displayLanguages={displayLanguageColumns}
+                languagesMap={languagesMap}
               />
 
               <tbody>
@@ -563,29 +593,19 @@ function GlossaryProductContent() {
                           </Badge>
                         </td>
                         <td style={getCellStyle('approval')}>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getApprovalStatusBadgeVariant(firstTerm.approval_status)}>
-                              {approvalStatusLabels[firstTerm.approval_status]}
-                            </Badge>
-                            {firstTerm.approval_status === 'pending' && (
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleApprove(firstTerm.id)}
-                                  className="text-emerald-600 hover:text-emerald-700 text-xs"
-                                  title="승인"
-                                >
-                                  ✓
-                                </button>
-                                <button
-                                  onClick={() => handleReject(firstTerm.id)}
-                                  className="text-red-600 hover:text-red-700 text-xs"
-                                  title="거부"
-                                >
-                                  ✗
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                          <select
+                            value={firstTerm.approval_status}
+                            onChange={(e) => {
+                              const newStatus = e.target.value as 'pending' | 'approved' | 'rejected' | 'not_used';
+                              handleGlossaryStatusChange(termsInGroup.map(t => t.id), newStatus);
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          >
+                            <option value="pending">검수대기</option>
+                            <option value="approved">검수완료</option>
+                            <option value="rejected">보류</option>
+                            <option value="not_used">사용안함</option>
+                          </select>
                         </td>
                         <td style={{ ...getCellStyle('hitCount'), textAlign: 'center' }}>
                           <span className="text-sm font-medium text-primary-active">
@@ -594,6 +614,22 @@ function GlossaryProductContent() {
                         </td>
                         <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
                           <div className="flex justify-center gap-2">
+                            {/* AI 재번역 버튼 */}
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await handleRetranslate(firstTerm.term, firstTerm.context || '', displayLanguageColumns);
+                                } catch (error) {
+                                  console.error('Retranslate error:', error);
+                                }
+                              }}
+                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                              title="AI 재번역"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
                             <button
                               onClick={() => handleDelete(firstTerm.id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -708,24 +744,33 @@ function GlossaryProductContent() {
           onClearSelection={() => setSelectedIds([])}
           onBulkApprove={handleBulkApprove}
           onBulkReject={handleBulkReject}
+          onBulkRetranslate={async (ids) => {
+            const selectedTerms = terms.filter(t => ids.includes(t.id));
+            const uniqueTerms = [...new Set(selectedTerms.map(t => t.term))];
+            for (const term of uniqueTerms) {
+              const termData = selectedTerms.find(t => t.term === term);
+              if (termData) {
+                await handleRetranslate(term, termData.context || '', displayLanguageColumns);
+              }
+            }
+          }}
         />
 
         {/* Modals */}
         <GlossaryFormModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          term={formTerm}
-          translation={formTranslation}
-          language={formLanguage}
+          sourceText={formSourceText}
+          onSourceTextChange={setFormSourceText}
           context={formContext}
-          productCode={formProductCode}
-          onTermChange={setFormTerm}
-          onTranslationChange={setFormTranslation}
-          onLanguageChange={setFormLanguage}
           onContextChange={setFormContext}
-          onProductCodeChange={setFormProductCode}
+          productCodes={formProductCodes}
+          onProductCodesChange={setFormProductCodes}
           onSubmit={editingTerm ? handleUpdate : handleCreate}
-          isEditing={!!editingTerm}
+          submitLabel={editingTerm ? "저장" : "추가"}
+          isSubmitting={isSubmitting}
+          selectedLanguages={displayLanguageColumns}
+          onRetranslate={handleRetranslate}
         />
 
         <ExportModal

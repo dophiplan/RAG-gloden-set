@@ -24,11 +24,13 @@ export function useTranslationEventHandlers({
   selectedTranslationsCount,
 }: UseTranslationEventHandlersParams) {
 
-  const handleOpenEmailModal = useCallback((templateType: EmailTemplateType) => {
+  const handleOpenEmailModal = useCallback((templateTypeOrTranslations: EmailTemplateType | any[]) => {
     if (selectedTranslationsCount === 0) {
       showError('번역 항목을 선택해주세요.');
       return;
     }
+    // Support both old signature (templateType) and new signature (translations array)
+    const templateType = Array.isArray(templateTypeOrTranslations) ? 'translation_request' : templateTypeOrTranslations;
     openEmailModal(templateType);
   }, [selectedTranslationsCount, openEmailModal]);
 
@@ -174,10 +176,32 @@ export function useTranslationEventHandlers({
     return false;
   }, [fetchTranslations, setSelectedProduct]);
 
+  // Placeholder handlers for backward compatibility (TODO: implement actual functionality)
+  const handleDownloadExcel = useCallback(() => {
+    showError('Excel 다운로드 기능은 아직 구현되지 않았습니다.');
+  }, []);
+
+  const handleDownloadAllExcel = useCallback(() => {
+    showError('전체 Excel 다운로드 기능은 아직 구현되지 않았습니다.');
+  }, []);
+
+  const handleBulkExport = useCallback(async () => {
+    showError('일괄 납품 기능은 아직 구현되지 않았습니다.');
+  }, []);
+
+  const handleSendEmail = useCallback(async () => {
+    showError('이메일 전송 기능은 아직 구현되지 않았습니다.');
+  }, []);
+
   return {
     handleOpenEmailModal,
+    handleEmailClick: handleOpenEmailModal, // Alias for backward compatibility
     handleOpenDeploymentModal,
     handlePDFUpload,
     handleCreateTranslation,
+    handleDownloadExcel,
+    handleDownloadAllExcel,
+    handleBulkExport,
+    handleSendEmail,
   };
 }

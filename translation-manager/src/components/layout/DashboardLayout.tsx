@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Sidebar from './Sidebar';
 import ProfileMenu from './ProfileMenu';
+import GlobalChangeHistory from './GlobalChangeHistory';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -55,6 +56,12 @@ export default function DashboardLayout({
               {headerActions && (
                 <div className="h-6 w-px bg-border-divider"></div>
               )}
+
+              {/* Global Change History Button */}
+              <GlobalChangeHistory />
+
+              {/* Divider */}
+              <div className="h-6 w-px bg-border-divider"></div>
 
               {/* Profile Menu */}
               <ProfileMenu />

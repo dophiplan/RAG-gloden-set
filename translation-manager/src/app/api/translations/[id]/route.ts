@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { TranslationUpdateInput } from '@/types';
+import { TranslationRepository } from '@/repositories';
 
 // GET - Get single translation
 export async function GET(
@@ -60,33 +61,23 @@ export async function PATCH(
     const { id } = await params;
     const body: TranslationUpdateInput & { version_updated_at?: string | null; platform_codes?: string[] } = await request.json();
 
-    // Optimistic Locking: Check for concurrent edits if updated_at is provided
+    // Optimistic Locking: Check for concurrent edits using Repository
     if (body.updated_at) {
-      const { data: currentData, error: fetchError } = await supabase
-        .from('translations')
-        .select('updated_at')
-        .eq('id', id)
-        .single();
+      const repository = new TranslationRepository(supabase);
+      const lockResult = await repository.checkVersion(id, undefined, body.updated_at);
 
-      if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
+      if (!lockResult.success) {
+        if (lockResult.errorCode === 'RECORD_NOT_FOUND') {
           return NextResponse.json({ error: '번역을 찾을 수 없습니다.' }, { status: 404 });
         }
-        throw fetchError;
-      }
 
-      // Compare timestamps (allow 1 second tolerance for network delay)
-      const clientTimestamp = new Date(body.updated_at).getTime();
-      const serverTimestamp = new Date(currentData.updated_at).getTime();
-
-      if (Math.abs(serverTimestamp - clientTimestamp) > 1000) {
         return NextResponse.json(
           {
             error: {
-              code: 'EDIT_CONFLICT',
-              message: '다른 사용자가 이 번역을 수정했습니다. 페이지를 새로고침하여 최신 내용을 확인하세요.',
+              code: lockResult.errorCode || 'EDIT_CONFLICT',
+              message: lockResult.message || '다른 사용자가 이 번역을 수정했습니다. 페이지를 새로고침하여 최신 내용을 확인하세요.',
               details: {
-                serverUpdatedAt: currentData.updated_at,
+                serverUpdatedAt: lockResult.serverTimestamp,
                 clientUpdatedAt: body.updated_at,
               },
             },

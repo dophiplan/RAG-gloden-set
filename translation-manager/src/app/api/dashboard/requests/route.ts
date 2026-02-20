@@ -81,7 +81,7 @@ export async function GET() {
       else requestStatus = 'in_progress';
 
       // Get highest priority
-      const priorityOrder: Record<string, number> = { '긴급': 4, '상': 3, '중': 2, '하': 1 };
+      const priorityOrder: Record<string, number> = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
       const priority = translations.reduce((highest, t) =>
         (priorityOrder[t.priority] || 0) > (priorityOrder[highest] || 0) ? t.priority : highest
       , translations[0].priority) as PriorityLevel;
@@ -170,7 +170,7 @@ export async function GET() {
     // Step 7: Combine and sort all requests
     const allRequests = [...groupedRequests, ...individualRequests];
 
-    const priorityOrder: Record<string, number> = { '긴급': 4, '상': 3, '중': 2, '하': 1 };
+    const priorityOrder: Record<string, number> = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
 
     allRequests.sort((a, b) => {
       // Incomplete first

@@ -5,4 +5,4 @@
 /**
  * Product scope type - used for translations, uploads, and requests
  */
-export type ScopeType = '' | 'SaaS' | 'Solution';
+export type ScopeType = '' | 'saas' | 'solution' | 'government' | 'other';

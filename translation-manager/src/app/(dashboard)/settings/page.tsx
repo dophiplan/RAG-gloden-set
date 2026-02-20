@@ -105,6 +105,8 @@ export default function SettingsPage() {
             const isRsupport = email.endsWith('@rsupport.com');
             const hasAdminRole = roles.includes('admin') || roles.includes('owner');
 
+            console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole });
+
             setIsRsupportUser(isRsupport);
             setIsAdmin(hasAdminRole);
           }
@@ -554,7 +556,12 @@ export default function SettingsPage() {
     >
       <div className="max-w-5xl mx-auto space-y-8">
         {/* AI Provider API Keys - Only visible to admins or rsupport users */}
-        {(isAdmin || isRsupportUser) && <AIProviderManager isRsupportUser={isRsupportUser} isAdmin={isAdmin} />}
+        {(isAdmin || isRsupportUser) && (
+          <>
+            {console.log('🔍 Rendering AIProviderManager with:', { isRsupportUser, isAdmin })}
+            <AIProviderManager isRsupportUser={isRsupportUser} isAdmin={isAdmin} />
+          </>
+        )}
 
         {/* Product Management */}
         <Card>

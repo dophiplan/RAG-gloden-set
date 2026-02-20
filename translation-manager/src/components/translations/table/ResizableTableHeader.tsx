@@ -51,6 +51,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
     })),
     { key: 'status', label: '번역 상태', resizable: true },
     { key: 'notes', label: '비고', resizable: true },
+    { key: 'actions', label: '작업', resizable: false },
   ];
 
   return (

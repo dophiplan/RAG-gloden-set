@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { GlossaryRepository } from '@/repositories';
 
 interface ApproveActionInput {
   action: 'approve' | 'reject';
@@ -28,29 +29,32 @@ export async function PATCH(
       );
     }
 
-    const newStatus = body.action === 'approve' ? 'approved' : 'rejected';
-
-    const { data, error } = await supabase
-      .from('glossary')
-      .update({
-        approval_status: newStatus,
-        approved_by: user.id,
-        approved_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
+    // Use Repository with Audit Logging (Phase 4)
+    const repository = new GlossaryRepository(supabase);
+    
+    // Get user profile for audit log
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: '용어를 찾을 수 없습니다.' }, { status: 404 });
-      }
-      throw error;
+    const userInfo = {
+      id: user.id,
+      name: userProfile?.name,
+      email: user.email || '',
+    };
+
+    let term;
+    if (body.action === 'approve') {
+      term = await repository.approveWithAudit(id, userInfo);
+    } else {
+      term = await repository.rejectWithAudit(id, userInfo);
     }
 
     return NextResponse.json({
       success: true,
-      term: data,
+      term,
     });
   } catch (error) {
     console.error('Error approving/rejecting glossary term:', error);

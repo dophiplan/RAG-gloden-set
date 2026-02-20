@@ -49,7 +49,7 @@ export default function CreateTranslationModal({
   const [newVersion, setNewVersion] = useState('');
   const [newProductCode, setNewProductCode] = useState<ProductCode | ''>('');
   const [newScope, setNewScope] = useState<ScopeType>('');
-  const [newPriority, setNewPriority] = useState<PriorityLevel>('중');
+  const [newPriority, setNewPriority] = useState<PriorityLevel>('medium');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [newCompletionDate, setNewCompletionDate] = useState('');
@@ -59,13 +59,13 @@ export default function CreateTranslationModal({
   const [pdfVersion, setPdfVersion] = useState('');
   const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>('');
   const [pdfScope, setPdfScope] = useState<ScopeType>('');
-  const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('중');
+  const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('medium');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [pdfSelectedPlatforms, setPdfSelectedPlatforms] = useState<string[]>([]);
   const [pdfCompletionDate, setPdfCompletionDate] = useState('');
   const [uploading, setUploading] = useState(false);
   const [pdfError, setPdfError] = useState<string>('');
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update languages when product changes - for manual form
   useEffect(() => {
@@ -92,11 +92,18 @@ export default function CreateTranslationModal({
       setPdfError('번역 언어를 최소 1개 이상 선택해주세요.');
       return;
     }
-
-    const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
-    if (success) {
-      resetManualForm();
-      onClose();
+    
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
+      if (success) {
+        resetManualForm();
+        onClose();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -129,7 +136,7 @@ export default function CreateTranslationModal({
     setNewVersion('');
     setNewProductCode('');
     setNewScope('');
-    setNewPriority('중');
+    setNewPriority('medium');
     setSelectedLanguages(['en', 'ja']);
     setSelectedPlatforms([]);
     setNewCompletionDate('');
@@ -140,7 +147,7 @@ export default function CreateTranslationModal({
     setPdfVersion('');
     setPdfProductCode('');
     setPdfScope('');
-    setPdfPriority('중');
+    setPdfPriority('medium');
     setPdfSelectedLanguages(['en', 'ja']);
     setPdfSelectedPlatforms([]);
     setPdfCompletionDate('');
@@ -230,8 +237,12 @@ export default function CreateTranslationModal({
             <Button variant="secondary" onClick={handleClose}>
               취소
             </Button>
-            <Button onClick={handleCreate} disabled={!newSourceText.trim() || !newScope || selectedLanguages.length === 0}>
-              추가
+            <Button 
+              onClick={handleCreate} 
+              disabled={!newSourceText.trim() || !newScope || selectedLanguages.length === 0 || isSubmitting}
+              loading={isSubmitting}
+            >
+              {isSubmitting ? '생성 중...' : '추가'}
             </Button>
           </div>
         </div>

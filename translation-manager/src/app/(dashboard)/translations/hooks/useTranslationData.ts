@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { TranslationStatus, ProductCode, TranslationResult, Translation, TranslationAuditLog } from '@/types';
+import { TranslationStatus, ProductCode, TranslationResult, Translation, TranslationAuditLog, ScopeType } from '@/types';
 import { buildApiUrl } from '@/lib/api/query-builder';
 
 export interface TranslationWithAudit extends Translation {
@@ -20,7 +20,7 @@ interface UseTranslationDataParams {
   searchTerm: string;
   selectedProduct: ProductCode | null;
   requestIdFilter: string | null;
-  scopeFilter: 'SaaS' | 'Solution' | '';
+  scopeFilter: ScopeType;
   versionFilter: string;
   page: number;
   setTotalPages: (pages: number) => void;

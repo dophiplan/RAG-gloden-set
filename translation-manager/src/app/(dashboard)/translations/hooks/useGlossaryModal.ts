@@ -10,6 +10,10 @@ export function useGlossaryModal() {
   const [glossaryContext, setGlossaryContext] = useState('');
   const [glossaryProductCodes, setGlossaryProductCodes] = useState<ProductCode[]>([]);
 
+  const openGlossaryModal = useCallback(() => {
+    setIsGlossaryModalOpen(true);
+  }, []);
+
   const handleAddToGlossary = useCallback((sourceText: string) => {
     setGlossaryTerm(sourceText);
     setGlossaryTranslation('');
@@ -82,7 +86,9 @@ export function useGlossaryModal() {
     setGlossaryContext,
     glossaryProductCodes,
     toggleGlossaryProduct,
+    openGlossaryModal,
     handleAddToGlossary,
+    handleOpenModal: openGlossaryModal, // Alias
     handleGlossaryCreate,
     closeGlossaryModal,
   };

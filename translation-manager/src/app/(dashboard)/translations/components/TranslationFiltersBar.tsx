@@ -2,7 +2,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { TranslationStatus, LanguageCode } from '@/types';
+import { TranslationStatus, LanguageCode, ScopeType } from '@/types';
 import { useLanguages } from '@/hooks/useReferenceData';
 
 interface TranslationFiltersBarProps {
@@ -12,10 +12,10 @@ interface TranslationFiltersBarProps {
   onLanguageFilterChange: (value: string) => void;
   statusFilter: TranslationStatus | '';
   onStatusFilterChange: (value: TranslationStatus | '') => void;
-  scopeFilter: 'SaaS' | 'Solution' | '';
-  onScopeFilterChange: (value: 'SaaS' | 'Solution' | '') => void;
+  scopeFilter: ScopeType;
+  onScopeFilterChange?: (value: ScopeType) => void;
   versionFilter: string;
-  onVersionFilterChange: (value: string) => void;
+  onVersionFilterChange?: (value: string) => void;
   selectedLanguageColumns: LanguageCode[] | null;
   onLanguageColumnsChange: (languages: LanguageCode[] | null) => void;
   availableLanguages: LanguageCode[];
@@ -26,6 +26,14 @@ interface TranslationFiltersBarProps {
   createdBefore: string;
   onCreatedBeforeChange: (value: string) => void;
   onQuickFilter: (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used') => void;
+  // Optional filters for backward compatibility
+  requestIdFilter?: string | null;
+  onRequestIdFilterChange?: (value: string | null) => void;
+  onRequestIdChange?: (value: string | null) => void; // Alias
+  onClearAllFilters?: () => void;
+  // Handler aliases for backward compatibility
+  onScopeChange?: (value: ScopeType) => void;
+  onVersionChange?: (value: string) => void;
 }
 
 export default function TranslationFiltersBar({
@@ -49,8 +57,20 @@ export default function TranslationFiltersBar({
   createdBefore,
   onCreatedBeforeChange,
   onQuickFilter,
+  requestIdFilter,
+  onRequestIdFilterChange,
+  onRequestIdChange,
+  onClearAllFilters,
+  onScopeChange,
+  onVersionChange,
 }: TranslationFiltersBarProps) {
   const { languages, languagesMap } = useLanguages();
+
+  // Normalize handlers (support both old and new naming)
+  const handleScopeChange = onScopeFilterChange ?? onScopeChange ?? (() => {});
+  const handleVersionChange = onVersionFilterChange ?? onVersionChange ?? (() => {});
+  const handleCreatedAfterChange = onCreatedAfterChange ?? (() => {});
+  const handleCreatedBeforeChange = onCreatedBeforeChange ?? (() => {});
 
   // Generate select options dynamically
   const languageSelectOptions = [
@@ -116,7 +136,7 @@ export default function TranslationFiltersBar({
           <div className="w-40">
             <Select
               value={scopeFilter}
-              onChange={(e) => onScopeFilterChange(e.target.value as 'SaaS' | 'Solution' | '')}
+              onChange={(e) => handleScopeChange(e.target.value as ScopeType)}
               options={[
                 { value: '', label: '모든 분류' },
                 { value: 'SaaS', label: 'SaaS' },
@@ -129,7 +149,7 @@ export default function TranslationFiltersBar({
             <Input
               placeholder="버전 검색..."
               value={versionFilter}
-              onChange={(e) => onVersionFilterChange(e.target.value)}
+              onChange={(e) => handleVersionChange(e.target.value)}
             />
           </div>
           {/* 검색 */}
@@ -163,7 +183,7 @@ export default function TranslationFiltersBar({
                 <Input
                   type="date"
                   value={createdAfter}
-                  onChange={(e) => onCreatedAfterChange(e.target.value)}
+                  onChange={(e) => handleCreatedAfterChange(e.target.value)}
                 />
               </div>
               <div className="w-52">
@@ -173,7 +193,7 @@ export default function TranslationFiltersBar({
                 <Input
                   type="date"
                   value={createdBefore}
-                  onChange={(e) => onCreatedBeforeChange(e.target.value)}
+                  onChange={(e) => handleCreatedBeforeChange(e.target.value)}
                 />
               </div>
 

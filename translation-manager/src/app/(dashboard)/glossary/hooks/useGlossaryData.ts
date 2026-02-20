@@ -19,15 +19,38 @@ export function useGlossaryData() {
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
   const [isReviewing, setIsReviewing] = useState(false);
   const [suggestionCount, setSuggestionCount] = useState(0);
-  // 표시할 언어 컬럼 (기본값: 없음, 제품 선택 시 자동 설정됨)
-  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>([]);
+  // 표시할 언어 컬럼 (기본값: 영어)
+  const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>(['en']);
+  // 통계 정보
+  const [stats, setStats] = useState<{
+    total_terms: number;
+    approved_terms: number;
+    pending_terms: number;
+    rejected_terms: number;
+    not_used_terms: number;
+  }>({
+    total_terms: 0,
+    approved_terms: 0,
+    pending_terms: 0,
+    rejected_terms: 0,
+    not_used_terms: 0,
+  });
 
-  // Form state
+  // Form state (simplified for new AI translation flow)
+  const [formSourceText, setFormSourceText] = useState('');
+  const [formContext, setFormContext] = useState('');
+  const [formProductCodes, setFormProductCodes] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
+  const [isRetranslating, setIsRetranslating] = useState(false);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
+  
+  // Legacy form state for edit mode (single language)
   const [formTerm, setFormTerm] = useState('');
   const [formTranslation, setFormTranslation] = useState('');
   const [formLanguage, setFormLanguage] = useState<LanguageCode>('ko');
-  const [formContext, setFormContext] = useState('');
-  const [formProductCode, setFormProductCode] = useState<ProductCode | ''>('');
 
   const fetchTerms = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -85,38 +108,77 @@ export function useGlossaryData() {
     }
   }, []);
 
+  // 통계 정보 가져오기
+  const fetchStats = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (selectedProduct) params.append('product', selectedProduct);
+      
+      const response = await fetch(`/api/glossary/stats?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          total_terms: data.total_terms || 0,
+          approved_terms: data.approved_terms || 0,
+          pending_terms: data.pending_terms || 0,
+          rejected_terms: data.rejected_terms || 0,
+          not_used_terms: data.not_used_terms || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  }, [selectedProduct]);
+
   useEffect(() => {
     const controller = new AbortController();
     fetchTerms(controller.signal);
     fetchSuggestionCount(controller.signal);
+    fetchStats();
 
     return () => {
       // Cancel fetches on unmount or dependency change
       controller.abort();
     };
-  }, [fetchTerms, fetchSuggestionCount]);
+  }, [fetchTerms, fetchSuggestionCount, fetchStats]);
 
   const resetForm = () => {
+    setFormSourceText('');
+    setFormContext('');
+    setFormProductCodes([]);
     setFormTerm('');
     setFormTranslation('');
-    setFormLanguage('ko');
-    setFormContext('');
-    setFormProductCode('');
   };
 
   const handleCreate = async () => {
-    if (!formTerm.trim() || !formTranslation.trim()) return;
+    // Prevent duplicate submissions
+    if (isSubmitting) return;
+    
+    if (!formSourceText.trim()) {
+      showError('원문을 입력해주세요.');
+      return;
+    }
 
+    // Determine target languages from selected columns, fallback to all except Korean
+    const targetLanguages = selectedLanguageColumns.length > 0 
+      ? selectedLanguageColumns.filter(lang => lang !== 'ko')
+      : Object.keys(SUPPORTED_LANGUAGES).filter(lang => lang !== 'ko') as LanguageCode[];
+
+    if (targetLanguages.length === 0) {
+      showError('번역할 언어를 선택해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/glossary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          term: formTerm,
-          translation: formTranslation,
-          language_code: formLanguage,
+          sourceText: formSourceText,
           context: formContext || undefined,
-          product_code: formProductCode || undefined,
+          product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
+          targetLanguages,
         }),
       });
 
@@ -124,7 +186,7 @@ export function useGlossaryData() {
         setIsModalOpen(false);
         resetForm();
         fetchTerms();
-        showSuccess('용어가 추가되었습니다.');
+        showSuccess(`${targetLanguages.length}개 언어로 용어가 추가되었습니다.`);
       } else {
         const data = await response.json();
         showError(data.error || '용어 추가에 실패했습니다.');
@@ -132,6 +194,8 @@ export function useGlossaryData() {
     } catch (error) {
       console.error('Error creating glossary term:', error);
       showError('용어 추가 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -146,7 +210,7 @@ export function useGlossaryData() {
           term: formTerm,
           translation: formTranslation,
           context: formContext || undefined,
-          product_code: formProductCode || undefined,
+          product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
         }),
       });
 
@@ -165,8 +229,10 @@ export function useGlossaryData() {
   };
 
   const handleDelete = async (id: string) => {
+    if (isDeleting) return;
     if (!showConfirm('정말 삭제하시겠습니까?')) return;
 
+    setIsDeleting(true);
     try {
       const response = await fetch(`/api/glossary/${id}`, {
         method: 'DELETE',
@@ -174,6 +240,7 @@ export function useGlossaryData() {
 
       if (response.ok) {
         setTerms((prev) => prev.filter((t) => t.id !== id));
+        await fetchStats();
         showSuccess('용어가 삭제되었습니다.');
       } else {
         showError('용어 삭제에 실패했습니다.');
@@ -181,6 +248,8 @@ export function useGlossaryData() {
     } catch (error) {
       console.error('Error deleting glossary term:', error);
       showError('용어 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -224,7 +293,72 @@ export function useGlossaryData() {
     }
   };
 
+  const handleStatusChange = async (id: string, status: 'pending' | 'approved' | 'rejected' | 'not_used') => {
+    if (isStatusChanging) return;
+    setIsStatusChanging(true);
+    
+    try {
+      // Use bulk-update API for all status changes (including not_used)
+      const response = await fetch('/api/glossary/bulk-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          glossary_ids: [id],
+          approval_status: status,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchTerms();
+        await fetchStats(); // 통계 새로고침
+        const statusLabels = { pending: '검수대기', approved: '검수완료', rejected: '보류', not_used: '사용안함' };
+        showSuccess(`상태가 "${statusLabels[status]}"(으)로 변경되었습니다.`);
+      } else {
+        showError('상태 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error changing status:', error);
+      showError('상태 변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsStatusChanging(false);
+    }
+  };
+
+  const handleRetranslate = async (sourceText: string, context: string, languages: LanguageCode[]) => {
+    if (isRetranslating) throw new Error('이미 재번역 중입니다.');
+    setIsRetranslating(true);
+    
+    try {
+      const response = await fetch('/api/glossary/retranslate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceText,
+          context: context || undefined,
+          targetLanguages: languages,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '재번역에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      await fetchTerms();
+      return result;
+    } catch (error) {
+      console.error('Retranslate error:', error);
+      throw error;
+    } finally {
+      setIsRetranslating(false);
+    }
+  };
+
   const handleBulkApprove = async (ids: string[]) => {
+    if (isBulkProcessing) return;
+    setIsBulkProcessing(true);
+    
     try {
       const response = await fetch('/api/glossary/bulk', {
         method: 'PATCH',
@@ -234,7 +368,8 @@ export function useGlossaryData() {
 
       if (response.ok) {
         const data = await response.json();
-        fetchTerms();
+        await fetchTerms();
+        await fetchStats(); // 통계 새로고침
         showSuccess(`${data.updated}개 용어가 승인되었습니다.`);
       } else {
         showError('일괄 승인에 실패했습니다.');
@@ -242,10 +377,15 @@ export function useGlossaryData() {
     } catch (error) {
       console.error('Error bulk approving glossary terms:', error);
       showError('일괄 승인 중 오류가 발생했습니다.');
+    } finally {
+      setIsBulkProcessing(false);
     }
   };
 
   const handleBulkReject = async (ids: string[]) => {
+    if (isBulkProcessing) return;
+    setIsBulkProcessing(true);
+    
     try {
       const response = await fetch('/api/glossary/bulk', {
         method: 'PATCH',
@@ -255,7 +395,8 @@ export function useGlossaryData() {
 
       if (response.ok) {
         const data = await response.json();
-        fetchTerms();
+        await fetchTerms();
+        await fetchStats(); // 통계 새로고침
         showSuccess(`${data.updated}개 용어가 거부되었습니다.`);
       } else {
         showError('일괄 거부에 실패했습니다.');
@@ -263,6 +404,8 @@ export function useGlossaryData() {
     } catch (error) {
       console.error('Error bulk rejecting glossary terms:', error);
       showError('일괄 거부 중 오류가 발생했습니다.');
+    } finally {
+      setIsBulkProcessing(false);
     }
   };
 
@@ -281,7 +424,7 @@ export function useGlossaryData() {
     setFormTranslation(term.translation);
     setFormLanguage(term.language_code as LanguageCode);
     setFormContext(term.context || '');
-    setFormProductCode(term.product_code || '');
+    setFormProductCodes(term.product_code ? [term.product_code] : []);
   };
 
   // Group terms by language (for legacy view)
@@ -384,9 +527,14 @@ export function useGlossaryData() {
 
   // Direct update handlers for inline editing
   const handleTermInlineUpdate = useCallback(async (id: string, newTerm: string) => {
+    if (updatingIds.has(id)) return;
+    
     const term = terms.find(t => t.id === id);
     if (!term) return;
+    if (term.term === newTerm) return; // 값이 같으면 API 호출 안 함
 
+    setUpdatingIds(prev => new Set(prev).add(id));
+    
     // Optimistic update
     setTerms(prev => prev.map(t => t.id === id ? { ...t, term: newTerm } : t));
 
@@ -408,13 +556,24 @@ export function useGlossaryData() {
       console.error('Error updating term:', error);
       setTerms(prev => prev.map(t => t.id === id ? term : t));
       showError('용어 수정 중 오류가 발생했습니다.');
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
-  }, [terms]);
+  }, [terms, updatingIds]);
 
   const handleTranslationInlineUpdate = useCallback(async (id: string, newTranslation: string) => {
+    if (updatingIds.has(id)) return;
+    
     const term = terms.find(t => t.id === id);
     if (!term) return;
+    if (term.translation === newTranslation) return;
 
+    setUpdatingIds(prev => new Set(prev).add(id));
+    
     // Optimistic update
     setTerms(prev => prev.map(t => t.id === id ? { ...t, translation: newTranslation } : t));
 
@@ -436,13 +595,24 @@ export function useGlossaryData() {
       console.error('Error updating translation:', error);
       setTerms(prev => prev.map(t => t.id === id ? term : t));
       showError('번역 수정 중 오류가 발생했습니다.');
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
-  }, [terms]);
+  }, [terms, updatingIds]);
 
   const handleContextInlineUpdate = useCallback(async (id: string, newContext: string) => {
+    if (updatingIds.has(id)) return;
+    
     const term = terms.find(t => t.id === id);
     if (!term) return;
+    if (term.context === newContext) return;
 
+    setUpdatingIds(prev => new Set(prev).add(id));
+    
     // Optimistic update
     setTerms(prev => prev.map(t => t.id === id ? { ...t, context: newContext || null } : t));
 
@@ -464,12 +634,19 @@ export function useGlossaryData() {
       console.error('Error updating context:', error);
       setTerms(prev => prev.map(t => t.id === id ? term : t));
       showError('문맥 수정 중 오류가 발생했습니다.');
+    } finally {
+      setUpdatingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
-  }, [terms]);
+  }, [terms, updatingIds]);
 
   return {
     terms,
     loading,
+    fetchTerms,
     languageFilter,
     setLanguageFilter,
     selectedProduct,
@@ -492,22 +669,34 @@ export function useGlossaryData() {
     setEditingTerm,
     isReviewing,
     suggestionCount,
+    stats,
+    fetchStats,
+    formSourceText,
+    setFormSourceText,
+    formContext,
+    setFormContext,
+    formProductCodes,
+    setFormProductCodes,
     formTerm,
     setFormTerm,
     formTranslation,
     setFormTranslation,
     formLanguage,
     setFormLanguage,
-    formContext,
-    setFormContext,
-    formProductCode,
-    setFormProductCode,
+    isSubmitting,
+    isDeleting,
+    isStatusChanging,
+    isRetranslating,
+    isBulkProcessing,
+    updatingIds,
     resetForm,
     handleCreate,
     handleUpdate,
     handleDelete,
     handleApprove,
     handleReject,
+    handleStatusChange,
+    handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
     handleAIReview,

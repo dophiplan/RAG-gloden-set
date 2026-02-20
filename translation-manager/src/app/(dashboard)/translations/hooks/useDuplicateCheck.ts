@@ -12,6 +12,7 @@ interface PendingEdit {
   field: string;
   fieldName: string;
   value: string | string[] | null;
+  newVersion?: string; // Alias for version updates
   updateFn: (id: string, value: string | string[] | null) => Promise<void>;
 }
 
@@ -47,7 +48,7 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
             duplicateIds: data.duplicates.map((d: { id: string }) => d.id),
             duplicateCount: data.count,
           });
-          setPendingEdit({ field, fieldName, value, updateFn });
+          setPendingEdit({ field, fieldName, value, newVersion: typeof value === 'string' ? value : undefined, updateFn });
           setIsDuplicateModalOpen(true);
           return;
         }
@@ -150,10 +151,14 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
 
   return {
     isDuplicateModalOpen,
+    showDuplicateModal: isDuplicateModalOpen, // Alias
     duplicateInfo,
+    duplicates: duplicateInfo?.duplicateIds || [], // Alias
     pendingEdit,
     handleDuplicateEditConfirm,
+    handleConfirmDuplicateEdit: handleDuplicateEditConfirm, // Alias
     closeDuplicateModal,
+    handleCancelDuplicateEdit: closeDuplicateModal, // Alias
     makeVersionUpdateWithDuplicateCheck,
     makeNotesUpdateWithDuplicateCheck,
   };

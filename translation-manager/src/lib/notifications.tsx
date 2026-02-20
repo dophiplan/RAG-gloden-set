@@ -59,6 +59,18 @@ export function showInfo(message: string): void {
   });
 }
 
+export function showWarning(message: string): void {
+  toast(message, {
+    duration: 4000,
+    position: 'top-right',
+    icon: '⚠️',
+    style: {
+      background: '#FEF3C7',
+      color: '#92400E',
+    },
+  });
+}
+
 export function showConfirm(message: string): boolean {
   return confirm(message);
 }

@@ -16,9 +16,10 @@ export interface GlossaryTerm {
   imported_at: string | null;
   hit_count: number;
   glossary_products?: GlossaryProduct[];
-  approval_status: 'pending' | 'approved' | 'rejected';
+  approval_status: 'pending' | 'approved' | 'rejected' | 'not_used';
   approved_by?: string | null;
   approved_at?: string | null;
+  version?: number; // For optimistic locking
 }
 
 export interface GlossaryProduct {

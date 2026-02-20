@@ -68,6 +68,9 @@ function TranslationsProductContent() {
 
   // Modal states
   const modals = useModalStates(translations);
+  
+  // Debug log
+  console.log('[Product Page] modals.selectedIds:', modals.selectedIds, 'modals.selectedTranslations:', modals.selectedTranslations.length);
 
   // Event handlers
   const handlers = useTranslationEventHandlers({
@@ -260,6 +263,8 @@ function TranslationsProductContent() {
           onAddToGlossary={glossary.handleOpenModal}
           onToggleSelectAll={modals.toggleSelectAll}
           onToggleSelect={modals.toggleSelect}
+          selectedIds={modals.selectedIds}
+          onSelectionChange={modals.setSelectedIds}
           selectedTranslations={modals.selectedTranslations}
           isAllSelected={modals.isAllSelected}
           page={filters.page}
@@ -269,12 +274,14 @@ function TranslationsProductContent() {
 
         {/* Bulk Action Bar */}
         <TranslationBulkActionBar
-          selectedCount={modals.selectedTranslations.length}
+          selectedCount={modals.selectedIds.length}
+          selectedIds={modals.selectedIds}
           onClearSelection={modals.clearSelection}
           onBulkStatusChange={mutations.handleBulkStatusChange}
           onBulkDelete={mutations.handleBulkDelete}
           onBulkExport={handlers.handleBulkExport}
           onVersionHistoryClick={modals.openVersionHistoryPanel}
+          onRefresh={fetchTranslations}
         />
 
         {/* Modals */}

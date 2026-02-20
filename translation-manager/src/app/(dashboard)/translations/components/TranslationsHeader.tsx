@@ -4,20 +4,36 @@ import { Translation } from '@/types';
 import { usePlatforms } from '@/hooks/useReferenceData';
 
 interface TranslationsHeaderProps {
-  onOpenCreateModal: () => void;
+  // Original naming
+  onOpenCreateModal?: () => void;
+  // Alternative naming (for backward compatibility)
+  onCreateClick?: () => void;
   selectedCount?: number;
   onShowHistory?: () => void;
   translations?: Translation[];
   versionFilter?: string;
+  // Email and download handlers
+  onEmailClick?: () => void;
+  onDownloadExcel?: () => void;
+  onDownloadAllExcel?: () => void;
+  hasSelectedTranslations?: boolean;
+  canEmail?: boolean;
 }
 
 export default function TranslationsHeader({
   onOpenCreateModal,
+  onCreateClick,
   selectedCount = 0,
   onShowHistory,
   translations = [],
-  versionFilter = ''
+  versionFilter = '',
+  onEmailClick,
+  onDownloadExcel,
+  onDownloadAllExcel,
+  hasSelectedTranslations,
+  canEmail,
 }: TranslationsHeaderProps) {
+  const handleCreate = onOpenCreateModal ?? onCreateClick ?? (() => {});
   const { platformsMap } = usePlatforms();
 
   // Calculate platform completion statistics when version filter is active
@@ -104,7 +120,7 @@ export default function TranslationsHeader({
           </div>
         )}
 
-        <Button onClick={onOpenCreateModal}>새 번역 추가</Button>
+        <Button onClick={handleCreate}>새 번역 추가</Button>
       </div>
     </div>
   );

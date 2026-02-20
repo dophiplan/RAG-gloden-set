@@ -1,5 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Translation, TranslationStatus, ProductCode, PriorityLevel, Scope } from '@/types';
+import { OptimisticLockService } from '@/services/optimistic_lock_service';
+import { LockCheckResult, LockCheckOptions } from '@/types/optimistic_lock';
 
 export interface TranslationFilters {
   status?: TranslationStatus;
@@ -37,33 +39,59 @@ export interface PaginatedResult<T> {
 }
 
 /**
+ * Options for update with optimistic locking
+ */
+export interface UpdateWithLockOptions {
+  /** Expected version number for version-based locking */
+  expectedVersion?: number;
+  /** Expected timestamp for timestamp-based locking */
+  expectedTimestamp?: string;
+  /** Skip lock check if true (for admin operations) */
+  skipLockCheck?: boolean;
+}
+
+/**
  * Repository for Translation database operations
  * Encapsulates all direct Supabase queries for translations table
+ * 
+ * Now supports optimistic locking via updateWithLock method
  */
 export class TranslationRepository {
-  constructor(private supabase: SupabaseClient) {}
+  private lockService: OptimisticLockService;
+
+  constructor(private supabase: SupabaseClient) {
+    this.lockService = new OptimisticLockService(supabase);
+  }
 
   /**
    * Find a single translation by ID with related data
    */
   async findById(id: string): Promise<Translation | null> {
-    const { data, error } = await this.supabase
+    // First, get the translation
+    const { data: translation, error: translationError } = await this.supabase
       .from('translations')
-      .select(`
-        *,
-        translation_results (*),
-        translation_products (*),
-        translation_platforms (*)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      throw new Error(`Failed to find translation: ${error.message}`);
+    if (translationError) {
+      if (translationError.code === 'PGRST116') return null; // Not found
+      throw new Error(`Failed to find translation: ${translationError.message}`);
     }
 
-    return data;
+    // Then fetch related data separately
+    const [resultsData, productsData, platformsData] = await Promise.all([
+      this.supabase.from('translation_results').select('*').eq('translation_id', id),
+      this.supabase.from('translation_products').select('*').eq('translation_id', id),
+      this.supabase.from('translation_platforms').select('*').eq('translation_id', id),
+    ]);
+
+    return {
+      ...translation,
+      translation_results: resultsData.data || [],
+      translation_products: productsData.data || [],
+      translation_platforms: platformsData.data || [],
+    } as Translation;
   }
 
   /**
@@ -164,6 +192,9 @@ export class TranslationRepository {
 
   /**
    * Update an existing translation
+   * 
+   * Note: This method does NOT perform optimistic locking.
+   * For updates with conflict detection, use updateWithLock instead.
    */
   async update(id: string, updates: Partial<Translation>): Promise<Translation> {
     const { data, error } = await this.supabase
@@ -178,6 +209,79 @@ export class TranslationRepository {
     }
 
     return data;
+  }
+
+  /**
+   * Update a translation with optimistic locking
+   * 
+   * Checks for concurrent edits before updating. Supports both version-based
+   * and timestamp-based locking for backward compatibility.
+   * 
+   * @param id Translation ID
+   * @param updates Updates to apply
+   * @param lockOptions Lock check options
+   * @returns Updated translation
+   * @throws Error with code 'EDIT_CONFLICT' if lock check fails
+   * 
+   * @example
+   * ```typescript
+   * // Timestamp-based (backward compatible with existing UI)
+   * await repo.updateWithLock('123', updates, { 
+   *   expectedTimestamp: '2026-02-13T10:00:00.000Z' 
+   * });
+   * 
+   * // Version-based (more robust)
+   * await repo.updateWithLock('123', updates, { expectedVersion: 5 });
+   * ```
+   */
+  async updateWithLock(
+    id: string,
+    updates: Partial<Translation>,
+    lockOptions: UpdateWithLockOptions = {}
+  ): Promise<Translation> {
+    const { expectedVersion, expectedTimestamp, skipLockCheck } = lockOptions;
+
+    // Perform lock check unless skipped
+    if (!skipLockCheck && (expectedVersion !== undefined || expectedTimestamp)) {
+      const lockResult = await this.lockService.checkVersion({
+        id,
+        entityType: 'translation',
+        expectedVersion,
+        expectedTimestamp,
+      });
+
+      if (!lockResult.success) {
+        const error = this.lockService.formatConflictError(lockResult);
+        const err = new Error(error.message);
+        (err as any).code = error.code;
+        (err as any).details = error.details;
+        throw err;
+      }
+    }
+
+    // Proceed with update
+    return this.update(id, updates);
+  }
+
+  /**
+   * Check if a translation can be updated without conflicts
+   * 
+   * @param id Translation ID
+   * @param expectedVersion Expected version number (optional)
+   * @param expectedTimestamp Expected timestamp (optional)
+   * @returns Lock check result
+   */
+  async checkVersion(
+    id: string,
+    expectedVersion?: number,
+    expectedTimestamp?: string
+  ): Promise<LockCheckResult> {
+    return this.lockService.checkVersion({
+      id,
+      entityType: 'translation',
+      expectedVersion,
+      expectedTimestamp,
+    });
   }
 
   /**
@@ -231,5 +335,14 @@ export class TranslationRepository {
     }
 
     return (data || []).map(t => t.id);
+  }
+
+  /**
+   * Get the underlying lock service for advanced operations
+   * 
+   * @returns OptimisticLockService instance
+   */
+  getLockService(): OptimisticLockService {
+    return this.lockService;
   }
 }

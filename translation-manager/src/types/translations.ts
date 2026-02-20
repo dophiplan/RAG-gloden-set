@@ -17,18 +17,18 @@ export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string
   not_used: { bg: 'bg-gray-900', text: 'text-white', label: '사용안함' },               // 검은색+흰글씨
 };
 
-// Priority levels
-export type PriorityLevel = '긴급' | '상' | '중' | '하';
+// Priority levels (database codes)
+export type PriorityLevel = 'urgent' | 'high' | 'medium' | 'low';
 
 export const PRIORITY_LABELS: Record<PriorityLevel, {
   label: string;
   color: string;
   sortOrder: number;
 }> = {
-  '긴급': { label: '긴급', color: 'bg-red-100 text-red-800', sortOrder: 4 },
-  '상': { label: '상', color: 'bg-orange-100 text-orange-800', sortOrder: 3 },
-  '중': { label: '중', color: 'bg-yellow-100 text-yellow-800', sortOrder: 2 },
-  '하': { label: '하', color: 'bg-gray-100 text-gray-800', sortOrder: 1 },
+  'urgent': { label: '긴급', color: 'bg-red-100 text-red-800', sortOrder: 4 },
+  'high': { label: '상', color: 'bg-orange-100 text-orange-800', sortOrder: 3 },
+  'medium': { label: '중', color: 'bg-yellow-100 text-yellow-800', sortOrder: 2 },
+  'low': { label: '하', color: 'bg-gray-100 text-gray-800', sortOrder: 1 },
 };
 
 // Database types
@@ -92,7 +92,16 @@ export interface TranslationResult {
 }
 
 // Audit log types
-export type AuditAction = 'create' | 'update' | 'delete' | 'ai_translate';
+export type AuditAction = 
+  | 'create' 
+  | 'update' 
+  | 'delete' 
+  | 'ai_translate'
+  | 'glossary_match'
+  | 'bulk_create'
+  | 'bulk_update'
+  | 'status_change'
+  | 'revert';
 
 export interface TranslationAuditLog {
   id: string;
@@ -106,6 +115,21 @@ export interface TranslationAuditLog {
   old_value: string | null;
   new_value: string | null;
   created_at: string;
+}
+
+/**
+ * Data required to create an audit log entry
+ */
+export interface AuditLogCreateData {
+  translation_id?: string | null;
+  translation_result_id?: string | null;
+  user_id?: string | null;
+  user_name?: string | null;
+  user_email?: string | null;
+  action: AuditAction;
+  field_name?: string | null;
+  old_value?: string | null;
+  new_value?: string | null;
 }
 
 // Form types
