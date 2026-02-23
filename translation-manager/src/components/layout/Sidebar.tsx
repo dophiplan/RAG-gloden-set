@@ -95,7 +95,25 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { products = [] } = useProducts();
+
+  // Listen for history panel open/close
+  useEffect(() => {
+    const checkHistoryOpen = () => {
+      const isOpen = document.body.hasAttribute('data-history-open');
+      setIsHistoryOpen(isOpen);
+    };
+    
+    // Check initially
+    checkHistoryOpen();
+    
+    // Set up mutation observer to detect attribute changes
+    const observer = new MutationObserver(checkHistoryOpen);
+    observer.observe(document.body, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     // Fetch current user with roles
@@ -154,8 +172,9 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       <div className={`
         flex flex-col w-64 bg-white border-r border-border-light min-h-screen
         fixed lg:static inset-y-0 left-0 z-50
-        transform transition-transform duration-300 ease-in-out
+        transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${isHistoryOpen ? 'opacity-30 pointer-events-none' : 'opacity-100 pointer-events-auto'}
       `} style={{
         boxShadow: '4px 0 16px rgba(99, 102, 241, 0.06)'
       }}>

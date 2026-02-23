@@ -150,15 +150,18 @@ export default function GlobalChangeHistory() {
     }
   }, [isOpen]);
 
-  // Prevent body scroll when panel is open
+  // Prevent body scroll and dim sidebar when panel is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.setAttribute('data-history-open', 'true');
     } else {
       document.body.style.overflow = '';
+      document.body.removeAttribute('data-history-open');
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.removeAttribute('data-history-open');
     };
   }, [isOpen]);
 
@@ -220,35 +223,32 @@ export default function GlobalChangeHistory() {
           </button>
         </div>
 
-        {/* Page Selector Dropdown */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-white">
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+        {/* Page Selector */}
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid #e5e7eb', background: 'white' }}>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: '#6b7280', marginBottom: '8px', textTransform: 'uppercase' }}>
             조회할 페이지 선택
           </label>
-          <div className="relative">
-            <select
-              value={selectedPage}
-              onChange={(e) => setSelectedPage(e.target.value as PageType)}
-              className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent cursor-pointer"
-            >
-              {pageOptions.map((page) => (
-                <option key={page.id} value={page.id}>
-                  {page.label}
-                  {page.id !== 'all' && pageHistory[page.id]?.length > 0 
-                    ? ` (${pageHistory[page.id].length}건)` 
-                    : ''}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-gray-400">
-            {currentPageLabel}의 변경 이력을 조회합니다.
-          </p>
+          <select
+            value={selectedPage}
+            onChange={(e) => setSelectedPage(e.target.value as PageType)}
+            style={{ 
+              width: '100%', 
+              padding: '10px 16px', 
+              fontSize: '14px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              background: 'white'
+            }}
+          >
+            <option value="all">전체 변경 이력</option>
+            <option value="dashboard">대시보드</option>
+            <option value="translations">번역관리</option>
+            <option value="glossary">용어집</option>
+            <option value="upload">번역 요청</option>
+            <option value="users">사용자관리</option>
+            <option value="migration">데이터 마이그레이션</option>
+            <option value="settings">설정</option>
+          </select>
         </div>
 
         {/* History List */}
@@ -313,16 +313,33 @@ export default function GlobalChangeHistory() {
                   {/* Change Details */}
                   {item.field_name && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs font-medium text-gray-600 mb-1.5">
-                        {item.field_name}:
-                      </p>
-                      <div className="space-y-1">
-                        <p className="text-xs text-red-500 line-through bg-red-50 px-2 py-1 rounded">
-                          {item.old_value || '(없음)'}
-                        </p>
-                        <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
-                          {item.new_value || '(없음)'}
-                        </p>
+                      {/* Field Name Badge */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                          {item.field_name}
+                        </span>
+                        <span className="text-xs text-gray-400">필드 변경</span>
+                      </div>
+                      
+                      {/* Before/After Comparison */}
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-medium text-red-500 w-10 shrink-0">Before</span>
+                          <p className="text-xs text-red-600 bg-red-50 px-2 py-1.5 rounded flex-1 break-all">
+                            {item.old_value || '(없음)'}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                          </svg>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-medium text-green-500 w-10 shrink-0">After</span>
+                          <p className="text-xs text-green-600 bg-green-50 px-2 py-1.5 rounded flex-1 break-all">
+                            {item.new_value || '(없음)'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
