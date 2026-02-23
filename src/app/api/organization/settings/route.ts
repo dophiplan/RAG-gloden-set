@@ -154,13 +154,19 @@ function buildUpdateData(body: Record<string, unknown>): Record<string, unknown>
   for (const field of keyFields) {
     if (field in body) {
       const value = body[field];
-      // Validate API key format (should start with sk-)
+      // Validate API key format (provider-specific)
       if (value !== null && value !== undefined && value !== '') {
-        if (typeof value === 'string' && value.startsWith('sk-')) {
-          updateData[field] = value;
-        } else if (value !== null) {
-          // Invalid format, skip
-          console.warn(`Invalid API key format for ${field}`);
+        if (typeof value === 'string') {
+          const isValidKey = 
+            value.startsWith('sk-') ||           // OpenAI, Kimi, etc
+            value.startsWith('sk-ant') ||        // Anthropic
+            value.startsWith('AIza');            // Google (Gemini)
+          
+          if (isValidKey) {
+            updateData[field] = value;
+          } else {
+            console.warn(`Invalid API key format for ${field}`);
+          }
         }
       } else {
         // Explicitly set to null for deletion

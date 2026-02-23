@@ -90,18 +90,20 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
       const response = await fetch('/api/organization/settings');
       if (!response.ok) throw new Error('설정을 불러올 수 없습니다.');
       
-      const data = await response.json();
+      const result = await response.json();
+      // Handle standardized API response: { data: {...} } or direct response
+      const settings = result.data || result;
       
-      if (data.settings) {
+      if (settings) {
         setApiKeys({
-          openai: !!data.settings.openai_api_key,
-          claude: !!data.settings.claude_api_key,
-          kimi: !!data.settings.kimi_api_key,
-          gemini: !!data.settings.gemini_api_key,
+          openai: !!settings.openai_api_key,
+          claude: !!settings.claude_api_key,
+          kimi: !!settings.kimi_api_key,
+          gemini: !!settings.gemini_api_key,
         });
         
-        if (data.settings.settings?.ai_provider_order) {
-          setProviderOrder(data.settings.settings.ai_provider_order);
+        if (settings.settings?.ai_provider_order) {
+          setProviderOrder(settings.settings.ai_provider_order);
         }
       }
     } catch (error) {
@@ -117,9 +119,15 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
       return;
     }
 
-    // Validate key format
-    if (!apiKeyInput.trim().startsWith('sk-')) {
-      showError('API 키는 "sk-"로 시작해야 합니다.');
+    // Validate key format (provider-specific)
+    const keyPrefix = apiKeyInput.trim().substring(0, 10);
+    const isValidKey = 
+      keyPrefix.startsWith('sk-') ||           // OpenAI, Kimi, etc
+      keyPrefix.startsWith('sk-ant') ||        // Anthropic
+      keyPrefix.startsWith('AIza');            // Google (Gemini)
+    
+    if (!isValidKey) {
+      showError('유효하지 않은 API 키 형식입니다. (예: sk-..., sk-ant-..., AIza...)');
       return;
     }
 
