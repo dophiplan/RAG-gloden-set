@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
+import { apiUnauthorized, apiInternalError, apiForbidden } from './response';
 
 export interface AuthContext {
   user: User;
@@ -18,31 +19,25 @@ export async function authenticateRequest(): Promise<{ context: AuthContext } | 
 
   if (authError || !user) {
     return {
-      error: NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      ),
+      error: apiUnauthorized(),
     };
   }
 
-  // Check user role
+  // Check user roles (using roles array)
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('role')
+    .select('roles')
     .eq('id', user.id)
     .single();
 
   if (profileError) {
     console.error('[authenticateRequest] Failed to fetch user profile:', profileError);
     return {
-      error: NextResponse.json(
-        { error: '사용자 정보를 조회할 수 없습니다.' },
-        { status: 500 }
-      ),
+      error: apiInternalError('사용자 정보를 조회할 수 없습니다.'),
     };
   }
 
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.roles?.includes('master') || profile?.roles?.includes('1st_master') || false;
 
   return {
     context: {
@@ -66,10 +61,7 @@ export async function requireAdmin(): Promise<{ context: AuthContext } | { error
 
   if (!auth.context.isAdmin) {
     return {
-      error: NextResponse.json(
-        { error: '관리자 권한이 필요합니다.' },
-        { status: 403 }
-      ),
+      error: apiForbidden('관리자 권한이 필요합니다.'),
     };
   }
 

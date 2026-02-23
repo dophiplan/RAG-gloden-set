@@ -285,7 +285,8 @@ export default function SettingsPage() {
       // Refresh products list
       const productsResponse = await fetch('/api/products');
       if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
+        const result = await productsResponse.json();
+        const productsData = result.data || result;
         setProducts(productsData.products || []);
       }
 
@@ -394,7 +395,8 @@ export default function SettingsPage() {
       // Refresh languages list
       const languagesResponse = await fetch('/api/languages');
       if (languagesResponse.ok) {
-        const languagesData = await languagesResponse.json();
+        const result = await languagesResponse.json();
+        const languagesData = result.data || result;
         setLanguages(languagesData.languages || []);
       }
 
@@ -503,7 +505,8 @@ export default function SettingsPage() {
       // Refresh platforms list
       const platformsResponse = await fetch('/api/platforms');
       if (platformsResponse.ok) {
-        const platformsData = await platformsResponse.json();
+        const result = await platformsResponse.json();
+        const platformsData = result.data || result;
         setPlatforms(platformsData.platforms || []);
       }
 
