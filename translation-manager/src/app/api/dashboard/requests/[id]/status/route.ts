@@ -76,19 +76,28 @@ export async function PATCH(
       .eq('id', user.id)
       .single();
 
-    // Create audit logs for each translation
-    const auditLogs = translationIds.map(id => ({
-      translation_id: id,
-      user_id: user.id,
-      user_name: userProfile?.name || null,
-      user_email: userProfile?.email || user.email,
-      action: 'update' as const,
-      field_name: 'status',
-      old_value: currentStatus,
-      new_value: newStatus,
-    }));
+    // Create audit logs for each translation (non-blocking)
+    try {
+      const auditLogs = translationIds.map(id => ({
+        translation_id: id,
+        user_id: user.id,
+        user_name: userProfile?.name || null,
+        user_email: userProfile?.email || user.email,
+        action: 'update' as const,
+        field_name: 'status',
+        old_value: currentStatus,
+        new_value: newStatus,
+      }));
 
-    await adminClient.from('translation_audit_logs').insert(auditLogs);
+      const { error: auditError } = await adminClient.from('translation_audit_logs').insert(auditLogs);
+      if (auditError) {
+        console.error('Audit log creation failed:', auditError);
+        // Don't fail the request if audit log fails
+      }
+    } catch (auditErr) {
+      console.error('Audit log error:', auditErr);
+      // Continue even if audit log fails
+    }
 
     // Return undo info (5-second window)
     return NextResponse.json({
@@ -101,6 +110,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error('Request status update error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

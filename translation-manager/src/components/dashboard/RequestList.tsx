@@ -103,7 +103,9 @@ export default function RequestList({ requests, loading = false, onStatusChange 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to start work');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Start work error:', errorData);
+        throw new Error(errorData.error || `Failed to start work: ${response.status}`);
       }
 
       const result = await response.json();
