@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { LanguageCode } from '@/types';
+
+interface TranslationResultInput {
+  language_code: LanguageCode;
+  translated_text: string;
+}
+
+// POST - Add or update translation result
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
+
+    const { id: translationId } = await params;
+    const body: TranslationResultInput = await request.json();
+
+    if (!body.language_code || !body.translated_text?.trim()) {
+      return NextResponse.json(
+        { error: '언어 코드와 번역 텍스트는 필수입니다.' },
+        { status: 400 }
+      );
+    }
+
+    // Check if result already exists for this language
+    const { data: existing } = await supabase
+      .from('translation_results')
+      .select('id')
+      .eq('translation_id', translationId)
+      .eq('language_code', body.language_code)
+      .single();
+
+    if (existing) {
+      // 기존 값 가져오기
+      const { data: existingResult } = await supabase
+        .from('translation_results')
+        .select('translated_text')
+        .eq('id', existing.id)
+        .single();
+
+      const previousText = existingResult?.translated_text || '';
+      const newText = body.translated_text.trim();
+
+      // 값이 변경된 경우에만 로그 생성
+      if (previousText !== newText) {
+        // 로그 저장
+        await supabase.from('translation_logs').insert({
+          translation_result_id: existing.id,
+          previous_text: previousText,
+          new_text: newText,
+          changed_by: user.id,
+        });
+      }
+
+      // Update existing - mark as manually edited
+      const { data, error } = await supabase
+        .from('translation_results')
+        .update({
+          translated_text: newText,
+          reviewer_id: user.id,
+          reviewed_at: new Date().toISOString(),
+          source_type: 'manual',
+          // glossary_term_id is preserved for reference
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json(data);
+    } else {
+      // Create new - mark as manually created
+      const { data, error } = await supabase
+        .from('translation_results')
+        .insert({
+          translation_id: translationId,
+          language_code: body.language_code,
+          translated_text: body.translated_text.trim(),
+          source_type: 'manual',
+          reviewer_id: user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json(data, { status: 201 });
+    }
+  } catch (error) {
+    console.error('Error saving translation result:', error);
+    return NextResponse.json(
+      { error: '번역 결과를 저장하는데 실패했습니다.' },
+      { status: 500 }
+    );
+  }
+}
