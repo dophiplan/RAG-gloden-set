@@ -3,6 +3,7 @@ import { GlossaryTerm, SUPPORTED_LANGUAGES, LanguageCode, ProductCode } from '@/
 import { showError, showConfirm, showSuccess } from '@/lib/notifications';
 import { PAGINATION } from '@/lib/constants';
 import { buildApiUrl } from '@/lib/api/query-builder';
+import { apiFetch, apiGet, apiPost, apiPatch } from '@/lib/api-utils';
 
 export function useGlossaryData() {
   const [terms, setTerms] = useState<GlossaryTerm[]>([]);
@@ -66,15 +67,12 @@ export function useGlossaryData() {
         sort: sortBy,
       });
 
-      const response = await fetch(url, { signal });
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
+      const result = await apiFetch<{ data?: { terms?: GlossaryTerm[] }; terms?: GlossaryTerm[] }>(url, { signal });
+      const data = result.data || result;
 
-        // Only update state if not aborted
-        if (!signal?.aborted) {
-          setTerms(data.terms);
-        }
+      // Only update state if not aborted
+      if (!signal?.aborted) {
+        setTerms(data.terms || []);
       }
     } catch (error) {
       // Ignore abort errors
@@ -91,15 +89,12 @@ export function useGlossaryData() {
 
   const fetchSuggestionCount = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch(`/api/glossary/suggest?limit=${PAGINATION.GLOSSARY_SUGGESTION_LIMIT}`, { signal });
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
+      const result = await apiFetch<{ data?: { suggestions?: unknown[] }; suggestions?: unknown[] }>(`/api/glossary/suggest?limit=${PAGINATION.GLOSSARY_SUGGESTION_LIMIT}`, { signal });
+      const data = result.data || result;
 
-        // Only update state if not aborted
-        if (!signal?.aborted) {
-          setSuggestionCount(data.suggestions.length);
-        }
+      // Only update state if not aborted
+      if (!signal?.aborted) {
+        setSuggestionCount(data.suggestions?.length || 0);
       }
     } catch (error) {
       // Ignore abort errors
@@ -116,18 +111,16 @@ export function useGlossaryData() {
       const params = new URLSearchParams();
       if (selectedProduct) params.append('product', selectedProduct);
       
-      const response = await fetch(`/api/glossary/stats?${params.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
-        setStats({
-          total_terms: data.total_terms || 0,
-          approved_terms: data.approved_terms || 0,
-          pending_terms: data.pending_terms || 0,
-          rejected_terms: data.rejected_terms || 0,
-          not_used_terms: data.not_used_terms || 0,
-        });
-      }
+      type StatsResponse = { total_terms: number; approved_terms: number; pending_terms: number; rejected_terms: number; not_used_terms: number };
+      const result = await apiGet<{ data?: StatsResponse } & StatsResponse>(`/api/glossary/stats?${params.toString()}`);
+      const data = (result.data || result) as StatsResponse;
+      setStats({
+        total_terms: data.total_terms || 0,
+        approved_terms: data.approved_terms || 0,
+        pending_terms: data.pending_terms || 0,
+        rejected_terms: data.rejected_terms || 0,
+        not_used_terms: data.not_used_terms || 0,
+      });
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -174,30 +167,20 @@ export function useGlossaryData() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/glossary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sourceText: formSourceText,
-          context: formContext || undefined,
-          product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
-          targetLanguages,
-        }),
+      await apiPost('/api/glossary', {
+        sourceText: formSourceText,
+        context: formContext || undefined,
+        product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
+        targetLanguages,
       });
 
-      if (response.ok) {
-        setIsModalOpen(false);
-        resetForm();
-        fetchTerms();
-        showSuccess(`${targetLanguages.length}개 언어로 용어가 추가되었습니다.`);
-      } else {
-        const result = await response.json();
-        const data = result.data || result;
-        showError(data.error || '용어 추가에 실패했습니다.');
-      }
+      setIsModalOpen(false);
+      resetForm();
+      fetchTerms();
+      showSuccess(`${targetLanguages.length}개 언어로 용어가 추가되었습니다.`);
     } catch (error) {
       console.error('Error creating glossary term:', error);
-      showError('용어 추가 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 추가에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -207,28 +190,20 @@ export function useGlossaryData() {
     if (!editingTerm || !formTerm.trim() || !formTranslation.trim()) return;
 
     try {
-      const response = await fetch(`/api/glossary/${editingTerm.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          term: formTerm,
-          translation: formTranslation,
-          context: formContext || undefined,
-          product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
-        }),
+      await apiPatch(`/api/glossary/${editingTerm.id}`, {
+        term: formTerm,
+        translation: formTranslation,
+        context: formContext || undefined,
+        product_codes: formProductCodes.length > 0 ? formProductCodes : undefined,
       });
 
-      if (response.ok) {
-        setEditingTerm(null);
-        resetForm();
-        fetchTerms();
-        showSuccess('용어가 수정되었습니다.');
-      } else {
-        showError('용어 수정에 실패했습니다.');
-      }
+      setEditingTerm(null);
+      resetForm();
+      fetchTerms();
+      showSuccess('용어가 수정되었습니다.');
     } catch (error) {
       console.error('Error updating glossary term:', error);
-      showError('용어 수정 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 수정에 실패했습니다.');
     }
   };
 
@@ -238,20 +213,14 @@ export function useGlossaryData() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/glossary/${id}`, {
-        method: 'DELETE',
-      });
+      await apiFetch(`/api/glossary/${id}`, { method: 'DELETE' });
 
-      if (response.ok) {
-        setTerms((prev) => prev.filter((t) => t.id !== id));
-        await fetchStats();
-        showSuccess('용어가 삭제되었습니다.');
-      } else {
-        showError('용어 삭제에 실패했습니다.');
-      }
+      setTerms((prev) => prev.filter((t) => t.id !== id));
+      await fetchStats();
+      showSuccess('용어가 삭제되었습니다.');
     } catch (error) {
       console.error('Error deleting glossary term:', error);
-      showError('용어 삭제 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 삭제에 실패했습니다.');
     } finally {
       setIsDeleting(false);
     }
@@ -259,41 +228,29 @@ export function useGlossaryData() {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch(`/api/glossary/${id}/approve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' }),
+      await apiPatch(`/api/glossary/${id}/approve`, {
+        action: 'approve',
       });
 
-      if (response.ok) {
-        fetchTerms();
-        showSuccess('용어가 승인되었습니다.');
-      } else {
-        showError('용어 승인에 실패했습니다.');
-      }
+      fetchTerms();
+      showSuccess('용어가 승인되었습니다.');
     } catch (error) {
       console.error('Error approving glossary term:', error);
-      showError('용어 승인 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 승인에 실패했습니다.');
     }
   };
 
   const handleReject = async (id: string) => {
     try {
-      const response = await fetch(`/api/glossary/${id}/approve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject' }),
+      await apiPatch(`/api/glossary/${id}/approve`, {
+        action: 'reject',
       });
 
-      if (response.ok) {
-        fetchTerms();
-        showSuccess('용어가 거부되었습니다.');
-      } else {
-        showError('용어 거부에 실패했습니다.');
-      }
+      fetchTerms();
+      showSuccess('용어가 거부되었습니다.');
     } catch (error) {
       console.error('Error rejecting glossary term:', error);
-      showError('용어 거부 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 거부에 실패했습니다.');
     }
   };
 
@@ -303,54 +260,35 @@ export function useGlossaryData() {
     
     try {
       // Use bulk-update API for all status changes (including not_used)
-      const response = await fetch('/api/glossary/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          glossary_ids: [id],
-          approval_status: status,
-        }),
+      await apiPatch('/api/glossary/bulk-update', {
+        glossary_ids: [id],
+        approval_status: status,
       });
 
-      if (response.ok) {
-        await fetchTerms();
-        await fetchStats(); // 통계 새로고침
-        const statusLabels = { pending: '검수대기', approved: '검수완료', rejected: '보류', not_used: '사용안함' };
-        showSuccess(`상태가 "${statusLabels[status]}"(으)로 변경되었습니다.`);
-      } else {
-        showError('상태 변경에 실패했습니다.');
-      }
+      await fetchTerms();
+      await fetchStats(); // 통계 새로고침
+      const statusLabels = { pending: '검수대기', approved: '검수완료', rejected: '보류', not_used: '사용안함' };
+      showSuccess(`상태가 "${statusLabels[status]}"(으)로 변경되었습니다.`);
     } catch (error) {
       console.error('Error changing status:', error);
-      showError('상태 변경 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '상태 변경에 실패했습니다.');
     } finally {
       setIsStatusChanging(false);
     }
   };
 
-  const handleRetranslate = async (sourceText: string, context: string, languages: LanguageCode[]) => {
+  const handleRetranslate = async (sourceText: string, context: string, languages: LanguageCode[]): Promise<void> => {
     if (isRetranslating) throw new Error('이미 재번역 중입니다.');
     setIsRetranslating(true);
     
     try {
-      const response = await fetch('/api/glossary/retranslate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sourceText,
-          context: context || undefined,
-          targetLanguages: languages,
-        }),
+      await apiPost('/api/glossary/retranslate', {
+        sourceText,
+        context: context || undefined,
+        targetLanguages: languages,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '재번역에 실패했습니다.');
-      }
-
-      const result = await response.json();
       await fetchTerms();
-      return result;
     } catch (error) {
       console.error('Retranslate error:', error);
       throw error;
@@ -364,24 +302,18 @@ export function useGlossaryData() {
     setIsBulkProcessing(true);
     
     try {
-      const response = await fetch('/api/glossary/bulk', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, action: 'approve' }),
+      const result = await apiPatch<{ data?: { updated: number }; updated?: number }>('/api/glossary/bulk', {
+        ids,
+        action: 'approve',
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
-        await fetchTerms();
-        await fetchStats(); // 통계 새로고침
-        showSuccess(`${data.updated}개 용어가 승인되었습니다.`);
-      } else {
-        showError('일괄 승인에 실패했습니다.');
-      }
+      const data = result.data || result;
+      await fetchTerms();
+      await fetchStats(); // 통계 새로고침
+      showSuccess(`${data.updated}개 용어가 승인되었습니다.`);
     } catch (error) {
       console.error('Error bulk approving glossary terms:', error);
-      showError('일괄 승인 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '일괄 승인에 실패했습니다.');
     } finally {
       setIsBulkProcessing(false);
     }
@@ -392,24 +324,18 @@ export function useGlossaryData() {
     setIsBulkProcessing(true);
     
     try {
-      const response = await fetch('/api/glossary/bulk', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids, action: 'reject' }),
+      const result = await apiPatch<{ data?: { updated: number }; updated?: number }>('/api/glossary/bulk', {
+        ids,
+        action: 'reject',
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
-        await fetchTerms();
-        await fetchStats(); // 통계 새로고침
-        showSuccess(`${data.updated}개 용어가 거부되었습니다.`);
-      } else {
-        showError('일괄 거부에 실패했습니다.');
-      }
+      const data = result.data || result;
+      await fetchTerms();
+      await fetchStats(); // 통계 새로고침
+      showSuccess(`${data.updated}개 용어가 거부되었습니다.`);
     } catch (error) {
       console.error('Error bulk rejecting glossary terms:', error);
-      showError('일괄 거부 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '일괄 거부에 실패했습니다.');
     } finally {
       setIsBulkProcessing(false);
     }
@@ -545,23 +471,16 @@ export function useGlossaryData() {
     setTerms(prev => prev.map(t => t.id === id ? { ...t, term: newTerm } : t));
 
     try {
-      const response = await fetch(`/api/glossary/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ term: newTerm }),
+      await apiPatch(`/api/glossary/${id}`, {
+        term: newTerm,
       });
 
-      if (response.ok) {
-        showSuccess('용어가 수정되었습니다.');
-      } else {
-        // Rollback on failure
-        setTerms(prev => prev.map(t => t.id === id ? term : t));
-        showError('용어 수정에 실패했습니다.');
-      }
+      showSuccess('용어가 수정되었습니다.');
     } catch (error) {
-      console.error('Error updating term:', error);
+      // Rollback on failure
       setTerms(prev => prev.map(t => t.id === id ? term : t));
-      showError('용어 수정 중 오류가 발생했습니다.');
+      console.error('Error updating term:', error);
+      showError(error instanceof Error ? error.message : '용어 수정에 실패했습니다.');
     } finally {
       setUpdatingIds(prev => {
         const next = new Set(prev);
@@ -584,23 +503,16 @@ export function useGlossaryData() {
     setTerms(prev => prev.map(t => t.id === id ? { ...t, translation: newTranslation } : t));
 
     try {
-      const response = await fetch(`/api/glossary/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ translation: newTranslation }),
+      await apiPatch(`/api/glossary/${id}`, {
+        translation: newTranslation,
       });
 
-      if (response.ok) {
-        showSuccess('번역이 수정되었습니다.');
-      } else {
-        // Rollback on failure
-        setTerms(prev => prev.map(t => t.id === id ? term : t));
-        showError('번역 수정에 실패했습니다.');
-      }
+      showSuccess('번역이 수정되었습니다.');
     } catch (error) {
-      console.error('Error updating translation:', error);
+      // Rollback on failure
       setTerms(prev => prev.map(t => t.id === id ? term : t));
-      showError('번역 수정 중 오류가 발생했습니다.');
+      console.error('Error updating translation:', error);
+      showError(error instanceof Error ? error.message : '번역 수정에 실패했습니다.');
     } finally {
       setUpdatingIds(prev => {
         const next = new Set(prev);
@@ -623,23 +535,16 @@ export function useGlossaryData() {
     setTerms(prev => prev.map(t => t.id === id ? { ...t, context: newContext || null } : t));
 
     try {
-      const response = await fetch(`/api/glossary/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: newContext || null }),
+      await apiPatch(`/api/glossary/${id}`, {
+        context: newContext || null,
       });
 
-      if (response.ok) {
-        showSuccess('문맥이 수정되었습니다.');
-      } else {
-        // Rollback on failure
-        setTerms(prev => prev.map(t => t.id === id ? term : t));
-        showError('문맥 수정에 실패했습니다.');
-      }
+      showSuccess('문맥이 수정되었습니다.');
     } catch (error) {
-      console.error('Error updating context:', error);
+      // Rollback on failure
       setTerms(prev => prev.map(t => t.id === id ? term : t));
-      showError('문맥 수정 중 오류가 발생했습니다.');
+      console.error('Error updating context:', error);
+      showError(error instanceof Error ? error.message : '문맥 수정에 실패했습니다.');
     } finally {
       setUpdatingIds(prev => {
         const next = new Set(prev);

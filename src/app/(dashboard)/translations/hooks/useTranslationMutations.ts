@@ -7,6 +7,7 @@ import {
   useCreateTranslation,
 } from './mutations';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
+import { apiDelete, apiFetch } from '@/lib/api-utils';
 
 interface UseTranslationMutationsParams {
   translations: TranslationWithAudit[];
@@ -85,18 +86,10 @@ export function useTranslationMutations({
       }
 
       try {
-        const response = await fetch('/api/translations/bulk', {
+        const result = await apiFetch<{ deleted: number }>('/api/translations/bulk', { 
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids }),
+          body: JSON.stringify({ ids })
         });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || '삭제에 실패했습니다.');
-        }
-
-        const result = await response.json();
         showSuccess(`${result.deleted}개 항목이 삭제되었습니다.`);
         fetchTranslations();
       } catch (error) {

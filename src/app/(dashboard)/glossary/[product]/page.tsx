@@ -19,6 +19,7 @@ import ExportModal from '../components/ExportModal';
 import BulkActionBar from '../components/BulkActionBar';
 import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
 import { showError, showSuccess } from '@/lib/notifications';
+import { apiGet, apiPatch } from '@/lib/api-utils';
 
 function GlossaryProductContent() {
   const params = useParams();
@@ -230,17 +231,15 @@ function GlossaryProductContent() {
   useEffect(() => {
     async function fetchRequests() {
       try {
-        const response = await fetch('/api/dashboard/requests');
-        if (response.ok) {
-          const data = await response.json();
-          // Filter by product
-          const filteredRequests = productCode
-            ? data.requests.filter((req: DashboardRequest) =>
-                req.products.some(p => p.code === productCode)
-              )
-            : data.requests;
-          setRequests(filteredRequests);
-        }
+        const result = await apiGet('/api/dashboard/requests') as { data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] };
+        const requestsData = result.data?.requests || result.requests || [];
+        // Filter by product
+        const filteredRequests = productCode
+          ? requestsData.filter((req: DashboardRequest) =>
+              req.products.some(p => p.code === productCode)
+            )
+          : requestsData;
+        setRequests(filteredRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
         showError('요청 목록을 불러오는데 실패했습니다.');
@@ -254,21 +253,10 @@ function GlossaryProductContent() {
 
   const handleGlossaryStatusChange = async (ids: string[], newStatus: 'pending' | 'approved' | 'rejected' | 'not_used') => {
     try {
-      const response = await fetch('/api/glossary/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          glossary_ids: ids,
-          approval_status: newStatus,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '상태 변경에 실패했습니다.');
-      }
-
-      const result = await response.json();
+      const result = await apiPatch('/api/glossary/bulk-update', {
+        glossary_ids: ids,
+        approval_status: newStatus,
+      }) as { updated: number };
       showSuccess(`${result.updated}개 용어의 상태가 변경되었습니다.`);
       fetchTerms();
     } catch (error) {
@@ -279,30 +267,17 @@ function GlossaryProductContent() {
 
   const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
     try {
-      const response = await fetch(`/api/translations/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Status change error:', error.error || 'Failed to update status');
-        showError('상태 변경에 실패했습니다.');
-        return;
-      }
+      await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
 
       // Refresh requests
-      const requestsRes = await fetch('/api/dashboard/requests');
-      if (requestsRes.ok) {
-        const data = await requestsRes.json();
-        const filteredRequests = productCode
-          ? data.requests.filter((req: DashboardRequest) =>
-              req.products.some(p => p.code === productCode)
-            )
-          : data.requests;
-        setRequests(filteredRequests);
-      }
+      const result = await apiGet('/api/dashboard/requests') as { data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] };
+      const requestsData = result.data?.requests || result.requests || [];
+      const filteredRequests = productCode
+        ? requestsData.filter((req: DashboardRequest) =>
+            req.products.some(p => p.code === productCode)
+          )
+        : requestsData;
+      setRequests(filteredRequests);
     } catch (error) {
       console.error('Error updating status:', error);
       showError('상태 업데이트 중 오류가 발생했습니다.');

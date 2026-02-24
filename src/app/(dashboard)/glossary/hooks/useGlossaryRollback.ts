@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 export interface AuditLogEntry {
   id: string;
@@ -68,15 +69,9 @@ export function useGlossaryRollback(
   const fetchAuditHistory = useCallback(async (glossaryId: string) => {
     setIsHistoryLoading(true);
     try {
-      const response = await fetch(`/api/glossary/revert?glossaryId=${glossaryId}&limit=50`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch history');
-      }
-
-      const result = await response.json();
-      const data = result.data || result;
-      setAuditHistory(data.data || []);
+      const result = await apiGet<{ data?: AuditLogEntry[] }>(`/api/glossary/revert?glossaryId=${glossaryId}&limit=50`);
+      const historyData = (result.data || result) as { data?: AuditLogEntry[] };
+      setAuditHistory(historyData.data || []);
     } catch (error) {
       console.error('[useGlossaryRollback] Failed to fetch history:', error);
       showError('변경 이력을 불러오는데 실패했습니다.');
@@ -101,35 +96,12 @@ export function useGlossaryRollback(
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/glossary/revert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          glossaryId,
-          auditLogId,
-          expectedVersion,
-          conflictResolution: 'reject',
-        }),
+      await apiPost('/api/glossary/revert', {
+        glossaryId,
+        auditLogId,
+        expectedVersion,
+        conflictResolution: 'reject',
       });
-
-      const result = await response.json();
-      const data = result.data || result;
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          // Conflict
-          setConflicts([{
-            glossaryId,
-            currentValue: data.currentValue,
-            expectedValue: data.expectedValue,
-            serverVersion: data.serverVersion,
-          }]);
-          setPendingItems([{ glossaryId, auditLogId, expectedVersion }]);
-          setShowConflictModal(true);
-          return false;
-        }
-        throw new Error(data.error || '롤백에 실패했습니다.');
-      }
 
       showSuccess('성공적으로 복구되었습니다.');
       onSuccess?.();
@@ -161,24 +133,18 @@ export function useGlossaryRollback(
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/glossary/bulk-revert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map(item => ({
-            glossaryId: item.glossaryId,
-            auditLogId: item.auditLogId,
-            expectedVersion: item.expectedVersion,
-          })),
-          atomic,
-        }),
+      const result = await apiPost<{ data?: { conflicts?: unknown[]; summary?: { success: number; failed?: number } }; conflicts?: unknown[]; summary?: { success: number; failed?: number } }>('/api/glossary/bulk-revert', {
+        items: items.map(item => ({
+          glossaryId: item.glossaryId,
+          auditLogId: item.auditLogId,
+          expectedVersion: item.expectedVersion,
+        })),
+        atomic,
       });
-
-      const result = await response.json();
-      const data = result.data || result;
+      const data = (result.data || result);
 
       if (data.conflicts && data.conflicts.length > 0) {
-        setConflicts(data.conflicts);
+        setConflicts(data.conflicts as RollbackConflict[]);
         setPendingItems(items.map(item => ({
           glossaryId: item.glossaryId,
           auditLogId: item.auditLogId,
@@ -187,21 +153,18 @@ export function useGlossaryRollback(
         setShowConflictModal(true);
       }
 
-      if (data.data?.summary?.success > 0) {
-        showSuccess(`${data.data.summary.success}개 항목을 복구했습니다.`);
+      if ((data.summary?.success || 0) > 0) {
+        showSuccess(`${data.summary?.success || 0}개 항목을 복구했습니다.`);
         onSuccess?.();
       }
 
-      if (data.data?.summary?.failed > 0) {
-        showError(`${data.data.summary.failed}개 항목 복구에 실패했습니다.`);
+      if ((data.summary?.failed || 0) > 0) {
+        showError(`${data.summary?.failed || 0}개 항목 복구에 실패했습니다.`);
       }
 
       return {
-        success: data.success,
-        results: data.data?.results?.map((r: { glossaryId: string; success: boolean }) => ({
-          glossaryId: r.glossaryId,
-          success: r.success,
-        })) || [],
+        success: (data.summary?.success || 0) > 0,
+        results: [],
       };
     } catch (error) {
       showError('일괄 복구에 실패했습니다.');
@@ -226,9 +189,8 @@ export function useGlossaryRollback(
       // Fetch current versions first
       const itemsWithVersions = await Promise.all(
         pendingItems.map(async (item) => {
-          const response = await fetch(`/api/glossary/${item.glossaryId}`);
-          const result = await response.json();
-          const data = result.data || result;
+          const result = await apiGet<{ data?: { version: number }; version?: number }>(`/api/glossary/${item.glossaryId}`);
+          const data = (result.data || result) as { version?: number };
           return {
             ...item,
             expectedVersion: data.version,
@@ -237,18 +199,9 @@ export function useGlossaryRollback(
       );
 
       // Retry rollback
-      const response = await fetch('/api/glossary/bulk-revert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: itemsWithVersions }),
-      });
-
-      if (response.ok) {
-        showSuccess('충돌을 해결하고 복구했습니다.');
-        onSuccess?.();
-      } else {
-        showError('충돌 해결에 실패했습니다.');
-      }
+      await apiPost('/api/glossary/bulk-revert', { items: itemsWithVersions });
+      showSuccess('충돌을 해결하고 복구했습니다.');
+      onSuccess?.();
     } catch (error) {
       showError('충돌 해결 중 오류가 발생했습니다.');
     } finally {

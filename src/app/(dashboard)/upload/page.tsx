@@ -13,6 +13,7 @@ import { Holiday } from '@/types/api';
 import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
 import { calculateDeadline, formatDeadline } from '@/shared/date_time/holiday_checker';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 interface ParseResult {
   success: boolean;
@@ -151,8 +152,7 @@ export default function UploadPage() {
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
-        const response = await fetch('/api/holidays');
-        const result = await response.json();
+        const result = await apiGet<{ data?: Holiday[] }>('/api/holidays');
         if (result.data) setHolidays(result.data);
       } catch (error) {
         console.error('Failed to fetch holidays:', error);
@@ -221,16 +221,7 @@ export default function UploadPage() {
       if (productCode) formData.append('product_code', productCode);
       if (version) formData.append('version', version);
 
-      const response = await fetch('/api/files/parse', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '파일 파싱에 실패했습니다.');
-      }
+      const data = await apiPost<ParseResult>('/api/files/parse', formData);
 
       setParseResult(data);
 
@@ -360,32 +351,16 @@ export default function UploadPage() {
     }
 
     try {
-      const response = await fetch('/api/translations/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          texts: selectedTextsArray,
-          version: version || undefined,
-          product_code: productCode || undefined,
-          scope: scope || undefined,
-          priority: priority,
-          languages: selectedLanguages,
-          platform_codes: selectedPlatforms,
-          completion_date: completionDate || undefined,
-        }),
+      const data = await apiPost<{ warning?: string; created?: number }>('/api/translations/bulk', {
+        texts: selectedTextsArray,
+        version: version || undefined,
+        product_code: productCode || undefined,
+        scope: scope || undefined,
+        priority: priority,
+        languages: selectedLanguages,
+        platform_codes: selectedPlatforms,
+        completion_date: completionDate || undefined,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('API Error:', error);
-        const errorMessage = error.details
-          ? `${error.error}\n상세: ${error.details}`
-          : error.error || '번역 항목 저장 중 오류가 발생했습니다.';
-        showError(errorMessage);
-        return;
-      }
-
-      const data = await response.json();
       console.log('Bulk create success:', data);
 
       // Show warning if AI translation failed

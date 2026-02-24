@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { mutate } from 'swr';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import AIProviderManager from '@/components/settings/AIProviderManager';
 import { createClient } from '@/lib/supabase/client';
 import { SUPPORTED_LANGUAGES } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
+import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api-utils';
 
 interface UserProfile {
   id: string;
@@ -84,33 +86,27 @@ export default function SettingsPage() {
     async function fetchUser() {
       try {
         // Use the same API endpoint as ProfileMenu
-        const response = await fetch('/api/auth/me');
-        console.log('🔍 /api/auth/me response:', response.ok);
+        const data = await apiGet<{ user: UserProfile & { roles?: string[] } }>('/api/auth/me');
+        console.log('🔍 /api/auth/me data:', data);
 
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || result;
-          console.log('🔍 /api/auth/me data:', data);
+        if (data.user) {
+          setUser({
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name || null,
+            roles: data.user.roles || [],
+          });
 
-          if (data.user) {
-            setUser({
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name || null,
-              roles: data.user.roles || [],
-            });
+          // Check if user is from rsupport.com domain or has admin/owner role
+          const email = data.user.email || '';
+          const roles = data.user.roles || [];
+          const isRsupport = email.endsWith('@rsupport.com');
+          const hasAdminRole = roles.includes('admin') || roles.includes('owner');
 
-            // Check if user is from rsupport.com domain or has admin/owner role
-            const email = data.user.email || '';
-            const roles = data.user.roles || [];
-            const isRsupport = email.endsWith('@rsupport.com');
-            const hasAdminRole = roles.includes('admin') || roles.includes('owner');
+          console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole });
 
-            console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole });
-
-            setIsRsupportUser(isRsupport);
-            setIsAdmin(hasAdminRole);
-          }
+          setIsRsupportUser(isRsupport);
+          setIsAdmin(hasAdminRole);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -127,12 +123,8 @@ export default function SettingsPage() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const response = await fetch('/api/products');
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || result;
-          setProducts(data.products || []);
-        }
+        const data = await apiGet<{ products: Product[] }>('/api/products');
+        setProducts(data.products || []);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {
@@ -148,25 +140,11 @@ export default function SettingsPage() {
     async function fetchLanguages() {
       setLoadingLanguages(true);
       try {
-        const response = await fetch('/api/languages');
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || result;
-          if (data.languages && data.languages.length > 0) {
-            setLanguages(data.languages);
-          } else {
-            // Fallback: Use hardcoded languages if API returns empty
-            const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
-              id: code,
-              code,
-              name,
-              description: null,
-              display_order: index + 1,
-            }));
-            setLanguages(fallbackLanguages);
-          }
+        const data = await apiGet<{ languages: Language[] }>('/api/languages');
+        if (data.languages && data.languages.length > 0) {
+          setLanguages(data.languages);
         } else {
-          // Fallback: Use hardcoded languages if API fails
+          // Fallback: Use hardcoded languages if API returns empty
           const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
             id: code,
             code,
@@ -200,12 +178,8 @@ export default function SettingsPage() {
     async function fetchPlatforms() {
       setLoadingPlatforms(true);
       try {
-        const response = await fetch('/api/platforms');
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || result;
-          setPlatforms(data.platforms || []);
-        }
+        const data = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+        setPlatforms(data.platforms || []);
       } catch (error) {
         console.error('Error fetching platforms:', error);
       } finally {
@@ -249,46 +223,29 @@ export default function SettingsPage() {
     setSavingProduct(true);
 
     try {
-      let response;
-
       if (editingProduct) {
         // Update existing product
-        response = await fetch(`/api/products/${editingProduct.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: productCode.trim(),
-            name: productName.trim(),
-            description: productDescription.trim() || null,
-          }),
+        await apiPatch(`/api/products/${editingProduct.id}`, {
+          code: productCode.trim(),
+          name: productName.trim(),
+          description: productDescription.trim() || null,
         });
       } else {
         // Create new product
-        response = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: productCode.trim(),
-            name: productName.trim(),
-            description: productDescription.trim() || null,
-            display_order: (products || []).length,
-          }),
+        await apiPost('/api/products', {
+          code: productCode.trim(),
+          name: productName.trim(),
+          description: productDescription.trim() || null,
+          display_order: (products || []).length,
         });
       }
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '제품 저장 실패');
-      }
-
       // Refresh products list
-      const productsResponse = await fetch('/api/products');
-      if (productsResponse.ok) {
-        const result = await productsResponse.json();
-        const productsData = result.data || result;
-        setProducts(productsData.products || []);
-      }
+      const productsData = await apiGet<{ products: Product[] }>('/api/products');
+      setProducts(productsData.products || []);
+
+      // Invalidate SWR cache for products (real-time sync)
+      mutate('/api/products');
 
       showSuccess(editingProduct ? '제품이 수정되었습니다.' : '제품이 추가되었습니다.');
       closeProductModal();
@@ -303,22 +260,14 @@ export default function SettingsPage() {
     if (!showConfirm(`제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '제품 삭제 실패');
-      }
+      await apiDelete(`/api/products/${product.id}`);
 
       // Refresh products list
-      const productsResponse = await fetch('/api/products');
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
-        setProducts(productsData.products || []);
-      }
+      const productsData = await apiGet<{ products: Product[] }>('/api/products');
+      setProducts(productsData.products || []);
+
+      // Invalidate SWR cache for products (real-time sync)
+      mutate('/api/products');
 
       showSuccess('제품이 삭제되었습니다.');
     } catch (error) {
@@ -359,46 +308,26 @@ export default function SettingsPage() {
     setSavingLanguage(true);
 
     try {
-      let response;
-
       if (editingLanguage) {
         // Update existing language
-        response = await fetch(`/api/languages/${editingLanguage.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: languageCode.trim(),
-            name: languageName.trim(),
-            description: languageDescription.trim() || null,
-          }),
+        await apiPatch(`/api/languages/${editingLanguage.id}`, {
+          code: languageCode.trim(),
+          name: languageName.trim(),
+          description: languageDescription.trim() || null,
         });
       } else {
         // Create new language
-        response = await fetch('/api/languages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: languageCode.trim(),
-            name: languageName.trim(),
-            description: languageDescription.trim() || null,
-            display_order: languages.length,
-          }),
+        await apiPost('/api/languages', {
+          code: languageCode.trim(),
+          name: languageName.trim(),
+          description: languageDescription.trim() || null,
+          display_order: languages.length,
         });
       }
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '언어 저장 실패');
-      }
-
       // Refresh languages list
-      const languagesResponse = await fetch('/api/languages');
-      if (languagesResponse.ok) {
-        const result = await languagesResponse.json();
-        const languagesData = result.data || result;
-        setLanguages(languagesData.languages || []);
-      }
+      const languagesData = await apiGet<{ languages: Language[] }>('/api/languages');
+      setLanguages(languagesData.languages || []);
 
       showSuccess(editingLanguage ? '언어가 수정되었습니다.' : '언어가 추가되었습니다.');
       closeLanguageModal();
@@ -413,22 +342,11 @@ export default function SettingsPage() {
     if (!showConfirm(`언어 "${language.name}" (${language.code})을(를) 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch(`/api/languages/${language.id}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '언어 삭제 실패');
-      }
+      await apiDelete(`/api/languages/${language.id}`);
 
       // Refresh languages list
-      const languagesResponse = await fetch('/api/languages');
-      if (languagesResponse.ok) {
-        const languagesData = await languagesResponse.json();
-        setLanguages(languagesData.languages || []);
-      }
+      const languagesData = await apiGet<{ languages: Language[] }>('/api/languages');
+      setLanguages(languagesData.languages || []);
 
       showSuccess('언어가 삭제되었습니다.');
     } catch (error) {
@@ -469,46 +387,26 @@ export default function SettingsPage() {
     setSavingPlatform(true);
 
     try {
-      let response;
-
       if (editingPlatform) {
         // Update existing platform
-        response = await fetch(`/api/platforms/${editingPlatform.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: platformCode.trim(),
-            name: platformName.trim(),
-            description: platformDescription.trim() || null,
-          }),
+        await apiPatch(`/api/platforms/${editingPlatform.id}`, {
+          code: platformCode.trim(),
+          name: platformName.trim(),
+          description: platformDescription.trim() || null,
         });
       } else {
         // Create new platform
-        response = await fetch('/api/platforms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: platformCode.trim(),
-            name: platformName.trim(),
-            description: platformDescription.trim() || null,
-            display_order: platforms.length,
-          }),
+        await apiPost('/api/platforms', {
+          code: platformCode.trim(),
+          name: platformName.trim(),
+          description: platformDescription.trim() || null,
+          display_order: platforms.length,
         });
       }
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '플랫폼 저장 실패');
-      }
-
       // Refresh platforms list
-      const platformsResponse = await fetch('/api/platforms');
-      if (platformsResponse.ok) {
-        const result = await platformsResponse.json();
-        const platformsData = result.data || result;
-        setPlatforms(platformsData.platforms || []);
-      }
+      const platformsData = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+      setPlatforms(platformsData.platforms || []);
 
       showSuccess(editingPlatform ? '플랫폼이 수정되었습니다.' : '플랫폼이 추가되었습니다.');
       closePlatformModal();
@@ -523,22 +421,11 @@ export default function SettingsPage() {
     if (!showConfirm(`플랫폼 "${platform.name}" (${platform.code})을(를) 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch(`/api/platforms/${platform.id}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '플랫폼 삭제 실패');
-      }
+      await apiDelete(`/api/platforms/${platform.id}`);
 
       // Refresh platforms list
-      const platformsResponse = await fetch('/api/platforms');
-      if (platformsResponse.ok) {
-        const platformsData = await platformsResponse.json();
-        setPlatforms(platformsData.platforms || []);
-      }
+      const platformsData = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+      setPlatforms(platformsData.platforms || []);
 
       showSuccess('플랫폼이 삭제되었습니다.');
     } catch (error) {

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { showSuccess, showError, showWarning } from '@/lib/notifications';
+import { apiPost } from '@/lib/api-utils';
 
 interface UseCreateTranslationParams {
   fetchTranslations: () => Promise<void>;
@@ -38,25 +39,17 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
 
       try {
         // 1. Create translation
-        const response = await fetch('/api/translations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            source_text: sourceText,
-            context: context || undefined,
-            version: version || undefined,
-            product_code: productCode || undefined,
-            scope: scope || undefined,
-            priority: priority,
-          }),
+        const createdTranslation = await apiPost<{
+          data?: { id: string };
+          id: string;
+        }>('/api/translations', {
+          source_text: sourceText,
+          context: context || undefined,
+          version: version || undefined,
+          product_code: productCode || undefined,
+          scope: scope || undefined,
+          priority: priority,
         });
-
-        if (!response.ok) {
-          showError('번역 생성에 실패했습니다.');
-          return false;
-        }
-
-        const createdTranslation = await response.json();
         
         // Extract ID from response (handle both {data: {...}} and direct {...} formats)
         const translationId = createdTranslation.data?.id || createdTranslation.id;
@@ -86,21 +79,17 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
                 targetLanguages: languages
               });
               
-              const aiResponse = await fetch('/api/ai/translate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  translationId: translationId,
-                  sourceText: sourceText,
-                  context: context || undefined,
-                  targetLanguages: languages,
-                }),
+              const result = await apiPost<{
+                translations?: unknown[];
+                provider: string;
+              }>('/api/ai/translate', {
+                translationId: translationId,
+                sourceText: sourceText,
+                context: context || undefined,
+                targetLanguages: languages,
               });
 
-              console.log('[AutoTranslate] API response status:', aiResponse.status);
-
-              if (aiResponse.ok) {
-                const result = await aiResponse.json();
+              if (result) {
                 console.log('[AutoTranslate] Success:', result);
                 showSuccess(`AI 번역 완료: ${result.translations?.length || 0}개 언어 (${result.provider})`);
                 
@@ -109,16 +98,6 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
                   console.log('[AutoTranslate] Refreshing translations...');
                   fetchTranslations();
                 }, 500);
-              } else {
-                const errorText = await aiResponse.text();
-                console.error('[AutoTranslate] Failed:', errorText);
-                let errorData;
-                try {
-                  errorData = JSON.parse(errorText);
-                } catch (e) {
-                  errorData = { error: errorText };
-                }
-                showWarning(`AI 번역 실패: ${errorData.error || errorText.substring(0, 100)}`);
               }
             } catch (aiError) {
               console.error('[AutoTranslate] Error:', aiError);
@@ -151,19 +130,10 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
       priority?: PriorityLevel
     ) => {
       try {
-        const response = await fetch('/api/translations/bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ texts, version, product_code: productCode, scope, priority }),
-        });
-
-        if (response.ok) {
-          fetchTranslations();
-          window.history.replaceState({}, '', '/translations');
-          showSuccess(`${texts.length}개의 번역이 생성되었습니다.`);
-        } else {
-          showError('번역 생성에 실패했습니다.');
-        }
+        await apiPost('/api/translations/bulk', { texts, version, product_code: productCode, scope, priority });
+        fetchTranslations();
+        window.history.replaceState({}, '', '/translations');
+        showSuccess(`${texts.length}개의 번역이 생성되었습니다.`);
       } catch (error) {
         console.error('Error creating translations:', error);
         showError('번역 생성 중 오류가 발생했습니다.');

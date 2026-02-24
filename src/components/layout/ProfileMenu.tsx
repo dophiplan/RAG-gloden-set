@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { showSuccess, showError } from '@/lib/notifications';
+import { apiGet, apiPost, apiPatch } from '@/lib/api-utils';
 
 interface UserProfile {
   id: string;
@@ -29,13 +30,10 @@ export default function ProfileMenu() {
     // Fetch user profile
     async function fetchUser() {
       try {
-        const response = await fetch('/api/auth/me');
-        if (response.ok) {
-          const result = await response.json();
-          // Handle standardized API response format: { data: { user: {...} } }
-          const userData = result.data?.user || result.data || result.user;
-          setUser(userData);
-        }
+        const result = await apiGet<{ data?: { user?: UserProfile }; user?: UserProfile }>('/api/auth/me');
+        // Handle standardized API response format: { data: { user: {...} } }
+        const userData = result.data?.user || result.user;
+        if (userData) setUser(userData);
       } catch (error) {
         console.error('Error fetching user:', error);
       } finally {
@@ -69,17 +67,7 @@ export default function ProfileMenu() {
     setSaving(true);
 
     try {
-      const response = await fetch('/api/profile/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editingName }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '프로필 저장 실패');
-      }
+      await apiPatch('/api/profile/update', { name: editingName });
 
       setUser({ ...user, name: editingName });
       setIsProfileModalOpen(false);
@@ -94,11 +82,9 @@ export default function ProfileMenu() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (response.ok) {
-        router.push('/login');
-        router.refresh();
-      }
+      await apiPost('/api/auth/logout', {});
+      router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Error logging out:', error);
     }

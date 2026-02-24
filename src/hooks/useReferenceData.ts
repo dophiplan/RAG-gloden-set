@@ -79,21 +79,20 @@ export interface Scope {
  * Hook to fetch and cache all products
  */
 export function useProducts() {
-  const { data, error, isLoading } = useSWR<{ products: Product[] }>(
-    '/api/products',
+  const { data, error, isLoading } = useSWR<{ data: { products: Product[] } }>(
+    '/api/products?v=2',
     fetcher,
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60000, // 1 minute
-      shouldRetryOnError: false,
-      onError: (err) => {
-        console.error('[useProducts] Failed to fetch products:', err);
-      },
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 10000,
+      shouldRetryOnError: true,
+      errorRetryCount: 3,
     }
   );
 
-  const products = data?.products || [];
+  // API returns { data: { products: [...] } }
+  const products = data?.data?.products || [];
   const isEmpty = !isLoading && !error && products.length === 0;
 
   return {
@@ -112,7 +111,7 @@ export function useProducts() {
  * Hook to fetch and cache all languages
  */
 export function useLanguages() {
-  const { data, error, isLoading } = useSWR<{ languages: Language[] }>(
+  const { data, error, isLoading } = useSWR<{ data: { languages: Language[] } }>(
     '/api/languages',
     fetcher,
     {
@@ -126,7 +125,7 @@ export function useLanguages() {
     }
   );
 
-  const languages = data?.languages || [];
+  const languages = data?.data?.languages || [];
   const isEmpty = !isLoading && !error && languages.length === 0;
 
   return {
@@ -145,7 +144,7 @@ export function useLanguages() {
  * Hook to fetch and cache all platforms
  */
 export function usePlatforms() {
-  const { data, error, isLoading } = useSWR<{ platforms: Platform[] }>(
+  const { data, error, isLoading } = useSWR<{ data: { platforms: Platform[] } }>(
     '/api/platforms',
     fetcher,
     {
@@ -159,7 +158,7 @@ export function usePlatforms() {
     }
   );
 
-  const platforms = data?.platforms || [];
+  const platforms = data?.data?.platforms || [];
   const isEmpty = !isLoading && !error && platforms.length === 0;
 
   return {
@@ -178,7 +177,7 @@ export function usePlatforms() {
  * Hook to fetch and cache all translation statuses
  */
 export function useStatuses() {
-  const { data, error, isLoading } = useSWR<{ statuses: TranslationStatus[] }>(
+  const { data, error, isLoading } = useSWR<{ data: { statuses: TranslationStatus[] } }>(
     '/api/statuses',
     fetcher,
     {
@@ -192,7 +191,7 @@ export function useStatuses() {
     }
   );
 
-  const statuses = data?.statuses || [];
+  const statuses = data?.data?.statuses || [];
   const isEmpty = !isLoading && !error && statuses.length === 0;
 
   return {
@@ -211,7 +210,7 @@ export function useStatuses() {
  * Hook to fetch and cache all priority levels
  */
 export function usePriorities() {
-  const { data, error, isLoading } = useSWR<{ priorities: PriorityLevel[] }>(
+  const { data, error, isLoading } = useSWR<{ data: { priorities: PriorityLevel[] } }>(
     '/api/priorities',
     fetcher,
     {
@@ -225,7 +224,7 @@ export function usePriorities() {
     }
   );
 
-  const priorities = data?.priorities || [];
+  const priorities = data?.data?.priorities || [];
   const isEmpty = !isLoading && !error && priorities.length === 0;
 
   return {
@@ -244,7 +243,7 @@ export function usePriorities() {
  * Hook to fetch and cache all scopes
  */
 export function useScopes() {
-  const { data, error, isLoading } = useSWR<{ scopes: Scope[] }>(
+  const { data, error, isLoading } = useSWR<{ data: { scopes: Scope[] } }>(
     '/api/scopes',
     fetcher,
     {
@@ -258,7 +257,7 @@ export function useScopes() {
     }
   );
 
-  const scopes = data?.scopes || [];
+  const scopes = data?.data?.scopes || [];
   const isEmpty = !isLoading && !error && scopes.length === 0;
 
   return {

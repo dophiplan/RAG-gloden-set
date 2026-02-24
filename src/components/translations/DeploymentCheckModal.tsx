@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { Translation } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { apiPatch } from '@/lib/api-utils';
 
 interface DeploymentCheckModalProps {
   isOpen: boolean;
@@ -116,19 +117,10 @@ export default function DeploymentCheckModal({
       });
 
       // Call API to update translation
-      const response = await fetch(`/api/translations/${translation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform_completions: updatedCompletions,
-          completion_rate: completionRate,
-        }),
+      await apiPatch(`/api/translations/${translation.id}`, {
+        platform_completions: updatedCompletions,
+        completion_rate: completionRate,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update deployment status');
-      }
 
       // Success - call onUpdate callback and close modal
       if (onUpdate) {

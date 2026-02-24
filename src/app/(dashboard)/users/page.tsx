@@ -10,6 +10,7 @@ import { showSuccess, showError, showConfirm } from '@/lib/notifications';
 import { FIRST_MASTER_EMAIL } from '@/types/users';
 import { useProducts } from '@/hooks/useReferenceData';
 import UserBulkActionBar from '@/components/users/UserBulkActionBar';
+import { apiGet, apiPost, apiPatch, apiFetch } from '@/lib/api-utils';
 
 interface SystemUser {
   id: string;
@@ -92,19 +93,11 @@ export default function UsersPage() {
   const fetchSystemUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/users');
-
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
-        setSystemUsers(data.users || []);
-      } else {
-        const error = await response.json();
-        showError(error.error || '사용자 목록을 불러오는데 실패했습니다.');
-      }
+      const data = await apiGet<{ users?: SystemUser[] }>('/api/admin/users');
+      setSystemUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      showError('사용자 목록을 불러오는데 실패했습니다.');
+      showError(error instanceof Error ? error.message : '사용자 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -127,25 +120,12 @@ export default function UsersPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/users/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userIds: selectedUserIds }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showSuccess(`${data.deleted}명의 사용자가 삭제되었습니다.`);
-        setSelectedUserIds([]);
-        fetchSystemUsers();
-      } else {
-        showError(data.error || '사용자 삭제에 실패했습니다.');
-      }
+      const data = await apiPost<{ deleted?: number }>('/api/admin/users/delete', { userIds: selectedUserIds });
+      showSuccess(`${data.deleted || 0}명의 사용자가 삭제되었습니다.`);
+      setSelectedUserIds([]);
+      fetchSystemUsers();
     } catch (error) {
-      showError('사용자 삭제 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '사용자 삭제 중 오류가 발생했습니다.');
     }
   };
 
@@ -176,35 +156,22 @@ export default function UsersPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/users/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: modalData.email,
-          name: modalData.name,
-          password: modalData.password,
-          products: modalData.products,
-          accountLevel: modalData.accountLevel,
-          permissions: modalData.permissions,
-          translatorLanguages: modalData.translatorLanguages,
-        }),
+      await apiPost('/api/admin/users/create', {
+        email: modalData.email,
+        name: modalData.name,
+        password: modalData.password,
+        products: modalData.products,
+        accountLevel: modalData.accountLevel,
+        permissions: modalData.permissions,
+        translatorLanguages: modalData.translatorLanguages,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showSuccess('사용자가 등록되었습니다.');
-        setIsModalOpen(false);
-        setEditingUserId(null);
-        setModalData(defaultModalData);
-        fetchSystemUsers();
-      } else {
-        showError(data.error || '사용자 등록에 실패했습니다.');
-      }
+      showSuccess('사용자가 등록되었습니다.');
+      setIsModalOpen(false);
+      setEditingUserId(null);
+      setModalData(defaultModalData);
+      fetchSystemUsers();
     } catch (error) {
-      showError('사용자 등록 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '사용자 등록 중 오류가 발생했습니다.');
     }
   };
 
@@ -217,35 +184,22 @@ export default function UsersPage() {
     if (!editingUserId) return;
 
     try {
-      const response = await fetch(`/api/admin/users/${editingUserId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: modalData.name,
-          email: modalData.email,
-          password: modalData.password || undefined, // Only send if provided
-          products: modalData.products,
-          accountLevel: modalData.accountLevel,
-          permissions: modalData.permissions,
-          translatorLanguages: modalData.translatorLanguages,
-        }),
+      await apiPatch(`/api/admin/users/${editingUserId}`, {
+        name: modalData.name,
+        email: modalData.email,
+        password: modalData.password || undefined, // Only send if provided
+        products: modalData.products,
+        accountLevel: modalData.accountLevel,
+        permissions: modalData.permissions,
+        translatorLanguages: modalData.translatorLanguages,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showSuccess('사용자 정보가 수정되었습니다.');
-        setIsModalOpen(false);
-        setEditingUserId(null);
-        setModalData(defaultModalData);
-        fetchSystemUsers();
-      } else {
-        showError(data.error || '사용자 수정에 실패했습니다.');
-      }
+      showSuccess('사용자 정보가 수정되었습니다.');
+      setIsModalOpen(false);
+      setEditingUserId(null);
+      setModalData(defaultModalData);
+      fetchSystemUsers();
     } catch (error) {
-      showError('사용자 수정 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '사용자 수정 중 오류가 발생했습니다.');
     }
   };
 
@@ -284,29 +238,14 @@ export default function UsersPage() {
     );
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}/permissions`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ permissions: newPermissions }),
-      });
-
-      if (response.ok) {
-        showSuccess('권한이 업데이트되었습니다.');
-      } else {
-        // Rollback on error
-        setSystemUsers(prev =>
-          prev.map(u => u.id === userId ? { ...u, permissions: currentPermissions } : u)
-        );
-        showError('권한 업데이트에 실패했습니다.');
-      }
+      await apiPatch(`/api/admin/users/${userId}/permissions`, { permissions: newPermissions });
+      showSuccess('권한이 업데이트되었습니다.');
     } catch (error) {
       // Rollback on error
       setSystemUsers(prev =>
         prev.map(u => u.id === userId ? { ...u, permissions: currentPermissions } : u)
       );
-      showError('권한 업데이트 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '권한 업데이트 중 오류가 발생했습니다.');
     }
   };
 
@@ -358,26 +297,20 @@ export default function UsersPage() {
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    const response = await fetch('/api/admin/users/import', {
+                    const data = await apiFetch<{ summary?: { created?: number; updated?: number; failed?: number } }>('/api/admin/users/import', {
                       method: 'POST',
+                      body: formData,
                       headers: {
                         'x-admin-secret': process.env.NEXT_PUBLIC_ADMIN_SECRET || '',
                       },
-                      body: formData,
                     });
 
-                    const data = await response.json();
-
-                    if (response.ok) {
-                      showSuccess(
-                        `사용자 등록 완료: 생성 ${data.summary.created}명, 수정 ${data.summary.updated}명, 실패 ${data.summary.failed}명`
-                      );
-                      fetchSystemUsers(); // Reload user list
-                    } else {
-                      showError(data.error || '사용자 등록에 실패했습니다.');
-                    }
+                    showSuccess(
+                      `사용자 등록 완료: 생성 ${data.summary?.created || 0}명, 수정 ${data.summary?.updated || 0}명, 실패 ${data.summary?.failed || 0}명`
+                    );
+                    fetchSystemUsers(); // Reload user list
                   } catch (error) {
-                    showError('파일 업로드 중 오류가 발생했습니다.');
+                    showError(error instanceof Error ? error.message : '파일 업로드 중 오류가 발생했습니다.');
                   }
 
                   // Reset input

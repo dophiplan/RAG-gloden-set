@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { EmailTemplateType, Translation, SUPPORTED_LANGUAGES, LanguageCode } from '@/types';
 import { TIMEOUTS } from '@/lib/constants';
+import { apiPost } from '@/lib/api-utils';
 
 interface EmailTemplateModalProps {
   isOpen: boolean;
@@ -81,23 +82,12 @@ export default function EmailTemplateModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/emails/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          template_type: selectedTemplateType,
-          translation_ids: (selectedTranslations || []).map((t) => t.id),
-          custom_message: customMessage || undefined,
-          language_codes: (selectedLanguages || []).length > 0 ? selectedLanguages : undefined,
-        }),
+      const data = await apiPost<EmailPreview>('/api/emails/preview', {
+        template_type: selectedTemplateType,
+        translation_ids: (selectedTranslations || []).map((t) => t.id),
+        custom_message: customMessage || undefined,
+        language_codes: (selectedLanguages || []).length > 0 ? selectedLanguages : undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to load email preview');
-      }
-
-      const data = await response.json();
       setPreview(data);
       setRecipients({
         to: data.recipients.to.join(', '),
@@ -129,26 +119,17 @@ export default function EmailTemplateModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/emails/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          template_type: selectedTemplateType,
-          translation_ids: selectedTranslations.map((t) => t.id),
-          recipients: {
-            to: recipients.to.split(',').map((email) => email.trim()).filter(Boolean),
-            cc: recipients.cc.split(',').map((email) => email.trim()).filter(Boolean),
-          },
-          custom_message: customMessage || undefined,
-          deadline: deadline || undefined,
-          language_codes: (selectedLanguages || []).length > 0 ? selectedLanguages : undefined,
-        }),
+      await apiPost('/api/emails/send', {
+        template_type: selectedTemplateType,
+        translation_ids: selectedTranslations.map((t) => t.id),
+        recipients: {
+          to: recipients.to.split(',').map((email) => email.trim()).filter(Boolean),
+          cc: recipients.cc.split(',').map((email) => email.trim()).filter(Boolean),
+        },
+        custom_message: customMessage || undefined,
+        deadline: deadline || undefined,
+        language_codes: (selectedLanguages || []).length > 0 ? selectedLanguages : undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send email');
-      }
 
       // Success - close modal
       onClose();

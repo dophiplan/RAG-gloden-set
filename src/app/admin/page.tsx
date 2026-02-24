@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 export default function AdminPage() {
   const [loading, setLoading] = useState(false);
@@ -10,8 +11,7 @@ export default function AdminPage() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch('/api/admin/create-master', { method: 'POST' });
-      const data = await res.json();
+      const data = await apiPost<Record<string, unknown>>('/api/admin/create-master', {});
       setResult(data);
     } catch (error) {
       setResult({ error: String(error) });
@@ -24,8 +24,7 @@ export default function AdminPage() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch('/api/admin/reset-master-password', { method: 'POST' });
-      const data = await res.json();
+      const data = await apiPost<Record<string, unknown>>('/api/admin/reset-master-password', {});
       setResult(data);
     } catch (error) {
       setResult({ error: String(error) });
@@ -38,8 +37,7 @@ export default function AdminPage() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await fetch('/api/admin/create-master');
-      const data = await res.json();
+      const data = await apiGet<Record<string, unknown>>('/api/admin/create-master');
       setResult(data);
     } catch (error) {
       setResult({ error: String(error) });

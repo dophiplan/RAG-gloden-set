@@ -6,6 +6,7 @@ import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
 import { UserRole, ProductCode, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { apiPatch } from '@/lib/api-utils';
 
 interface UserBulkActionBarProps {
   selectedCount: number;
@@ -100,19 +101,10 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/admin/users/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_ids: selectedIds,
-          account_level: selectedAccountLevel,
-        }),
+      await apiPatch('/api/admin/users/bulk-update', {
+        user_ids: selectedIds,
+        account_level: selectedAccountLevel,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '계정 권한 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}명의 계정 권한이 변경되었습니다.`);
       setSelectedAccountLevel('');
@@ -142,19 +134,10 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/admin/users/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_ids: selectedIds,
-          work_products: selectedProducts,
-        }),
+      await apiPatch('/api/admin/users/bulk-update', {
+        user_ids: selectedIds,
+        work_products: selectedProducts,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '제품 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}명의 제품이 변경되었습니다.`);
       setSelectedProducts([]);
@@ -182,19 +165,10 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/admin/users/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_ids: selectedIds,
-          work_scope: selectedWorkScope,
-        }),
+      await apiPatch('/api/admin/users/bulk-update', {
+        user_ids: selectedIds,
+        work_scope: selectedWorkScope,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '작업 범위 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}명의 작업 범위가 변경되었습니다.`);
       setSelectedWorkScope([]);
@@ -222,19 +196,10 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/admin/users/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_ids: selectedIds,
-          work_languages: selectedLanguages,
-        }),
+      await apiPatch('/api/admin/users/bulk-update', {
+        user_ids: selectedIds,
+        work_languages: selectedLanguages,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '번역 언어 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}명의 번역 언어가 변경되었습니다.`);
       setSelectedLanguages([]);

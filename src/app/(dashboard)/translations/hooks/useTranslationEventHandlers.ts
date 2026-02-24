@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { ProductCode, LanguageCode, PriorityLevel, ScopeType, EmailTemplateType } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
+import { apiPost } from '@/lib/api-utils';
 import type { UploadedFile } from '@/components/FileUploader';
 import { TIMEOUTS } from '@/lib/constants';
 
@@ -62,23 +63,12 @@ export function useTranslationEventHandlers({
       if (scope) formData.append('scope', scope);
 
       // Step 1: Parse PDF to extract texts
-      const parseResponse = await fetch('/api/files/parse', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!parseResponse.ok) {
-        const error = await parseResponse.json();
-        showError(error.error || 'PDF 파싱 중 오류가 발생했습니다.');
-        return;
-      }
-
-      const parseData = await parseResponse.json();
+      const parseData = await apiPost<{ results?: { success?: boolean; texts?: string[] }[] }>('/api/files/parse', formData);
 
       // Collect all extracted texts from all files
       const allTexts: string[] = [];
       if (parseData.results && Array.isArray(parseData.results)) {
-        parseData.results.forEach((result: any) => {
+        parseData.results.forEach((result) => {
           if (result.success && result.texts && Array.isArray(result.texts)) {
             allTexts.push(...result.texts);
           }
@@ -93,28 +83,16 @@ export function useTranslationEventHandlers({
       showSuccess(`${allTexts.length}개의 텍스트가 추출되었습니다.`);
 
       // Step 2: Save extracted texts to database
-      const bulkCreateResponse = await fetch('/api/translations/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          texts: allTexts,
-          version: version || undefined,
-          product_code: productCode || undefined,
-          scope: scope || undefined,
-          priority: priority,
-          languages: languages,
-          platform_codes: platformCodes,
-          completion_date: completionDate || undefined,
-        }),
+      const bulkData = await apiPost<{ created?: number }>('/api/translations/bulk', {
+        texts: allTexts,
+        version: version || undefined,
+        product_code: productCode || undefined,
+        scope: scope || undefined,
+        priority: priority,
+        languages: languages,
+        platform_codes: platformCodes,
+        completion_date: completionDate || undefined,
       });
-
-      if (!bulkCreateResponse.ok) {
-        const error = await bulkCreateResponse.json();
-        showError(error.error || '번역 항목 저장 중 오류가 발생했습니다.');
-        return;
-      }
-
-      const bulkData = await bulkCreateResponse.json();
 
       // Switch to selected product tab FIRST
       if (productCode) {
@@ -150,10 +128,8 @@ export function useTranslationEventHandlers({
       translated_text: '',
     }));
 
-    const response = await fetch('/api/translations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      await apiPost('/api/translations', {
         source_text: sourceText,
         context: context || undefined,
         version: version || undefined,
@@ -163,17 +139,15 @@ export function useTranslationEventHandlers({
         translations: translationsArray,
         platform_codes: platformCodes,
         completion_date: completionDate || undefined,
-      }),
-    });
-
-    if (response.ok) {
+      });
       fetchTranslations();
       if (productCode) {
         setSelectedProduct(productCode as ProductCode);
       }
       return true;
+    } catch (error) {
+      return false;
     }
-    return false;
   }, [fetchTranslations, setSelectedProduct]);
 
   // Placeholder handlers for backward compatibility (TODO: implement actual functionality)

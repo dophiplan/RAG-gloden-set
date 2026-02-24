@@ -4,6 +4,7 @@ import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
 import { ProductCode } from '@/types';
+import { apiPatch, apiFetch } from '@/lib/api-utils';
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -65,19 +66,10 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/glossary/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          glossary_ids: selectedIds,
-          approval_status: 'pending',
-        }),
+      await apiPatch('/api/glossary/bulk-update', {
+        glossary_ids: selectedIds,
+        approval_status: 'pending',
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '상태 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}개 용어의 상태가 변경되었습니다.`);
       onClearSelection();
@@ -110,18 +102,10 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/glossary/bulk', {
+      const result = await apiFetch<{ deleted: number }>('/api/glossary/bulk', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: selectedIds }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '삭제에 실패했습니다.');
-      }
-
-      const result = await response.json();
       showSuccess(`${result.deleted}개 용어가 삭제되었습니다.`);
       onClearSelection();
       onRefresh?.();
@@ -179,19 +163,10 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/glossary/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          glossary_ids: selectedIds,
-          product_codes: selectedProducts,
-        }),
+      await apiPatch('/api/glossary/bulk-update', {
+        glossary_ids: selectedIds,
+        product_codes: selectedProducts,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '제품 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}개 용어의 제품이 변경되었습니다.`);
       setSelectedProducts([]);

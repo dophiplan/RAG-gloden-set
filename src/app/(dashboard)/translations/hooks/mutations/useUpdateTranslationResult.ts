@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
-import { LanguageCode } from '@/types';
+import { LanguageCode, TranslationResult } from '@/types';
 import { showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
+import { apiPost, apiPatch } from '@/lib/api-utils';
 
 interface UseUpdateTranslationResultParams {
   translations: TranslationWithAudit[];
@@ -54,73 +55,37 @@ export function useUpdateTranslationResult({
       }
 
       try {
-        const response = await fetch(`/api/translations/${translationId}/results`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            language_code: languageCode,
-            translated_text: text,
-          }),
+        const savedResult = await apiPost<TranslationResult>(`/api/translations/${translationId}/results`, {
+          language_code: languageCode,
+          translated_text: text,
         });
+        console.log('[Translation Update] Success:', savedResult);
 
-        if (response.ok) {
-          const savedResult = await response.json();
-          console.log('[Translation Update] Success:', savedResult);
+        // Update with actual server response
+        const finalResults = existingResult
+          ? translation.translation_results.map((r) =>
+              r.language_code === languageCode ? savedResult : r
+            )
+          : [...translation.translation_results, savedResult];
 
-          // Update with actual server response
-          const finalResults = existingResult
-            ? translation.translation_results.map((r) =>
-                r.language_code === languageCode ? savedResult : r
-              )
-            : [...translation.translation_results, savedResult];
+        updateLocalTranslation(translationId, { translation_results: finalResults });
 
-          updateLocalTranslation(translationId, { translation_results: finalResults });
-
-          // If status was reverted, also update it on the server
-          if (needsStatusRevert) {
-            await fetch(`/api/translations/${translationId}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'in_progress' }),
-            });
-            showSuccess('번역이 저장되었습니다. 상태가 "진행 중"으로 변경되었습니다.');
-          } else {
-            showSuccess('번역이 저장되었습니다.');
-          }
-
-          // Record correction in background (fire-and-forget)
-          if (existingResult && existingResult.translated_text !== text) {
-            void fetch('/api/ai/corrections', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                original_text: existingResult.translated_text,
-                corrected_text: text,
-                source_text: translation.source_text,
-                language_code: languageCode,
-              }),
-            })
-              .then(() => {})
-              .catch(() => {});
-          }
+        // If status was reverted, also update it on the server
+        if (needsStatusRevert) {
+          await apiPatch(`/api/translations/${translationId}`, { status: 'in_progress' });
+          showSuccess('번역이 저장되었습니다. 상태가 "진행 중"으로 변경되었습니다.');
         } else {
-          // Rollback
-          const errorData = await response.json().catch(() => ({}));
-          console.error('[Translation Update] Failed:', {
-            status: response.status,
-            error: errorData,
-            translationId,
-            languageCode,
-          });
+          showSuccess('번역이 저장되었습니다.');
+        }
 
-          updateLocalTranslation(translationId, {
-            translation_results: translation.translation_results,
-          });
-          if (needsStatusRevert) {
-            updateLocalTranslation(translationId, { status: translation.status });
-          }
-
-          showError(errorData.error || '번역 저장에 실패했습니다.');
+        // Record correction in background (fire-and-forget)
+        if (existingResult && existingResult.translated_text !== text) {
+          void apiPost('/api/ai/corrections', {
+            original_text: existingResult.translated_text,
+            corrected_text: text,
+            source_text: translation.source_text,
+            language_code: languageCode,
+          }).catch(() => {});
         }
       } catch (error) {
         console.error('[Translation Update] Error:', error);

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { LanguageCode, ProductCode } from '@/types';
 import { showSuccess, showError } from '@/lib/notifications';
+import { apiPost } from '@/lib/api-utils';
 
 export function useGlossaryModal() {
   const [isGlossaryModalOpen, setIsGlossaryModalOpen] = useState(false);
@@ -30,34 +31,25 @@ export function useGlossaryModal() {
     }
 
     try {
-      const response = await fetch('/api/glossary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          term: glossaryTerm,
-          translation: glossaryTranslation,
-          language_code: glossaryLanguage,
-          context: glossaryContext || undefined,
-          product_codes: glossaryProductCodes.length > 0 ? glossaryProductCodes : undefined,
-        }),
+      await apiPost('/api/glossary', {
+        term: glossaryTerm,
+        translation: glossaryTranslation,
+        language_code: glossaryLanguage,
+        context: glossaryContext || undefined,
+        product_codes: glossaryProductCodes.length > 0 ? glossaryProductCodes : undefined,
       });
 
-      if (response.ok) {
-        setIsGlossaryModalOpen(false);
-        setGlossaryTerm('');
-        setGlossaryTranslation('');
-        setGlossaryLanguage('en');
-        setGlossaryContext('');
-        setGlossaryProductCodes([]);
-        showSuccess('용어집에 추가되었습니다!');
-        return true;
-      } else {
-        const data = await response.json();
-        showError(data.error || '용어 추가에 실패했습니다.');
-      }
+      setIsGlossaryModalOpen(false);
+      setGlossaryTerm('');
+      setGlossaryTranslation('');
+      setGlossaryLanguage('en');
+      setGlossaryContext('');
+      setGlossaryProductCodes([]);
+      showSuccess('용어집에 추가되었습니다!');
+      return true;
     } catch (error) {
       console.error('Error creating glossary term:', error);
-      showError('용어 추가 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '용어 추가 중 오류가 발생했습니다.');
     }
     return false;
   }, [glossaryTerm, glossaryTranslation, glossaryLanguage, glossaryContext, glossaryProductCodes]);

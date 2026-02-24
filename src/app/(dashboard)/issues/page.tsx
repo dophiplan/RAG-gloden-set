@@ -11,6 +11,7 @@ import { isMaster } from '@/lib/permissions';
 import { formatDateTimeKR } from '@/shared/date_time/date_formatter';
 import { showError, showConfirm } from '@/lib/notifications';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { apiGet, apiPatch, apiDelete } from '@/lib/api-utils';
 
 const ISSUE_TYPE_LABELS: Record<IssueType, string> = {
   pdf_parse_error: 'PDF 파싱 오류',
@@ -50,15 +51,13 @@ export default function IssuesPage() {
         params.set('product_code', selectedProduct);
       }
 
-      const response = await fetch(`/api/issues?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        // Filter issues: Master sees all, users see their own
-        if (currentUser && !isMaster(currentUser)) {
-          setIssues(data.issues.filter((issue: Issue) => issue.user_id === currentUser.id));
-        } else {
-          setIssues(data.issues);
-        }
+      const data = await apiGet<{ issues?: Issue[] }>(`/api/issues?${params}`);
+      // Filter issues: Master sees all, users see their own
+      const issues = data.issues || [];
+      if (currentUser && !isMaster(currentUser)) {
+        setIssues(issues.filter((issue: Issue) => issue.user_id === currentUser.id));
+      } else {
+        setIssues(issues);
       }
     } catch (error) {
       console.error('Error fetching issues:', error);
@@ -79,18 +78,8 @@ export default function IssuesPage() {
 
   const handleResolveToggle = async (issueId: string, currentResolved: boolean) => {
     try {
-      const response = await fetch(`/api/issues/${issueId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolved: !currentResolved }),
-      });
-
-      if (response.ok) {
-        fetchIssues();
-      } else {
-        const errorData = await response.json();
-        showError(errorData.error || '이슈 상태 변경에 실패했습니다.');
-      }
+      await apiPatch(`/api/issues/${issueId}`, { resolved: !currentResolved });
+      fetchIssues();
     } catch (error) {
       console.error('Error updating issue:', error);
       showError('이슈 상태 변경 중 오류가 발생했습니다.');
@@ -101,16 +90,8 @@ export default function IssuesPage() {
     if (!showConfirm('정말 이 이슈를 삭제하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/issues/${issueId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        fetchIssues();
-      } else {
-        const errorData = await response.json();
-        showError(errorData.error || '이슈 삭제에 실패했습니다.');
-      }
+      await apiDelete(`/api/issues/${issueId}`);
+      fetchIssues();
     } catch (error) {
       console.error('Error deleting issue:', error);
       showError('이슈 삭제 중 오류가 발생했습니다.');

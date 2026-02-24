@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { apiGet, apiPost, apiPatch } from '@/lib/api-utils';
 import type { TranslationWithAudit } from './useTranslationData';
 
 interface DuplicateInfo {
@@ -35,23 +36,19 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
     updateFn: (id: string, value: string | string[] | null) => Promise<void>
   ) => {
     try {
-      const response = await fetch(
+      const data = await apiGet<{ count?: number; duplicates?: { id: string }[] }>(
         `/api/translations/update-duplicates?sourceText=${encodeURIComponent(sourceText)}&excludeId=${translationId}`
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.count > 0) {
-          setDuplicateInfo({
-            translationId,
-            sourceText,
-            duplicateIds: data.duplicates.map((d: { id: string }) => d.id),
-            duplicateCount: data.count,
-          });
-          setPendingEdit({ field, fieldName, value, newVersion: typeof value === 'string' ? value : undefined, updateFn });
-          setIsDuplicateModalOpen(true);
-          return;
-        }
+      if ((data.count || 0) > 0) {
+        setDuplicateInfo({
+          translationId,
+          sourceText,
+          duplicateIds: (data.duplicates || []).map((d: { id: string }) => d.id),
+          duplicateCount: data.count || 0,
+        });
+        setPendingEdit({ field, fieldName, value, newVersion: typeof value === 'string' ? value : undefined, updateFn });
+        setIsDuplicateModalOpen(true);
+        return;
       }
       await updateFn(translationId, value);
     } catch (error) {
@@ -67,15 +64,11 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
       await pendingEdit.updateFn(duplicateInfo.translationId, pendingEdit.value);
 
       if (updateAll && duplicateInfo.duplicateIds.length > 0) {
-        await fetch('/api/translations/update-duplicates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceText: duplicateInfo.sourceText,
-            field: pendingEdit.field,
-            value: pendingEdit.value,
-            excludeId: duplicateInfo.translationId,
-          }),
+        await apiPost('/api/translations/update-duplicates', {
+          sourceText: duplicateInfo.sourceText,
+          field: pendingEdit.field,
+          value: pendingEdit.value,
+          excludeId: duplicateInfo.translationId,
         });
       }
 
@@ -109,15 +102,11 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
           '버전',
           version.trim() || null,
           async (id, val) => {
-            const response = await fetch(`/api/translations/${id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                version: val,
-                version_updated_at: val ? new Date().toISOString() : null,
-              }),
+            await apiPatch(`/api/translations/${id}`, {
+              version: val,
+              version_updated_at: val ? new Date().toISOString() : null,
             });
-            if (response.ok) fetchTranslations();
+            fetchTranslations();
           }
         );
       },
@@ -137,12 +126,8 @@ export function useDuplicateCheck({ translations, fetchTranslations }: UseDuplic
           '비고',
           notes || null,
           async (id, val) => {
-            const response = await fetch(`/api/translations/${id}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ notes: val }),
-            });
-            if (response.ok) fetchTranslations();
+            await apiPatch(`/api/translations/${id}`, { notes: val });
+            fetchTranslations();
           }
         );
       },

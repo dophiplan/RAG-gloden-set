@@ -53,7 +53,7 @@ export default function ProductTabs({
               boxShadow: '0 -2px 8px rgba(123, 201, 111, 0.2)'
             } : undefined}
           >
-            {product.name}
+            {product.code}
           </button>
         ))}
       </nav>

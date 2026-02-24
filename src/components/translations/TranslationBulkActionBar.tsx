@@ -4,6 +4,7 @@ import Select from '@/components/ui/Select';
 import { ProductCode, TranslationStatus } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
+import { apiPatch, apiDelete, apiFetch } from '@/lib/api-utils';
 
 interface TranslationBulkActionBarProps {
   selectedCount: number;
@@ -80,19 +81,10 @@ export default function TranslationBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/translations/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          translation_ids: selectedIds,
-          product_code: selectedProduct,
-        }),
+      await apiPatch('/api/translations/bulk-update', {
+        translation_ids: selectedIds,
+        product_code: selectedProduct,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '제품 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}개 항목의 제품이 변경되었습니다.`);
       setSelectedProduct('');
@@ -131,19 +123,10 @@ export default function TranslationBulkActionBar({
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/translations/bulk-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          translation_ids: selectedIds,
-          status: targetStatus,
-        }),
+      await apiPatch('/api/translations/bulk-update', {
+        translation_ids: selectedIds,
+        status: targetStatus,
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '상태 변경에 실패했습니다.');
-      }
 
       showSuccess(`${selectedCount}개 항목의 상태가 변경되었습니다.`);
       setSelectedStatus('');
@@ -173,18 +156,10 @@ export default function TranslationBulkActionBar({
       // Direct API call if handler not provided
       setIsProcessing(true);
       try {
-        const response = await fetch('/api/translations/bulk', {
+        const result = await apiFetch<{ deleted: number }>('/api/translations/bulk', { 
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedIds }),
+          body: JSON.stringify({ ids: selectedIds })
         });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || '삭제에 실패했습니다.');
-        }
-
-        const result = await response.json();
         showSuccess(`${result.deleted}개 항목이 삭제되었습니다.`);
         onClearSelection();
         onRefresh?.();

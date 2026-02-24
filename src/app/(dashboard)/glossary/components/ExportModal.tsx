@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { LanguageCode, ProductCode } from '@/types';
+import { apiFetch } from '@/lib/api-utils';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -55,11 +56,6 @@ export default function ExportModal({
       params.append('include_metadata', includeMetadata.toString());
 
       const response = await fetch(`/api/glossary/export?${params.toString()}`);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Export failed');
-      }
 
       // Download file
       const blob = await response.blob();

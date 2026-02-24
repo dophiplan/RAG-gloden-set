@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TermSuggestion } from '@/lib/glossary/term-detector';
 import { ProductCode } from '@/types';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 export interface SuggestionWithUI extends TermSuggestion {
   selected: boolean;
@@ -28,12 +29,9 @@ export function useSuggestionData() {
       if (filterProduct !== 'all') params.append('product_code', filterProduct);
       params.append('limit', '50');
 
-      const response = await fetch(`/api/glossary/suggest?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch suggestions');
-
-      const data = await response.json();
+      const data = await apiGet<{ suggestions?: TermSuggestion[] }>(`/api/glossary/suggest?${params}`);
       setSuggestions(
-        (data.suggestions || []).map((s: TermSuggestion) => ({
+        (data.suggestions || []).map((s) => ({
           ...s,
           selected: false,
           context: '',
@@ -118,21 +116,13 @@ export function useSuggestionData() {
     );
 
     try {
-      const response = await fetch('/api/glossary/generate-context', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          term: suggestion.term,
-          translation: suggestion.translation,
-          language_code: suggestion.language_code,
-          sample_contexts: suggestion.sample_contexts,
-        }),
+      const data = await apiPost<{ context?: string }>('/api/glossary/generate-context', {
+        term: suggestion.term,
+        translation: suggestion.translation,
+        language_code: suggestion.language_code,
+        sample_contexts: suggestion.sample_contexts,
       });
-
-      if (!response.ok) throw new Error('Failed to generate context');
-
-      const data = await response.json();
-      updateContext(index, data.context);
+      updateContext(index, data.context || '');
     } catch (error) {
       console.error('Error generating context:', error);
       showError('설명 생성에 실패했습니다. OpenAI API 키가 설정되어 있는지 확인해주세요.');
@@ -165,24 +155,16 @@ export function useSuggestionData() {
 
     setApproving(true);
     try {
-      const response = await fetch('/api/glossary/suggest/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          suggestions: selected.map((s) => ({
-            term: s.term,
-            translation: s.translation,
-            language_code: s.language_code,
-            context: s.context || undefined,
-            product_codes: s.product_codes.length > 0 ? s.product_codes : undefined,
-          })),
-        }),
+      const data = await apiPost<{ added?: number }>('/api/glossary/suggest/approve', {
+        suggestions: selected.map((s) => ({
+          term: s.term,
+          translation: s.translation,
+          language_code: s.language_code,
+          context: s.context || undefined,
+          product_codes: s.product_codes.length > 0 ? s.product_codes : undefined,
+        })),
       });
-
-      if (!response.ok) throw new Error('Failed to approve suggestions');
-
-      const data = await response.json();
-      showSuccess(`${data.added}개의 용어가 추가되었습니다.`);
+      showSuccess(`${data.added || 0}개의 용어가 추가되었습니다.`);
 
       // 승인된 항목 제거
       setSuggestions(suggestions.filter((s) => !s.selected));

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { TranslationStatus, ProductCode, TranslationResult, Translation, TranslationAuditLog, ScopeType } from '@/types';
 import { buildApiUrl } from '@/lib/api/query-builder';
+import { apiFetch } from '@/lib/api-utils';
 
 export interface TranslationWithAudit extends Translation {
   translation_results: TranslationResult[];
@@ -66,25 +67,19 @@ export function useTranslationData({
         page: page.toString(),
       });
 
-      const response = await fetch(url, { signal });
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
+      const data = await apiFetch<{ translations: TranslationWithAudit[]; totalPages?: number; total?: number; stats?: { pending?: number; reviewed?: number; deployed?: number } }>(url, { signal });
 
-        // Only update state if not aborted
-        if (!signal?.aborted) {
-          setTranslations(data.translations);
-          setTotalPages(data.totalPages);
+      // Only update state if not aborted
+      if (!signal?.aborted) {
+        setTranslations(data.translations || []);
+        setTotalPages(data.totalPages || 1);
 
-          setStats({
-            total: data.total || 0,
-            pending: data.stats?.pending || 0,
-            reviewed: data.stats?.reviewed || 0,
-            deployed: data.stats?.deployed || 0,
-          });
-        }
-      } else {
-        console.error('API Error:', response.status, response.statusText);
+        setStats({
+          total: data.total || 0,
+          pending: data.stats?.pending || 0,
+          reviewed: data.stats?.reviewed || 0,
+          deployed: data.stats?.deployed || 0,
+        });
       }
     } catch (error) {
       // Ignore abort errors

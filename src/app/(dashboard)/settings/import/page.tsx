@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { ProductCode } from '@/types';
 import { useProducts } from '@/hooks/useReferenceData';
+import { apiFetch } from '@/lib/api-utils';
 
 export default function ImportPage() {
   const router = useRouter();
@@ -64,16 +65,16 @@ export default function ImportPage() {
       formData.append('product_code', productCode);
       if (version) formData.append('version', version);
 
-      const response = await fetch('/api/import', {
+      const data = await apiFetch<{
+        success: boolean;
+        created: number;
+        skipped: number;
+        errors: string[];
+        error?: string;
+      }>('/api/import', {
         method: 'POST',
         body: formData,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '가져오기 실패');
-      }
 
       setResult(data);
     } catch (err) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { VersionItem } from './VersionItem';
+import { apiGet, apiPost } from '@/lib/api-utils';
 
 interface VersionHistory {
   id: string;
@@ -37,13 +38,7 @@ export function VersionHistoryPanel({
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `/api/translations/${translationId}/logs?language=${languageCode}`
-      );
-
-      if (!response.ok) throw new Error('히스토리를 불러오지 못했습니다.');
-
-      const data = await response.json();
+      const data = await apiGet<VersionHistory[]>(`/api/translations/${translationId}/logs?language=${languageCode}`);
       setLogs(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류');
@@ -57,16 +52,7 @@ export function VersionHistoryPanel({
     if (!confirm('이 버전으로 복구하시겠습니까?')) return;
 
     try {
-      const response = await fetch(`/api/translations/${translationId}/revert`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logId, languageCode }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '복구에 실패했습니다.');
-      }
+      await apiPost(`/api/translations/${translationId}/revert`, { logId, languageCode });
 
       // 성공 후 목록 새로고침
       await fetchLogs();

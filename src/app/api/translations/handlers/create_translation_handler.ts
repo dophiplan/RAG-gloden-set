@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import type { PriorityLevel } from '@/types';
 import { createClient } from '@/lib/supabase/server';
 import { TranslationCrudService } from '@/services';
 import { translationCreateSchema, validateAndSanitize, sanitizeText } from '@/lib/validation/schemas';
@@ -84,7 +85,7 @@ export async function handleCreateTranslation(request: NextRequest) {
         productCode: body.product_code as any,
         productCodes: body.product_codes as any,
         scope: body.scope as any,
-        priority: body.priority,
+        priority: body.priority as PriorityLevel | undefined,
         completionDate: body.completion_date,
         userId: user.id,
         translations,

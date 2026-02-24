@@ -12,6 +12,7 @@ import GlossaryStatsCard from '@/app/(dashboard)/glossary/components/GlossarySta
 import type { DashboardRequest } from '@/types/translations';
 import type { ProductCode } from '@/types';
 import { showError } from '@/lib/notifications';
+import { apiGet, apiPatch } from '@/lib/api-utils';
 
 interface DashboardStats {
   total: number;
@@ -46,29 +47,17 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const params = new URLSearchParams();
-        if (startDate) params.set('start_date', startDate);
-        if (endDate) params.set('end_date', endDate);
-
-        const [statsRes, requestsRes] = await Promise.all([
-          fetch(`/api/dashboard/stats?${params}`),
-          fetch('/api/dashboard/requests'),
+        const [statsData, requestsData] = await Promise.all([
+          apiGet<DashboardStats>('/api/dashboard/stats', { start_date: startDate, end_date: endDate }),
+          apiGet<{ requests: DashboardRequest[] }>('/api/dashboard/requests'),
         ]);
 
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData);
-        }
-
-        if (requestsRes.ok) {
-          const requestsData = await requestsRes.json();
-          setRequests(requestsData.requests || []);
-        } else {
-          setRequests([]);
-        }
+        setStats(statsData);
+        setRequests(requestsData.requests || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         showError('대시보드 데이터를 불러오는데 실패했습니다.');
+        setRequests([]);
       } finally {
         setLoading(false);
       }
@@ -79,25 +68,11 @@ export default function DashboardPage() {
 
   const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
     try {
-      const response = await fetch(`/api/translations/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Status change error:', error.error || 'Failed to update status');
-        showError('상태 변경에 실패했습니다.');
-        return;
-      }
+      await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
 
       // Refresh requests data
-      const requestsRes = await fetch('/api/dashboard/requests');
-      if (requestsRes.ok) {
-        const requestsData = await requestsRes.json();
-        setRequests(requestsData.requests);
-      }
+      const requestsData = await apiGet<{ requests: DashboardRequest[] }>('/api/dashboard/requests');
+      setRequests(requestsData.requests || []);
     } catch (error) {
       console.error('Error updating status:', error);
       showError('상태 업데이트 중 오류가 발생했습니다.');

@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card';
 import Tooltip from '@/components/ui/Tooltip';
 import { ProductCode } from '@/types';
 import { useProducts } from '@/hooks/useReferenceData';
+import { apiGet } from '@/lib/api-utils';
 
 interface GlossaryStats {
   total_terms: number;
@@ -62,12 +63,9 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
       if (selectedProduct) {
         params.set('product_code', selectedProduct);
       }
-      const response = await fetch(`/api/glossary/stats?${params}`);
-      if (response.ok) {
-        const result = await response.json();
-        const data = result.data || result;
-        setStats(data);
-      }
+      const result = await apiGet(`/api/glossary/stats?${params}`) as { data?: GlossaryStats } & GlossaryStats;
+      const data = result.data || result;
+      setStats(data);
     } catch (error) {
       console.error('Error fetching glossary stats:', error);
     } finally {

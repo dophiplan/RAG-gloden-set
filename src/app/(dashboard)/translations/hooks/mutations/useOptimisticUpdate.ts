@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
+import { apiPatch } from '@/lib/api-utils';
 
 interface UseOptimisticUpdateParams {
   translations: TranslationWithAudit[];
@@ -27,21 +28,9 @@ export function useOptimisticUpdate({
       updateLocalTranslation(id, localUpdates);
 
       try {
-        const response = await fetch(`/api/translations/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        if (response.ok) {
-          if (successMessage) {
-            showSuccess(successMessage);
-          }
-        } else {
-          if (prev) {
-            updateLocalTranslation(id, prev);
-          }
-          showError('수정에 실패했습니다.');
+        await apiPatch(`/api/translations/${id}`, body);
+        if (successMessage) {
+          showSuccess(successMessage);
         }
       } catch (error) {
         console.error('Error updating translation:', error);

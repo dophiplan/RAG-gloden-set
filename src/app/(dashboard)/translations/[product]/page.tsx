@@ -11,6 +11,7 @@ import { getAllDisplayableLanguages } from '@/lib/product-languages';
 import type { DashboardRequest } from '@/types/translations';
 import type { ProductCode } from '@/types';
 import { showError } from '@/lib/notifications';
+import { apiGet, apiPatch } from '@/lib/api-utils';
 
 import { useTranslationFilters } from '../hooks/useTranslationFilters';
 import { useTranslationData } from '../hooks/useTranslationData';
@@ -121,17 +122,16 @@ function TranslationsProductContent() {
   useEffect(() => {
     async function fetchRequests() {
       try {
-        const response = await fetch('/api/dashboard/requests');
-        if (response.ok) {
-          const data = await response.json();
-          // Filter by product
-          const filteredRequests = productCode
-            ? data.requests.filter((req: DashboardRequest) =>
-                req.products.some(p => p.code === productCode)
-              )
-            : data.requests;
-          setRequests(filteredRequests);
-        }
+        const result = await apiGet<{ data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] }>('/api/dashboard/requests');
+        // API returns { data: { requests: [...] } }
+        const requestsData = result.data?.requests || result.requests || [];
+        // Filter by product
+        const filteredRequests = productCode
+          ? requestsData.filter((req: DashboardRequest) =>
+              req.products.some(p => p.code === productCode)
+            )
+          : requestsData;
+        setRequests(filteredRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
         showError('요청 목록을 불러오는데 실패했습니다.');
@@ -145,30 +145,17 @@ function TranslationsProductContent() {
 
   const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
     try {
-      const response = await fetch(`/api/translations/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('Status change error:', error.error || 'Failed to update status');
-        showError('상태 변경에 실패했습니다.');
-        return;
-      }
+      await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
 
       // Refresh requests
-      const requestsRes = await fetch('/api/dashboard/requests');
-      if (requestsRes.ok) {
-        const data = await requestsRes.json();
-        const filteredRequests = productCode
-          ? data.requests.filter((req: DashboardRequest) =>
-              req.products.some(p => p.code === productCode)
-            )
-          : data.requests;
-        setRequests(filteredRequests);
-      }
+      const result = await apiGet<{ data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] }>('/api/dashboard/requests');
+      const requestsData = result.data?.requests || result.requests || [];
+      const filteredRequests = productCode
+        ? requestsData.filter((req: DashboardRequest) =>
+            req.products.some(p => p.code === productCode)
+          )
+        : requestsData;
+      setRequests(filteredRequests);
     } catch (error) {
       console.error('Error updating status:', error);
       showError('상태 업데이트 중 오류가 발생했습니다.');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { apiPost } from '@/lib/api-utils';
 
 interface BulkLog {
   id: string;
@@ -68,17 +69,9 @@ export function BulkVersionHistoryPanel({
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/translations/bulk-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ translationIds, languageCode }),
-      });
-
-      if (!response.ok) throw new Error('히스토리를 불러오지 못했습니다.');
-
-      const data = await response.json();
+      const data = await apiPost<{ logs?: BulkLog[]; currentVersions?: unknown[] }>('/api/translations/bulk-logs', { translationIds, languageCode });
       setLogs(data.logs || []);
-      setCurrentVersions(data.currentVersions || []);
+      setCurrentVersions((data.currentVersions || []) as CurrentVersion[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류');
     } finally {
@@ -100,19 +93,8 @@ export function BulkVersionHistoryPanel({
         revertText: log.previousText, // 이전 텍스트로 복구
       }));
 
-      const response = await fetch('/api/translations/bulk-revert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ revertItems }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '복구에 실패했습니다.');
-      }
-
-      const result = await response.json();
-      alert(result.message);
+      const result = await apiPost<{ message?: string }>('/api/translations/bulk-revert', { revertItems });
+      alert(result.message || '복구되었습니다.');
       
       // 성공 후 목록 새로고침
       await fetchLogs();

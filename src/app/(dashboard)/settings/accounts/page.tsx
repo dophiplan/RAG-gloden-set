@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { canManageAccounts } from '@/lib/permissions';
 import { User } from '@/types';
 import { showError } from '@/lib/notifications';
+import { apiFetch } from '@/lib/api-utils';
 
 export default function AccountsPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -82,25 +83,24 @@ export default function AccountsPage() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/users/bulk-upload', {
+      const data = await apiFetch<{
+        success: number;
+        failed: number;
+        errors?: string[];
+        error?: string;
+      }>('/api/users/bulk-upload', {
         method: 'POST',
         body: formData,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setUploadResult({
-          success: data.success,
-          failed: data.failed,
-          errors: data.errors || [],
-        });
-      } else {
-        showError(data.error || '업로드에 실패했습니다.');
-      }
+      setUploadResult({
+        success: data.success,
+        failed: data.failed,
+        errors: data.errors || [],
+      });
     } catch (error) {
       console.error('Error uploading file:', error);
-      showError('파일 업로드 중 오류가 발생했습니다.');
+      showError(error instanceof Error ? error.message : '파일 업로드 중 오류가 발생했습니다.');
     } finally {
       setUploading(false);
     }

@@ -5,6 +5,7 @@ import Card, { CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { showSuccess, showError } from '@/lib/notifications';
+import { apiGet, apiPatch } from '@/lib/api-utils';
 
 export type AIProvider = 'openai' | 'claude' | 'kimi' | 'gemini';
 
@@ -87,12 +88,9 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch('/api/organization/settings');
-      if (!response.ok) throw new Error('설정을 불러올 수 없습니다.');
-      
-      const result = await response.json();
-      // Handle standardized API response: { data: {...} } or direct response
-      const settings = result.data || result;
+      const result = await apiGet<{ settings?: { openai_api_key?: string; claude_api_key?: string; kimi_api_key?: string; gemini_api_key?: string; ai_provider_order?: string[] } }>('/api/organization/settings');
+      // API returns { settings: {...} }
+      const settings = result.settings;
       
       if (settings) {
         setApiKeys({
@@ -102,12 +100,12 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
           gemini: !!settings.gemini_api_key,
         });
         
-        if (settings.settings?.ai_provider_order) {
-          setProviderOrder(settings.settings.ai_provider_order);
+        if (settings.ai_provider_order) {
+          setProviderOrder(settings.ai_provider_order as AIProvider[]);
         }
       }
     } catch (error) {
-      showError('설정을 불러오는데 실패했습니다.');
+      showError(error instanceof Error ? error.message : '설정을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -136,16 +134,7 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
     try {
       const config = AI_PROVIDERS.find(p => p.id === selectedProvider)!;
       
-      const response = await fetch('/api/organization/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [config.keyField]: apiKeyInput.trim() }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'API 키 저장 실패');
-      }
+      await apiPatch('/api/organization/settings', { [config.keyField]: apiKeyInput.trim() });
 
       setApiKeys(prev => ({ ...prev, [selectedProvider]: true }));
       setApiKeyInput('');
@@ -168,18 +157,12 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
     setSaving(true);
 
     try {
-      const response = await fetch('/api/organization/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [config.keyField]: null }),
-      });
-
-      if (!response.ok) throw new Error('API 키 삭제 실패');
+      await apiPatch('/api/organization/settings', { [config.keyField]: null });
 
       setApiKeys(prev => ({ ...prev, [provider]: false }));
       showSuccess(`${config.displayName} API 키가 삭제되었습니다.`);
     } catch (error) {
-      showError('API 키 삭제에 실패했습니다.');
+      showError(error instanceof Error ? error.message : 'API 키 삭제에 실패했습니다.');
     } finally {
       setSaving(false);
     }
@@ -238,22 +221,13 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
   const saveProviderOrder = async (newOrder: AIProvider[]) => {
     setIsSavingOrder(true);
     try {
-      const response = await fetch('/api/organization/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          settings: { ai_provider_order: newOrder }
-        }),
+      await apiPatch('/api/organization/settings', { 
+        settings: { ai_provider_order: newOrder }
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || '순서 저장 실패');
-      }
 
       showSuccess('AI 제공사 우선순위가 저장되었습니다.');
     } catch (error) {
-      showError('우선순위 저장에 실패했습니다.');
+      showError(error instanceof Error ? error.message : '우선순위 저장에 실패했습니다.');
     } finally {
       setIsSavingOrder(false);
     }

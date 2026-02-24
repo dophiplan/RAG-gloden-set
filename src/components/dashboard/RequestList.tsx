@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardTitle } from '@/components/ui/Card';
 import { showSuccess, showError } from '@/lib/notifications';
 import { TIMEOUTS } from '@/lib/constants';
+import { apiPatch, apiPost, apiDelete } from '@/lib/api-utils';
 
 interface RequestListProps {
   requests: DashboardRequest[];
@@ -124,24 +125,9 @@ export default function RequestList({ requests, loading = false, onStatusChange 
     setStartingId(request.id);
 
     try {
-      const response = await fetch(`/api/dashboard/requests/${request.id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'in_progress' }),
+      const result = await apiPatch<{ request_id: string; old_status: string; undo_expires_at: string }>(`/api/dashboard/requests/${request.id}/status`, {
+        status: 'in_progress',
       });
-
-      if (!response.ok) {
-        let errorMessage: string;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || `서버 오류: ${response.status}`;
-        } catch {
-          errorMessage = `서버 오류: ${response.status}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
 
       // Show success with undo option
       setUndoInfo(result);
@@ -178,25 +164,10 @@ export default function RequestList({ requests, loading = false, onStatusChange 
     undo_expires_at: string;
   }) => {
     try {
-      const response = await fetch(`/api/dashboard/requests/${info.request_id}/status/undo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          old_status: info.old_status,
-          undo_expires_at: info.undo_expires_at,
-        }),
+      await apiPost(`/api/dashboard/requests/${info.request_id}/status/undo`, {
+        old_status: info.old_status,
+        undo_expires_at: info.undo_expires_at,
       });
-
-      if (!response.ok) {
-        let errorMessage: string;
-        try {
-          const error = await response.json();
-          errorMessage = error.error || `서버 오류: ${response.status}`;
-        } catch {
-          errorMessage = `서버 오류: ${response.status}`;
-        }
-        throw new Error(errorMessage);
-      }
 
       setUndoInfo(null);
       showSuccess('실행 취소되었습니다');
@@ -227,20 +198,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
     setDeletingId(request.id);
 
     try {
-      const response = await fetch(`/api/dashboard/requests/${request.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        let errorMessage: string;
-        try {
-          const error = await response.json();
-          errorMessage = error.error || `서버 오류: ${response.status}`;
-        } catch {
-          errorMessage = `서버 오류: ${response.status}`;
-        }
-        throw new Error(errorMessage);
-      }
+      await apiDelete(`/api/dashboard/requests/${request.id}`);
 
       showSuccess('요청이 삭제되었습니다');
 
@@ -281,21 +239,7 @@ export default function RequestList({ requests, loading = false, onStatusChange 
     try {
       // Delete all selected requests in parallel
       const deletePromises = Array.from(selectedRequests).map(requestId =>
-        fetch(`/api/dashboard/requests/${requestId}`, {
-          method: 'DELETE',
-        }).then(async response => {
-          if (!response.ok) {
-            let errorMessage: string;
-            try {
-              const error = await response.json();
-              errorMessage = error.error || `Failed to delete request ${requestId}`;
-            } catch {
-              errorMessage = `Failed to delete request ${requestId}`;
-            }
-            throw new Error(errorMessage);
-          }
-          return response.json();
-        })
+        apiDelete(`/api/dashboard/requests/${requestId}`)
       );
 
       await Promise.all(deletePromises);

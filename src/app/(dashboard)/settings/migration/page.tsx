@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ProductCode } from '@/types';
 import { useProducts } from '@/hooks/useReferenceData';
 import MigrationPreviewTable from './components/MigrationPreviewTable';
+import { apiFetch } from '@/lib/api-utils';
 
 interface PreviewEntry {
   id: string;
@@ -34,6 +35,25 @@ interface Summary {
 }
 
 type Step = 'upload' | 'preview' | 'confirm';
+
+interface PreviewResponse {
+  entries: PreviewEntry[];
+  summary: Summary;
+  error?: string;
+}
+
+interface CommitResponse {
+  glossary: {
+    created: number;
+    skipped: number;
+  };
+  translations: {
+    created: number;
+    updated: number;
+    skipped: number;
+  };
+  error?: string;
+}
 
 export default function MigrationPage() {
   const router = useRouter();
@@ -148,16 +168,10 @@ export default function MigrationPage() {
         // If "ALL" is selected, pass empty string to indicate common terms
         previewFormData.append('product_code', productCode === 'ALL' ? '' : productCode);
 
-        const previewResponse = await fetch('/api/migration/preview', {
+        const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
           method: 'POST',
           body: previewFormData,
         });
-
-        const previewData = await previewResponse.json();
-
-        if (!previewResponse.ok) {
-          throw new Error(previewData.error || '파일 처리 중 오류가 발생했습니다.');
-        }
 
         // Check if there are any issues (duplicates or similar)
         const hasDuplicates = previewData.summary.exact_matches > 0;
@@ -170,7 +184,7 @@ export default function MigrationPage() {
           const initializedEntries = previewData.entries.map((entry: PreviewEntry) => ({
             ...entry,
             category: entry.suggested_category,
-            action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+            action: (entry.duplicate_status.status === 'exact' ? 'skip' : 'import') as 'skip' | 'import',
           }));
 
           setEntries(initializedEntries);
@@ -184,16 +198,13 @@ export default function MigrationPage() {
           formData.append('product_code', productCode === 'ALL' ? '' : productCode);
           formData.append('mode', 'simple');
 
-          const response = await fetch('/api/migration/commit', {
+          const data = await apiFetch<{
+            glossary: { created: number };
+            error?: string;
+          }>('/api/migration/commit', {
             method: 'POST',
             body: formData,
           });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || '가져오기 중 오류가 발생했습니다.');
-          }
 
           alert(
             `✅ 가져오기 완료!\n\n` +
@@ -208,22 +219,16 @@ export default function MigrationPage() {
         formData.append('file', file);
         formData.append('product_code', productCode === 'ALL' ? '' : productCode);
 
-        const response = await fetch('/api/migration/preview', {
+        const data = await apiFetch<PreviewResponse>('/api/migration/preview', {
           method: 'POST',
           body: formData,
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || '미리보기 중 오류가 발생했습니다.');
-        }
 
         // Initialize category and action for each entry
         const initializedEntries = data.entries.map((entry: PreviewEntry) => ({
           ...entry,
           category: entry.suggested_category,
-          action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+          action: (entry.duplicate_status.status === 'exact' ? 'skip' : 'import') as 'skip' | 'import',
         }));
 
         setEntries(initializedEntries);
@@ -242,7 +247,7 @@ export default function MigrationPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/migration/commit', {
+      const data = await apiFetch<CommitResponse>('/api/migration/commit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -258,12 +263,6 @@ export default function MigrationPage() {
           version: version || null,
         }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '마이그레이션 중 오류가 발생했습니다.');
-      }
 
       // Show success message and redirect
       alert(
