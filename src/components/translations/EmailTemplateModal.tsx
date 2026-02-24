@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
-import { EmailTemplateType, Translation, SUPPORTED_LANGUAGES, LanguageCode } from '@/types';
+import { EmailTemplateType, Translation, LanguageCode } from '@/types';
 import { TIMEOUTS } from '@/lib/constants';
 import { apiPost } from '@/lib/api-utils';
+import { useLanguages } from '@/hooks/useReferenceData';
 
 interface EmailTemplateModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export default function EmailTemplateModal({
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { languages } = useLanguages();
 
   // Template type options
   const templateOptions = [
@@ -57,10 +59,10 @@ export default function EmailTemplateModal({
     { value: 'deployment_complete', label: templateTypeLabels.deployment_complete },
   ];
 
-  // Language options for request emails
-  const languageOptions = Object.entries(SUPPORTED_LANGUAGES).map(([code, name]) => ({
-    value: code,
-    label: name,
+  // Language options for request emails (from DB)
+  const languageOptions = (languages || []).map((lang) => ({
+    value: lang.code,
+    label: lang.name,
   }));
 
   // Reset state when modal opens

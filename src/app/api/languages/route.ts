@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { languageCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
 import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/lib/api/response';
@@ -9,15 +9,10 @@ import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Use admin client to bypass RLS for reference data
+    const adminClient = createAdminClient();
 
-    // Development: Allow bypass for reference data
-    if ((authError || !user) && process.env.ALLOW_AUTH_BYPASS !== 'true') {
-      return apiUnauthorized();
-    }
-
-    const { data: languages, error } = await supabase
+    const { data: languages, error } = await adminClient
       .from('languages')
       .select('*')
       .order('display_order', { ascending: true });
