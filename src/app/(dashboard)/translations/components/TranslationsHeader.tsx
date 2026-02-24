@@ -1,10 +1,9 @@
 import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
 import { Translation } from '@/types';
 import { usePlatforms } from '@/hooks/useReferenceData';
 
 interface TranslationsHeaderProps {
-  // Original naming
+  // Original naming (kept for backward compatibility)
   onOpenCreateModal?: () => void;
   // Alternative naming (for backward compatibility)
   onCreateClick?: () => void;
@@ -33,7 +32,9 @@ export default function TranslationsHeader({
   hasSelectedTranslations,
   canEmail,
 }: TranslationsHeaderProps) {
-  const handleCreate = onOpenCreateModal ?? onCreateClick ?? (() => {});
+  // Props kept for backward compatibility, but create button moved to parent
+  void onOpenCreateModal;
+  void onCreateClick;
   const { platformsMap } = usePlatforms();
 
   // Calculate platform completion statistics when version filter is active
@@ -120,7 +121,6 @@ export default function TranslationsHeader({
           </div>
         )}
 
-        <Button onClick={handleCreate}>새 번역 추가</Button>
       </div>
     </div>
   );

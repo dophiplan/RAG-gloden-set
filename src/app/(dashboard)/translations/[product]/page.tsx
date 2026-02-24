@@ -164,10 +164,10 @@ function TranslationsProductContent() {
 
   return (
     <DashboardLayout title={`번역 관리 - ${productCode?.toUpperCase()}`}>
-      <div className="space-y-6">
-        {/* Translation Header with Status Tabs */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex gap-2">
+      <div className="space-y-3">
+        {/* Status Tabs with Create Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             {['pending', 'in_progress', 'reviewed', 'deployed'].map((status) => {
               const count = requests.filter(r => r.status === status).length;
               const labels = {
@@ -190,11 +190,16 @@ function TranslationsProductContent() {
               );
             })}
           </div>
+          <button
+            onClick={modals.openCreateModal}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            새 번역 추가
+          </button>
         </div>
 
         {/* Translation Header */}
         <TranslationsHeader
-          onCreateClick={modals.openCreateModal}
           onEmailClick={() => handlers.handleEmailClick(modals.selectedTranslations)}
           onDownloadExcel={handlers.handleDownloadExcel}
           onDownloadAllExcel={handlers.handleDownloadAllExcel}

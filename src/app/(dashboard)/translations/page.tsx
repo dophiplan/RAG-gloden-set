@@ -103,11 +103,22 @@ function TranslationsContent() {
       title="번역 관리"
       subtitle="번역된 언어들을 전체 볼 수 있습니다."
     >
-      <div className="space-y-6">
-        <ProductTabs
-          selectedProduct={filters.selectedProduct}
-          onProductChange={filters.setSelectedProduct}
-        />
+      <div className="space-y-3">
+        {/* Product Tabs with Create Button */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <ProductTabs
+              selectedProduct={filters.selectedProduct}
+              onProductChange={filters.setSelectedProduct}
+            />
+          </div>
+          <button
+            onClick={modals.openCreateModal}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors ml-4"
+          >
+            새 번역 추가
+          </button>
+        </div>
 
         <TranslationFiltersBar
           searchTerm={filters.searchTerm}
@@ -133,7 +144,6 @@ function TranslationsContent() {
         />
 
         <TranslationsHeader
-          onOpenCreateModal={modals.openCreateModal}
           selectedCount={(modals.selectedTranslations || []).length}
           onShowHistory={() => {
             if ((modals.selectedIds || []).length > 0) {
