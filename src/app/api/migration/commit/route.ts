@@ -14,10 +14,13 @@ interface CommitEntry {
 // POST - Commit migration data
 export async function POST(request: NextRequest) {
   try {
+    // Allow bypassing auth in development if explicitly enabled
+    const isDevBypass = process.env.ALLOW_AUTH_BYPASS === 'true' && process.env.NODE_ENV === 'development';
+    
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (!isDevBypass && (authError || !user)) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
