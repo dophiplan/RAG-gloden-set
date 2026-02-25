@@ -1,0 +1,12 @@
+{
+  "name": "translation-manager-figma",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc code.ts --outDir . --target ES2017 --module commonjs",
+    "dev": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.82.0",
+    "typescript": "^5.3.0"
+  }
+}

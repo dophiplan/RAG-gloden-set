@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h2 {
+      font-size: 18px;
+      color: #333;
+    }
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #4F46E5;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #4338CA;
+    }
+    .btn-secondary {
+      background: #E5E7EB;
+      color: #374151;
+    }
+    .text-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .text-item {
+      padding: 10px;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 13px;
+    }
+    .text-original {
+      color: #6B7280;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .text-translated {
+      color: #111827;
+      font-weight: 500;
+    }
+    .language-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>🌐 Translation Manager</h2>
+  </div>
+
+  <!-- Step 1: 텍스트 추출 -->
+  <div class="section">
+    <h3 style="font-size: 14px; margin-bottom: 12px;">1. 텍스트 추출</h3>
+    <button class="btn btn-primary" onclick="extractText()">
+      📄 현재 페이지 텍스트 추출
+    </button>
+    <div class="stats" id="stats">
+      추출된 텍스트: 0개
+    </div>
+  </div>
+
+  <!-- Step 2: 언어 선택 -->
+  <div class="section">
+    <h3 style="font-size: 14px; margin-bottom: 12px;">2. 번역 설정</h3>
+    <select class="language-select" id="targetLang">
+      <option value="en">English (영어)</option>
+      <option value="ja">Japanese (일본어)</option>
+      <option value="zh">Chinese (중국어)</option>
+      <option value="es">Spanish (스페인어)</option>
+    </select>
+    <button class="btn btn-primary" onclick="translateAll()">
+      🔄 AI 번역 시작
+    </button>
+  </div>
+
+  <!-- Step 3: 결과 및 적용 -->
+  <div class="section">
+    <h3 style="font-size: 14px; margin-bottom: 12px;">3. 번역 결과</h3>
+    <div class="text-list" id="textList">
+      <div style="text-align: center; color: #9CA3AF; padding: 20px;">
+        번역 결과가 여기에 표시됩니다
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="applyAll()" style="margin-top: 12px;">
+      ✅ 피그마에 적용
+    </button>
+  </div>
+
+  <script>
+    let extractedTexts = [];
+    let translatedTexts = [];
+
+    // 텍스트 추출 요청
+    function extractText() {
+      parent.postMessage({ pluginMessage: { type: 'extract-text' } }, '*');
+    }
+
+    // 번역 요청
+    function translateAll() {
+      const targetLang = document.getElementById('targetLang').value;
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'translate-all',
+          targetLang 
+        } 
+      }, '*');
+    }
+
+    // 피그마에 적용
+    function applyAll() {
+      translatedTexts.forEach(item => {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'update-text',
+            nodeId: item.id,
+            newText: item.translated
+          }
+        }, '*');
+      });
+      alert('피그마에 적용되었습니다!');
+    }
+
+    // 메시지 수신
+    onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      
+      if (msg.type === 'text-extracted') {
+        extractedTexts = msg.data;
+        document.getElementById('stats').textContent = 
+          `추출된 텍스트: ${extractedTexts.length}개`;
+        
+        // 목록 표시
+        const listHtml = extractedTexts.map(item => `
+          <div class="text-item">
+            <div class="text-original">${item.characters}</div>
+          </div>
+        `).join('');
+        document.getElementById('textList').innerHTML = listHtml;
+      }
+      
+      if (msg.type === 'translation-complete') {
+        translatedTexts = msg.data.translations;
+        
+        // 번역 결과 표시
+        const listHtml = translatedTexts.map(item => `
+          <div class="text-item">
+            <div class="text-original">${item.original}</div>
+            <div class="text-translated">${item.translated}</div>
+          </div>
+        `).join('');
+        document.getElementById('textList').innerHTML = listHtml;
+      }
+    };
+  </script>
+</body>
+</html>

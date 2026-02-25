@@ -1,0 +1,14 @@
+{
+  "name": "Translation Manager",
+  "id": "translation-manager",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "http://localhost:3000",
+      "https://translation-manager.vercel.app"
+    ]
+  }
+}
