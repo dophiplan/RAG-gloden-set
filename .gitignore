@@ -48,3 +48,6 @@ blog/
 # Railway configuration (disabled to avoid auto-deployment costs)
 railway.json
 nixpacks.toml
+
+# Personal backlog / todo files
+todo/
