@@ -21,10 +21,13 @@ interface GlossaryStats {
 // GET - Get glossary statistics
 export async function GET(request: NextRequest) {
   try {
+    // Allow bypassing auth in development if explicitly enabled
+    const isDevBypass = process.env.ALLOW_AUTH_BYPASS === 'true' && process.env.NODE_ENV === 'development';
+    
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (!isDevBypass && (authError || !user)) {
       return apiUnauthorized();
     }
 
