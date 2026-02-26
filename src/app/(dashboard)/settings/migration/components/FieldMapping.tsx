@@ -298,48 +298,51 @@ export default function FieldMapping({
           </div>
         ) : (
           <div className="space-y-2.5 flex-1 overflow-y-auto">
-            {/* KEY/ID - 고유 식별자 */}
-            <DropZone
-              label="KEY / ID"
-              value={currentMappings.metadata.key_id}
-              placeholder="컬럼 드래그"
-              onDrop={(e) => handleDrop(e, 'metadata', 'key_id')}
-              onClear={() => handleClear('metadata', 'key_id')}
-              color="blue"
-            />
+            {/* 1행: KEY/ID + 제품분류 */}
+            <div className="grid grid-cols-2 gap-2">
+              <DropZone
+                label="KEY / ID"
+                value={currentMappings.metadata.key_id}
+                placeholder="컬럼 드래그"
+                onDrop={(e) => handleDrop(e, 'metadata', 'key_id')}
+                onClear={() => handleClear('metadata', 'key_id')}
+                color="blue"
+                small
+              />
+              <DropZone
+                label="제품분류"
+                value={currentMappings.metadata.product_category}
+                placeholder="버전/컬럼 드래그"
+                onDrop={(e) => handleDrop(e, 'metadata', 'product_category')}
+                onClear={() => handleClear('metadata', 'product_category')}
+                color="purple"
+                small
+              />
+            </div>
 
-            {/* 제품분류 - 대분류 */}
-            <DropZone
-              label="제품분류"
-              value={currentMappings.metadata.product_category}
-              placeholder="버전/컬럼 드래그"
-              onDrop={(e) => handleDrop(e, 'metadata', 'product_category')}
-              onClear={() => handleClear('metadata', 'product_category')}
-              color="purple"
-            />
+            {/* 2행: 원문 + 번역 언어 */}
+            <div className="grid grid-cols-2 gap-2">
+              <DropZone
+                label="원문"
+                required
+                value={currentMappings.source}
+                placeholder="컬럼 드래그"
+                onDrop={(e) => handleDrop(e, 'source')}
+                onClear={() => handleClear('source')}
+                color="blue"
+                small
+              />
+              <MultiDropZone
+                label="번역 언어"
+                values={currentMappings.translations}
+                placeholder="여러 컬럼 드래그"
+                onDrop={(e) => handleDrop(e, 'translations')}
+                onClear={(val) => handleClear('translations', val)}
+                color="green"
+              />
+            </div>
 
-            {/* 원문 - 실제 데이터 */}
-            <DropZone
-              label="원문"
-              required
-              value={currentMappings.source}
-              placeholder="컬럼을 드래그하세요"
-              onDrop={(e) => handleDrop(e, 'source')}
-              onClear={() => handleClear('source')}
-              color="blue"
-            />
-
-            {/* 번역 언어 */}
-            <MultiDropZone
-              label="번역 언어"
-              values={currentMappings.translations}
-              placeholder="여러 개의 언어 컬럼을 드래그하세요"
-              onDrop={(e) => handleDrop(e, 'translations')}
-              onClear={(val) => handleClear('translations', val)}
-              color="green"
-            />
-
-            {/* 버전, 문맥 */}
+            {/* 3행: 버전 + 문맥 */}
             <div className="grid grid-cols-2 gap-2">
               <DropZone
                 label="버전"
@@ -361,7 +364,7 @@ export default function FieldMapping({
               />
             </div>
 
-            {/* 설명, 제품코드 */}
+            {/* 4행: 설명 + 제품코드 */}
             <div className="grid grid-cols-2 gap-2">
               <DropZone
                 label="설명"
@@ -383,7 +386,7 @@ export default function FieldMapping({
               />
             </div>
 
-            {/* 플랫폼, 기타 */}
+            {/* 5행: 플랫폼 + 기타 */}
             <div className="grid grid-cols-2 gap-2">
               <DropZone
                 label="플랫폼"
