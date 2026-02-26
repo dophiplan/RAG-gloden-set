@@ -60,17 +60,29 @@ export default function MigrationPage() {
   const [error, setError] = useState('');
   const [hasIssues, setHasIssues] = useState(false);
   
+  // 모든 시트 데이터 (버전 = 시트명)
+  const [sheetsData, setSheetsData] = useState<{
+    name: string;      // 시트명 = 버전
+    columns: string[]; // 컬럼 목록
+    rowCount: number;  // 데이터 행 수
+  }[]>([]);
+  
+  // 선택된 버전(시트)
+  const [selectedVersion, setSelectedVersion] = useState<string>('');
+  
+  // 현재 선택된 버전의 컬럼
   const [fileColumns, setFileColumns] = useState<string[]>([]);
-  const [availableSheets, setAvailableSheets] = useState<string[]>([]);
-  const [selectedSheet, setSelectedSheet] = useState<string>('');
+  
   const [fieldMappings, setFieldMappings] = useState<{
     source: string | null;
     translations: string[];
     metadata: Record<string, string>;
+    customFields: string[];
   }>({
     source: null,
     translations: [],
     metadata: {},
+    customFields: [],
   });
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,35 +91,53 @@ export default function MigrationPage() {
 
     setFile(selectedFile);
     setError('');
+    setSheetsData([]);
+    setSelectedVersion('');
     setFileColumns([]);
-    setAvailableSheets([]);
-    setSelectedSheet('');
-    setFieldMappings({ source: null, translations: [], metadata: {} });
+    setFieldMappings({ source: null, translations: [], metadata: {}, customFields: [] });
 
     try {
       const ext = selectedFile.name.split('.').pop()?.toLowerCase();
       
       if (ext === 'csv') {
+        // CSV는 단일 시트로 처리 (파일명 = 버전)
         const text = await selectedFile.text();
-        const firstLine = text.split('\n')[0];
+        const lines = text.split('\n');
+        const firstLine = lines[0];
         const cols = firstLine.split(',').map(c => c.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+        
+        const versionName = selectedFile.name.replace(/\.csv$/i, '');
+        setSheetsData([{
+          name: versionName,
+          columns: cols,
+          rowCount: lines.length - 1
+        }]);
+        setSelectedVersion(versionName);
         setFileColumns(cols);
-        setAvailableSheets(['Sheet1']);
-        setSelectedSheet('Sheet1');
       } else {
+        // Excel: 모든 시트 읽기
         const buf = await selectedFile.arrayBuffer();
         const wb = XLSX.read(buf, { type: 'array' });
-        const sheets = wb.SheetNames;
-        setAvailableSheets(sheets);
         
-        if (sheets.length > 0) {
-          const first = sheets[0];
-          setSelectedSheet(first);
-          const ws = wb.Sheets[first];
+        const allSheetsData = wb.SheetNames.map(sheetName => {
+          const ws = wb.Sheets[sheetName];
           const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
-          if (data.length > 0) {
-            setFileColumns(data[0].map(h => String(h || '').trim()).filter(Boolean));
-          }
+          const columns = data.length > 0 
+            ? data[0].map(h => String(h || '').trim()).filter(Boolean)
+            : [];
+          return {
+            name: sheetName,  // 시트명 = 버전
+            columns,
+            rowCount: data.length > 0 ? data.length - 1 : 0
+          };
+        });
+        
+        setSheetsData(allSheetsData);
+        
+        // 첫 번째 시트 자동 선택
+        if (allSheetsData.length > 0) {
+          setSelectedVersion(allSheetsData[0].name);
+          setFileColumns(allSheetsData[0].columns);
         }
       }
     } catch (err) {
@@ -115,20 +145,14 @@ export default function MigrationPage() {
     }
   };
 
-  const handleSheetChange = async (sheetName: string) => {
-    if (!file) return;
-    setSelectedSheet(sheetName);
-    setFieldMappings({ source: null, translations: [], metadata: {} });
+  const handleVersionChange = (versionName: string) => {
+    setSelectedVersion(versionName);
+    setFieldMappings({ source: null, translations: [], metadata: {}, customFields: [] });
     
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext !== 'csv') {
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
-      if (data.length > 0) {
-        setFileColumns(data[0].map(h => String(h || '').trim()).filter(Boolean));
-      }
+    // 선택된 버전(시트)의 컬럼 설정
+    const selectedSheet = sheetsData.find(s => s.name === versionName);
+    if (selectedSheet) {
+      setFileColumns(selectedSheet.columns);
     }
   };
 
@@ -231,23 +255,20 @@ export default function MigrationPage() {
         {/* Mode Toggle */}
         <div className="mb-6 flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg w-fit mx-auto">
           <button onClick={() => setMode('simple')} className={`px-6 py-2 rounded-md font-medium transition-all ${mode === 'simple' ? 'bg-white text-[#818CF8] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-            <span className="flex items-center gap-2"><span>⚡</span><span>간단 모드</span></span>
+            간단 모드
           </button>
           <button onClick={() => setMode('advanced')} className={`px-6 py-2 rounded-md font-medium transition-all ${mode === 'advanced' ? 'bg-white text-[#818CF8] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-            <span className="flex items-center gap-2"><span>🔧</span><span>고급 모드</span></span>
+            고급 모드
           </button>
         </div>
 
         {/* Mode Description */}
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{mode === 'simple' ? '⚡' : '🔧'}</span>
-            <p className="text-sm text-blue-900">
-              {mode === 'simple' 
-                ? '간단 모드 - 용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
-                : '고급 모드 - 미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다.'}
-            </p>
-          </div>
+          <p className="text-sm text-blue-900">
+            {mode === 'simple' 
+              ? '간단 모드 - 용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
+              : '고급 모드 - 미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다.'}
+          </p>
         </div>
 
         {/* Progress Steps */}
@@ -321,10 +342,10 @@ export default function MigrationPage() {
                       <button
                         onClick={() => {
                           setFile(null);
+                          setSheetsData([]);
+                          setSelectedVersion('');
                           setFileColumns([]);
-                          setAvailableSheets([]);
-                          setSelectedSheet('');
-                          setFieldMappings({ source: null, translations: [], metadata: {} });
+                          setFieldMappings({ source: null, translations: [], metadata: {}, customFields: [] });
                           setError('');
                         }}
                         className="text-blue-600 hover:text-blue-800"
@@ -335,25 +356,19 @@ export default function MigrationPage() {
                       </button>
                     </div>
                     
-                    {/* Sheet selection */}
-                    {availableSheets.length > 1 && (
+                    {/* Sheets info */}
+                    {sheetsData.length > 0 && (
                       <div className="border-t border-blue-200 pt-2 mt-2">
-                        <label className="block text-xs font-medium text-blue-700 mb-1">시트 선택 ({availableSheets.length}개)</label>
-                        <select
-                          value={selectedSheet}
-                          onChange={(e) => handleSheetChange(e.target.value)}
-                          className="w-full px-3 py-2 bg-white border border-blue-300 rounded text-sm"
-                        >
-                          {availableSheets.map(sheet => <option key={sheet} value={sheet}>{sheet}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    
-                    {/* Column info */}
-                    {fileColumns.length > 0 && (
-                      <div className="border-t border-blue-200 pt-2 mt-2">
-                        <p className="text-xs text-blue-700">감지된 컬럼: <span className="font-semibold">{fileColumns.length}개</span></p>
-                        <p className="text-xs text-blue-600 truncate">{fileColumns.slice(0, 5).join(', ')}{fileColumns.length > 5 && ` 외 ${fileColumns.length - 5}개`}</p>
+                        <p className="text-xs text-blue-700">
+                          감지된 버전(시트): <span className="font-semibold">{sheetsData.length}개</span>
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          {sheetsData.map(s => s.name).slice(0, 3).join(', ')}
+                          {sheetsData.length > 3 && ` 외 ${sheetsData.length - 3}개`}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          * 미리보기 단계에서 버전별 매핑 가능
+                        </p>
                       </div>
                     )}
                   </div>
@@ -401,18 +416,14 @@ export default function MigrationPage() {
 
         {/* Step 2: Preview */}
         {step === 'preview' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-2">필드 매핑</h2>
+          <div className="bg-white rounded-lg shadow p-6 pb-24">
+            <h2 className="text-lg font-semibold mb-4">필드 매핑</h2>
             
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 왼쪽 파일 필드를 드래그해서 오른쪽 시스템 필드에 매칭하세요.
-              </p>
-            </div>
-            
-            {fileColumns.length > 0 ? (
+            {sheetsData.length > 0 ? (
               <FieldMapping
-                fileColumns={fileColumns}
+                sheetsData={sheetsData}
+                selectedVersion={selectedVersion}
+                onVersionChange={handleVersionChange}
                 onMappingChange={setFieldMappings}
                 initialMappings={fieldMappings}
               />
@@ -423,7 +434,7 @@ export default function MigrationPage() {
               </div>
             )}
             
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
               <button onClick={() => setStep('upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
               <button
                 onClick={() => {
@@ -442,7 +453,7 @@ export default function MigrationPage() {
 
         {/* Step 3: Classify */}
         {step === 'classify' && summary && (
-          <div>
+          <div className="pb-20">
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">분류</h2>
               <div className="grid grid-cols-5 gap-4 mb-4">
@@ -479,8 +490,8 @@ export default function MigrationPage() {
               onUpdateEntry={updateEntry}
             />
 
-            <div className="flex gap-4 mt-6">
-              <button onClick={() => setStep(mode === 'advanced' ? 'preview' : 'upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
+            <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200 bg-white p-6 rounded-lg shadow-sm">
+              <button onClick={() => setStep(mode === 'advanced' ? 'preview' : 'upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white">이전</button>
               <button onClick={() => setStep('confirm')} className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]">다음 단계</button>
             </div>
           </div>
@@ -488,7 +499,7 @@ export default function MigrationPage() {
 
         {/* Step 4: Confirm */}
         {step === 'confirm' && (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 pb-20">
             <h2 className="text-xl font-semibold mb-4">확인 및 실행</h2>
 
             <div className="space-y-4 mb-6">
