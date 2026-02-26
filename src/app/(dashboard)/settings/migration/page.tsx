@@ -437,15 +437,49 @@ export default function MigrationPage() {
             <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
               <button onClick={() => setStep('upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (!fieldMappings.source) { alert('원문 필드는 필수 매핑입니다.'); return; }
                   if (fieldMappings.translations.length === 0) { alert('최소 하나의 번역 언어를 선택해주세요.'); return; }
-                  setStep('classify');
+                  
+                  // 필드 매핑 후 preview API 호출
+                  setLoading(true);
+                  setError('');
+                  
+                  try {
+                    const fd = new FormData();
+                    fd.append('file', file!);
+                    fd.append('product_code', productCode === 'ALL' ? '' : productCode);
+                    fd.append('field_mapping', JSON.stringify({
+                      source: fieldMappings.source,
+                      translations: fieldMappings.translations,
+                      metadata: fieldMappings.metadata,
+                      customFields: fieldMappings.customFields,
+                    }));
+                    
+                    const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
+                      method: 'POST',
+                      body: fd,
+                    });
+
+                    const init = previewData.entries.map(e => ({
+                      ...e,
+                      category: e.suggested_category,
+                      action: (e.duplicate_status.status === 'exact' ? 'skip' : 'import') as 'skip' | 'import' | 'merge' | 'overwrite',
+                    }));
+                    setEntries(init);
+                    setSummary(previewData.summary);
+                    setHasIssues(previewData.summary.exact_matches > 0 || previewData.summary.similar_matches > 0);
+                    setStep('classify');
+                  } catch (err: any) {
+                    setError(err.message);
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
-                disabled={fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0}
+                disabled={fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0 || loading}
                 className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '분류로 이동'}
+                {loading ? '처리 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '분류로 이동'}
               </button>
             </div>
           </div>
