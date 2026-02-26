@@ -488,8 +488,7 @@ export default function MigrationPage() {
             )}
 
             <MigrationPreviewTable
-              glossaryEntries={glossaryEntries}
-              translationEntries={translationEntries}
+              entries={entries}
               onUpdateEntry={updateEntry}
             />
 

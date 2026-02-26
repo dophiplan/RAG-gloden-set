@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLanguages } from '@/hooks/useReferenceData';
-import DuplicateConflictModal from './DuplicateConflictModal';
+import Button from '@/components/ui/Button';
 
 interface PreviewEntry {
   id: string;
@@ -19,243 +18,256 @@ interface PreviewEntry {
   };
   category?: 'glossary' | 'translation';
   action?: 'import' | 'skip' | 'merge' | 'overwrite';
+  // 추가 필드
+  key?: string;
+  product?: string;
+  version?: string;
+  platform?: string;
 }
 
 interface Props {
-  glossaryEntries: PreviewEntry[];
-  translationEntries: PreviewEntry[];
+  entries: PreviewEntry[];
   onUpdateEntry: (id: string, updates: Partial<PreviewEntry>) => void;
+  onBulkAction?: (action: string, entryIds: string[]) => void;
 }
 
 export default function MigrationPreviewTable({
-  glossaryEntries,
-  translationEntries,
+  entries,
   onUpdateEntry,
+  onBulkAction,
 }: Props) {
-  const { languagesMap } = useLanguages();
-  const [selectedEntry, setSelectedEntry] = useState<PreviewEntry | null>(null);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'translation' | 'glossary'>('translation');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  const allEntries = [...glossaryEntries, ...translationEntries];
-  const totalPages = Math.ceil(allEntries.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedGlossary = glossaryEntries.slice(
-    Math.max(0, startIndex - translationEntries.length),
-    Math.max(0, endIndex - translationEntries.length)
+  // 탭별 필터링
+  const filteredEntries = entries.filter(e => 
+    (e.category || e.suggested_category) === activeTab
   );
-  const paginatedTranslations = translationEntries.slice(startIndex, endIndex);
 
-  const moveToGlossary = (id: string) => {
-    onUpdateEntry(id, { category: 'glossary' });
+  // 페이지네이션
+  const totalPages = Math.ceil(filteredEntries.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEntries = filteredEntries.slice(startIndex, startIndex + itemsPerPage);
+
+  // 체크박스 토글
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) 
+        ? prev.filter(i => i !== id)
+        : [...prev, id]
+    );
   };
 
-  const moveToTranslation = (id: string) => {
-    onUpdateEntry(id, { category: 'translation' });
-  };
-
-  const handleDuplicateClick = (entry: PreviewEntry) => {
-    setSelectedEntry(entry);
-    setShowDuplicateModal(true);
-  };
-
-  const handleDuplicateAction = (action: 'import' | 'skip' | 'merge' | 'overwrite') => {
-    if (selectedEntry) {
-      onUpdateEntry(selectedEntry.id, { action });
-      setShowDuplicateModal(false);
-      setSelectedEntry(null);
+  // 전체 선택
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedEntries.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedEntries.map(e => e.id));
     }
   };
 
-  const getDuplicateStatusBadge = (status: 'exact' | 'similar' | 'new') => {
-    const badges = {
-      exact: {
-        bg: 'bg-yellow-100',
-        text: 'text-yellow-800',
-        label: '동일 항목 있음',
-        icon: '🟡',
-      },
-      similar: {
-        bg: 'bg-blue-100',
-        text: 'text-blue-800',
-        label: '유사 항목 있음',
-        icon: '🔵',
-      },
-      new: {
-        bg: 'bg-green-100',
-        text: 'text-green-800',
-        label: '새 항목',
-        icon: '🟢',
-      },
-    };
+  // 번역관리 → 용어집 등록
+  const handleRegisterGlossary = (entry: PreviewEntry) => {
+    onUpdateEntry(entry.id, { category: 'glossary', action: 'import' });
+  };
 
+  // 용어집 → 번역 요청 (일괄)
+  const handleRequestTranslation = () => {
+    if (selectedIds.length === 0) {
+      alert('번역을 요청할 항목을 선택해주세요.');
+      return;
+    }
+    selectedIds.forEach(id => {
+      onUpdateEntry(id, { category: 'translation', action: 'import' });
+    });
+    setSelectedIds([]);
+    alert(`${selectedIds.length}개 항목을 번역관리로 이동했습니다.`);
+  };
+
+  // 중복 상태 배지
+  const getDuplicateBadge = (status: 'exact' | 'similar' | 'new') => {
+    const badges = {
+      exact: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '동일 항목 있음' },
+      similar: { bg: 'bg-blue-100', text: 'text-blue-800', label: '유사 항목 있음' },
+      new: { bg: 'bg-green-100', text: 'text-green-800', label: '신규' },
+    };
     const badge = badges[status];
     return (
-      <span
-        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${badge.bg} ${badge.text}`}
-      >
-        <span className="mr-1">{badge.icon}</span>
+      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${badge.bg} ${badge.text}`}>
         {badge.label}
       </span>
     );
   };
-
-  const getActionBadge = (action?: string) => {
-    if (!action || action === 'import') return null;
-
-    const badges: Record<string, { bg: string; text: string; label: string }> = {
-      skip: { bg: 'bg-gray-100', text: 'text-gray-800', label: '건너뛰기' },
-      merge: { bg: 'bg-blue-100', text: 'text-blue-800', label: '병합' },
-      overwrite: { bg: 'bg-orange-100', text: 'text-orange-800', label: '덮어쓰기' },
-    };
-
-    const badge = badges[action];
-    if (!badge) return null;
-
-    return (
-      <span
-        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded ${badge.bg} ${badge.text}`}
-      >
-        {badge.label}
-      </span>
-    );
-  };
-
-  const EntryCard = ({ entry, type }: { entry: PreviewEntry; type: 'glossary' | 'translation' }) => (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          <p className="font-medium text-gray-900 mb-1">{entry.source_text}</p>
-          {entry.context && (
-            <p className="text-sm text-gray-600 mb-2">{entry.context}</p>
-          )}
-        </div>
-        <button
-          onClick={() => {
-            if (type === 'glossary') {
-              moveToTranslation(entry.id);
-            } else {
-              moveToGlossary(entry.id);
-            }
-          }}
-          className="ml-2 p-1 text-gray-400 hover:text-[#818CF8] transition-colors"
-          title={type === 'glossary' ? '번역으로 이동' : '용어집으로 이동'}
-        >
-          {type === 'glossary' ? '→' : '←'}
-        </button>
-      </div>
-
-      {/* Translations */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {Object.entries(entry.translations).map(([langCode, text]) => {
-          const languageName = languagesMap[langCode]?.name;
-          if (!languageName) return null;
-          return (
-            <span
-              key={langCode}
-              className="inline-flex items-center px-2 py-1 bg-[#E0E7FF] text-[#4F46E5] text-xs rounded"
-              title={text}
-            >
-              {langCode.toUpperCase()}
-            </span>
-          );
-        })}
-      </div>
-
-      {/* Status Badges */}
-      <div className="flex flex-wrap gap-2 items-center">
-        {getDuplicateStatusBadge(entry.duplicate_status.status)}
-        {getActionBadge(entry.action)}
-
-        {/* Duplicate Action Button */}
-        {entry.duplicate_status.status !== 'new' && (
-          <button
-            onClick={() => handleDuplicateClick(entry)}
-            className="text-xs text-blue-600 hover:underline"
-          >
-            처리 방법 선택
-          </button>
-        )}
-      </div>
-    </div>
-  );
 
   return (
-    <div>
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Glossary Column */}
-        <div>
-          <div className="bg-gradient-to-r from-[#818CF8] to-[#6366F1] text-white px-4 py-3 rounded-t-lg">
-            <h3 className="font-semibold">용어집 ({glossaryEntries.length})</h3>
-          </div>
-          <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-gray-50 min-h-[400px]">
-            {glossaryEntries.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">용어집에 추가할 항목이 없습니다.</p>
-            ) : (
-              <div className="space-y-3">
-                {paginatedGlossary.map((entry) => (
-                  <EntryCard key={entry.id} entry={entry} type="glossary" />
-                ))}
-              </div>
-            )}
-          </div>
+    <div className="space-y-4">
+      {/* 탭 전환 */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setActiveTab('translation'); setSelectedIds([]); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              activeTab === 'translation'
+                ? 'bg-[#818CF8] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            번역관리 ({entries.filter(e => (e.category || e.suggested_category) === 'translation').length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('glossary'); setSelectedIds([]); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              activeTab === 'glossary'
+                ? 'bg-[#818CF8] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            용어집 ({entries.filter(e => (e.category || e.suggested_category) === 'glossary').length})
+          </button>
         </div>
 
-        {/* Translations Column */}
-        <div>
-          <div className="bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white px-4 py-3 rounded-t-lg">
-            <h3 className="font-semibold">번역 ({translationEntries.length})</h3>
-          </div>
-          <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 bg-gray-50 min-h-[400px]">
-            {translationEntries.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">번역에 추가할 항목이 없습니다.</p>
-            ) : (
-              <div className="space-y-3">
-                {paginatedTranslations.map((entry) => (
-                  <EntryCard key={entry.id} entry={entry} type="translation" />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 용어집 탭에서 번역 요청 버튼 */}
+        {activeTab === 'glossary' && selectedIds.length > 0 && (
+          <Button onClick={handleRequestTranslation} variant="primary" size="sm">
+            번역 요청 ({selectedIds.length}개)
+          </Button>
+        )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-          >
-            이전
-          </button>
-          <span className="text-sm text-gray-600">
-            {currentPage} / {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-          >
-            다음
-          </button>
+      {/* 테이블 */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                {activeTab === 'glossary' && (
+                  <th className="px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === paginatedEntries.length && paginatedEntries.length > 0}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300"
+                    />
+                  </th>
+                )}
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">KEY/ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">원문</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">
+                  {activeTab === 'translation' ? '번역어' : '번역어(KO/EN/JA)'}
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">제품</th>
+                {activeTab === 'translation' && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">버전</th>
+                )}
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">상태</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">액션</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {paginatedEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={activeTab === 'translation' ? 8 : 7} className="px-4 py-8 text-center text-gray-500">
+                    데이터가 없습니다
+                  </td>
+                </tr>
+              ) : (
+                paginatedEntries.map((entry) => (
+                  <tr key={entry.id} className="hover:bg-gray-50">
+                    {activeTab === 'glossary' && (
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(entry.id)}
+                          onChange={() => toggleSelection(entry.id)}
+                          className="rounded border-gray-300"
+                        />
+                      </td>
+                    )}
+                    <td className="px-4 py-3 text-sm text-gray-900 font-mono">{entry.key || entry.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate" title={entry.source_text}>
+                      {entry.source_text}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {activeTab === 'translation' ? (
+                        // 번역관리: 첫 번째 번역어만
+                        Object.values(entry.translations)[0] || '-'
+                      ) : (
+                        // 용어집: 모든 번역어 요약
+                        <div className="flex gap-1 flex-wrap">
+                          {Object.entries(entry.translations).slice(0, 3).map(([lang, text]) => (
+                            <span key={lang} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                              {lang.toUpperCase()}
+                            </span>
+                          ))}
+                          {Object.keys(entry.translations).length > 3 && (
+                            <span className="text-xs text-gray-400">+{Object.keys(entry.translations).length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{entry.product || '-'}</td>
+                    {activeTab === 'translation' && (
+                      <td className="px-4 py-3 text-sm text-gray-600">{entry.version || '-'}</td>
+                    )}
+                    <td className="px-4 py-3">
+                      {getDuplicateBadge(entry.duplicate_status.status)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {activeTab === 'translation' ? (
+                        // 번역관리: 용어집 등록 버튼
+                        <Button
+                          onClick={() => handleRegisterGlossary(entry)}
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          용어집 등록
+                        </Button>
+                      ) : (
+                        // 용어집: 개별 번역 요청
+                        <Button
+                          onClick={() => onUpdateEntry(entry.id, { category: 'translation', action: 'import' })}
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          번역 요청
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {/* Duplicate Conflict Modal */}
-      {showDuplicateModal && selectedEntry && (
-        <DuplicateConflictModal
-          entry={selectedEntry}
-          onClose={() => {
-            setShowDuplicateModal(false);
-            setSelectedEntry(null);
-          }}
-          onSelectAction={handleDuplicateAction}
-        />
-      )}
+        {/* 페이지네이션 */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            >
+              이전
+            </button>
+            <span className="text-sm text-gray-600">
+              {currentPage} / {totalPages} 페이지 (총 {filteredEntries.length}개)
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+            >
+              다음
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
