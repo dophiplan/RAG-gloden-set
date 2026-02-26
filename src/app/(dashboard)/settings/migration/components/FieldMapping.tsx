@@ -136,18 +136,38 @@ export default function FieldMapping({
     if (type === 'version' && targetType === 'metadata' && fieldName) {
       newMappings.metadata = { ...prevMappings.metadata, [fieldName]: value };
     } else if (type === 'column') {
+      // 다중 컬럼 처리 (JSON 문자열인 경우)
+      let columns: string[];
+      try {
+        columns = JSON.parse(value);
+      } catch {
+        columns = [value]; // 단일 컬럼
+      }
+      
       if (targetType === 'source') {
-        newMappings.source = value;
+        // 원문은 첫 번째 컬럼만
+        newMappings.source = columns[0];
       } else if (targetType === 'translations') {
-        if (!prevMappings.translations.includes(value)) {
-          newMappings.translations = [...prevMappings.translations, value];
-        }
+        // 번역 언어는 모든 컬럼 추가
+        const newTranslations = [...prevMappings.translations];
+        columns.forEach(col => {
+          if (!newTranslations.includes(col)) {
+            newTranslations.push(col);
+          }
+        });
+        newMappings.translations = newTranslations;
       } else if (targetType === 'metadata' && fieldName) {
-        newMappings.metadata = { ...prevMappings.metadata, [fieldName]: value };
+        // 메타데이터는 첫 번째 컬럼만
+        newMappings.metadata = { ...prevMappings.metadata, [fieldName]: columns[0] };
       } else if (targetType === 'custom') {
-        if (!prevMappings.customFields.includes(value)) {
-          newMappings.customFields = [...prevMappings.customFields, value];
-        }
+        // 기타 필드는 모든 컬럼 추가
+        const newCustomFields = [...prevMappings.customFields];
+        columns.forEach(col => {
+          if (!newCustomFields.includes(col)) {
+            newCustomFields.push(col);
+          }
+        });
+        newMappings.customFields = newCustomFields;
       }
     }
 
@@ -225,55 +245,12 @@ export default function FieldMapping({
           </div>
 
           {/* 파일 컬럼 */}
-          <div className="flex flex-col h-full min-h-0">
-            <h3 className="text-sm font-semibold text-text-main mb-2 flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-xs">2</span>
-              파일 컬럼
-            </h3>
-            <div className="bg-surface rounded-xl border border-border-light flex-1 min-h-0 overflow-hidden">
-              {fileColumns.length > 0 ? (
-                <div className="h-full overflow-y-auto p-2">
-                  <div className="space-y-1">
-                    {fileColumns.map((column) => {
-                      const mapped = isColumnMapped(column);
-                      return (
-                        <div
-                          key={column}
-                          draggable={!mapped}
-                          onDragStart={(e) => {
-                            globalDragType = 'column';
-                            globalDragValue = column;
-                            globalDragSourceVersion = selectedVersion; // 현재 선택된 버전 저장
-                            e.dataTransfer.effectAllowed = 'copy';
-                          }}
-                          onDragEnd={() => {
-                            globalDragType = null;
-                            globalDragValue = null;
-                            globalDragSourceVersion = null;
-                          }}
-                          className={`px-2.5 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 ${
-                            mapped
-                              ? 'bg-gray-100 text-text-secondary cursor-not-allowed'
-                              : 'bg-surface border border-border-light cursor-grab hover:border-primary hover:shadow-sm'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                          </svg>
-                          <span className="truncate text-xs">{column}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-text-secondary text-xs p-4 text-center">
-                  버전을 선택하면<br/>컬럼이 표시됩니다
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-text-secondary mt-1.5">드래그하여 오른쪽에 매핑</p>
-          </div>
+          <FileColumnList
+            fileColumns={fileColumns}
+            selectedVersion={selectedVersion}
+            currentMappings={currentMappings}
+            onMappingsChange={updateCurrentMappings}
+          />
         </div>
       </Card>
 
@@ -678,6 +655,129 @@ function MultiDropZone({ label, values, placeholder, onDrop, onClear, color = 'g
       ) : (
         <p className="text-xs text-text-secondary">{placeholder}</p>
       )}
+    </div>
+  );
+}
+
+
+// 파일 컬럼 리스트 - 다중 선택 및 드래그 지원
+interface FileColumnListProps {
+  fileColumns: string[];
+  selectedVersion: string;
+  currentMappings: VersionMapping;
+  onMappingsChange: (mappings: VersionMapping) => void;
+}
+
+function FileColumnList({ fileColumns, selectedVersion, currentMappings, onMappingsChange }: FileColumnListProps) {
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+
+  const isColumnMapped = (column: string) => {
+    return currentMappings.source === column ||
+           currentMappings.translations.includes(column) ||
+           Object.values(currentMappings.metadata).includes(column) ||
+           currentMappings.customFields.includes(column);
+  };
+
+  const handleColumnClick = (e: React.MouseEvent, column: string) => {
+    if (isColumnMapped(column)) return;
+    
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl/Cmd 클릭: 토글 선택
+      setSelectedColumns(prev => 
+        prev.includes(column) 
+          ? prev.filter(c => c !== column)
+          : [...prev, column]
+      );
+    } else {
+      // 일반 클릭: 단일 선택
+      setSelectedColumns([column]);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, columns: string[]) => {
+    globalDragType = 'column';
+    globalDragValue = JSON.stringify(columns); // 여러 컬럼을 JSON으로 전달
+    globalDragSourceVersion = selectedVersion;
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('columns', JSON.stringify(columns));
+  };
+
+  const handleDragEnd = () => {
+    globalDragType = null;
+    globalDragValue = null;
+    globalDragSourceVersion = null;
+    setSelectedColumns([]); // 드래그 후 선택 해제
+  };
+
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <h3 className="text-sm font-semibold text-text-main mb-2 flex items-center gap-1.5">
+        <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-xs">2</span>
+        파일 컬럼
+        {selectedColumns.length > 0 && (
+          <span className="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-auto">
+            {selectedColumns.length}개 선택
+          </span>
+        )}
+      </h3>
+      <div className="bg-surface rounded-xl border border-border-light flex-1 min-h-0 overflow-hidden">
+        {fileColumns.length > 0 ? (
+          <div className="h-full overflow-y-auto p-2">
+            <div className="space-y-1">
+              {fileColumns.map((column) => {
+                const mapped = isColumnMapped(column);
+                const isSelected = selectedColumns.includes(column);
+                const isMultiSelected = selectedColumns.length > 1 && isSelected;
+                
+                return (
+                  <div
+                    key={column}
+                    draggable={!mapped && (isSelected || selectedColumns.length === 0)}
+                    onClick={(e) => handleColumnClick(e, column)}
+                    onDragStart={(e) => {
+                      if (selectedColumns.includes(column)) {
+                        // 선택된 컬럼들을 함께 드래그
+                        handleDragStart(e, selectedColumns);
+                      } else {
+                        // 단일 컬럼 드래그
+                        handleDragStart(e, [column]);
+                      }
+                    }}
+                    onDragEnd={handleDragEnd}
+                    className={`px-2.5 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 select-none ${
+                      mapped
+                        ? 'bg-gray-100 text-text-secondary cursor-not-allowed'
+                        : isMultiSelected
+                        ? 'bg-primary text-white shadow-md cursor-grab'
+                        : isSelected
+                        ? 'bg-primary-light border border-primary cursor-grab'
+                        : 'bg-surface border border-border-light cursor-pointer hover:border-primary hover:shadow-sm'
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                    <span className="truncate text-xs">{column}</span>
+                    {isSelected && !mapped && (
+                      <span className="ml-auto text-xs opacity-70">✓</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="h-full flex items-center justify-center text-text-secondary text-xs p-4 text-center">
+            버전을 선택하면<br/>컬럼이 표시됩니다
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-text-secondary mt-1.5">
+        {selectedColumns.length > 0 
+          ? '선택한 컬럼을 드래그하세요 (Ctrl+클릭으로 다중 선택)'
+          : 'Ctrl+클릭으로 다중 선택 후 드래그'
+        }
+      </p>
     </div>
   );
 }

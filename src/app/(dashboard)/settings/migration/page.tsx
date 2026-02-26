@@ -440,26 +440,30 @@ export default function MigrationPage() {
                 onClick={async () => {
                   if (!fieldMappings.source) { alert('원문 필드는 필수 매핑입니다.'); return; }
                   if (fieldMappings.translations.length === 0) { alert('최소 하나의 번역 언어를 선택해주세요.'); return; }
+                  if (!file) { alert('파일이 없습니다.'); return; }
                   
                   // 필드 매핑 후 preview API 호출
                   setLoading(true);
                   setError('');
                   
                   try {
+                    console.log('[Migration] Calling preview API with field mapping:', fieldMappings);
+                    
                     const fd = new FormData();
-                    fd.append('file', file!);
+                    fd.append('file', file);
                     fd.append('product_code', productCode === 'ALL' ? '' : productCode);
-                    fd.append('field_mapping', JSON.stringify({
-                      source: fieldMappings.source,
-                      translations: fieldMappings.translations,
-                      metadata: fieldMappings.metadata,
-                      customFields: fieldMappings.customFields,
-                    }));
+                    fd.append('source_field', fieldMappings.source);
+                    fd.append('translation_fields', JSON.stringify(fieldMappings.translations));
+                    fd.append('metadata_fields', JSON.stringify(fieldMappings.metadata));
+                    fd.append('custom_fields', JSON.stringify(fieldMappings.customFields));
+                    fd.append('version', selectedVersion);
                     
                     const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
                       method: 'POST',
                       body: fd,
                     });
+                    
+                    console.log('[Migration] Preview API response:', previewData);
 
                     const init = previewData.entries.map(e => ({
                       ...e,
@@ -471,12 +475,13 @@ export default function MigrationPage() {
                     setHasIssues(previewData.summary.exact_matches > 0 || previewData.summary.similar_matches > 0);
                     setStep('classify');
                   } catch (err: any) {
-                    setError(err.message);
+                    console.error('[Migration] Preview API error:', err);
+                    setError('미리보기 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'));
                   } finally {
                     setLoading(false);
                   }
                 }}
-                disabled={fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0 || loading}
+                disabled={fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0 || loading || !file}
                 className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {loading ? '처리 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '분류로 이동'}
