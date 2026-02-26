@@ -3,7 +3,21 @@
 import { useTheme } from '@/context/ThemeContext';
 
 export default function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mounted } = useTheme();
+
+  // hydration 문제 방지: mounted 되기 전에는 기본 UI만 표시
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg opacity-50">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+          블루톤
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
