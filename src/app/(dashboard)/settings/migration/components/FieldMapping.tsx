@@ -298,7 +298,17 @@ export default function FieldMapping({
           </div>
         ) : (
           <div className="space-y-2.5 flex-1 overflow-y-auto">
-            {/* 제품분류 - 대분류 (가장 상위) */}
+            {/* KEY/ID - 고유 식별자 */}
+            <DropZone
+              label="KEY / ID"
+              value={currentMappings.metadata.key_id}
+              placeholder="컬럼 드래그"
+              onDrop={(e) => handleDrop(e, 'metadata', 'key_id')}
+              onClear={() => handleClear('metadata', 'key_id')}
+              color="blue"
+            />
+
+            {/* 제품분류 - 대분류 */}
             <DropZone
               label="제품분류"
               value={currentMappings.metadata.product_category}
