@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/context/ThemeContext";
 import "./globals.css";
 
 const notoSansKR = Noto_Sans_KR({
@@ -25,12 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body
         className={`${notoSansKR.variable} ${inter.variable} font-sans antialiased`}
       >
-        <Toaster />
-        {children}
+        <ThemeProvider>
+          <Toaster />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

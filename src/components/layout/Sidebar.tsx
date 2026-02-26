@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useReferenceData';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -323,6 +324,11 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             );
           })}
         </nav>
+
+        {/* Theme Toggle */}
+        <div className="px-4 py-4 border-t border-gray-200 bg-white">
+          <ThemeToggle />
+        </div>
       </div>
     </>
   );

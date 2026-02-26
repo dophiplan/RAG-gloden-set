@@ -1,33 +1,46 @@
 @import "tailwindcss";
 
+/* ===== BLUE THEME (Default) ===== */
 :root {
-  /* Soft Indigo Theme Colors - Lighter & Elegant */
-  --primary: #818CF8; /* Indigo 400 - Lighter & softer */
-  --primary-hover: #6366F1; /* Indigo 500 - Slightly deeper on hover */
-  --primary-light: #E0E7FF; /* Indigo 100 - Light backgrounds */
-  --secondary: #A5B4FC; /* Indigo 300 - Even lighter complementary */
-  --background: #FAFAFA; /* Neutral light gray for reduced eye strain */
+  --primary: #818CF8;
+  --primary-hover: #6366F1;
+  --primary-light: #E0E7FF;
+  --secondary: #A5B4FC;
+  --background: #FAFAFA;
   --background-secondary: #F5F5F5;
   --surface: #FFFFFF;
-  --border: #C7D2FE; /* Indigo 200 - Soft borders */
-  --border-light: #E0E7FF; /* Indigo 100 - Lighter borders */
-  --text-main: #2C3E50; /* Softer than pure black */
+  --border: #C7D2FE;
+  --border-light: #E0E7FF;
+  --text-main: #2C3E50;
   --text-secondary: #546E7A;
   --text-muted: #90A4AE;
-
-  /* Shadow tokens - Lighter indigo shadows */
   --shadow-sm: 0 2px 8px rgba(129, 140, 248, 0.08);
   --shadow-md: 0 4px 16px rgba(129, 140, 248, 0.12);
   --shadow-lg: 0 8px 24px rgba(129, 140, 248, 0.15);
-
-  /* Border radius tokens */
   --radius-sm: 12px;
   --radius-md: 16px;
   --radius-lg: 20px;
   --radius-xl: 24px;
-
-  /* Legacy */
   --foreground: #2C3E50;
+}
+
+/* ===== WHITE THEME ===== */
+[data-theme="white"] {
+  --primary: #111827;
+  --primary-hover: #374151;
+  --primary-light: #F3F4F6;
+  --secondary: #6B7280;
+  --background: #FFFFFF;
+  --background-secondary: #F9FAFB;
+  --surface: #FFFFFF;
+  --border: #E5E7EB;
+  --border-light: #F3F4F6;
+  --text-main: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05);
 }
 
 @theme inline {

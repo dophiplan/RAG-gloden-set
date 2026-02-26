@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Blue Theme (Default)
         primary: {
           DEFAULT: '#818CF8',
           hover: '#6366F1',
@@ -32,6 +33,23 @@ const config: Config = {
           divider: '#D4E3FC',
         },
         surface: '#FFFFFF',
+        
+        // White Theme Colors (for reference)
+        'white-theme': {
+          primary: '#111827',
+          secondary: '#374151',
+          accent: '#10B981', // Green
+          warning: '#F59E0B', // Orange
+          danger: '#EF4444', // Red
+          background: '#FFFFFF',
+          surface: '#F9FAFB',
+          border: '#E5E7EB',
+          text: {
+            main: '#111827',
+            secondary: '#6B7280',
+            muted: '#9CA3AF',
+          },
+        },
       },
       borderRadius: {
         'sm': '12px',
@@ -43,6 +61,10 @@ const config: Config = {
         'sm': '0 2px 8px rgba(129, 140, 248, 0.08)',
         'md': '0 4px 16px rgba(129, 140, 248, 0.12)',
         'lg': '0 8px 24px rgba(129, 140, 248, 0.15)',
+        // White theme shadows
+        'white-sm': '0 1px 3px rgba(0, 0, 0, 0.1)',
+        'white-md': '0 4px 6px rgba(0, 0, 0, 0.07)',
+        'white-lg': '0 10px 15px rgba(0, 0, 0, 0.05)',
       },
     },
   },
