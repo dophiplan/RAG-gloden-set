@@ -173,18 +173,14 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <div className={`
-        flex flex-col w-64 bg-white border-r border-border-light min-h-screen
+        flex flex-col w-64 min-h-screen sidebar
         fixed lg:static inset-y-0 left-0 z-50
         transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isHistoryOpen ? 'opacity-30 pointer-events-none' : 'opacity-100 pointer-events-auto'}
-      `} style={{
-        boxShadow: '4px 0 16px rgba(99, 102, 241, 0.06)'
-      }}>
+      `}>
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-5 border-b border-primary-hover bg-gradient-to-br from-primary-hover via-primary-active to-primary" style={{
-          boxShadow: '0 4px 16px rgba(99, 102, 241, 0.25)'
-        }}>
+        <div className="flex items-center justify-center h-16 px-5 border-b border-[var(--border)] bg-[var(--primary)]">
           <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">Language Monster</h1>
           {/* Close button for mobile */}
           {onClose && (
@@ -201,7 +197,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 bg-white overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto" style={{ background: 'var(--surface)' }}>
           {(filteredNavigation || []).map((item) => {
             // For items with submenu
             if (item.hasSubmenu && item.submenuKey) {
@@ -326,7 +322,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </nav>
 
         {/* Theme Toggle */}
-        <div className="px-4 py-4 border-t border-gray-200 bg-white">
+        <div className="px-4 py-4 border-t border-[var(--border)]" style={{ background: 'var(--background-secondary)' }}>
           <ThemeToggle />
         </div>
       </div>

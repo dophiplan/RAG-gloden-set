@@ -22,6 +22,9 @@
   --radius-lg: 20px;
   --radius-xl: 24px;
   --foreground: #2C3E50;
+  --accent-green: #10B981;
+  --accent-orange: #F59E0B;
+  --accent-red: #EF4444;
 }
 
 /* ===== WHITE THEME ===== */
@@ -38,13 +41,16 @@
   --text-main: #111827;
   --text-secondary: #6B7280;
   --text-muted: #9CA3AF;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+  --foreground: #111827;
+  --accent-green: #10B981;
+  --accent-orange: #F59E0B;
+  --accent-red: #EF4444;
 }
 
 @theme inline {
-  /* Tech Blue Color Palette */
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-light: var(--primary-light);
@@ -123,77 +129,81 @@ button {
   background: var(--text-secondary);
 }
 
-/* Table Styles */
+/* Table Styles - Theme Aware */
 table {
   border-collapse: separate;
   border-spacing: 0;
 }
 
 table thead {
-  background: linear-gradient(135deg, #F5F7FF 0%, #EEF2FF 100%);
+  background: var(--background-secondary);
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: var(--shadow-sm);
-  border: 2px solid #6366F1;
-  border-radius: var(--radius-md);
+  border-bottom: 2px solid var(--border);
 }
 
 table thead th {
-  padding: 18px 24px;
+  padding: 16px 20px;
   text-align: left;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: #6366F1;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: none;
   white-space: nowrap;
-}
-
-table thead th:first-child {
-  border-top-left-radius: var(--radius-md);
-}
-
-table thead th:last-child {
-  border-top-right-radius: var(--radius-md);
 }
 
 table tbody tr {
   background: var(--surface);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border);
 }
 
 table tbody tr:hover {
-  background: var(--primary-light);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  background: var(--background-secondary);
 }
 
 table tbody td {
-  padding: 18px 24px;
+  padding: 16px 20px;
   font-size: 14px;
   color: var(--text-main);
   border-bottom: 1px solid var(--border);
 }
 
-table tbody tr:last-child td {
-  border-bottom: none;
+/* White Theme Specific Table Styles */
+[data-theme="white"] table thead {
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
 }
 
-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: var(--radius-md);
+[data-theme="white"] table thead th {
+  color: #6B7280;
+  font-weight: 500;
 }
 
-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: var(--radius-md);
+[data-theme="white"] table tbody tr:hover {
+  background: #F9FAFB;
+}
+
+/* Card Styles */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="white"] .card {
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Empty state styling */
 table tbody tr td[colspan] {
   text-align: center;
   padding: 64px 24px;
-  color: #64748B;
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
 }
@@ -210,4 +220,41 @@ table tbody tr td[colspan] {
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+[data-theme="white"] .sidebar {
+  background: #FFFFFF;
+  border-right: 1px solid #E5E7EB;
+}
+
+/* Status Badges */
+.badge-green {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.badge-yellow {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.badge-blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+[data-theme="white"] .badge-green {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+[data-theme="white"] .badge-yellow {
+  background: #FEF3C7;
+  color: #92400E;
 }

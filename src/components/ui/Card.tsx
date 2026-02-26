@@ -13,13 +13,16 @@ export default function Card({
   const paddings = {
     none: '',
     sm: 'p-5',
-    md: 'p-7',
-    lg: 'p-9',
+    md: 'p-6',
+    lg: 'p-8',
   };
 
   return (
     <div
-      className={`bg-surface rounded-2xl border border-border-light hover:border-primary-hover/30 transition-all duration-300 shadow-md ${paddings[padding]} ${className}`}
+      className={`bg-white rounded-xl border border-[var(--border)] transition-all duration-300 shadow-sm ${paddings[padding]} ${className}`}
+      style={{
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+      }}
       {...props}
     >
       {children}
@@ -33,7 +36,7 @@ export function CardHeader({
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`border-b border-border-light pb-5 mb-5 ${className}`} {...props}>
+    <div className={`border-b border-[var(--border)] pb-4 mb-4 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -45,7 +48,7 @@ export function CardTitle({
   ...props
 }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={`text-lg font-semibold text-text-main tracking-tight ${className}`} {...props}>
+    <h3 className={`text-lg font-semibold text-[var(--text-main)] tracking-tight ${className}`} {...props}>
       {children}
     </h3>
   );
