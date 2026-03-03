@@ -4,8 +4,6 @@ const nextConfig: NextConfig = {
   // Production output optimization for Vercel
   output: 'standalone',
 
-
-
   // Compression
   compress: true,
 

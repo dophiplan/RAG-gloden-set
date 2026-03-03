@@ -21,6 +21,15 @@ interface AIProviderConfig {
 
 const AI_PROVIDERS: AIProviderConfig[] = [
   {
+    id: 'kimi',
+    name: 'Kimi',
+    displayName: 'Kimi',
+    keyField: 'kimi_api_key',
+    color: 'bg-blue-50 border-blue-200 text-blue-700',
+    description: 'Moonshot AI',
+    websiteUrl: 'https://platform.moonshot.cn/',
+  },
+  {
     id: 'openai',
     name: 'OpenAI',
     displayName: 'OpenAI',
@@ -37,15 +46,6 @@ const AI_PROVIDERS: AIProviderConfig[] = [
     color: 'bg-purple-50 border-purple-200 text-purple-700',
     description: 'Claude 3.5 Sonnet',
     websiteUrl: 'https://console.anthropic.com/settings/keys',
-  },
-  {
-    id: 'kimi',
-    name: 'Kimi',
-    displayName: 'Kimi',
-    keyField: 'kimi_api_key',
-    color: 'bg-blue-50 border-blue-200 text-blue-700',
-    description: 'Moonshot AI',
-    websiteUrl: 'https://platform.moonshot.cn/',
   },
   {
     id: 'gemini',

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const { texts, targetLang } = body;
 
     if (!texts || texts.length === 0) {
-      return apiError('번역할 텍스트가 없습니다.', 400);
+      return apiError('NO_TEXTS', '번역할 텍스트가 없습니다.', 400);
     }
 
     // TODO: AI 번역 서비스 연동

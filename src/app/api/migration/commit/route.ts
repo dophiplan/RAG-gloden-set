@@ -24,11 +24,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
+    // TypeScript null check bypass - we've already checked user exists above
+    const userId = user!.id;
+    const userEmail = user!.email;
+
     // Get user profile for audit log
     const { data: userProfile } = await supabase
       .from('users')
       .select('name, email')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     // Check if this is simple mode (FormData) or advanced mode (JSON)
@@ -167,7 +171,7 @@ export async function POST(request: NextRequest) {
               translation: translation.trim(),
               language_code: langCode,
               context: entry.context || null,
-              user_id: user.id,
+              user_id: userId,
             })
             .select()
             .single();
@@ -236,7 +240,7 @@ export async function POST(request: NextRequest) {
                     .from('translation_results')
                     .update({
                       translated_text: translatedText.trim(),
-                      reviewer_id: user.id,
+                      reviewer_id: userId,
                       reviewed_at: new Date().toISOString(),
                     })
                     .eq('id', existingResult.id);
@@ -248,7 +252,7 @@ export async function POST(request: NextRequest) {
                   translation_id: existing.id,
                   language_code: langCode,
                   translated_text: translatedText.trim(),
-                  reviewer_id: user.id,
+                  reviewer_id: userId,
                   reviewed_at: new Date().toISOString(),
                 });
               }
@@ -257,9 +261,9 @@ export async function POST(request: NextRequest) {
             // Create audit log for merge/overwrite (non-blocking)
             void supabase.from('translation_audit_logs').insert({
               translation_id: existing.id,
-              user_id: user.id,
+              user_id: userId,
               user_name: userProfile?.name,
-              user_email: userProfile?.email || user.email,
+              user_email: userProfile?.email || userEmail,
               action: 'update',
               field_name: 'migration',
               new_value: `Data ${entry.action} from migration`,
@@ -287,7 +291,7 @@ export async function POST(request: NextRequest) {
             version: version || null,
             version_updated_at: version ? new Date().toISOString() : null,
             product_code: product_code,
-            user_id: user.id,
+            user_id: userId,
             is_migrated: true,
           })
           .select()
@@ -302,7 +306,7 @@ export async function POST(request: NextRequest) {
             translation_id: translation.id,
             language_code: langCode,
             translated_text: text.trim(),
-            reviewer_id: user.id,
+            reviewer_id: userId,
             reviewed_at: new Date().toISOString(),
           }));
 
@@ -321,9 +325,9 @@ export async function POST(request: NextRequest) {
         // Create audit log (non-blocking)
         void supabase.from('translation_audit_logs').insert({
           translation_id: translation.id,
-          user_id: user.id,
+          user_id: userId,
           user_name: userProfile?.name,
-          user_email: userProfile?.email || user.email,
+          user_email: userProfile?.email || userEmail,
           action: 'create',
           field_name: 'migration',
           new_value: 'Data migrated from Excel',

@@ -413,29 +413,6 @@ export default function MigrationPage() {
               </div>
             </div>
 
-            {mode === 'simple' && hasIssues && (
-              <div className="space-y-4 mb-6">
-                {summary.exact_matches > 0 && (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">⚠️</span>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-yellow-900 mb-1">중복 항목: {summary.exact_matches}개</h3>
-                        <div className="mt-3 flex gap-2">
-                          <button onClick={() => setEntries(prev => prev.map(e => e.duplicate_status.status === 'exact' ? { ...e, action: 'overwrite' } : e))} className="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700">모두 덮어쓰기</button>
-                          <button onClick={() => setEntries(prev => prev.map(e => e.duplicate_status.status === 'exact' ? { ...e, action: 'skip' } : e))} className="px-3 py-1 text-sm border border-yellow-600 text-yellow-700 rounded hover:bg-yellow-50">모두 건너뛰기</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <MigrationPreviewTable
-              entries={entries}
-              onUpdateEntry={updateEntry}
-            />
 
             <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200 bg-white p-6 rounded-lg shadow-sm">
               <button onClick={() => setStep('preview')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white">이전</button>

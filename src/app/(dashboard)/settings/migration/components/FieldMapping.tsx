@@ -219,11 +219,11 @@ export default function FieldMapping({
                 <div className="space-y-1">
                   {sheetsData.map((sheet) => {
                     const isSelected = selectedVersion === sheet.name;
-                    const sheetHasMapping = !!allMappings[sheet.name] && (
+                    const sheetHasMapping = !!(!!allMappings[sheet.name] && (
                       allMappings[sheet.name].source ||
                       allMappings[sheet.name].translations.length > 0 ||
                       Object.keys(allMappings[sheet.name].metadata).length > 0
-                    );
+                    ));
                     // 현재 버전에 매핑이 있고, 이 버전이 선택된 버전이 아니면 disabled
                     const isDisabled = hasCurrentMapping && !isSelected && !sheetHasMapping;
                     
