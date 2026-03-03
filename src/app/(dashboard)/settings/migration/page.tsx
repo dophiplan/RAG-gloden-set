@@ -1,19 +1,26 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ProductCode } from '@/types';
 import { useProducts } from '@/hooks/useReferenceData';
 import MigrationPreviewTable from './components/MigrationPreviewTable';
+import MigrationClassifyTable from './components/MigrationClassifyTable';
 import FieldMapping from './components/FieldMapping';
+import Toast from './components/Toast';
 import { apiFetch } from '@/lib/api-utils';
 
 interface PreviewEntry {
   id: string;
   source_text: string;
   context?: string;
+  key?: string;
+  product?: string;
+  platform?: string;
+  version?: string;
+  note?: string;
   translations: Record<string, string>;
   suggested_category: 'glossary' | 'translation';
   word_count: number;
@@ -24,7 +31,8 @@ interface PreviewEntry {
     existing_translations?: Record<string, string>;
   };
   category?: 'glossary' | 'translation';
-  action?: 'import' | 'skip' | 'merge' | 'overwrite';
+  action?: 'import' | 'skip' | 'glossary';
+  duplicate_action?: 'skip' | 'overwrite' | 'merge';
 }
 
 interface Summary {
@@ -42,6 +50,7 @@ interface PreviewResponse {
   entries: PreviewEntry[];
   summary: Summary;
   error?: string;
+  details?: string;
 }
 
 export default function MigrationPage() {
@@ -83,6 +92,36 @@ export default function MigrationPage() {
     metadata: {},
     customFields: [],
   });
+
+  // 디버깅용
+  useEffect(() => {
+    console.log('[Page] fieldMappings:', fieldMappings);
+  }, [fieldMappings]);
+
+  // 버전별 매핑 저장소
+  const [versionMappings, setVersionMappings] = useState<{
+    [version: string]: {
+      source: string | null;
+      translations: string[];
+      metadata: Record<string, string>;
+      customFields: string[];
+    }
+  }>({});
+
+  // 버전별 entries 저장소
+  const [versionEntries, setVersionEntries] = useState<{
+    [version: string]: PreviewEntry[];
+  }>({});
+
+  // 토스트 상태
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'error' | 'success' | 'warning';
+  } | null>(null);
+
+  const showToast = (message: string, type: 'error' | 'success' | 'warning' = 'error') => {
+    setToast({ message, type });
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -146,7 +185,13 @@ export default function MigrationPage() {
 
   const handleVersionChange = (versionName: string) => {
     setSelectedVersion(versionName);
-    setFieldMappings({ source: null, translations: [], metadata: {}, customFields: [] });
+    
+    // 저장된 매핑이 있으면 복원, 없으면 초기화
+    if (versionMappings[versionName]) {
+      setFieldMappings(versionMappings[versionName]);
+    } else {
+      setFieldMappings({ source: null, translations: [], metadata: {}, customFields: [] });
+    }
     
     // 선택된 버전(시트)의 컬럼 설정
     const selectedSheet = sheetsData.find(s => s.name === versionName);
@@ -154,6 +199,8 @@ export default function MigrationPage() {
       setFileColumns(selectedSheet.columns);
     }
   };
+
+
 
   const handleUpload = async () => {
     if (!file) {
@@ -168,6 +215,127 @@ export default function MigrationPage() {
       setStep('preview');
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 필드 매핑 후 preview 데이터 로드 (모든 버전)
+  const handleLoadPreview = async () => {
+    if (!file) {
+      setError('파일을 선택해주세요.');
+      return;
+    }
+    if (!fieldMappings.source) {
+      showToast('원문을 매칭 시켜주세요', 'error');
+      return;
+    }
+    if (!fieldMappings.metadata.version && !selectedVersion) {
+      showToast('버전 선택도 시스템 필드에 매칭 시켜주세요', 'error');
+      return;
+    }
+    if (fieldMappings.translations.length === 0) {
+      showToast('최소 하나의 번역 언어를 선택해주세요', 'error');
+      return;
+    }
+    
+    // 현재 버전 매핑 저장
+    const finalVersionMappings = { ...versionMappings };
+    if (selectedVersion) {
+      finalVersionMappings[selectedVersion] = { ...fieldMappings };
+      setVersionMappings(finalVersionMappings);
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // 매핑된 모든 버전에 대해 API 호출
+      const allVersionsToLoad = Object.keys(finalVersionMappings).filter(
+        v => finalVersionMappings[v].source // 원문이 매핑된 버전만
+      );
+
+      // 현재 버전도 추가 (아직 저장되지 않았을 수 있음)
+      if (selectedVersion && !allVersionsToLoad.includes(selectedVersion)) {
+        allVersionsToLoad.push(selectedVersion);
+      }
+
+      if (allVersionsToLoad.length === 0) {
+        showToast('매핑된 버전이 없습니다.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // 모든 버전의 entries를 저장할 객체
+      const allVersionEntries: { [version: string]: PreviewEntry[] } = {};
+      let totalSummary = {
+        total: 0,
+        glossary_suggested: 0,
+        translation_suggested: 0,
+        exact_matches: 0,
+        similar_matches: 0,
+        new_entries: 0,
+      };
+
+      // 순차적으로 모든 버전 API 호출
+      for (const versionName of allVersionsToLoad) {
+        const mappings = finalVersionMappings[versionName];
+        if (!mappings || !mappings.source) continue;
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('product_code', productCode === 'ALL' ? '' : productCode);
+        fd.append('version', versionName);
+        fd.append('field_mappings', JSON.stringify(mappings));
+
+        const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
+          method: 'POST',
+          body: fd,
+        });
+
+        if (previewData.error) {
+          console.error(`[Preview API] Error for ${versionName}:`, previewData.error);
+          continue;
+        }
+
+        // 버전별 entries 저장
+        const initEntries = previewData.entries.map(e => ({
+          ...e,
+          version: versionName, // 버전 정보 추가
+          action: 'import' as 'import' | 'skip' | 'glossary',
+          duplicate_action: e.duplicate_status.status === 'exact' ? 'skip' as 'skip' | 'overwrite' | 'merge' : undefined,
+        }));
+
+        allVersionEntries[versionName] = initEntries;
+
+        // summary 누적
+        totalSummary.total += previewData.summary.total;
+        totalSummary.glossary_suggested += previewData.summary.glossary_suggested;
+        totalSummary.translation_suggested += previewData.summary.translation_suggested;
+        totalSummary.exact_matches += previewData.summary.exact_matches;
+        totalSummary.similar_matches += previewData.summary.similar_matches;
+        totalSummary.new_entries += previewData.summary.new_entries;
+      }
+
+      // 모든 버전의 entries를 합쳐서 저장
+      const allEntries = Object.values(allVersionEntries).flat();
+      
+      // 디버깅: 첫 번째 entry 확인
+      console.log('[handleLoadPreview] allVersionEntries:', allVersionEntries);
+      console.log('[handleLoadPreview] First entry:', allEntries[0]);
+      console.log('[handleLoadPreview] First entry translations:', allEntries[0]?.translations);
+      
+      // 상태 업데이트 순서 중요: versionEntries 먼저, 그 다음 step 변경
+      setVersionEntries(allVersionEntries);
+      setEntries(allEntries);
+      setSummary(totalSummary);
+      
+      // 약간의 지연 후 step 변경 (상태 업데이트 완료 보장)
+      setTimeout(() => {
+        setStep('classify');
+      }, 0);
+    } catch (err: any) {
+      setError(err.message || '미리보기 데이터를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -203,7 +371,19 @@ export default function MigrationPage() {
   };
 
   const updateEntry = (id: string, updates: Partial<PreviewEntry>) => {
+    // entries 업데이트
     setEntries(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    
+    // versionEntries도 업데이트
+    setVersionEntries(prev => {
+      const newVersionEntries = { ...prev };
+      Object.keys(newVersionEntries).forEach(version => {
+        newVersionEntries[version] = newVersionEntries[version].map(e => 
+          e.id === id ? { ...e, ...updates } : e
+        );
+      });
+      return newVersionEntries;
+    });
   };
 
   const glossaryEntries = entries.filter(e => (e.category || e.suggested_category) === 'glossary');
@@ -211,6 +391,15 @@ export default function MigrationPage() {
 
   return (
     <DashboardLayout title="데이터 가져오기" subtitle="Excel/CSV 파일에서 용어집 및 번역 데이터를 가져옵니다.">
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+          duration={3000}
+        />
+      )}
       <div className="max-w-7xl mx-auto">
         {/* Description */}
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -229,7 +418,7 @@ export default function MigrationPage() {
                       {i + 1}
                     </div>
                     <span className={`ml-2 font-medium ${step === s ? 'text-[#818CF8]' : 'text-gray-600'}`}>
-                      {s === 'upload' ? '업로드' : s === 'preview' ? '미리보기' : s === 'classify' ? '분류' : '확인 및 실행'}
+                      {s === 'upload' ? '업로드' : s === 'preview' ? '필드 매핑' : s === 'classify' ? '미리보기' : '확인 및 실행'}
                     </span>
                   </button>
                   {i < 3 && <div className="w-16 h-1 mx-2 bg-gray-200" />}
@@ -370,6 +559,7 @@ export default function MigrationPage() {
                 selectedVersion={selectedVersion}
                 onVersionChange={handleVersionChange}
                 onMappingChange={setFieldMappings}
+                onAllMappingsChange={setVersionMappings}
                 initialMappings={fieldMappings}
               />
             ) : (
@@ -382,18 +572,11 @@ export default function MigrationPage() {
             <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
               <button onClick={() => setStep('upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
               <button
-                onClick={() => {
-                  if (!fieldMappings.source) { alert('원문 필드는 필수 매핑입니다.'); return; }
-                  if (fieldMappings.translations.length === 0) { alert('최소 하나의 번역 언어를 선택해주세요.'); return; }
-                  
-                  // 필드 매핑 후 분류로 이동 (이전에 로드된 preview 데이터 사용)
-                  // 이미 entries/summary가 있다면 그대로 사용, 없으면 빈 상태로 이동
-                  setStep('classify');
-                }}
-                disabled={fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0}
+                onClick={handleLoadPreview}
+                disabled={loading || fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0}
                 className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '분류로 이동'}
+                {loading ? '로딩 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '다음 단계'}
               </button>
             </div>
           </div>
@@ -401,22 +584,44 @@ export default function MigrationPage() {
 
         {/* Step 3: Classify */}
         {step === 'classify' && summary && (
-          <div className="pb-20">
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="pb-20 space-y-6">
+            {/* 요약 카드 */}
+            <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">분류</h2>
-              <div className="grid grid-cols-5 gap-4 mb-4">
+              <div className="grid grid-cols-5 gap-4">
                 <div className="text-center"><p className="text-2xl font-bold text-gray-900">{summary.total}</p><p className="text-sm text-gray-600">전체</p></div>
-                <div className="text-center"><p className="text-2xl font-bold text-[#818CF8]">{glossaryEntries.length}</p><p className="text-sm text-gray-600">용어집</p></div>
-                <div className="text-center"><p className="text-2xl font-bold text-[#6366F1]">{translationEntries.length}</p><p className="text-sm text-gray-600">번역</p></div>
+                <div className="text-center"><p className="text-2xl font-bold text-[#818CF8]">{entries.filter(e => e.action === 'glossary').length}</p><p className="text-sm text-gray-600">용어집추가</p></div>
                 <div className="text-center"><p className="text-2xl font-bold text-green-600">{summary.new_entries}</p><p className="text-sm text-gray-600">신규</p></div>
                 <div className="text-center"><p className="text-2xl font-bold text-yellow-600">{summary.exact_matches + summary.similar_matches}</p><p className="text-sm text-gray-600">중복/유사</p></div>
+                <div className="text-center"><p className="text-2xl font-bold text-gray-500">{entries.filter(e => e.action === 'skip').length}</p><p className="text-sm text-gray-600">제외</p></div>
               </div>
             </div>
 
+            {/* 분류 테이블 */}
+            <MigrationClassifyTable
+              entries={entries}
+              versionEntries={versionEntries}
+              onUpdateEntry={updateEntry}
+              onBulkAction={(action, ids) => {
+                ids.forEach(id => updateEntry(id, { action }));
+              }}
+            />
 
-            <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200 bg-white p-6 rounded-lg shadow-sm">
-              <button onClick={() => setStep('preview')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white">이전</button>
-              <button onClick={() => setStep('confirm')} className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]">다음 단계</button>
+            {/* 하단 액션 */}
+            <div className="flex gap-4 mt-8 bg-white p-6 rounded-lg shadow-sm">
+              <button 
+                onClick={() => {
+                  if (confirm('분류에서 작업하던 내용이 초기화됩니다. 계속하시겠습니까?')) {
+                    setStep('preview');
+                  }
+                }} 
+                className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white"
+              >
+                필드 매핑
+              </button>
+              <button onClick={() => setStep('confirm')} className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]">
+                다음 단계
+              </button>
             </div>
           </div>
         )}
@@ -430,17 +635,16 @@ export default function MigrationPage() {
               <div className="border-b pb-4">
                 <h3 className="font-semibold text-gray-900 mb-2">용어집</h3>
                 <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#818CF8]">{glossaryEntries.filter(e => e.action === 'import' || e.action === 'merge' || e.action === 'overwrite').length}건</p></div>
-                  <div><p className="text-gray-600">건너뛰기</p><p className="text-lg font-semibold text-gray-600">{glossaryEntries.filter(e => e.action === 'skip').length}건</p></div>
+                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#818CF8]">{entries.filter(e => e.action === 'glossary').length}건</p></div>
+                  <div><p className="text-gray-600">건너뛰기</p><p className="text-lg font-semibold text-gray-600">{entries.filter(e => e.action === 'skip').length}건</p></div>
                 </div>
               </div>
 
               <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">번역</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">번역관리</h3>
                 <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#6366F1]">{translationEntries.filter(e => e.action === 'import').length}건</p></div>
-                  <div><p className="text-gray-600">병합</p><p className="text-lg font-semibold text-blue-600">{translationEntries.filter(e => e.action === 'merge').length}건</p></div>
-                  <div><p className="text-gray-600">건너뛰기</p><p className="text-lg font-semibold text-gray-600">{translationEntries.filter(e => e.action === 'skip').length}건</p></div>
+                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#6366F1]">{entries.filter(e => e.action === 'import' || e.action === 'glossary').length}건</p></div>
+                  <div><p className="text-gray-600">걄너뛰기</p><p className="text-lg font-semibold text-gray-600">{entries.filter(e => e.action === 'skip').length}건</p></div>
                 </div>
               </div>
             </div>

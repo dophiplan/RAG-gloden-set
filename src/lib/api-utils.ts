@@ -85,10 +85,13 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { field, ...fetchOptions } = options;
   
+  // Don't set Content-Type for FormData - browser will set it with boundary
+  const isFormData = fetchOptions.body instanceof FormData;
+  
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: isFormData 
+      ? {} // Let browser set Content-Type with boundary for FormData
+      : { 'Content-Type': 'application/json' },
     ...fetchOptions,
   });
 

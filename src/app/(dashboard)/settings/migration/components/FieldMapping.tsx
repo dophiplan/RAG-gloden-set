@@ -4,6 +4,14 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
+// 버전별 매핑 저장 구조
+interface VersionMapping {
+  source: string | null;
+  translations: string[];
+  metadata: Record<string, string>;
+  customFields: string[];
+}
+
 interface FieldMappingProps {
   sheetsData: {
     name: string;
@@ -12,26 +20,9 @@ interface FieldMappingProps {
   }[];
   selectedVersion: string;
   onVersionChange: (version: string) => void;
-  onMappingChange: (mappings: {
-    source: string | null;
-    translations: string[];
-    metadata: Record<string, string>;
-    customFields: string[];
-  }) => void;
-  initialMappings?: {
-    source: string | null;
-    translations: string[];
-    metadata: Record<string, string>;
-    customFields: string[];
-  };
-}
-
-// 버전별 매핑 저장 구조
-interface VersionMapping {
-  source: string | null;
-  translations: string[];
-  metadata: Record<string, string>;
-  customFields: string[];
+  onMappingChange: (mappings: VersionMapping) => void;
+  onAllMappingsChange?: (allMappings: Record<string, VersionMapping>) => void;  // 전체 매핑 변경 시 상위에 알림
+  initialMappings?: VersionMapping;
 }
 
 // 전역 드래그 상태
@@ -44,6 +35,7 @@ export default function FieldMapping({
   selectedVersion,
   onVersionChange,
   onMappingChange,
+  onAllMappingsChange,
   initialMappings,
 }: FieldMappingProps) {
   // 버전별 매핑 저장소 - 안전한 초기화
@@ -90,18 +82,45 @@ export default function FieldMapping({
     };
     setAllMappings(updatedAll);
     onMappingChange(newMappings);
+    
+    // 상위 컴포넌트에 전체 매핑 변경 알림
+    if (onAllMappingsChange) {
+      onAllMappingsChange(updatedAll);
+    }
+    
+    console.log('[FieldMapping] Updated:', newMappings);
   };
 
-  // 버전 변경 핸들러 (매핑 존재 시 경고)
-  const handleVersionSelect = (version: string) => {
-    if (hasCurrentMapping && version !== selectedVersion) {
-      const confirmed = confirm(
-        `현재 버전(${selectedVersion})에 매핑된 데이터가 있습니다.\n` +
-        `버전을 변경하면 현재 매핑 데이터는 유지되지만, 새로운 버전으로 작업하게 됩니다.\n` +
-        `계속하시겠습니까?`
-      );
-      if (!confirmed) return;
+  // 현재 버전의 매핑을 저장 (1개라도 매핑되면)
+  const saveCurrentMapping = () => {
+    if (selectedVersion) {
+      const hasAnyMapping = 
+        currentMappings.source !== null ||
+        currentMappings.translations.length > 0 ||
+        Object.keys(currentMappings.metadata).length > 0 ||
+        currentMappings.customFields.length > 0;
+      
+      if (hasAnyMapping) {
+        const updatedAll = {
+          ...allMappings,
+          [selectedVersion]: getCurrentMappings()
+        };
+        setAllMappings(updatedAll);
+        
+        // 상위 컴포넌트에 전체 매핑 변경 알림
+        if (onAllMappingsChange) {
+          onAllMappingsChange(updatedAll);
+        }
+      }
     }
+  };
+
+  // 버전 변경 핸들러 - 자동 저장/복원
+  const handleVersionSelect = (version: string) => {
+    // 현재 버전의 매핑을 저장
+    saveCurrentMapping();
+    
+    // 새 버전 선택
     onVersionChange(version);
   };
 
@@ -125,8 +144,8 @@ export default function FieldMapping({
     if (!value || !type) return;
     
     // 파일 컬럼인 경우, 현재 선택된 버전과 드래그 시작한 버전이 일치해야 함
+    // 다른 버전의 컬럼은 무시 (트집기)
     if (type === 'column' && sourceVersion !== selectedVersion) {
-      alert(`현재 선택된 버전(${selectedVersion})의 파일 컬럼만 매핑할 수 있습니다.`);
       return;
     }
 
@@ -160,14 +179,10 @@ export default function FieldMapping({
         // 메타데이터는 첫 번째 컬럼만
         newMappings.metadata = { ...prevMappings.metadata, [fieldName]: columns[0] };
       } else if (targetType === 'custom') {
-        // 기타 필드는 모든 컬럼 추가
-        const newCustomFields = [...prevMappings.customFields];
-        columns.forEach(col => {
-          if (!newCustomFields.includes(col)) {
-            newCustomFields.push(col);
-          }
-        });
-        newMappings.customFields = newCustomFields;
+        // 기타 필드도 첫 번째 컬럼만 (단일 값)
+        if (!newMappings.customFields.includes(columns[0])) {
+          newMappings.customFields = [...prevMappings.customFields, columns[0]];
+        }
       }
     }
 
@@ -224,8 +239,9 @@ export default function FieldMapping({
                       allMappings[sheet.name].translations.length > 0 ||
                       Object.keys(allMappings[sheet.name].metadata).length > 0
                     ));
-                    // 현재 버전에 매핑이 있고, 이 버전이 선택된 버전이 아니면 disabled
-                    const isDisabled = hasCurrentMapping && !isSelected && !sheetHasMapping;
+                    
+                    // 모든 버전 선택 가능
+                    const isDisabled = false;
                     
                     return (
                       <VersionItem
