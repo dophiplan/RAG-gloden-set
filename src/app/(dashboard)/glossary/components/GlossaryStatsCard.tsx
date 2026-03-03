@@ -112,18 +112,18 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
       {/* 1. Cost Savings */}
-      <Card padding="none" className="bg-gradient-to-br from-purple-50 to-white">
+      <Card padding="none" className="bg-gradient-to-br from-gray-50 to-white">
         <div className="px-4 py-1.5 flex flex-col justify-between h-full">
           <div className="flex items-start justify-between mb-1">
             <div className="flex items-center gap-1">
-              <span className="text-xs font-semibold text-purple-700">절감</span>
-              <div className="flex gap-0.5 bg-white rounded border border-purple-200 overflow-hidden">
+              <span className="text-xs font-semibold text-gray-700">절감</span>
+              <div className="flex gap-0.5 bg-white rounded border border-gray-200 overflow-hidden">
                 <button
                   onClick={() => setCurrency('krw')}
                   className={`px-1 py-0.5 text-xs font-medium transition-colors ${
                     currency === 'krw'
-                      ? 'bg-purple-600 text-white'
-                      : 'text-purple-600 hover:bg-purple-50'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   ₩
@@ -132,8 +132,8 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
                   onClick={() => setCurrency('usd')}
                   className={`px-1 py-0.5 text-xs font-medium transition-colors ${
                     currency === 'usd'
-                      ? 'bg-purple-600 text-white'
-                      : 'text-purple-600 hover:bg-purple-50'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
                   $
@@ -141,7 +141,7 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
               </div>
             </div>
             <Tooltip content="용어집 재사용으로 절약한 AI 번역 비용 (총 재사용 횟수 × 평균 언어 수 × 언어당 비용)">
-              <div className="text-5xl font-bold text-purple-700 cursor-help leading-none">
+              <div className="text-5xl font-bold text-gray-800 cursor-help leading-none">
                 {currency === 'usd'
                   ? `$${estimatedCostSaved.toFixed(1)}`
                   : `₩${krwAmount.toLocaleString()}`
@@ -149,33 +149,33 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
               </div>
             </Tooltip>
           </div>
-          <p className="text-xs text-gray-400 pt-0.5 border-t border-purple-100 leading-tight">
+          <p className="text-xs text-gray-400 pt-0.5 border-t border-gray-100 leading-tight">
             용어집 재사용으로 비용 절감
           </p>
         </div>
       </Card>
 
       {/* 2. Reuse Statistics */}
-      <Card padding="none" className="bg-gradient-to-br from-green-50 to-white">
+      <Card padding="none" className="bg-gradient-to-br from-gray-50 to-white">
         <div className="px-4 py-1.5 flex flex-col justify-between h-full">
           <div className="flex items-start justify-between mb-1">
-            <span className="text-xs font-semibold text-green-700">재사용 횟수</span>
+            <span className="text-xs font-semibold text-gray-700">재사용 횟수</span>
             <Tooltip content="용어집에 저장된 번역이 실제 번역에 재사용된 총 횟수">
-              <div className="text-5xl font-bold text-green-700 cursor-help leading-none">
+              <div className="text-5xl font-bold text-gray-800 cursor-help leading-none">
                 {(stats.total_hits ?? 0).toLocaleString()}
               </div>
             </Tooltip>
           </div>
-          <div className="flex items-center text-xs text-gray-400 gap-1.5 pt-0.5 border-t border-green-100">
+          <div className="flex items-center text-xs text-gray-400 gap-1.5 pt-0.5 border-t border-gray-100">
             <span className="whitespace-nowrap">사용 용어</span>
             <Tooltip content="실제로 번역에 재사용된 용어 수 / 승인된 전체 용어 수">
-              <span className="font-medium text-green-600 cursor-help whitespace-nowrap">
+              <span className="font-medium text-gray-700 cursor-help whitespace-nowrap">
                 {stats.used_terms ?? 0} / {stats.approved_terms ?? 0}
               </span>
             </Tooltip>
             <div className="flex-1 min-w-0 bg-gray-200 rounded-full h-0.5">
               <div
-                className="bg-green-600 h-0.5 rounded-full transition-all"
+                className="bg-gray-600 h-0.5 rounded-full transition-all"
                 style={{
                   width: `${(stats.approved_terms ?? 0) > 0 ? ((stats.used_terms ?? 0) / (stats.approved_terms ?? 1)) * 100 : 0}%`,
                 }}
@@ -186,29 +186,29 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
       </Card>
 
       {/* 3. Trends */}
-      <Card padding="none" className="bg-gradient-to-br from-blue-50 to-white">
+      <Card padding="none" className="bg-gradient-to-br from-gray-50 to-white">
         <div className="px-4 py-1.5 flex flex-col justify-between h-full">
           <div className="flex items-start justify-between mb-1">
-            <span className="text-xs font-semibold text-blue-700">신규 용어</span>
+            <span className="text-xs font-semibold text-gray-700">신규 용어</span>
             <Tooltip content="이번 달(1일~현재)에 용어집에 새로 추가된 용어 수">
-              <div className="text-5xl font-bold text-blue-700 cursor-help leading-none">
+              <div className="text-5xl font-bold text-gray-800 cursor-help leading-none">
                 {stats.new_terms_this_month ?? 0}
               </div>
             </Tooltip>
           </div>
-          <div className="pt-0.5 border-t border-blue-100 space-y-0.5">
+          <div className="pt-0.5 border-t border-gray-100 space-y-0.5">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400">이번 주</span>
               <Tooltip content="최근 7일간 새로 추가된 용어 수">
-                <span className="text-xs font-semibold text-blue-600 cursor-help">
+                <span className="text-xs font-semibold text-gray-700 cursor-help">
                   {stats.new_terms_this_week ?? 0}개
                 </span>
               </Tooltip>
             </div>
             {(stats.pending_terms ?? 0) > 0 && (
-              <div className="flex items-center justify-between bg-yellow-50 px-1 py-0.5 rounded">
-                <span className="text-xs text-yellow-700">⚠️ 검수 대기</span>
-                <span className="text-xs font-semibold text-yellow-700">{stats.pending_terms ?? 0}개</span>
+              <div className="flex items-center justify-between bg-gray-50 px-1 py-0.5 rounded">
+                <span className="text-xs text-gray-600">⚠️ 검수 대기</span>
+                <span className="text-xs font-semibold text-gray-700">{stats.pending_terms ?? 0}개</span>
               </div>
             )}
           </div>
@@ -216,10 +216,10 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
       </Card>
 
       {/* 4. Product Activity */}
-      <Card padding="none" className="bg-gradient-to-br from-indigo-50 to-white">
+      <Card padding="none" className="bg-gradient-to-br from-gray-50 to-white">
         <div className="px-4 py-1.5 flex flex-col justify-between h-full">
           <div className="mb-0.5">
-            <span className="text-xs font-semibold text-indigo-700">제품별 활동</span>
+            <span className="text-xs font-semibold text-gray-700">제품별 활동</span>
           </div>
           <div className="flex-1 flex items-center justify-center relative min-h-[35px]">
             {(() => {
@@ -329,7 +329,7 @@ function GlossaryStatsCard({ selectedProduct, stats: externalStats }: GlossarySt
               );
             })()}
           </div>
-          <div className="pt-0.5 border-t border-indigo-100">
+          <div className="pt-0.5 border-t border-gray-100">
             <div className="text-xs text-gray-400 text-center leading-tight">
               신규 / 전체 번역
             </div>

@@ -34,12 +34,12 @@ const config: Config = {
         },
         surface: '#FFFFFF',
         
-        // White Theme Colors (for reference)
+        // White Theme Colors (Clean Dashboard Style)
         'white-theme': {
-          primary: '#111827',
-          secondary: '#374151',
-          accent: '#10B981', // Green
-          warning: '#F59E0B', // Orange
+          primary: '#3B82F6', // Soft Blue
+          secondary: '#6B7280',
+          accent: '#22C55E', // Emerald Green
+          warning: '#F59E0B', // Amber Orange
           danger: '#EF4444', // Red
           background: '#FFFFFF',
           surface: '#F9FAFB',

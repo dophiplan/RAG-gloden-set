@@ -1,3 +1,6 @@
+'use client';
+
+import { useTheme } from '@/context/ThemeContext';
 import { HTMLAttributes } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -10,18 +13,23 @@ export default function Card({
   children,
   ...props
 }: CardProps) {
+  const { theme } = useTheme();
+  
   const paddings = {
     none: '',
-    sm: 'p-5',
-    md: 'p-6',
-    lg: 'p-8',
+    sm: 'p-4',
+    md: 'p-5',
+    lg: 'p-6',
   };
 
   return (
     <div
-      className={`bg-white rounded-xl border border-[var(--border)] transition-all duration-300 shadow-sm ${paddings[padding]} ${className}`}
+      className={`bg-white rounded-xl border transition-all duration-200 ${paddings[padding]} ${className}`}
       style={{
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        borderColor: theme === 'white' ? '#E5E7EB' : '#E0E7FF',
+        boxShadow: theme === 'white' 
+          ? '0 1px 3px rgba(0, 0, 0, 0.08)' 
+          : '0 2px 8px rgba(129, 140, 248, 0.08)',
       }}
       {...props}
     >
@@ -35,8 +43,14 @@ export function CardHeader({
   children,
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
+  const { theme } = useTheme();
+  
   return (
-    <div className={`border-b border-[var(--border)] pb-4 mb-4 ${className}`} {...props}>
+    <div 
+      className={`border-b pb-4 mb-4 ${className}`} 
+      style={{ borderColor: theme === 'white' ? '#E5E7EB' : '#E0E7FF' }}
+      {...props}
+    >
       {children}
     </div>
   );

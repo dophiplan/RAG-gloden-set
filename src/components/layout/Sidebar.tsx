@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useProducts } from '@/hooks/useReferenceData';
+import { useTheme } from '@/context/ThemeContext';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface SidebarProps {
@@ -161,6 +162,8 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     setExpandedMenus(newExpanded);
   };
 
+  const { theme } = useTheme();
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -172,15 +175,27 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       )}
 
       {/* Sidebar */}
-      <div className={`
-        flex flex-col w-64 min-h-screen sidebar
-        fixed lg:static inset-y-0 left-0 z-50
-        transform transition-all duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        ${isHistoryOpen ? 'opacity-30 pointer-events-none' : 'opacity-100 pointer-events-auto'}
-      `}>
+      <div 
+        className={`
+          flex flex-col w-64 min-h-screen
+          fixed lg:static inset-y-0 left-0 z-50
+          transform transition-all duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isHistoryOpen ? 'opacity-30 pointer-events-none' : 'opacity-100 pointer-events-auto'}
+        `}
+        style={{ 
+          background: 'var(--surface)',
+          borderRight: '1px solid var(--border)'
+        }}
+      >
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-5 border-b border-[var(--border)] bg-[var(--primary)]">
+        <div 
+          className="flex items-center justify-center h-16 px-5 border-b"
+          style={{ 
+            background: theme === 'white' ? '#111827' : '#6366F1',
+            borderColor: theme === 'white' ? '#374151' : '#818CF8'
+          }}
+        >
           <h1 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">Language Monster</h1>
           {/* Close button for mobile */}
           {onClose && (
@@ -220,14 +235,16 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                         }
                       }}
                       className={`
-                        w-full flex items-center justify-between px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
+                        w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
                         ${isInSection
-                          ? 'bg-gradient-to-r from-primary-hover to-primary-active text-white shadow-md'
-                          : 'text-text-secondary hover:bg-primary-light hover:text-primary-hover'
+                          ? theme === 'white'
+                            ? 'bg-gray-900 text-white shadow-sm'
+                            : 'bg-gradient-to-r from-[#6366F1] to-[#818CF8] text-white shadow-md'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                         }
                       `}
-                      style={isInSection ? {
-                        boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
+                      style={isInSection && theme === 'blue' ? {
+                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
                       } : undefined}
                     >
                       <div className="flex items-center">
@@ -268,10 +285,12 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                             href={productPath}
                             onClick={onClose}
                             className={`
-                              block px-4 py-2 text-sm rounded-lg transition-all duration-200
+                              block px-4 py-2 text-sm rounded-md transition-all duration-150
                               ${isProductActive
-                                ? 'bg-primary-light text-primary-active font-semibold'
-                                : 'text-text-secondary hover:bg-gray-50 hover:text-primary-hover'
+                                ? theme === 'white'
+                                  ? 'bg-gray-100 text-gray-900 font-medium'
+                                  : 'bg-[#E0E7FF] text-[#4F46E5] font-medium'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                               }
                             `}
                           >
@@ -304,14 +323,16 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 href={item.href || '#'}
                 onClick={onClose}
                 className={`
-                  flex items-center px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-300
+                  flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
                   ${isActive
-                    ? 'bg-gradient-to-r from-primary-hover to-primary-active text-white shadow-md'
-                    : 'text-text-secondary hover:bg-primary-light hover:text-primary-hover'
+                    ? theme === 'white'
+                      ? 'bg-gray-900 text-white shadow-sm'
+                      : 'bg-gradient-to-r from-[#6366F1] to-[#818CF8] text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }
                 `}
-                style={isActive ? {
-                  boxShadow: '0 4px 16px rgba(99, 102, 241, 0.2)'
+                style={isActive && theme === 'blue' ? {
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)'
                 } : undefined}
               >
                 <span className="mr-3">{item.icon}</span>

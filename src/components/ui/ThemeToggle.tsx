@@ -5,11 +5,11 @@ import { useTheme } from '@/context/ThemeContext';
 export default function ThemeToggle() {
   const { theme, setTheme, mounted } = useTheme();
 
-  // hydration 문제 방지: mounted 되기 전에는 기본 UI만 표시
+  // hydration 문제 방지
   if (!mounted) {
     return (
-      <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg opacity-50">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium">
+      <div className="flex items-center gap-1 p-1 rounded-lg bg-gray-100">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium opacity-50">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
@@ -20,7 +20,7 @@ export default function ThemeToggle() {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+    <div className="flex items-center gap-1 p-1 rounded-lg bg-gray-100">
       <button
         onClick={() => setTheme('blue')}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
@@ -38,7 +38,7 @@ export default function ThemeToggle() {
         onClick={() => setTheme('white')}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
           theme === 'white'
-            ? 'bg-white text-gray-900 shadow-sm'
+            ? 'bg-gray-900 text-white shadow-sm'
             : 'text-gray-600 hover:text-gray-900'
         }`}
       >
