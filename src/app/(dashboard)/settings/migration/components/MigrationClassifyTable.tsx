@@ -75,22 +75,12 @@ export default function MigrationClassifyTable({
     activeEntries = entries;
   }
   
-  // 디버깅
-  console.log('[MigrationClassifyTable] versions:', versions);
-  console.log('[MigrationClassifyTable] activeVersion:', activeVersion);
-  console.log('[MigrationClassifyTable] versionEntries?:', !!versionEntries);
-  console.log('[MigrationClassifyTable] activeEntries length:', activeEntries.length);
-  if (activeEntries.length > 0) {
-    console.log('[MigrationClassifyTable] activeEntries[0]:', activeEntries[0]);
-    console.log('[MigrationClassifyTable] activeEntries[0].translations:', activeEntries[0].translations);
-  }
-  
   // 페이지네이션
   const totalPages = Math.ceil(activeEntries.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedEntries = activeEntries.slice(startIndex, startIndex + itemsPerPage);
 
-  // 체크박스 토글
+  // 체크박스 토글 (행 클릭 시)
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => 
       prev.includes(id) 
@@ -99,13 +89,26 @@ export default function MigrationClassifyTable({
     );
   };
 
-  // 전체 선택
+  // 현재 페이지 선택 상태 계산
+  const currentPageIds = paginatedEntries.map(e => e.id);
+  const selectedCountOnPage = currentPageIds.filter(id => selectedIds.includes(id)).length;
+  const isAllSelectedOnPage = selectedCountOnPage === currentPageIds.length && currentPageIds.length > 0;
+  const isIndeterminate = selectedCountOnPage > 0 && selectedCountOnPage < currentPageIds.length;
+
+  // 전체 선택/해제 (현재 페이지 기준)
   const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedEntries.length) {
-      setSelectedIds([]);
+    if (isAllSelectedOnPage) {
+      // 현재 페이지 항목만 해제
+      setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
     } else {
-      setSelectedIds(paginatedEntries.map(e => e.id));
+      // 현재 페이지 항목 추가 (중복 제거)
+      setSelectedIds(prev => [...new Set([...prev, ...currentPageIds])]);
     }
+  };
+
+  // 행 클릭 핸들러 (체크박스 토글)
+  const handleRowClick = (id: string) => {
+    toggleSelection(id);
   };
 
   // 일괴 제외
@@ -170,12 +173,15 @@ export default function MigrationClassifyTable({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={selectedIds.length === paginatedEntries.length && paginatedEntries.length > 0}
+              checked={isAllSelectedOnPage}
+              ref={el => {
+                if (el) el.indeterminate = isIndeterminate;
+              }}
               onChange={toggleSelectAll}
               className="rounded border-gray-300 w-4 h-4"
             />
             <span className="text-sm text-gray-700">
-              전체 선택 ({selectedIds.length}/{paginatedEntries.length})
+              전체 선택 {selectedIds.length > 0 && `(${selectedIds.length}개 선택됨)`}
             </span>
           </label>
         </div>
@@ -249,7 +255,10 @@ export default function MigrationClassifyTable({
                 <th className="px-3 py-3 text-left w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.length === paginatedEntries.length && paginatedEntries.length > 0}
+                    checked={isAllSelectedOnPage}
+                    ref={el => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
                     onChange={toggleSelectAll}
                     className="rounded border-gray-300"
                   />
@@ -281,14 +290,15 @@ export default function MigrationClassifyTable({
                 paginatedEntries.map((entry) => (
                   <tr 
                     key={entry.id} 
-                    className={`hover:bg-gray-50 ${entry.action === 'glossary' ? 'bg-blue-50' : ''}`}
+                    onClick={() => handleRowClick(entry.id)}
+                    className={`hover:bg-gray-50 cursor-pointer ${entry.action === 'glossary' ? 'bg-blue-50' : ''} ${selectedIds.includes(entry.id) ? 'bg-blue-50/50' : ''}`}
                   >
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(entry.id)}
                         onChange={() => toggleSelection(entry.id)}
-                        className="rounded border-gray-300"
+                        className="rounded border-gray-300 cursor-pointer"
                       />
                     </td>
                     <td className="px-3 py-3">
