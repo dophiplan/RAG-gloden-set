@@ -49,7 +49,7 @@ export default function MigrationPage() {
   const { products } = useProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
+  // 고급 모드만 지원 (간단 모드 삭제)
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [productCode, setProductCode] = useState<ProductCode | 'ALL'>('ALL');
@@ -58,7 +58,6 @@ export default function MigrationPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [hasIssues, setHasIssues] = useState(false);
   
   // 모든 시트 데이터 (버전 = 시트명)
   const [sheetsData, setSheetsData] = useState<{
@@ -166,46 +165,7 @@ export default function MigrationPage() {
     setError('');
 
     try {
-      if (mode === 'simple') {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('product_code', productCode === 'ALL' ? '' : productCode);
-        
-        const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
-          method: 'POST',
-          body: fd,
-        });
-
-        const hasDup = previewData.summary.exact_matches > 0;
-        const hasSim = previewData.summary.similar_matches > 0;
-
-        if (hasDup || hasSim) {
-          const init = previewData.entries.map(e => ({
-            ...e,
-            category: e.suggested_category,
-            action: (e.duplicate_status.status === 'exact' ? 'skip' : 'import') as 'skip' | 'import',
-          }));
-          setEntries(init);
-          setSummary(previewData.summary);
-          setHasIssues(true);
-          setStep('classify');
-        } else {
-          const fd2 = new FormData();
-          fd2.append('file', file);
-          fd2.append('product_code', productCode === 'ALL' ? '' : productCode);
-          fd2.append('mode', 'simple');
-          
-          const data = await apiFetch<{ glossary: { created: number } }>('/api/migration/commit', {
-            method: 'POST',
-            body: fd2,
-          });
-          
-          alert(`가져오기 완료!\n\n용어집: ${data.glossary.created}개 추가`);
-          router.push('/glossary');
-        }
-      } else {
-        setStep('preview');
-      }
+      setStep('preview');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -252,27 +212,14 @@ export default function MigrationPage() {
   return (
     <DashboardLayout title="데이터 가져오기" subtitle="Excel/CSV 파일에서 용어집 및 번역 데이터를 가져옵니다.">
       <div className="max-w-7xl mx-auto">
-        {/* Mode Toggle */}
-        <div className="mb-6 flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg w-fit mx-auto">
-          <button onClick={() => setMode('simple')} className={`px-6 py-2 rounded-md font-medium transition-all ${mode === 'simple' ? 'bg-white text-[#818CF8] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-            간단 모드
-          </button>
-          <button onClick={() => setMode('advanced')} className={`px-6 py-2 rounded-md font-medium transition-all ${mode === 'advanced' ? 'bg-white text-[#818CF8] shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-            고급 모드
-          </button>
-        </div>
-
-        {/* Mode Description */}
+        {/* Description */}
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-900">
-            {mode === 'simple' 
-              ? '간단 모드 - 용어집에 빠르게 추가합니다. 중복이 없으면 바로 가져오고, 중복이 있으면 확인 후 진행합니다.'
-              : '고급 모드 - 미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다.'}
+            미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다.
           </p>
         </div>
 
         {/* Progress Steps */}
-        {mode === 'advanced' && (
           <div className="mb-8">
             <div className="flex items-center justify-center">
               {['upload', 'preview', 'classify', 'confirm'].map((s, i) => (
@@ -290,7 +237,7 @@ export default function MigrationPage() {
               ))}
             </div>
           </div>
-        )}
+
 
         {/* Error Display */}
         {error && (
@@ -302,7 +249,7 @@ export default function MigrationPage() {
         {/* Step 1: Upload */}
         {step === 'upload' && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">{mode === 'simple' ? '파일 선택' : '파일 업로드'}</h2>
+            <h2 className="text-lg font-semibold mb-4">파일 업로드</h2>
 
             <div className="space-y-6">
               {/* File Upload */}
@@ -383,24 +330,22 @@ export default function MigrationPage() {
                   onChange={(e) => setProductCode(e.target.value as ProductCode | 'ALL')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8]"
                 >
-                  {mode === 'simple' && <option value="ALL">전체 (모든 제품 공통)</option>}
+                  <option value="ALL">전체 (모든 제품 공통)</option>
                   {products.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                 </select>
               </div>
 
               {/* Version (Advanced only) */}
-              {mode === 'advanced' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">버전 (선택사항)</label>
-                  <input
-                    type="text"
-                    value={version}
-                    onChange={(e) => setVersion(e.target.value)}
-                    placeholder="예: v1.0.0"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8]"
-                  />
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">버전 (선택사항)</label>
+                <input
+                  type="text"
+                  value={version}
+                  onChange={(e) => setVersion(e.target.value)}
+                  placeholder="예: v1.0.0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8]"
+                />
+              </div>
 
               {/* Upload Button */}
               <button
@@ -408,7 +353,7 @@ export default function MigrationPage() {
                 disabled={!file || loading}
                 className="w-full px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? '처리 중...' : mode === 'simple' ? '바로 가져오기' : fileColumns.length > 0 ? '다음 단계' : '파일 업로드 필요'}
+                {loading ? '처리 중...' : fileColumns.length > 0 ? '다음 단계' : '파일 업로드 필요'}
               </button>
             </div>
           </div>
@@ -493,7 +438,7 @@ export default function MigrationPage() {
             />
 
             <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200 bg-white p-6 rounded-lg shadow-sm">
-              <button onClick={() => setStep(mode === 'advanced' ? 'preview' : 'upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white">이전</button>
+              <button onClick={() => setStep('preview')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 bg-white">이전</button>
               <button onClick={() => setStep('confirm')} className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1]">다음 단계</button>
             </div>
           </div>
