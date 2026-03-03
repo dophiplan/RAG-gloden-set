@@ -128,64 +128,64 @@ export default function DashboardPage() {
                 <p className="text-sm text-text-muted">전체 번역</p>
                 <p className="text-3xl font-bold text-text-main">{stats?.total || 0}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 bg-primary-light rounded-full">
+                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-gray-300">
+          <Card className="border-l-4 border-l-amber-400">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">요청</p>
-                <p className="text-3xl font-bold text-text-main">{stats?.pending || 0}</p>
+                <p className="text-3xl font-bold text-amber-600">{stats?.pending || 0}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 bg-amber-100 rounded-full">
+                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-gray-300">
+          <Card className="border-l-4 border-l-blue-400">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">진행중</p>
-                <p className="text-3xl font-bold text-text-main">{stats?.in_progress || 0}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats?.in_progress || 0}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 bg-blue-100 rounded-full">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-gray-300">
+          <Card>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">검수중</p>
-                <p className="text-3xl font-bold text-text-main">{stats?.reviewed || 0}</p>
+                <p className="text-3xl font-bold text-[#475569]">{stats?.reviewed || 0}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 bg-[#F8FAFC] rounded-full">
+                <svg className="w-6 h-6 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-gray-300">
+          <Card className="border-l-4 border-l-emerald-400">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">반영완료</p>
-                <p className="text-3xl font-bold text-text-main">{stats?.deployed || 0}</p>
+                <p className="text-3xl font-bold text-emerald-600">{stats?.deployed || 0}</p>
               </div>
-              <div className="p-3 bg-gray-100 rounded-full">
-                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 bg-emerald-100 rounded-full">
+                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
