@@ -136,56 +136,56 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-amber-400">
+          <Card className="stats-card-pending">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">요청</p>
-                <p className="text-3xl font-bold text-amber-600">{stats?.pending || 0}</p>
+                <p className="text-3xl font-bold stats-value-pending">{stats?.pending || 0}</p>
               </div>
-              <div className="p-3 bg-amber-100 rounded-full">
-                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 rounded-full stats-icon-pending">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-blue-400">
+          <Card className="stats-card-progress">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">진행중</p>
-                <p className="text-3xl font-bold text-blue-600">{stats?.in_progress || 0}</p>
+                <p className="text-3xl font-bold stats-value-progress">{stats?.in_progress || 0}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 rounded-full stats-icon-progress">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card>
+          <Card className="stats-card-review">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">검수중</p>
-                <p className="text-3xl font-bold text-[#475569]">{stats?.reviewed || 0}</p>
+                <p className="text-3xl font-bold stats-value-review">{stats?.reviewed || 0}</p>
               </div>
-              <div className="p-3 bg-[#F8FAFC] rounded-full">
-                <svg className="w-6 h-6 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 rounded-full stats-icon-review">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </Card>
 
-          <Card className="border-l-4 border-l-emerald-400">
+          <Card className="stats-card-complete">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-text-muted">반영완료</p>
-                <p className="text-3xl font-bold text-emerald-600">{stats?.deployed || 0}</p>
+                <p className="text-3xl font-bold stats-value-complete">{stats?.deployed || 0}</p>
               </div>
-              <div className="p-3 bg-emerald-100 rounded-full">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <div className="p-3 rounded-full stats-icon-complete">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>

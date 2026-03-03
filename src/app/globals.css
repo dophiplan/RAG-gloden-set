@@ -205,6 +205,157 @@ table tbody td {
   font-weight: 600;
 }
 
+/* ===== BLUE THEME - Stats Cards ===== */
+[data-theme="blue"] .stats-card-pending {
+  border-left: 4px solid #FBBF24;
+}
+[data-theme="blue"] .stats-value-pending {
+  color: #D97706;
+}
+[data-theme="blue"] .stats-icon-pending {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+[data-theme="blue"] .stats-card-progress {
+  border-left: 4px solid #60A5FA;
+}
+[data-theme="blue"] .stats-value-progress {
+  color: #2563EB;
+}
+[data-theme="blue"] .stats-icon-progress {
+  background: #DBEAFE;
+  color: #2563EB;
+}
+
+[data-theme="blue"] .stats-card-review {
+  border-left: none;
+}
+[data-theme="blue"] .stats-value-review {
+  color: #475569;
+}
+[data-theme="blue"] .stats-icon-review {
+  background: #F8FAFC;
+  color: #475569;
+}
+
+[data-theme="blue"] .stats-card-complete {
+  border-left: 4px solid #34D399;
+}
+[data-theme="blue"] .stats-value-complete {
+  color: #059669;
+}
+[data-theme="blue"] .stats-icon-complete {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+/* ===== WHITE THEME - Stats Cards (Neutral) ===== */
+[data-theme="white"] .stats-card-pending,
+[data-theme="white"] .stats-card-progress,
+[data-theme="white"] .stats-card-review,
+[data-theme="white"] .stats-card-complete {
+  border-left: 4px solid #E5E7EB;
+}
+
+[data-theme="white"] .stats-value-pending,
+[data-theme="white"] .stats-value-progress,
+[data-theme="white"] .stats-value-review,
+[data-theme="white"] .stats-value-complete {
+  color: #111827;
+}
+
+[data-theme="white"] .stats-icon-pending,
+[data-theme="white"] .stats-icon-progress,
+[data-theme="white"] .stats-icon-review,
+[data-theme="white"] .stats-icon-complete {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+/* ===== BLUE THEME - Glossary Cards ===== */
+[data-theme="blue"] .glossary-card-cost {
+  background: linear-gradient(135deg, #FAF5FF 0%, #FFFFFF 100%);
+}
+[data-theme="blue"] .glossary-card-reuse {
+  background: linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%);
+}
+[data-theme="blue"] .glossary-card-trends {
+  background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 100%);
+}
+[data-theme="blue"] .glossary-card-activity {
+  background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%);
+}
+
+/* ===== WHITE THEME - Glossary Cards (Neutral) ===== */
+[data-theme="white"] .glossary-card-cost,
+[data-theme="white"] .glossary-card-reuse,
+[data-theme="white"] .glossary-card-trends,
+[data-theme="white"] .glossary-card-activity {
+  background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+}
+
+/* ===== BLUE THEME - Glossary Text Colors ===== */
+[data-theme="blue"] .glossary-text-cost-label,
+[data-theme="blue"] .glossary-text-cost-value {
+  color: #7C3AED;
+}
+[data-theme="blue"] .glossary-btn-cost:not(.bg-purple-600) {
+  color: #7C3AED;
+}
+[data-theme="blue"] .glossary-btn-cost:not(.bg-purple-600):hover {
+  background: #F3E8FF;
+}
+
+[data-theme="blue"] .glossary-text-reuse-label,
+[data-theme="blue"] .glossary-text-reuse-value,
+[data-theme="blue"] .glossary-text-reuse-count {
+  color: #059669;
+}
+[data-theme="blue"] .glossary-progress-reuse {
+  background: #059669;
+}
+
+[data-theme="blue"] .glossary-text-trends-label,
+[data-theme="blue"] .glossary-text-trends-value,
+[data-theme="blue"] .glossary-text-trends-count {
+  color: #2563EB;
+}
+
+[data-theme="blue"] .glossary-text-activity-label {
+  color: #4F46E5;
+}
+
+/* ===== WHITE THEME - Glossary Text Colors (Neutral) ===== */
+[data-theme="white"] .glossary-text-cost-label,
+[data-theme="white"] .glossary-text-reuse-label,
+[data-theme="white"] .glossary-text-trends-label,
+[data-theme="white"] .glossary-text-activity-label {
+  color: #374151;
+}
+
+[data-theme="white"] .glossary-text-cost-value,
+[data-theme="white"] .glossary-text-reuse-value,
+[data-theme="white"] .glossary-text-trends-value {
+  color: #111827;
+}
+
+[data-theme="white"] .glossary-text-reuse-count,
+[data-theme="white"] .glossary-text-trends-count {
+  color: #4B5563;
+}
+
+[data-theme="white"] .glossary-btn-cost:not(.bg-purple-600) {
+  color: #4B5563;
+}
+[data-theme="white"] .glossary-btn-cost:not(.bg-purple-600):hover {
+  background: #F3F4F6;
+}
+
+[data-theme="white"] .glossary-progress-reuse {
+  background: #6B7280;
+}
+
 /* ===== WHITE THEME SPECIFIC ===== */
 [data-theme="white"] table thead {
   background: #F9FAFB;
@@ -226,33 +377,6 @@ table tbody td {
 [data-theme="white"] table tbody td {
   color: #111827;
   font-size: 14px;
-}
-
-/* White Theme - Neutral Stats Cards */
-[data-theme="white"] .stats-card-neutral {
-  border-left: 4px solid #E5E7EB;
-}
-
-[data-theme="white"] .stats-icon-neutral {
-  background: #F3F4F6;
-  color: #6B7280;
-}
-
-/* White Theme - Clean Card Gradients */
-[data-theme="white"] .card-gradient-gray {
-  background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
-}
-
-[data-theme="white"] .text-stats-label {
-  color: #6B7280;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-[data-theme="white"] .text-stats-value {
-  color: #111827;
-  font-size: 36px;
-  font-weight: 700;
 }
 
 /* ===== CARD STYLES ===== */
