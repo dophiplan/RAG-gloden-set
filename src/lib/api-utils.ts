@@ -35,6 +35,7 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({})) as ApiResponse;
     const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+    console.error('[API Error]', errorMessage, errorData);
     throw new ApiError(errorMessage, response.status, errorData);
   }
 
@@ -110,6 +111,10 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.data = data;
+  }
+
+  toString(): string {
+    return `ApiError: ${this.message} (HTTP ${this.status})`;
   }
 }
 
