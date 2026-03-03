@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { GlossaryTerm, SUPPORTED_LANGUAGES, LanguageCode, ProductCode } from '@/types';
 import { showError, showConfirm, showSuccess } from '@/lib/notifications';
 import { PAGINATION } from '@/lib/constants';
 import { buildApiUrl } from '@/lib/api/query-builder';
-import { apiFetch, apiGet, apiPost, apiPatch } from '@/lib/api-utils';
+import { apiFetch, apiGet, apiPost, apiPatch, ApiError } from '@/lib/api-utils';
 
 export function useGlossaryData() {
+  const router = useRouter();
   const [terms, setTerms] = useState<GlossaryTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [languageFilter, setLanguageFilter] = useState<string>('');
@@ -79,6 +81,11 @@ export function useGlossaryData() {
       if (error instanceof Error && error.name === 'AbortError') {
         return;
       }
+      // 401 Unauthorized - redirect to login
+      if (error instanceof ApiError && error.status === 401) {
+        router.push('/login');
+        return;
+      }
       console.error('Error fetching glossary:', error);
     } finally {
       if (!signal?.aborted) {
@@ -101,9 +108,15 @@ export function useGlossaryData() {
       if (error instanceof Error && error.name === 'AbortError') {
         return;
       }
-      console.error('Error fetching suggestion count:', error);
+      // 401 Unauthorized - redirect to login
+      if (error instanceof ApiError && error.status === 401) {
+        router.push('/login');
+        return;
+      }
+      // Silently ignore other errors to prevent console spam
+      setSuggestionCount(0);
     }
-  }, []);
+  }, [router]);
 
   // 통계 정보 가져오기
   const fetchStats = useCallback(async () => {
@@ -122,9 +135,14 @@ export function useGlossaryData() {
         not_used_terms: data.not_used_terms || 0,
       });
     } catch (error) {
+      // 401 Unauthorized - redirect to login
+      if (error instanceof ApiError && error.status === 401) {
+        router.push('/login');
+        return;
+      }
       console.error('Error fetching stats:', error);
     }
-  }, [selectedProduct]);
+  }, [selectedProduct, router]);
 
   useEffect(() => {
     const controller = new AbortController();
