@@ -73,7 +73,7 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
     gemini: false,
   });
   
-  const [providerOrder, setProviderOrder] = useState<AIProvider[]>(['openai', 'claude', 'kimi', 'gemini']);
+  const [providerOrder, setProviderOrder] = useState<AIProvider[]>(['kimi', 'openai', 'claude', 'gemini']);
   const [selectedProvider, setSelectedProvider] = useState<AIProvider | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -236,7 +236,7 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
   if (loading) {
     return (
       <Card>
-        <CardTitle>AI 제공사 API 키 관리</CardTitle>
+        <CardTitle>API 키 관리</CardTitle>
         <div className="text-center py-8 text-gray-500">로딩 중...</div>
       </Card>
     );
@@ -244,7 +244,7 @@ export default function AIProviderManager({ isRsupportUser, isAdmin = false }: A
 
   return (
     <Card>
-      <CardTitle>AI 제공사 API 키 관리</CardTitle>
+      <CardTitle>API 키 관리</CardTitle>
       
       {selectedProvider ? (
         // Edit mode
