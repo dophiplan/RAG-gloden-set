@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card, { CardTitle } from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
+import Card from '@/components/ui/Card';
 import { DateRangePicker, ActionButtons } from '@/components/dashboard/QuickActions';
 import RequestList from '@/components/dashboard/RequestList';
 import ProductTabs from '@/components/ProductTabs';
@@ -13,7 +12,6 @@ import type { DashboardRequest } from '@/types/translations';
 import type { ProductCode } from '@/types';
 import { showError } from '@/lib/notifications';
 import { apiGet, apiPatch } from '@/lib/api-utils';
-import { useLanguages } from '@/hooks/useReferenceData';
 
 interface DashboardStats {
   total: number;
@@ -35,7 +33,6 @@ export default function DashboardPage() {
   const [requests, setRequests] = useState<DashboardRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | null>(null);
-  const { languages } = useLanguages();
 
   // 기간 설정 - 기본값은 오늘 날짜
   const getTodayDate = () => {
@@ -197,16 +194,6 @@ export default function DashboardPage() {
         <div className="w-full">
           <RequestList requests={requests} loading={loading} onStatusChange={handleStatusChange} />
         </div>
-
-        {/* Supported Languages */}
-        <Card>
-          <CardTitle>지원 언어</CardTitle>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(languages || []).map((lang) => (
-              <Badge key={lang.code} variant="info">{lang.name} ({lang.code})</Badge>
-            ))}
-          </div>
-        </Card>
       </div>
     </DashboardLayout>
   );
