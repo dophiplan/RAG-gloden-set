@@ -230,6 +230,10 @@ export default function MigrationPage() {
       showToast('원문을 매칭 시켜주세요', 'error');
       return;
     }
+    if (!fieldMappings.metadata.product_category) {
+      showToast('제품분류를 매칭 시켜주세요', 'error');
+      return;
+    }
     if (!fieldMappings.metadata.version && !selectedVersion) {
       showToast('버전 선택도 시스템 필드에 매칭 시켜주세요', 'error');
       return;
@@ -573,10 +577,10 @@ export default function MigrationPage() {
               <button onClick={() => setStep('upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
               <button
                 onClick={handleLoadPreview}
-                disabled={loading || fileColumns.length === 0 || !fieldMappings.source || fieldMappings.translations.length === 0}
+                disabled={loading || fileColumns.length === 0 || !fieldMappings.source || !fieldMappings.metadata.product_category || fieldMappings.translations.length === 0}
                 className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {loading ? '로딩 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '다음 단계'}
+                {loading ? '로딩 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : !fieldMappings.metadata.product_category ? '제품분류 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '다음 단계'}
               </button>
             </div>
           </div>

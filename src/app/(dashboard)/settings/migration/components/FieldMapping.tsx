@@ -303,7 +303,8 @@ export default function FieldMapping({
                 small
               />
               <DropZone
-                label="제품분류"
+                label="제품분류*"
+                required
                 value={currentMappings.metadata.product_category}
                 placeholder="버전/컬럼 드래그"
                 onDrop={(e) => handleDrop(e, 'metadata', 'product_category')}
