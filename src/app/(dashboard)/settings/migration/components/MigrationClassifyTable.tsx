@@ -153,17 +153,26 @@ export default function MigrationClassifyTable({
     }
   };
 
-  // 일괴 용어집 추가
-  const handleBulkGlossary = () => {
-    if (selectedIds.length === 0) {
-      alert('용어집에 추가할 항목을 선택해주세요.');
-      return;
-    }
-    if (confirm(`${selectedIds.length}개 항목을 번역관리와 용어집에 동시 추가하시겠습니까?`)) {
+  // 일괴 용어집 토글
+  const handleBulkGlossaryToggle = () => {
+    if (selectedIds.length === 0) return;
+    
+    // 선택된 항목들이 모두 용어집 상태인지 확인
+    const allGlossary = selectedIds.every(id => {
+      const entry = activeEntries.find(e => e.id === id);
+      return entry?.action === 'glossary';
+    });
+    
+    if (allGlossary) {
+      // 모두 용어집이면 해제 (import로 변경)
+      selectedIds.forEach(id => {
+        onUpdateEntry(id, { action: 'import' });
+      });
+    } else {
+      // 아니면 용어집 추가
       selectedIds.forEach(id => {
         onUpdateEntry(id, { action: 'glossary' });
       });
-      setSelectedIds([]);
     }
   };
 
@@ -182,15 +191,12 @@ export default function MigrationClassifyTable({
     );
   };
 
-  // 액션 배지
+  // 액션 배지 (용어집추가 라벨 제거)
   const getActionBadge = (action?: string) => {
-    if (action === 'glossary') {
-      return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">용어집추가</span>;
-    }
     if (action === 'skip') {
       return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">제외</span>;
     }
-    return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-600">-</span>;
+    return null; // glossary는 라벨 없음, 버튼으로 표시
   };
 
   return (
@@ -343,12 +349,15 @@ export default function MigrationClassifyTable({
                           {getActionBadge(entry.action)}
                           <div className="flex gap-1">
                             <Button
-                              onClick={() => onUpdateEntry(entry.id, { action: 'glossary' })}
-                              variant={entry.action === 'glossary' ? 'primary' : 'ghost'}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateEntry(entry.id, { action: entry.action === 'glossary' ? 'import' : 'glossary' });
+                              }}
+                              variant={entry.action === 'glossary' ? 'secondary' : 'ghost'}
                               size="sm"
                               className="text-xs px-2 py-1"
                             >
-                              용어집
+                              {entry.action === 'glossary' ? '추가됨' : '용어집'}
                             </Button>
                             <Button
                               onClick={() => onUpdateEntry(entry.id, { action: 'skip' })}
@@ -412,8 +421,12 @@ export default function MigrationClassifyTable({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={handleBulkGlossary} variant="primary" size="sm">
-                용어집 추가
+              <Button 
+                onClick={handleBulkGlossaryToggle} 
+                variant={selectedIds.every(id => activeEntries.find(e => e.id === id)?.action === 'glossary') ? 'secondary' : 'primary'}
+                size="sm"
+              >
+                {selectedIds.every(id => activeEntries.find(e => e.id === id)?.action === 'glossary') ? '추가됨' : '용어집 추가'}
               </Button>
               <Button onClick={handleBulkSkip} variant="secondary" size="sm">
                 제외
