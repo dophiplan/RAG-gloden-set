@@ -102,18 +102,21 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      const result = await apiFetch<{ deleted: number }>('/api/glossary/bulk', {
-        method: 'DELETE',
-        body: JSON.stringify({ ids: selectedIds }),
-      });
-      showSuccess(`${result.deleted}개 용어가 삭제되었습니다.`);
-      onClearSelection();
-      onRefresh?.();
-      
-      // Call the prop if provided
+      // Call the prop first if provided (for custom delete logic)
       if (onBulkDelete) {
         await onBulkDelete(selectedIds);
+      } else {
+        // Default API call
+        const result = await apiFetch<{ deleted: number }>('/api/glossary/bulk', {
+          method: 'DELETE',
+          body: JSON.stringify({ ids: selectedIds }),
+        });
+        showSuccess(`${result.deleted}개 용어가 삭제되었습니다.`);
       }
+      
+      // Clear selection and refresh
+      onClearSelection();
+      onRefresh?.();
     } catch (error) {
       console.error('Bulk delete error:', error);
       showError(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다.');

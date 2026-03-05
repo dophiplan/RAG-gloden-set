@@ -14,6 +14,7 @@ import { LanguageCode } from '@/types';
 import { useGlossaryData } from './hooks/useGlossaryData';
 import { useProducts, useLanguages } from '@/hooks/useReferenceData';
 import { showSuccess, showError } from '@/lib/notifications';
+import { apiFetch } from '@/lib/api-utils';
 
 import GlossaryFormModal from './components/GlossaryFormModal';
 import ExportModal from './components/ExportModal';
@@ -66,6 +67,7 @@ export default function GlossaryPage() {
 
   const {
     terms,
+    setTerms, // 낙관적 업데이트용
     loading,
     languageFilter,
     setLanguageFilter,
@@ -109,6 +111,7 @@ export default function GlossaryPage() {
     handleAIReview,
     openEditModal,
     fetchTerms,
+    fetchStats,
 
     selectedLanguageColumns,
     setSelectedLanguageColumns,
@@ -122,6 +125,8 @@ export default function GlossaryPage() {
     isStatusChanging,
     isRetranslating,
     isBulkProcessing,
+    paginatedTerms,
+    totalTerms,
   } = useGlossaryData();
 
   const sourceTypeLabels: Record<string, string> = {
@@ -403,7 +408,12 @@ export default function GlossaryPage() {
         {/* Action Buttons */}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
-            총 <strong>{(terms || []).length}</strong>개 용어
+            총 <strong>{totalTerms}</strong>개 용어 (원문 기준)
+            {selectedIds.length > 0 && (
+              <span className="ml-2 text-[#818CF8] font-medium">
+                | {selectedIds.length}개 선택됨
+              </span>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
@@ -429,6 +439,27 @@ export default function GlossaryPage() {
           </div>
         </div>
 
+        {/* ⚠️ 관리자용: 전체 삭제 */}
+        <div className="flex items-center justify-end gap-2 px-4 py-2 bg-red-50 rounded-lg border border-red-200">
+          <span className="text-sm text-red-600 font-medium">⚠️ 모든 용어를 삭제합니다</span>
+          <Button 
+            variant="danger" 
+            onClick={async () => {
+              if (!confirm('⚠️ 정말 모든 용어를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+              try {
+                await apiFetch('/api/admin/glossary/clear', { method: 'DELETE' });
+                alert('✅ 모든 용어가 삭제되었습니다.');
+                fetchTerms();
+                fetchStats();
+              } catch (err) {
+                alert('❌ 삭제 실패: ' + (err instanceof Error ? err.message : '권한이 없거나 오류가 발생했습니다.'));
+              }
+            }}
+          >
+            전체 삭제
+          </Button>
+        </div>
+
         {/* Terms List - Single table with multiple language columns */}
         {loading ? (
           <Card>
@@ -446,8 +477,7 @@ export default function GlossaryPage() {
             </div>
           </Card>
         ) : (
-          <Card padding="none">
-            <div className="overflow-auto">
+          <Card padding="none" className="min-w-fit">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -481,34 +511,10 @@ export default function GlossaryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {/* 용어별로 그룹화 */}
-                  {(() => {
-                    console.log('Glossary table - terms count:', (terms || []).length);
-                    // 용어명으로 그룹화
-                    const grouped = (terms || []).reduce((acc, term) => {
-                      if (!acc[term.term]) {
-                        acc[term.term] = {
-                          term: term.term,
-                          context: term.context,
-                          glossary_products: term.glossary_products,
-                          product_code: term.product_code,
-                          source_type: term.source_type,
-                          approval_status: term.approval_status,
-                          hit_count: term.hit_count,
-                          translations: {} as Record<string, { id: string; translation: string; language_code: string }>,
-                        };
-                      }
-                      acc[term.term].translations[term.language_code] = {
-                        id: term.id,
-                        translation: term.translation,
-                        language_code: term.language_code,
-                      };
-                      return acc;
-                    }, {} as Record<string, any>);
-
-                    return Object.values(grouped).map((group: any) => {
-                      const allIds = Object.values(group.translations).map((t: any) => t.id);
-                      const isGroupSelected = allIds.every((id: string) => selectedIds.includes(id));
+                  {/* 페이지네이션된 용어 목록 */}
+                  {paginatedTerms.map((group) => {
+                    const allIds = Object.values(group.translations).map((t) => t.id);
+                    const isGroupSelected = allIds.every((id) => selectedIds.includes(id));
 
                       return (
                         <tr key={group.term} className="hover:bg-gray-50/50">
@@ -679,11 +685,10 @@ export default function GlossaryPage() {
                           </td>
                         </tr>
                       );
-                    });
-                  })()}
+                    })}
                 </tbody>
               </table>
-            </div>
+            
           </Card>
         )}
 
@@ -755,6 +760,13 @@ export default function GlossaryPage() {
             handleBulkReject(selectedIds);
             setSelectedIds([]);
           }}
+          onBulkDelete={async (ids) => {
+            // 낙관적 업데이트: 먼저 로컬 상태에서 제거
+            setTerms(prev => prev.filter(t => !ids.includes(t.id)));
+            setSelectedIds([]);
+            // 통계 새로고침
+            await fetchStats();
+          }}
           onBulkRetranslate={async (ids) => {
             // Get terms info for retranslation
             const selectedTerms = (terms || []).filter(t => ids.includes(t.id));
@@ -783,6 +795,8 @@ export default function GlossaryPage() {
           }}
           onClearSelection={() => setSelectedIds([])}
           onRefresh={() => {
+            fetchTerms();
+            fetchStats();
             setSelectedIds([]);
           }}
         />

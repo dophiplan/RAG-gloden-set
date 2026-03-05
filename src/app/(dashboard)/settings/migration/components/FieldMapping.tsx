@@ -23,6 +23,7 @@ interface FieldMappingProps {
   onMappingChange: (mappings: VersionMapping) => void;
   onAllMappingsChange?: (allMappings: Record<string, VersionMapping>) => void;  // 전체 매핑 변경 시 상위에 알림
   initialMappings?: VersionMapping;
+  platforms?: { code: string; name: string }[]; // 플랫폼 목록
 }
 
 // 전역 드래그 상태
@@ -37,6 +38,7 @@ export default function FieldMapping({
   onMappingChange,
   onAllMappingsChange,
   initialMappings,
+  platforms,
 }: FieldMappingProps) {
   // 버전별 매핑 저장소 - 안전한 초기화
   const [allMappings, setAllMappings] = useState<Record<string, VersionMapping>>({});
@@ -380,17 +382,44 @@ export default function FieldMapping({
               />
             </div>
 
-            {/* 5행: 플랫폼 + 기타 */}
+            {/* 5행: 플랫폼(체크박스) + 기타 */}
             <div className="grid grid-cols-2 gap-2">
-              <DropZone
-                label="플랫폼"
-                value={currentMappings.metadata.platform}
-                placeholder="버전/컬럼 드래그"
-                onDrop={(e) => handleDrop(e, 'metadata', 'platform')}
-                onClear={() => handleClear('metadata', 'platform')}
-                color="purple"
-                small
-              />
+              {/* 플랫폼 체크박스 목록 */}
+              <div className="p-2.5 rounded-xl border-2 bg-purple-50 border-purple-200">
+                <span className="text-xs font-semibold text-purple-700 block mb-1.5">플랫폼</span>
+                <div className="space-y-1 max-h-[80px] overflow-y-auto">
+                  {platforms && platforms.length > 0 ? (
+                    platforms.map(platform => {
+                      const selectedPlatforms = currentMappings.metadata.platform?.split(',').filter(Boolean) || [];
+                      const isChecked = selectedPlatforms.includes(platform.code);
+                      return (
+                        <label key={platform.code} className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-purple-100/50 rounded px-1 py-0.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const newPlatforms = e.target.checked
+                                ? [...selectedPlatforms, platform.code]
+                                : selectedPlatforms.filter(p => p !== platform.code);
+                              updateCurrentMappings({
+                                ...currentMappings,
+                                metadata: {
+                                  ...currentMappings.metadata,
+                                  platform: newPlatforms.join(','),
+                                },
+                              });
+                            }}
+                            className="rounded border-gray-300 text-[#818CF8] focus:ring-[#818CF8]"
+                          />
+                          <span className="text-gray-700">{platform.name}</span>
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-gray-400">플랫폼 데이터 없음</p>
+                  )}
+                </div>
+              </div>
               <div 
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
                 onDrop={(e) => handleDrop(e, 'custom')}

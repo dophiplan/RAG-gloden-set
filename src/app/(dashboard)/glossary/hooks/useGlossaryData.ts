@@ -67,6 +67,7 @@ export function useGlossaryData() {
         imported_after: importedAfter,
         imported_before: importedBefore,
         sort: sortBy,
+        limit: 1000, // 더 많은 데이터를 한 번에 가져옴
       });
 
       const result = await apiFetch<{ data?: { terms?: GlossaryTerm[] }; terms?: GlossaryTerm[] }>(url, { signal });
@@ -233,12 +234,17 @@ export function useGlossaryData() {
     try {
       await apiFetch(`/api/glossary/${id}`, { method: 'DELETE' });
 
-      setTerms((prev) => prev.filter((t) => t.id !== id));
+      // 낙관적 업데이트: 먼저 로컬 상태에서 제거
+      setTerms(prev => prev.filter(t => t.id !== id));
+      
+      // 삭제 후 목록과 통계 새로고침
       await fetchStats();
       showSuccess('용어가 삭제되었습니다.');
     } catch (error) {
       console.error('Error deleting glossary term:', error);
       showError(error instanceof Error ? error.message : '용어 삭제에 실패했습니다.');
+      // 실패 시 복구를 위해 다시 가져오기
+      await fetchTerms();
     } finally {
       setIsDeleting(false);
     }
@@ -398,6 +404,7 @@ export function useGlossaryData() {
     approval_status: string;
     hit_count: number;
     imported_at?: string;
+    created_at?: string;
   }
 
   const groupedByTerm = useMemo(() => {
@@ -413,16 +420,29 @@ export function useGlossaryData() {
           approval_status: t.approval_status,
           hit_count: t.hit_count || 0,
           imported_at: t.imported_at ?? undefined,
+          created_at: t.created_at ?? undefined,
         };
       }
       acc[t.term].translations[t.language_code] = t;
       // Update hit_count to sum of all languages
       acc[t.term].hit_count = Math.max(acc[t.term].hit_count, t.hit_count || 0);
+      // Keep the most recent created_at
+      if (t.created_at && (!acc[t.term].created_at || t.created_at > acc[t.term].created_at!)) {
+        acc[t.term].created_at = t.created_at;
+      }
       return acc;
     }, {});
 
-    return Object.values(termsByName);
+    // Sort by created_at desc (newest first)
+    return Object.values(termsByName).sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
   }, [terms]);
+
+  // 페이지네이션 제거 - 전체 데이터 표시
+  // groupedByTerm을 직접 사용
 
   // Quick filter functions
   const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used' | 'unused' | 'pending') => {
@@ -574,6 +594,7 @@ export function useGlossaryData() {
 
   return {
     terms,
+    setTerms, // 낙관적 업데이트용
     loading,
     fetchTerms,
     languageFilter,
@@ -639,5 +660,8 @@ export function useGlossaryData() {
     handleTermInlineUpdate,
     handleTranslationInlineUpdate,
     handleContextInlineUpdate,
+    // No pagination - use all data
+    paginatedTerms: groupedByTerm, // 전체 데이터 사용
+    totalTerms: groupedByTerm.length, // 원문 기준 총 개수
   };
 }

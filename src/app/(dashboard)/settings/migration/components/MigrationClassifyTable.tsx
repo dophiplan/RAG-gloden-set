@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
+import { apiFetch } from '@/lib/api-utils';
+
+// 중간 말줄임표 유틸리티 - 앞뒤 각각 prefix/suffix 글자 수 지정
+function truncateMiddle(text: string, prefix: number = 8, suffix: number = 8): string {
+  if (!text || text.length <= prefix + suffix + 3) return text || '';
+  return text.slice(0, prefix) + '...' + text.slice(-suffix);
+}
 
 interface TranslationEntry {
   id: string;
@@ -20,6 +27,7 @@ interface TranslationEntry {
   };
   action?: 'import' | 'skip' | 'glossary';
   duplicate_action?: 'skip' | 'overwrite' | 'merge';
+  glossaryIds?: string[]; // 용어집에 추가된 항목 ID들
 }
 
 interface Props {
@@ -27,6 +35,8 @@ interface Props {
   onUpdateEntry: (id: string, updates: Partial<TranslationEntry>) => void;
   onBulkAction?: (action: 'skip' | 'glossary', entryIds: string[]) => void;
   versionEntries?: { [version: string]: TranslationEntry[] }; // 버전별 entries
+  products?: { code: string; name: string }[]; // 제품 목록
+  selectedProduct?: string; // 선택된 제품 코드
 }
 
 export default function MigrationClassifyTable({
@@ -34,11 +44,89 @@ export default function MigrationClassifyTable({
   onUpdateEntry,
   onBulkAction,
   versionEntries,
+  products,
+  selectedProduct,
 }: Props) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeVersion, setActiveVersion] = useState<string>(''); // 현재 선택된 버전 탭
+  const [addingToGlossary, setAddingToGlossary] = useState<Set<string>>(new Set()); // 용어집 추가 중인 항목
+  const [removingFromGlossary, setRemovingFromGlossary] = useState<Set<string>>(new Set()); // 용어집 삭제 중인 항목
   const itemsPerPage = 20;
+
+  // 용어집에 항목 추가
+  const addToGlossary = async (entry: TranslationEntry) => {
+    if (addingToGlossary.has(entry.id)) return;
+    
+    setAddingToGlossary(prev => new Set(prev).add(entry.id));
+    
+    try {
+      // 제품 코드 목록 - 선택된 제품만 사용
+      const productCodes = selectedProduct ? [selectedProduct] : (entry.product ? [entry.product] : []);
+      
+      // 번역 언어 코드 목록
+      const targetLanguages = Object.keys(entry.translations).filter(lang => lang !== 'ko');
+      
+      // 용어집 API 호출 - product_code도 함께 전달 (stats API 필터링용)
+      const result = await apiFetch<{ terms: { id: string }[] }>('/api/glossary', {
+        method: 'POST',
+        body: JSON.stringify({
+          sourceText: entry.source_text,
+          context: entry.context,
+          product_code: productCodes[0] || null,  // 첫 번째 제품을 주 제품으로
+          product_codes: productCodes,
+          targetLanguages: targetLanguages,
+        }),
+      });
+      
+      // 성공 시 action 업데이트 및 glossaryIds 저장
+      const glossaryIds = result.terms?.map((t: { id: string }) => t.id) || [];
+      onUpdateEntry(entry.id, { action: 'glossary', glossaryIds });
+    } catch (error) {
+      console.error('용어집 추가 실패:', error);
+      alert('용어집 추가에 실패했습니다.');
+    } finally {
+      setAddingToGlossary(prev => {
+        const next = new Set(prev);
+        next.delete(entry.id);
+        return next;
+      });
+    }
+  };
+
+  // 용어집에서 항목 삭제
+  const removeFromGlossary = async (entry: TranslationEntry) => {
+    if (!entry.glossaryIds || entry.glossaryIds.length === 0) {
+      // ID가 없으면 그냥 action만 변경
+      onUpdateEntry(entry.id, { action: 'import' });
+      return;
+    }
+    
+    if (removingFromGlossary.has(entry.id)) return;
+    
+    setRemovingFromGlossary(prev => new Set(prev).add(entry.id));
+    
+    try {
+      // 모든 glossary ID에 대해 삭제 API 호출
+      await Promise.all(
+        entry.glossaryIds!.map(id => 
+          apiFetch(`/api/glossary/${id}`, { method: 'DELETE' })
+        )
+      );
+      
+      // 성공 시 action 업데이트 및 glossaryIds 제거
+      onUpdateEntry(entry.id, { action: 'import', glossaryIds: undefined });
+    } catch (error) {
+      console.error('용어집 삭제 실패:', error);
+      alert('용어집에서 삭제하는데 실패했습니다.');
+    } finally {
+      setRemovingFromGlossary(prev => {
+        const next = new Set(prev);
+        next.delete(entry.id);
+        return next;
+      });
+    }
+  };
 
   // 실제 데이터에서 사용되는 언어 코드들 추출
   const getUsedLanguages = (): { code: string; label: string }[] => {
@@ -265,7 +353,6 @@ export default function MigrationClassifyTable({
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">중복</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">제품분류</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">플랫폼</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">버전</th>
@@ -284,7 +371,7 @@ export default function MigrationClassifyTable({
             <tbody className="divide-y divide-gray-200">
               {paginatedEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={18} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={17} className="px-4 py-8 text-center text-gray-500">
                     데이터가 없습니다
                   </td>
                 </tr>
@@ -303,22 +390,21 @@ export default function MigrationClassifyTable({
                         className="rounded border-gray-300 cursor-pointer"
                       />
                     </td>
-                    <td className="px-3 py-3">
-                      {getDuplicateBadge(entry.duplicate_status.status)}
+                    <td className="px-3 py-3 text-sm text-gray-900">
+                      {entry.product || activeVersion || '-'}
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-900">{entry.product || '-'}</td>
                     <td className="px-3 py-3 text-sm text-gray-600">{entry.platform || '-'}</td>
                     <td className="px-3 py-3 text-sm text-gray-600">{entry.version || '-'}</td>
-                    <td className="px-3 py-3 text-sm text-gray-900 max-w-xs truncate" title={entry.source_text}>
-                      {entry.source_text}
+                    <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap overflow-hidden" title={entry.source_text}>
+                      {truncateMiddle(entry.source_text, 10, 10)}
                     </td>
-                    <td className="px-3 py-3 text-sm text-gray-600 max-w-xs truncate" title={entry.context}>
-                      {entry.context || '-'}
+                    <td className="px-3 py-3 text-sm text-gray-600 whitespace-nowrap overflow-hidden" title={entry.context}>
+                      {entry.context ? truncateMiddle(entry.context, 8, 8) : '-'}
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-600 font-mono">{entry.key || entry.id.slice(0, 8)}</td>
                     {usedLanguages.map(lang => (
-                      <td key={lang.code} className="px-2 py-3 text-sm text-gray-600">
-                        {entry.translations[lang.code] || '-'}
+                      <td key={lang.code} className="px-2 py-3 text-sm text-gray-600 whitespace-nowrap overflow-hidden" title={entry.translations[lang.code]}>
+                        {entry.translations[lang.code] ? truncateMiddle(entry.translations[lang.code], 6, 6) : '-'}
                       </td>
                     ))}
                     <td className="px-3 py-3 text-sm text-gray-600 max-w-xs truncate">
@@ -326,39 +412,36 @@ export default function MigrationClassifyTable({
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-col gap-2">
-                        {/* 중복인 경우 중복 처리 방법 선택 */}
-                        {entry.duplicate_status.status === 'exact' && (
-                          <div className="flex items-center gap-1">
-                            <select
-                              value={entry.duplicate_action || 'skip'}
-                              onChange={(e) => onUpdateEntry(entry.id, { 
-                                duplicate_action: e.target.value as 'skip' | 'overwrite' | 'merge',
-                                action: e.target.value === 'skip' ? 'skip' : 'import'
-                              })}
-                              className="text-xs border rounded px-2 py-1 bg-white"
-                            >
-                              <option value="skip">중복-걄너뛰기</option>
-                              <option value="overwrite">중복-덮어쓰기</option>
-                              <option value="merge">중복-병합</option>
-                            </select>
-                          </div>
-                        )}
-                        
-                        {/* 일반 액션 버튼들 */}
+                        {/* 액션 버튼들 */}
                         <div className="flex items-center gap-2">
                           {getActionBadge(entry.action)}
                           <div className="flex gap-1">
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUpdateEntry(entry.id, { action: entry.action === 'glossary' ? 'import' : 'glossary' });
-                              }}
-                              variant={entry.action === 'glossary' ? 'secondary' : 'ghost'}
-                              size="sm"
-                              className="text-xs px-2 py-1"
-                            >
-                              {entry.action === 'glossary' ? '추가됨' : '용어집'}
-                            </Button>
+                            {/* 이미 용어집에 존재하는 경우 */}
+                            {entry.duplicate_status.status === 'exact' ? (
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700">
+                                용어O
+                              </span>
+                            ) : (
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (entry.action === 'glossary') {
+                                    // 이미 추가됨 → 해제 (용어집에서 삭제)
+                                    removeFromGlossary(entry);
+                                  } else {
+                                    // 용어집에 추가 (API 호출)
+                                    addToGlossary(entry);
+                                  }
+                                }}
+                                variant={entry.action === 'glossary' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="text-xs px-2 py-1"
+                                loading={addingToGlossary.has(entry.id) || removingFromGlossary.has(entry.id)}
+                                disabled={addingToGlossary.has(entry.id) || removingFromGlossary.has(entry.id)}
+                              >
+                                {entry.action === 'glossary' ? '추가됨' : '용어집'}
+                              </Button>
+                            )}
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();

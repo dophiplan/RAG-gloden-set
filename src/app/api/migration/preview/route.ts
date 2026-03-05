@@ -158,13 +158,25 @@ export async function POST(request: NextRequest) {
         newEntries++;
       }
 
+      // Field mappings에서 메타데이터 추출
+      const mappedProduct = fieldMappings?.metadata?.product_category 
+        ? row[fieldMappings.metadata.product_category] 
+        : (row.product || row.product_category || undefined);
+      
+      // 플랫폼은 체크박스로 다중 선택된 값이 직접 저장됨 (쉼표 구분)
+      const mappedPlatform = fieldMappings?.metadata?.platform || (row.platform || undefined);
+      
+      const mappedVersion = fieldMappings?.metadata?.version
+        ? row[fieldMappings.metadata.version]
+        : (row.version || undefined);
+
       entries.push({
         id: uuidv4(),
         source_text: sourceText,
         context,
-        product: row.product || row.product_category || undefined,
-        platform: row.platform || undefined,
-        version: row.version || undefined,
+        product: mappedProduct,
+        platform: mappedPlatform,
+        version: mappedVersion,
         key: row.key || row.id || row.key_id || undefined,
         note: row.note || row.description || undefined,
         translations,

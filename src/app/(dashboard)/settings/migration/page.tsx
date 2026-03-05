@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ProductCode } from '@/types';
-import { useProducts } from '@/hooks/useReferenceData';
+import { useProducts, usePlatforms } from '@/hooks/useReferenceData';
 import MigrationPreviewTable from './components/MigrationPreviewTable';
 import MigrationClassifyTable from './components/MigrationClassifyTable';
 import FieldMapping from './components/FieldMapping';
 import Toast from './components/Toast';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import { apiFetch } from '@/lib/api-utils';
 
 interface PreviewEntry {
@@ -56,12 +58,13 @@ interface PreviewResponse {
 export default function MigrationPage() {
   const router = useRouter();
   const { products } = useProducts();
+  const { platforms } = usePlatforms();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // 고급 모드만 지원 (간단 모드 삭제)
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
-  const [productCode, setProductCode] = useState<ProductCode | 'ALL'>('ALL');
+  const [productCode, setProductCode] = useState<ProductCode | ''>('');
   const [version, setVersion] = useState('');
   const [entries, setEntries] = useState<PreviewEntry[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -282,7 +285,7 @@ export default function MigrationPage() {
 
         const fd = new FormData();
         fd.append('file', file);
-        fd.append('product_code', productCode === 'ALL' ? '' : productCode);
+        fd.append('product_code', productCode);
         fd.append('version', versionName);
         fd.append('field_mappings', JSON.stringify(mappings));
 
@@ -383,7 +386,7 @@ export default function MigrationPage() {
             category: e.category || e.suggested_category,
             action: e.action || 'import',
           })),
-          product_code: productCode,
+          product_code: productCode || undefined,
           version: version || null,
         }),
       });
@@ -543,10 +546,10 @@ export default function MigrationPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">제품 선택</label>
                 <select
                   value={productCode}
-                  onChange={(e) => setProductCode(e.target.value as ProductCode | 'ALL')}
+                  onChange={(e) => setProductCode(e.target.value as ProductCode | '')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#818CF8]"
                 >
-                  <option value="ALL">전체 (모든 제품 공통)</option>
+                  <option value="">제품을 선택해주세요</option>
                   {products.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                 </select>
               </div>
@@ -588,6 +591,7 @@ export default function MigrationPage() {
                 onMappingChange={setFieldMappings}
                 onAllMappingsChange={setVersionMappings}
                 initialMappings={fieldMappings}
+                platforms={platforms}
               />
             ) : (
               <div className="bg-gray-50 rounded-lg p-8 text-center">
@@ -600,10 +604,10 @@ export default function MigrationPage() {
               <button onClick={() => setStep('upload')} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">이전</button>
               <button
                 onClick={handleLoadPreview}
-                disabled={loading || fileColumns.length === 0 || !fieldMappings.source || !fieldMappings.metadata.product_category || fieldMappings.translations.length === 0}
+                disabled={loading || fileColumns.length === 0 || !productCode || !fieldMappings.source || !fieldMappings.metadata.product_category || fieldMappings.translations.length === 0}
                 className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {loading ? '로딩 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !fieldMappings.source ? '원문 매핑 필요' : !fieldMappings.metadata.product_category ? '제품분류 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '다음 단계'}
+                {loading ? '로딩 중...' : fileColumns.length === 0 ? '파일 업로드 필요' : !productCode ? '제품 선택 필요' : !fieldMappings.source ? '원문 매핑 필요' : !fieldMappings.metadata.product_category ? '제품분류 매핑 필요' : fieldMappings.translations.length === 0 ? '번역 언어 필요' : '다음 단계'}
               </button>
             </div>
           </div>
@@ -632,6 +636,8 @@ export default function MigrationPage() {
               onBulkAction={(action, ids) => {
                 ids.forEach(id => updateEntry(id, { action }));
               }}
+              products={products}
+              selectedProduct={productCode}
             />
 
             {/* 하단 액션 */}
@@ -655,38 +661,61 @@ export default function MigrationPage() {
 
         {/* Step 4: Confirm */}
         {step === 'confirm' && (
-          <div className="bg-white rounded-lg shadow p-6 pb-20">
-            <h2 className="text-xl font-semibold mb-4">확인 및 실행</h2>
-
-            <div className="space-y-4 mb-6">
-              <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">용어집</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#818CF8]">{entries.filter(e => e.action === 'glossary').length}건</p></div>
-                  <div><p className="text-gray-600">건너뛰기</p><p className="text-lg font-semibold text-gray-600">{entries.filter(e => e.action === 'skip').length}건</p></div>
-                </div>
+          <Card padding="lg" className="pb-20">
+            {/* 요약 통계 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900">{entries.filter(e => e.action === 'glossary').length}</p>
+                <p className="text-sm text-gray-600 mt-1">용어집 추가</p>
               </div>
-
-              <div className="border-b pb-4">
-                <h3 className="font-semibold text-gray-900 mb-2">번역관리</h3>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div><p className="text-gray-600">추가</p><p className="text-lg font-semibold text-[#6366F1]">{entries.filter(e => e.action === 'import' || e.action === 'glossary').length}건</p></div>
-                  <div><p className="text-gray-600">걄너뛰기</p><p className="text-lg font-semibold text-gray-600">{entries.filter(e => e.action === 'skip').length}건</p></div>
-                </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-[#6366F1]">{entries.filter(e => e.action === 'import' || e.action === 'glossary').length}</p>
+                <p className="text-sm text-gray-600 mt-1">번역관리 추가</p>
+              </div>
+              <div className="text-center p-4 bg-gray-100 rounded-lg">
+                <p className="text-2xl font-bold text-gray-600">{entries.filter(e => e.action === 'skip').length}</p>
+                <p className="text-sm text-gray-600 mt-1">제외</p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{entries.filter(e => !e.action || e.action === 'import' || e.action === 'glossary').length}</p>
+                <p className="text-sm text-gray-600 mt-1">총 처리</p>
               </div>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-yellow-800">⚠️ 마이그레이션을 실행하면 선택한 항목이 데이터베이스에 추가됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+            {/* 경고 메시지 */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-sm text-amber-800">
+                  마이그레이션을 실행하면 선택한 항목이 데이터베이스에 추가됩니다. 이 작업은 되돌릴 수 없습니다.
+                </p>
+              </div>
             </div>
 
-            <div className="flex gap-4">
-              <button onClick={() => setStep('classify')} disabled={loading} className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50">이전</button>
-              <button onClick={handleCommit} disabled={loading} className="flex-1 px-6 py-3 bg-[#818CF8] text-white font-semibold rounded-lg hover:bg-[#6366F1] disabled:bg-gray-300 disabled:cursor-not-allowed">
-                {loading ? '마이그레이션 중...' : '마이그레이션 실행'}
-              </button>
+            {/* 액션 버튼 */}
+            <div className="flex gap-3">
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                onClick={() => setStep('classify')} 
+                disabled={loading}
+              >
+                이전
+              </Button>
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="flex-1"
+                onClick={handleCommit} 
+                disabled={loading}
+                loading={loading}
+              >
+                마이그레이션 실행
+              </Button>
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </DashboardLayout>

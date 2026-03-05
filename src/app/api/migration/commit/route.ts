@@ -287,10 +287,10 @@ export async function POST(request: NextRequest) {
           .insert({
             source_text: entry.source_text,
             context: entry.context || null,
-            status: 'reviewed', // Migrated data is considered reviewed
+            status: 'completed', // 번역 완료 상태로 저장
             version: version || null,
             version_updated_at: version ? new Date().toISOString() : null,
-            product_code: product_code,
+            product_code: product_code, // 제품 코드 설정
             user_id: userId,
             is_migrated: true,
           })
@@ -308,6 +308,7 @@ export async function POST(request: NextRequest) {
             translated_text: text.trim(),
             reviewer_id: userId,
             reviewed_at: new Date().toISOString(),
+            status: 'completed', // 번역 완료 상태
           }));
 
         if (translationResults.length > 0) {

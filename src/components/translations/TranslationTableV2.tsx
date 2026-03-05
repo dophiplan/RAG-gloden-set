@@ -88,7 +88,7 @@ export default memo(function TranslationTableV2({
   onPageChange,
 }: TranslationTableV2Props) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
-  const showProductColumn = selectedProduct === null;
+  const showProductColumn = true; // 항상 제품분류 열 표시
 
   // Calculate which languages to display (needed for column widths)
   const displayLanguagesForWidth = useMemo(() => {
