@@ -427,7 +427,7 @@ export default function MigrationPage() {
           duration={3000}
         />
       )}
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full px-4">
         {/* Description */}
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-sm text-blue-900">
