@@ -272,6 +272,57 @@ export default function MigrationPage() {
 
       // 모든 버전의 entries를 저장할 객체
       const allVersionEntries: { [version: string]: PreviewEntry[] } = {};
+      
+      // 병렬로 모든 버전 API 호출
+      console.time('[Performance] Total API calls');
+      const versionPromises = allVersionsToLoad.map(async (versionName) => {
+        console.time(`[Performance] API call for ${versionName}`);
+        const mappings = finalVersionMappings[versionName];
+        if (!mappings || !mappings.source) return null;
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('product_code', productCode === 'ALL' ? '' : productCode);
+        fd.append('version', versionName);
+        fd.append('field_mappings', JSON.stringify(mappings));
+
+        try {
+          const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
+            method: 'POST',
+            body: fd,
+          });
+
+          if (previewData.error) {
+            console.error(`[Preview API] Error for ${versionName}:`, previewData.error);
+            return null;
+          }
+
+          // 버전별 entries 저장
+          const initEntries = previewData.entries.map(e => ({
+            ...e,
+            version: versionName,
+            action: 'import' as 'import' | 'skip' | 'glossary',
+            duplicate_action: e.duplicate_status.status === 'exact' ? 'skip' as 'skip' | 'overwrite' | 'merge' : undefined,
+          }));
+
+          console.timeEnd(`[Performance] API call for ${versionName}`);
+          return {
+            versionName,
+            entries: initEntries,
+            summary: previewData.summary,
+          };
+        } catch (error) {
+          console.error(`[Preview API] Failed for ${versionName}:`, error);
+          console.timeEnd(`[Performance] API call for ${versionName}`);
+          return null;
+        }
+      });
+
+      // 모든 요청 완료 대기
+      const results = await Promise.all(versionPromises);
+      console.timeEnd('[Performance] Total API calls');
+      
+      // 결과 합산
       let totalSummary = {
         total: 0,
         glossary_suggested: 0,
@@ -281,45 +332,17 @@ export default function MigrationPage() {
         new_entries: 0,
       };
 
-      // 순차적으로 모든 버전 API 호출
-      for (const versionName of allVersionsToLoad) {
-        const mappings = finalVersionMappings[versionName];
-        if (!mappings || !mappings.source) continue;
-
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('product_code', productCode === 'ALL' ? '' : productCode);
-        fd.append('version', versionName);
-        fd.append('field_mappings', JSON.stringify(mappings));
-
-        const previewData = await apiFetch<PreviewResponse>('/api/migration/preview', {
-          method: 'POST',
-          body: fd,
-        });
-
-        if (previewData.error) {
-          console.error(`[Preview API] Error for ${versionName}:`, previewData.error);
-          continue;
+      results.forEach((result) => {
+        if (result) {
+          allVersionEntries[result.versionName] = result.entries;
+          totalSummary.total += result.summary.total;
+          totalSummary.glossary_suggested += result.summary.glossary_suggested;
+          totalSummary.translation_suggested += result.summary.translation_suggested;
+          totalSummary.exact_matches += result.summary.exact_matches;
+          totalSummary.similar_matches += result.summary.similar_matches;
+          totalSummary.new_entries += result.summary.new_entries;
         }
-
-        // 버전별 entries 저장
-        const initEntries = previewData.entries.map(e => ({
-          ...e,
-          version: versionName, // 버전 정보 추가
-          action: 'import' as 'import' | 'skip' | 'glossary',
-          duplicate_action: e.duplicate_status.status === 'exact' ? 'skip' as 'skip' | 'overwrite' | 'merge' : undefined,
-        }));
-
-        allVersionEntries[versionName] = initEntries;
-
-        // summary 누적
-        totalSummary.total += previewData.summary.total;
-        totalSummary.glossary_suggested += previewData.summary.glossary_suggested;
-        totalSummary.translation_suggested += previewData.summary.translation_suggested;
-        totalSummary.exact_matches += previewData.summary.exact_matches;
-        totalSummary.similar_matches += previewData.summary.similar_matches;
-        totalSummary.new_entries += previewData.summary.new_entries;
-      }
+      });
 
       // 모든 버전의 entries를 합쳐서 저장
       const allEntries = Object.values(allVersionEntries).flat();

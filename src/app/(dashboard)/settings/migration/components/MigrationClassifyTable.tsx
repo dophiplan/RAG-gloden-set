@@ -29,18 +29,6 @@ interface Props {
   versionEntries?: { [version: string]: TranslationEntry[] }; // 버전별 entries
 }
 
-// 지원 언어 목록 (ko 제외 - 원문과 동일)
-const SUPPORTED_LANGUAGES = [
-  { code: 'en', label: 'EN' },
-  { code: 'ja', label: 'JA' },
-  { code: 'zh-CN', label: 'ZH-CN' },
-  { code: 'zh-TW', label: 'ZH-TW' },
-  { code: 'de', label: 'DE' },
-  { code: 'es', label: 'ES' },
-  { code: 'pt', label: 'PT' },
-  { code: 'fr', label: 'FR' },
-];
-
 export default function MigrationClassifyTable({
   entries,
   onUpdateEntry,
@@ -51,6 +39,46 @@ export default function MigrationClassifyTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [activeVersion, setActiveVersion] = useState<string>(''); // 현재 선택된 버전 탭
   const itemsPerPage = 20;
+
+  // 실제 데이터에서 사용되는 언어 코드들 추출
+  const getUsedLanguages = (): { code: string; label: string }[] => {
+    const languageSet = new Set<string>();
+    
+    // 모든 entries에서 translations 키 수집
+    const allEntries = versionEntries 
+      ? Object.values(versionEntries).flat()
+      : entries;
+    
+    allEntries.forEach(entry => {
+      if (entry.translations) {
+        Object.keys(entry.translations).forEach(langCode => {
+          if (langCode !== 'ko') { // 원문과 동일한 한국어 제외
+            languageSet.add(langCode);
+          }
+        });
+      }
+    });
+    
+    // 언어 코드 레이블 매핑
+    const labelMap: Record<string, string> = {
+      'en': 'EN',
+      'ja': 'JA',
+      'zh-CN': 'ZH-CN',
+      'zh-TW': 'ZH-TW',
+      'de': 'DE',
+      'es': 'ES',
+      'pt': 'PT',
+      'fr': 'FR',
+      'ko': 'KO',
+    };
+    
+    return Array.from(languageSet).map(code => ({
+      code,
+      label: labelMap[code] || code.toUpperCase(),
+    }));
+  };
+
+  const usedLanguages = getUsedLanguages();
 
   // 버전 목록
   const versions = versionEntries && Object.keys(versionEntries).length > 0 
@@ -238,7 +266,7 @@ export default function MigrationClassifyTable({
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 min-w-[200px]">원문</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">설명</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700">KEY/ID</th>
-                {SUPPORTED_LANGUAGES.map(lang => (
+                {usedLanguages.map(lang => (
                   <th key={lang.code} className="px-2 py-3 text-left text-xs font-semibold text-gray-700 w-16">
                     {lang.label}
                   </th>
@@ -282,7 +310,7 @@ export default function MigrationClassifyTable({
                       {entry.context || '-'}
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-600 font-mono">{entry.key || entry.id.slice(0, 8)}</td>
-                    {SUPPORTED_LANGUAGES.map(lang => (
+                    {usedLanguages.map(lang => (
                       <td key={lang.code} className="px-2 py-3 text-sm text-gray-600">
                         {entry.translations[lang.code] || '-'}
                       </td>
