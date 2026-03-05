@@ -167,38 +167,6 @@ export default function MigrationClassifyTable({
 
   return (
     <div className="space-y-4">
-      {/* 상단 툴 */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAllSelectedOnPage}
-              ref={el => {
-                if (el) el.indeterminate = isIndeterminate;
-              }}
-              onChange={toggleSelectAll}
-              className="rounded border-gray-300 w-4 h-4"
-            />
-            <span className="text-sm text-gray-700">
-              전체 선택 {selectedIds.length > 0 && `(${selectedIds.length}개 선택됨)`}
-            </span>
-          </label>
-        </div>
-        
-        {selectedIds.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{selectedIds.length}개 선택됨</span>
-            <Button onClick={handleBulkGlossary} variant="primary" size="sm">
-              용어집 추가
-            </Button>
-            <Button onClick={handleBulkSkip} variant="secondary" size="sm">
-              제외
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* 버전별 탭 */}
       {versions.length > 0 && (
         <div className="border-b border-gray-200">
@@ -396,6 +364,36 @@ export default function MigrationClassifyTable({
           </div>
         )}
       </div>
+
+      {/* 하단 액션 바 - 번역관리와 동일한 UI */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={isAllSelectedOnPage}
+                ref={el => {
+                  if (el) el.indeterminate = isIndeterminate;
+                }}
+                onChange={toggleSelectAll}
+                className="rounded border-gray-300 w-4 h-4"
+              />
+              <span className="text-sm text-gray-700">
+                {selectedIds.length}개 선택됨
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleBulkGlossary} variant="primary" size="sm">
+                용어집 추가
+              </Button>
+              <Button onClick={handleBulkSkip} variant="secondary" size="sm">
+                제외
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
