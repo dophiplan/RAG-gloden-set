@@ -121,6 +121,27 @@ export async function POST(request: NextRequest) {
         errors: [] as { row: number; message: string }[],
       },
     };
+    
+    // Create operation batch for rollback support
+    const { data: batch, error: batchError } = await supabase
+      .from('operation_batches')
+      .insert({
+        operation_type: 'migration',
+        user_id: userId,
+        user_name: userProfile?.name,
+        description: `Migration to ${product_code}${version ? ` (v${version})` : ''}`,
+        affected_count: entries.filter(e => e.action !== 'skip').length,
+        status: 'running',
+      })
+      .select()
+      .single();
+    
+    if (batchError) {
+      console.error('[Migration] Failed to create batch:', batchError);
+      // Continue without batch - rollback won't be available
+    }
+    
+    const batchId = batch?.id;
 
     // Separate entries by category
     const glossaryEntries = entries.filter((e) => e.category === 'glossary');
@@ -267,6 +288,7 @@ export async function POST(request: NextRequest) {
               action: 'update',
               field_name: 'migration',
               new_value: `Data ${entry.action} from migration`,
+              batch_operation_id: batchId,
             }).then(({ error }) => {
               if (error) {
                 console.error('[Audit Log] Failed to log migration update:', error);
@@ -332,6 +354,7 @@ export async function POST(request: NextRequest) {
           action: 'create',
           field_name: 'migration',
           new_value: 'Data migrated from Excel',
+          batch_operation_id: batchId,
         }).then(({ error }) => {
           if (error) {
             console.error('[Audit Log] Failed to log migration creation:', error);
@@ -349,8 +372,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Update batch status to completed
+    if (batchId) {
+      void supabase.from('operation_batches').update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      }).eq('id', batchId);
+    }
+
     return NextResponse.json({
       success: true,
+      batchId,
       ...results,
     });
   } catch (error) {

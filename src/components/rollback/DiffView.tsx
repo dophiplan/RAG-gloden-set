@@ -44,14 +44,36 @@ export function getUserColors(userName: string | null | undefined) {
   return userColorPalette[index];
 }
 
-// 단어 단위 diff 계산
+// 단어 단위 diff 계산 (성능 최적화 버전)
+const MAX_TOKENS = 500; // 최대 토큰 수 제한
+
 function computeWordDiff(oldText: string, newText: string): Array<{ type: 'same' | 'removed' | 'added'; text: string }> {
+  // 긴 텍스트는 간단한 비교만 수행
+  if (oldText.length > 5000 || newText.length > 5000) {
+    return [
+      { type: 'removed', text: oldText.slice(0, 200) + (oldText.length > 200 ? '...' : '') },
+      { type: 'added', text: newText.slice(0, 200) + (newText.length > 200 ? '...' : '') },
+    ];
+  }
+
   const oldWords = oldText.split(/(\s+)/);
   const newWords = newText.split(/(\s+)/);
+  
+  // 토큰 수 제한
+  if (oldWords.length > MAX_TOKENS || newWords.length > MAX_TOKENS) {
+    return [
+      { type: 'removed', text: oldText.slice(0, 200) + '...' },
+      { type: 'added', text: newText.slice(0, 200) + '...' },
+    ];
+  }
   
   const result: Array<{ type: 'same' | 'removed' | 'added'; text: string }> = [];
   let oldIdx = 0;
   let newIdx = 0;
+  
+  // Set을 사용한 성능 최적화
+  const newWordsSet = new Set(newWords);
+  const oldWordsSet = new Set(oldWords);
   
   while (oldIdx < oldWords.length || newIdx < newWords.length) {
     const oldWord = oldWords[oldIdx];
@@ -64,14 +86,22 @@ function computeWordDiff(oldText: string, newText: string): Array<{ type: 'same'
       }
       oldIdx++;
       newIdx++;
-    } else if (newWords.slice(newIdx).includes(oldWord)) {
-      // oldWord가 뒤에 있음 → 추가된 단어들
-      result.push({ type: 'added', text: newWord });
-      newIdx++;
-    } else if (oldWords.slice(oldIdx).includes(newWord)) {
-      // newWord가 뒤에 있음 → 삭제된 단어들
-      result.push({ type: 'removed', text: oldWord });
-      oldIdx++;
+    } else if (newWordsSet.has(oldWord)) {
+      // oldWord가 newWords에 있음 (뒤에 있음) → 추가된 단어
+      if (newWord !== undefined) {
+        result.push({ type: 'added', text: newWord });
+        newIdx++;
+      } else {
+        oldIdx++;
+      }
+    } else if (oldWordsSet.has(newWord)) {
+      // newWord가 oldWords에 있음 (뒤에 있음) → 삭제된 단어
+      if (oldWord !== undefined) {
+        result.push({ type: 'removed', text: oldWord });
+        oldIdx++;
+      } else {
+        newIdx++;
+      }
     } else {
       // 둘 다 다름
       if (oldWord !== undefined) {

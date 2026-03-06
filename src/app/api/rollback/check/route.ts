@@ -1,32 +1,82 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/lib/api/response';
+import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiNotFound } from '@/lib/api/response';
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return apiUnauthorized();
+    
+    // Auth check with timeout
+    const authPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Auth timeout')), 10000)
+    );
+    
+    const { data: { user }, error: authError } = await Promise.race([authPromise, timeoutPromise]) as any;
+    
+    if (authError || !user) {
+      console.error('[Rollback Check] Auth error:', authError);
+      return apiUnauthorized();
+    }
 
-    const body = await request.json();
+    // Parse body with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return apiBadRequest('잘못된 요청 형식입니다.');
+    }
+    
     const { targetType, auditLogId, targetId } = body;
+    
+    // Validate required params
     if (!targetType || !auditLogId || !targetId) {
-      return apiBadRequest('필수 파라미터가 누락되었습니다.');
+      return apiBadRequest('필수 파라미터가 누락되었습니다. (targetType, auditLogId, targetId)');
+    }
+    
+    // Validate targetType
+    if (!['translation', 'glossary'].includes(targetType)) {
+      return apiBadRequest('유효하지 않은 targetType입니다. (translation 또는 glossary)');
     }
 
     // Get original action
     let originalActionAt: string | null = null;
-    if (targetType === 'translation') {
-      const { data } = await supabase.from('translation_audit_logs')
-        .select('created_at').eq('id', auditLogId).single();
-      originalActionAt = data?.created_at;
-    } else if (targetType === 'glossary') {
-      const { data } = await supabase.from('glossary_audit_logs')
-        .select('created_at').eq('id', auditLogId).single();
-      originalActionAt = data?.created_at;
+    let originalAction: any = null;
+    
+    try {
+      if (targetType === 'translation') {
+        const { data, error } = await supabase.from('translation_audit_logs')
+          .select('created_at, is_rolled_back').eq('id', auditLogId).single();
+        if (error) throw error;
+        originalAction = data;
+        originalActionAt = data?.created_at;
+      } else if (targetType === 'glossary') {
+        const { data, error } = await supabase.from('glossary_audit_logs')
+          .select('created_at, is_rolled_back').eq('id', auditLogId).single();
+        if (error) throw error;
+        originalAction = data;
+        originalActionAt = data?.created_at;
+      }
+    } catch (dbError) {
+      console.error('[Rollback Check] DB error fetching original action:', dbError);
+      return apiInternalError('원본 작업 조회 중 데이터베이스 오류가 발생했습니다.');
     }
 
-    if (!originalActionAt) return apiBadRequest('원본 작업을 찾을 수 없습니다.');
+    if (!originalActionAt) {
+      return apiNotFound('원본 작업을 찾을 수 없습니다. 이미 삭제되었거나 잘못된 ID입니다.');
+    }
+    
+    // Check if already rolled back
+    if (originalAction?.is_rolled_back) {
+      return apiSuccess({
+        hasConflict: false,
+        conflictCount: 0,
+        newerActions: [],
+        originalActionAt,
+        alreadyRolledBack: true,
+        message: '이미 롤백된 작업입니다.',
+      });
+    }
 
     // Check for newer actions
     let newerActions: any[] = [];
