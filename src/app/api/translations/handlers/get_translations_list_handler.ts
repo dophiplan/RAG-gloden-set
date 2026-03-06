@@ -4,7 +4,7 @@ import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
 import { TranslationCrudService } from '@/services';
 import { apiSuccess, apiInternalError } from '@/lib/api/response';
 import { PAGINATION } from '@/lib/constants';
-import { TranslationStatus, ProductCode } from '@/types';
+import { TranslationStatus, ProductCode, ScopeType } from '@/types';
 
 /**
  * Handler for GET /api/translations
@@ -26,7 +26,19 @@ export async function handleGetTranslationsList(request: NextRequest) {
     const search = searchParams.get('search');
     const productCode = searchParams.get('product_code') as ProductCode | null;
     const requestId = searchParams.get('request_id');
-    const scope = searchParams.get('scope') as 'SaaS' | 'Solution' | null;
+    const rawScope = searchParams.get('scope');
+    // Convert legacy scope values to new format
+    const scopeMap: Record<string, ScopeType> = {
+      'SaaS': 'saas',
+      'Solution': 'solution',
+      '정부과제': 'government',
+      '기타': 'other',
+      'saas': 'saas',
+      'solution': 'solution',
+      'government': 'government',
+      'other': 'other',
+    };
+    const scope = rawScope ? scopeMap[rawScope] || null : null;
     const version = searchParams.get('version');
     const createdAfter = searchParams.get('created_after');
     const createdBefore = searchParams.get('created_before');
