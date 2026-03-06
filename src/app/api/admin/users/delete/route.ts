@@ -4,8 +4,14 @@ import { FIRST_MASTER_EMAIL } from '@/types/users';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Security: Verify user is master
-async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized: boolean; userId?: string }> {
+async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized: boolean; userId?: string; isDevBypass?: boolean }> {
   const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Development mode bypass
+  if ((error || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+    console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/admin/users/delete');
+    return { authorized: true, userId: 'dev-mode-user', isDevBypass: true };
+  }
 
   if (error || !user) {
     return { authorized: false };
@@ -14,11 +20,11 @@ async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized:
   // Check if user has master or 1st_master role
   const { data: userProfile } = await supabase
     .from('users')
-    .select('roles')
+    .select('account_level')
     .eq('id', user.id)
     .single();
 
-  const isMaster = userProfile?.roles?.includes('master') || userProfile?.roles?.includes('1st_master');
+  const isMaster = userProfile?.account_level === 'master' || userProfile?.account_level === '1st_master';
 
   return {
     authorized: isMaster,
@@ -63,11 +69,11 @@ export async function POST(request: NextRequest) {
     // Protect 1st_master account from being deleted
     const { data: targetUsers } = await adminClient
       .from('users')
-      .select('id, email, roles')
+      .select('id, email, account_level')
       .in('id', userIds);
 
     const hasFirstMaster = targetUsers?.some(
-      u => u.email === FIRST_MASTER_EMAIL || u.roles?.includes('1st_master')
+      u => u.email === FIRST_MASTER_EMAIL || u.account_level === '1st_master'
     );
 
     if (hasFirstMaster) {
@@ -102,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     // Create audit logs for deleted users (non-blocking)
     for (const user of targetUsers || []) {
-      if (!user.roles?.includes('1st_master')) { // Don't log 1st_master (shouldn't happen due to check above)
+      if (user.account_level !== '1st_master') { // Don't log 1st_master (shouldn't happen due to check above)
         void supabase.from('user_audit_logs').insert({
           user_id: currentUserId,
           user_name: currentUser?.name,
@@ -111,7 +117,7 @@ export async function POST(request: NextRequest) {
           target_user_id: user.id,
           target_user_email: user.email,
           field_name: 'user',
-          old_value: JSON.stringify({ email: user.email, roles: user.roles }),
+          old_value: JSON.stringify({ email: user.email, account_level: user.account_level }),
         }).then(({ error }) => {
           if (error) console.error('[Audit Log] Failed to log user deletion:', error);
         });
