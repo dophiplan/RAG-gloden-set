@@ -113,10 +113,20 @@ export async function POST(request: NextRequest) {
         
         // Restore original value
         if (log.targetType === 'translation') {
-          if (log.field_name === 'source_text') {
-            await supabase.from('translations')
-              .update({ source_text: log.old_value })
-              .eq('id', targetId);
+          if (log.field_name === 'source_text' || log.field_name === 'migration') {
+            // For migration, delete the created translation
+            if (log.action === 'create') {
+              await supabase.from('translation_results')
+                .delete()
+                .eq('translation_id', targetId);
+              await supabase.from('translations')
+                .delete()
+                .eq('id', targetId);
+            } else {
+              await supabase.from('translations')
+                .update({ source_text: log.old_value })
+                .eq('id', targetId);
+            }
           } else if (log.field_name === 'status') {
             await supabase.from('translations')
               .update({ status: log.old_value })
@@ -135,6 +145,16 @@ export async function POST(request: NextRequest) {
             await supabase.from('glossary')
               .update({ translation: log.old_value })
               .eq('id', targetId);
+          } else if (log.field_name === 'migration') {
+            // For migration, delete the created glossary entry
+            if (log.action === 'create') {
+              await supabase.from('glossary_products')
+                .delete()
+                .eq('glossary_id', targetId);
+              await supabase.from('glossary')
+                .delete()
+                .eq('id', targetId);
+            }
           }
           
           await supabase.from('glossary_audit_logs')

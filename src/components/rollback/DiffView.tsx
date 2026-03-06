@@ -44,8 +44,9 @@ export function getUserColors(userName: string | null | undefined) {
   return userColorPalette[index];
 }
 
-// 단어 단위 diff 계산 (성능 최적화 버전)
+// 단어 단위 diff 계산 (성능 최적화 및 안정화 버전)
 const MAX_TOKENS = 500; // 최대 토큰 수 제한
+const MAX_ITERATIONS = 10000; // 무한 루프 방지
 
 function computeWordDiff(oldText: string, newText: string): Array<{ type: 'same' | 'removed' | 'added'; text: string }> {
   // 긴 텍스트는 간단한 비교만 수행
@@ -56,8 +57,8 @@ function computeWordDiff(oldText: string, newText: string): Array<{ type: 'same'
     ];
   }
 
-  const oldWords = oldText.split(/(\s+)/);
-  const newWords = newText.split(/(\s+)/);
+  const oldWords = oldText.split(/(\s+)/).filter(w => w.length > 0);
+  const newWords = newText.split(/(\s+)/).filter(w => w.length > 0);
   
   // 토큰 수 제한
   if (oldWords.length > MAX_TOKENS || newWords.length > MAX_TOKENS) {
@@ -70,48 +71,32 @@ function computeWordDiff(oldText: string, newText: string): Array<{ type: 'same'
   const result: Array<{ type: 'same' | 'removed' | 'added'; text: string }> = [];
   let oldIdx = 0;
   let newIdx = 0;
+  let iterations = 0;
   
-  // Set을 사용한 성능 최적화
-  const newWordsSet = new Set(newWords);
-  const oldWordsSet = new Set(oldWords);
-  
-  while (oldIdx < oldWords.length || newIdx < newWords.length) {
+  while ((oldIdx < oldWords.length || newIdx < newWords.length) && iterations < MAX_ITERATIONS) {
+    iterations++;
     const oldWord = oldWords[oldIdx];
     const newWord = newWords[newIdx];
     
     if (oldWord === newWord) {
       // 같은 단어
-      if (oldWord !== undefined) {
-        result.push({ type: 'same', text: oldWord });
-      }
+      result.push({ type: 'same', text: oldWord });
       oldIdx++;
       newIdx++;
-    } else if (newWordsSet.has(oldWord)) {
-      // oldWord가 newWords에 있음 (뒤에 있음) → 추가된 단어
-      if (newWord !== undefined) {
-        result.push({ type: 'added', text: newWord });
-        newIdx++;
-      } else {
-        oldIdx++;
-      }
-    } else if (oldWordsSet.has(newWord)) {
-      // newWord가 oldWords에 있음 (뒤에 있음) → 삭제된 단어
-      if (oldWord !== undefined) {
-        result.push({ type: 'removed', text: oldWord });
-        oldIdx++;
-      } else {
-        newIdx++;
-      }
-    } else {
-      // 둘 다 다름
-      if (oldWord !== undefined) {
-        result.push({ type: 'removed', text: oldWord });
-        oldIdx++;
-      }
-      if (newWord !== undefined) {
-        result.push({ type: 'added', text: newWord });
-        newIdx++;
-      }
+    } else if (oldIdx < oldWords.length && newIdx < newWords.length) {
+      // 둘 다 존재하고 다름
+      result.push({ type: 'removed', text: oldWord });
+      result.push({ type: 'added', text: newWord });
+      oldIdx++;
+      newIdx++;
+    } else if (oldIdx < oldWords.length) {
+      // old만 남음
+      result.push({ type: 'removed', text: oldWord });
+      oldIdx++;
+    } else if (newIdx < newWords.length) {
+      // new만 남음
+      result.push({ type: 'added', text: newWord });
+      newIdx++;
     }
   }
   

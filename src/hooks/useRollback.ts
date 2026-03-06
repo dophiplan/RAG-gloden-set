@@ -91,12 +91,6 @@ export function useRollback(
     auditLogId: string,
     targetId: string
   ): Promise<CheckConflictResult | null> => {
-    // 동시 요청 방지
-    if (isChecking || isLoading) {
-      console.warn('[useRollback] Already processing a request');
-      return null;
-    }
-    
     setIsChecking(true);
     try {
       const result = await apiPost<CheckConflictResult>('/api/rollback/check', {
@@ -122,12 +116,6 @@ export function useRollback(
   ): Promise<RollbackResult> => {
     if (resolution === 'cancel') {
       return { success: false, message: '사용자가 취소했습니다.' };
-    }
-
-    // 동시 요청 방지
-    if (isLoading) {
-      console.warn('[useRollback] Already processing a rollback');
-      return { success: false, message: '이미 롤백이 진행 중입니다.' };
     }
 
     setIsLoading(true);
@@ -198,12 +186,6 @@ export function useRollback(
       confirmMessage?: string;
     }
   ): Promise<boolean> => {
-    // 이미 처리 중이면 무시
-    if (isLoading || isChecking) {
-      console.warn('[useRollback] Request already in progress');
-      return false;
-    }
-    
     const { fieldName, confirmMessage } = options || {};
 
     // 1. 충돌 검사

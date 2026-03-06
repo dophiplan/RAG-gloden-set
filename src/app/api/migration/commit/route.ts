@@ -179,6 +179,23 @@ export async function POST(request: NextRequest) {
                   context: entry.context || null,
                 })
                 .eq('id', existing.id);
+              
+              // Create audit log for glossary update (non-blocking)
+              void supabase.from('glossary_audit_logs').insert({
+                glossary_term_id: existing.id,
+                user_id: userId,
+                user_name: userProfile?.name,
+                user_email: userProfile?.email || userEmail,
+                action: 'update',
+                field_name: 'translation',
+                old_value: existing.translation,
+                new_value: translation.trim(),
+                batch_operation_id: batchId,
+              }).then(({ error }) => {
+                if (error) {
+                  console.error('[Audit Log] Failed to log glossary update:', error);
+                }
+              });
             }
             // For 'merge', we keep the existing entry (skip)
             continue;
@@ -204,6 +221,22 @@ export async function POST(request: NextRequest) {
             glossary_id: glossaryData.id,
             product_code: product_code,
             version: version || null,
+          });
+          
+          // Create audit log for glossary creation (non-blocking)
+          void supabase.from('glossary_audit_logs').insert({
+            glossary_term_id: glossaryData.id,
+            user_id: userId,
+            user_name: userProfile?.name,
+            user_email: userProfile?.email || userEmail,
+            action: 'create',
+            field_name: 'migration',
+            new_value: 'Glossary term migrated from Excel',
+            batch_operation_id: batchId,
+          }).then(({ error }) => {
+            if (error) {
+              console.error('[Audit Log] Failed to log glossary creation:', error);
+            }
           });
         }
 
