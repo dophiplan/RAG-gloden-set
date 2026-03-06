@@ -20,14 +20,14 @@ export async function PATCH(
     // Use admin client for authorization check
     const adminClient = createAdminClient();
 
-    // Check if user is master (has 'admin' or 'master' role)
+    // Check if user is master
     const { data: adminUser } = await adminClient
       .from('users')
-      .select('roles')
+      .select('account_level')
       .eq('id', authUser.id)
       .single();
 
-    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master') || adminUser.roles?.includes('1st_master'))) {
+    if (!adminUser || !(adminUser.account_level === 'master' || adminUser.account_level === '1st_master')) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 
@@ -45,13 +45,13 @@ export async function PATCH(
     // Check if the target user is a master
     const { data: targetUser } = await adminClient
       .from('users')
-      .select('email, roles')
+      .select('email, account_level')
       .eq('id', id)
       .single();
 
     // Protect 1st_master account from being modified by master users
-    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.roles?.includes('1st_master');
-    const isRequesterFirstMaster = adminUser.roles?.includes('1st_master');
+    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.account_level === '1st_master';
+    const isRequesterFirstMaster = adminUser.account_level === '1st_master';
 
     if (isTargetFirstMaster && !isRequesterFirstMaster) {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function PATCH(
     }
 
     // Master users always get all permissions
-    const finalPermissions = targetUser?.roles?.includes('master')
+    const finalPermissions = targetUser?.account_level === 'master'
       ? ['translator', 'reviewer', 'requester', 'deployer']
       : permissions;
 

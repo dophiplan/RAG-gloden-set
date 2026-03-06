@@ -21,14 +21,14 @@ export async function PATCH(
     // Check if user is master (has 'admin' role)
     const { data: adminUser, error: checkError } = await adminClient
       .from('users')
-      .select('roles')
+      .select('account_level')
       .eq('id', authUser.id)
       .single();
 
     console.log('Authorization check:', { adminUser, checkError, authUserId: authUser.id });
 
-    // Check for both 'admin' and 'master' roles for backwards compatibility
-    if (!adminUser || !(adminUser.roles?.includes('admin') || adminUser.roles?.includes('master') || adminUser.roles?.includes('1st_master'))) {
+    // Check for master roles
+    if (!adminUser || !(adminUser.account_level === 'master' || adminUser.account_level === '1st_master')) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 
@@ -40,12 +40,12 @@ export async function PATCH(
     // Protect 1st_master account from being modified by master users
     const { data: targetUser } = await adminClient
       .from('users')
-      .select('email, roles')
+      .select('email, account_level')
       .eq('id', userId)
       .single();
 
-    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.roles?.includes('1st_master');
-    const isRequesterFirstMaster = adminUser.roles?.includes('1st_master');
+    const isTargetFirstMaster = targetUser?.email === FIRST_MASTER_EMAIL || targetUser?.account_level === '1st_master';
+    const isRequesterFirstMaster = adminUser.account_level === '1st_master';
 
     if (isTargetFirstMaster && !isRequesterFirstMaster) {
       return NextResponse.json(
@@ -54,10 +54,10 @@ export async function PATCH(
       );
     }
 
-    // Prevent users from changing their own role (security protection)
+    // Prevent users from changing their own account level (security protection)
     if (userId === authUser.id && accountLevel !== undefined) {
-      const currentRole = adminUser.roles?.[0];
-      if (currentRole !== accountLevel) {
+      const currentLevel = adminUser.account_level;
+      if (currentLevel !== accountLevel) {
         return NextResponse.json(
           { error: '본인의 계정 권한은 변경할 수 없습니다.' },
           { status: 403 }
@@ -118,14 +118,14 @@ export async function PATCH(
     // Fetch current user to check their role
     const { data: currentUser } = await adminClient
       .from('users')
-      .select('roles')
+      .select('account_level')
       .eq('id', userId)
       .single();
 
     // Determine the effective account level (new one if changing, or current one)
     const effectiveAccountLevel = accountLevel !== undefined
       ? accountLevel
-      : currentUser?.roles?.[0];
+      : currentUser?.account_level;
 
     // Master users always get all permissions
     const finalPermissions = effectiveAccountLevel === 'master'
