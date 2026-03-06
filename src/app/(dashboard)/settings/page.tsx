@@ -50,6 +50,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isRsupportUser, setIsRsupportUser] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [accountLevel, setAccountLevel] = useState<string>('');
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const supabase = createClient();
 
   // Products management
@@ -86,7 +88,7 @@ export default function SettingsPage() {
     async function fetchUser() {
       try {
         // Use the same API endpoint as ProfileMenu
-        const data = await apiGet<{ user: UserProfile & { roles?: string[] } }>('/api/auth/me');
+        const data = await apiGet<{ user: UserProfile & { roles?: string[]; account_level?: string } }>('/api/auth/me');
         console.log('🔍 /api/auth/me data:', data);
 
         if (data.user) {
@@ -97,16 +99,20 @@ export default function SettingsPage() {
             roles: data.user.roles || [],
           });
 
-          // Check if user is from rsupport.com domain or has admin/owner role
+          // Check account level for authorization
           const email = data.user.email || '';
           const roles = data.user.roles || [];
+          const level = data.user.account_level || '';
           const isRsupport = email.endsWith('@rsupport.com');
           const hasAdminRole = roles.includes('admin') || roles.includes('owner');
+          const isMasterUser = level === 'master' || level === '1st_master';
 
-          console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole });
+          console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole, accountLevel: level });
 
           setIsRsupportUser(isRsupport);
           setIsAdmin(hasAdminRole);
+          setAccountLevel(level);
+          setIsAuthorized(isMasterUser);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -433,11 +439,31 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) {
+  if (loading || isAuthorized === null) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-gray-500">로딩 중...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show access denied for non-master users
+  if (!isAuthorized) {
+    return (
+      <DashboardLayout title="접근 불가" subtitle="">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h2>
+            <p className="text-gray-600 mb-6">이 페이지는 관리자만 접근할 수 있습니다.</p>
+            <Button variant="primary" onClick={() => window.location.href = '/'}>
+              대시보드로 돌아가기
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );

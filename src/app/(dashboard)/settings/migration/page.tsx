@@ -10,7 +10,7 @@ import MigrationPreviewTable from './components/MigrationPreviewTable';
 import MigrationClassifyTable from './components/MigrationClassifyTable';
 import FieldMapping from './components/FieldMapping';
 import Toast from './components/Toast';
-import BatchRollbackPanel from './components/BatchRollbackPanel';
+
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { apiFetch } from '@/lib/api-utils';
@@ -432,19 +432,7 @@ export default function MigrationPage() {
         />
       )}
       <div className="w-full px-4">
-        {/* Batch Rollback Panel */}
-        <div className="mb-6">
-          <BatchRollbackPanel />
-        </div>
-
-        {/* Description */}
-        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-900">
-            미리보기를 통해 각 항목을 확인하고, 중복 처리 방법을 선택할 수 있습니다.
-          </p>
-        </div>
-
-        {/* Progress Steps */}
+        {/* Progress Steps -->
           <div className="mb-8">
             <div className="flex items-center justify-center">
               {['upload', 'preview', 'classify', 'confirm'].map((s, i) => (

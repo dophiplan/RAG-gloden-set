@@ -33,12 +33,36 @@ type DragState = {
   sourceVersion: string | null;
 };
 
-// 전역 드래그 상태 (모듈 레벨에서 관리)
-const globalDragState: DragState = {
-  type: null,
-  value: null,
-  sourceVersion: null,
-};
+// 드래그 상태 관리를 위한 싱글톤 (모듈 외부에서 접근 가능)
+class DragStateManager {
+  private static instance: DragStateManager;
+  private state: DragState = {
+    type: null,
+    value: null,
+    sourceVersion: null,
+  };
+
+  static getInstance(): DragStateManager {
+    if (!DragStateManager.instance) {
+      DragStateManager.instance = new DragStateManager();
+    }
+    return DragStateManager.instance;
+  }
+
+  setState(state: Partial<DragState>) {
+    this.state = { ...this.state, ...state };
+  }
+
+  getState(): DragState {
+    return { ...this.state };
+  }
+
+  reset() {
+    this.state = { type: null, value: null, sourceVersion: null };
+  }
+}
+
+const dragStateManager = DragStateManager.getInstance();
 
 export default function FieldMapping({
   sheetsData,
@@ -148,9 +172,7 @@ export default function FieldMapping({
     // selectedVersion이 없으면 드롭 무시
     if (!selectedVersion) return;
     
-    const type = globalDragState.type;
-    const value = globalDragState.value;
-    const sourceVersion = globalDragState.sourceVersion;
+    const { type, value, sourceVersion } = dragStateManager.getState();
     
     if (!value || !type) return;
     
@@ -522,8 +544,7 @@ function VersionItem({ sheet, isSelected, hasMapping, isDisabled, onSelect }: Ve
     isDragging.current = false;
     clickTimer.current = setTimeout(() => {
       isDragging.current = true;
-      globalDragState.type = 'version';
-      globalDragState.value = sheet.name;
+      dragStateManager.setState({ type: 'version', value: sheet.name });
     }, 200);
   };
 
@@ -548,16 +569,13 @@ function VersionItem({ sheet, isSelected, hasMapping, isDisabled, onSelect }: Ve
       clickTimer.current = null;
     }
     isDragging.current = true;
-    globalDragState.type = 'version';
-    globalDragState.value = sheet.name;
-    globalDragState.sourceVersion = sheet.name; // 버전 자체를 드래그하므로 자신의 이름 저장
+    dragStateManager.setState({ type: 'version', value: sheet.name, sourceVersion: sheet.name });
     e.dataTransfer.effectAllowed = 'copy';
   };
 
   const handleDragEnd = () => {
     setTimeout(() => {
-      globalDragState.type = null;
-      globalDragState.value = null;
+      dragStateManager.reset();
       isDragging.current = false;
     }, 0);
   };
@@ -629,18 +647,20 @@ function DropZone({ label, value, placeholder, onDrop, onClear, color = 'blue', 
           {label} {required && <span className="text-red-500">*</span>}
         </span>
         {value && (
-          <button 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               onClear();
-            }} 
-            className="ml-2 p-1 rounded-full hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+            }}
+            className="!p-1 ml-2"
             title="삭제"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         )}
       </div>
       {value ? (
@@ -699,11 +719,16 @@ function MultiDropZone({ label, values, placeholder, onDrop, onClear, color = 'g
           {values.map(val => (
             <span key={val} className={`inline-flex items-center gap-1 text-xs bg-white px-2 py-0.5 rounded-lg border ${c.light}`}>
               ← {val}
-              <button onClick={() => onClear(val)} className={`${c.text} hover:text-red-500`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onClear(val)}
+                className={`!p-0.5 ${c.text} hover:text-red-500`}
+              >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </span>
           ))}
         </div>
@@ -750,17 +775,17 @@ function FileColumnList({ fileColumns, selectedVersion, currentMappings, onMappi
   };
 
   const handleDragStart = (e: React.DragEvent, columns: string[]) => {
-    globalDragState.type = 'column';
-    globalDragState.value = JSON.stringify(columns); // 여러 컬럼을 JSON으로 전달
-    globalDragState.sourceVersion = selectedVersion;
+    dragStateManager.setState({
+      type: 'column',
+      value: JSON.stringify(columns),
+      sourceVersion: selectedVersion,
+    });
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('columns', JSON.stringify(columns));
   };
 
   const handleDragEnd = () => {
-    globalDragState.type = null;
-    globalDragState.value = null;
-    globalDragState.sourceVersion = null;
+    dragStateManager.reset();
     setSelectedColumns([]); // 드래그 후 선택 해제
   };
 

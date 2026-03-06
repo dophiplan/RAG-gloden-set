@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import Card, { CardTitle } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import { apiGet } from '@/lib/api-utils';
 
 interface QAMetrics {
   codeQuality: number;
@@ -23,6 +22,42 @@ interface TestResult {
   failed: number;
   duration: string;
 }
+
+const getGrade = (score: number) => {
+  if (score >= 90) return { grade: 'A', color: 'bg-green-500' };
+  if (score >= 80) return { grade: 'B+', color: 'bg-blue-500' };
+  if (score >= 70) return { grade: 'B', color: 'bg-yellow-500' };
+  if (score >= 60) return { grade: 'C', color: 'bg-orange-500' };
+  return { grade: 'F', color: 'bg-red-500' };
+};
+
+interface MetricCardProps {
+  title: string;
+  score: number;
+  description: string;
+}
+
+const MetricCard = ({ title, score, description }: MetricCardProps) => {
+  const { grade, color } = getGrade(score);
+  return (
+    <Card className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <Badge className={`${color} text-white`}>{grade}</Badge>
+      </div>
+      <div className="flex items-end gap-2 mb-2">
+        <span className="text-4xl font-bold text-gray-900">{score}%</span>
+      </div>
+      <p className="text-sm text-gray-500">{description}</p>
+      <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className={`h-full ${color} transition-all duration-500`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+    </Card>
+  );
+};
 
 export default function QAPage() {
   const [metrics, setMetrics] = useState<QAMetrics>({
@@ -51,36 +86,6 @@ export default function QAPage() {
     setTimeout(() => {
       setLoading(false);
     }, 2000);
-  };
-
-  const getGrade = (score: number) => {
-    if (score >= 90) return { grade: 'A', color: 'bg-green-500' };
-    if (score >= 80) return { grade: 'B+', color: 'bg-blue-500' };
-    if (score >= 70) return { grade: 'B', color: 'bg-yellow-500' };
-    if (score >= 60) return { grade: 'C', color: 'bg-orange-500' };
-    return { grade: 'F', color: 'bg-red-500' };
-  };
-
-  const MetricCard = ({ title, score, description }: { title: string; score: number; description: string }) => {
-    const { grade, color } = getGrade(score);
-    return (
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <Badge className={`${color} text-white`}>{grade}</Badge>
-        </div>
-        <div className="flex items-end gap-2 mb-2">
-          <span className="text-4xl font-bold text-gray-900">{score}%</span>
-        </div>
-        <p className="text-sm text-gray-500">{description}</p>
-        <div className="mt-4 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${color} transition-all duration-500`}
-            style={{ width: `${score}%` }}
-          />
-        </div>
-      </Card>
-    );
   };
 
   const averageScore = Math.round(
