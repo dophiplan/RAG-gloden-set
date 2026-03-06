@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { apiPost } from '@/lib/api-utils';
 import { useRollback } from '@/hooks/useRollback';
 import RollbackConflictModal from '@/components/rollback/RollbackConflictModal';
 import DiffView, { UserAvatar, getUserColors } from '@/components/rollback/DiffView';
@@ -22,6 +23,14 @@ interface ChangeHistoryItem {
   page_name: string;
   created_at: string;
   is_rolled_back?: boolean;
+  batch_operation_id?: string | null;
+}
+
+interface DateGroup {
+  date: string;
+  label: string;
+  items: ChangeHistoryItem[];
+  rollbackableCount: number;
 }
 
 const pageOptions: Array<{ id: PageType; label: string }> = [
@@ -249,6 +258,79 @@ export default function GlobalChangeHistory() {
     return currentHistory.find(item => item.id === selectedItemId);
   }, [currentHistory, selectedItemId]);
 
+  // 날짜별 그룹핑
+  const dateGroups = useMemo((): DateGroup[] => {
+    if (!currentHistory.length) return [];
+    
+    const groups: Map<string, ChangeHistoryItem[]> = new Map();
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    
+    currentHistory.forEach(item => {
+      const date = new Date(item.created_at).toDateString();
+      if (!groups.has(date)) {
+        groups.set(date, []);
+      }
+      groups.get(date)!.push(item);
+    });
+    
+    return Array.from(groups.entries()).map(([date, items]) => {
+      let label: string;
+      if (date === today) label = '오늘';
+      else if (date === yesterday) label = '어제';
+      else {
+        const d = new Date(date);
+        label = `${d.getMonth() + 1}월 ${d.getDate()}일`;
+      }
+      
+      const rollbackableCount = items.filter(
+        i => !i.is_rolled_back && i.action !== 'rollback' && i.action !== 'delete' && 
+             (i.entity_type === 'translation' || i.entity_type === 'glossary')
+      ).length;
+      
+      return { date, label, items, rollbackableCount };
+    });
+  }, [currentHistory]);
+
+  // 날짜별 전체 롤백
+  const [isBatchRollbackLoading, setIsBatchRollbackLoading] = useState(false);
+  
+  const handleBatchRollback = useCallback(async (group: DateGroup) => {
+    if (group.rollbackableCount === 0) return;
+    
+    const targetDate = new Date(group.date).toISOString().split('T')[0];
+    const message = group.items.length > 10 
+      ? `${group.label}의 작업 ${group.items.length}개 중 롤백 가능한 ${group.rollbackableCount}개를 모두 되돌리시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.`
+      : `${group.label}의 작업 ${group.rollbackableCount}개를 모두 되돌리시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.`;
+    
+    if (!confirm(message)) return;
+    
+    setIsBatchRollbackLoading(true);
+    try {
+      const result = await apiPost<{
+        success: boolean;
+        rolledBackCount: number;
+        failedCount: number;
+        errors?: string[];
+      }>('/api/rollback/batch-by-date', {
+        targetDate,
+        entityTypes: ['translation', 'glossary'],
+      });
+      
+      if (result.success) {
+        alert(`롤백 완료!\n\n✅ 성공: ${result.rolledBackCount}개\n❌ 실패: ${result.failedCount}개`);
+        fetchAllHistory();
+      } else {
+        alert('롤백 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('Batch rollback error:', error);
+      alert('롤백 중 오류가 발생했습니다.');
+    } finally {
+      setIsBatchRollbackLoading(false);
+    }
+  }, []);
+
   return (
     <>
       {/* Change History Button */}
@@ -342,8 +424,41 @@ export default function GlobalChangeHistory() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {(currentHistory || []).map((item) => {
+            <div className="space-y-6">
+              {dateGroups.map((group) => (
+                <div key={group.date} className="space-y-3">
+                  {/* Date Header with Batch Rollback */}
+                  <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="font-semibold text-gray-900">{group.label}</span>
+                      <span className="text-xs text-gray-500">
+                        {group.items.length}개 작업
+                      </span>
+                    </div>
+                    {group.rollbackableCount > 0 && (
+                      <button
+                        onClick={() => handleBatchRollback(group)}
+                        disabled={isBatchRollbackLoading}
+                        className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                        title={`${group.label}의 작업 ${group.rollbackableCount}개 모두 되돌리기`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        {group.label} 전체 롤백
+                        <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full text-[10px]">
+                          {group.rollbackableCount}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Items for this date */}
+                  <div className="space-y-3 pl-2">
+                    {group.items.map((item) => {
                 const colors = getUserColors(item.user_name || item.user_email);
                 const isSelected = selectedItemId === item.id;
                 
@@ -474,6 +589,9 @@ export default function GlobalChangeHistory() {
                 </div>
               );
               })}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

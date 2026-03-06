@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import { MAX_FILE_SIZE } from '@/lib/constants';
 
 export interface UploadedFile {
   file: File;
@@ -12,8 +15,6 @@ export interface FileUploaderProps {
   maxFiles?: number;
   className?: string;
 }
-
-import { MAX_FILE_SIZE } from '@/lib/constants';
 
 const ACCEPTED_PDF_TYPES = ['application/pdf'];
 
@@ -134,10 +135,11 @@ export default function FileUploader({
 
   return (
     <div className={className}>
-      <div
+      <Card
+        padding="lg"
         className={`
-          relative border-2 border-dashed rounded-lg p-6 transition-colors
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          relative border-2 border-dashed transition-colors
+          ${isDragging ? 'border-[#818CF8] bg-[#E0E7FF]/50' : 'border-gray-300 hover:border-gray-400'}
         `}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -168,25 +170,25 @@ export default function FileUploader({
               d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
             />
           </svg>
-          <div className="mt-4 flex flex-col items-center text-sm text-gray-600">
-            <button
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => fileInputRef.current?.click()}
-              className="relative font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:underline"
             >
               PDF 파일 업로드
-            </button>
-            <p className="mt-1">또는 드래그 앤 드롭</p>
+            </Button>
+            <p className="text-sm text-gray-500">또는 드래그 앤 드롭</p>
           </div>
-          <p className="mt-2 text-xs text-gray-500">
-            PDF 파일 (최대 {maxFiles}개)
+          <p className="mt-3 text-xs text-gray-500">
+            PDF 파일 (최대 {maxFiles}개) • 파일당 최대 4.5MB
           </p>
-          <p className="text-xs text-gray-500">파일당 최대 4.5MB</p>
-          <p className="mt-2 text-xs text-gray-600">
+          <p className="mt-1 text-xs text-[#818CF8] font-medium">
             현재: {(uploadedFiles || []).length}/{maxFiles} 개
           </p>
         </div>
-      </div>
+      </Card>
 
       {error && (
         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -196,12 +198,13 @@ export default function FileUploader({
 
       {(uploadedFiles || []).length > 0 && (
         <div className="mt-4 space-y-3">
-          <h4 className="text-sm font-medium text-gray-900">업로드된 파일 ({(uploadedFiles || []).length})</h4>
+          <h4 className="text-sm font-medium text-text-main">업로드된 파일 ({(uploadedFiles || []).length})</h4>
           <div className="space-y-2">
             {(uploadedFiles || []).map((uploadedFile) => (
-              <div
+              <Card
                 key={uploadedFile.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                padding="sm"
+                className="flex items-center gap-3 border border-gray-200 hover:border-gray-300 transition-colors"
               >
                 <div className="flex-shrink-0">
                   <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -210,17 +213,19 @@ export default function FileUploader({
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-text-main truncate">
                     {uploadedFile.file.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-text-muted">
                     {formatFileSize(uploadedFile.file.size)} • PDF
                   </p>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleRemoveFile(uploadedFile.id)}
-                  className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="flex-shrink-0 !p-1"
                   aria-label={`${uploadedFile.file.name} 삭제`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -231,8 +236,8 @@ export default function FileUploader({
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
-                </button>
-              </div>
+                </Button>
+              </Card>
             ))}
           </div>
         </div>

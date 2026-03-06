@@ -96,6 +96,7 @@ const baseNavigation: NavigationItem[] = [
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [accountLevel, setAccountLevel] = useState<string>('');
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { products = [] } = useProducts();
@@ -118,14 +119,19 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   }, []);
 
   useEffect(() => {
-    // Fetch current user with roles
+    // Fetch current user with roles and account level
     fetch('/api/auth/me')
       .then(res => res.json())
       .then(result => {
         // Handle standardized API response: { data: { user: {...} } }
         const userData = result.data?.user || result.data || result.user;
-        if (userData && userData.roles) {
-          setUserRoles(userData.roles);
+        if (userData) {
+          if (userData.roles) {
+            setUserRoles(userData.roles);
+          }
+          if (userData.account_level) {
+            setAccountLevel(userData.account_level);
+          }
         }
       })
       .catch(console.error);
@@ -143,11 +149,14 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     setExpandedMenus(newExpanded);
   }, [pathname]);
 
-  // Filter navigation based on user role
+  // Check if user is master (master or 1st_master account level)
+  const isMaster = accountLevel === 'master' || accountLevel === '1st_master';
+
+  // Filter navigation based on account level
   const filteredNavigation = baseNavigation.filter(item => {
     if (item.masterOnly) {
-      // Show to master and 1st_master users
-      return userRoles.includes('master') || userRoles.includes('1st_master');
+      // Only show to master and 1st_master account levels
+      return isMaster;
     }
     return true;
   });
