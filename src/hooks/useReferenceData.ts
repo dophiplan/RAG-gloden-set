@@ -79,15 +79,17 @@ export interface Scope {
  * Hook to fetch and cache all products
  */
 export function useProducts() {
-  const { data, error, isLoading } = useSWR<{ data: { products: Product[] } }>(
+  const { data, error, isLoading, isValidating } = useSWR<{ data: { products: Product[] } }>(
     '/api/products?v=2',
     fetcher,
     {
-      revalidateOnFocus: true,
+      revalidateOnFocus: false, // 포커스 시 재검증 비활성화
       revalidateOnReconnect: true,
-      dedupingInterval: 10000,
+      dedupingInterval: 300000, // 5분 동안 중복 요청 방지
+      focusThrottleInterval: 5000, // 포커스 이벤트 스로틀
       shouldRetryOnError: true,
       errorRetryCount: 3,
+      keepPreviousData: true, // 새 데이터 로딩 중 이전 데이터 유지
     }
   );
 
@@ -117,8 +119,9 @@ export function useLanguages() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 300000, // 5분
       shouldRetryOnError: false,
+      keepPreviousData: true,
       onError: (err) => {
         console.error('[useLanguages] Failed to fetch languages:', err);
       },
@@ -150,8 +153,9 @@ export function usePlatforms() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 300000, // 5분
       shouldRetryOnError: false,
+      keepPreviousData: true,
       onError: (err) => {
         console.error('[usePlatforms] Failed to fetch platforms:', err);
       },
@@ -183,8 +187,9 @@ export function useStatuses() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 300000, // 5분
       shouldRetryOnError: false,
+      keepPreviousData: true,
       onError: (err) => {
         console.error('[useStatuses] Failed to fetch statuses:', err);
       },
@@ -216,8 +221,9 @@ export function usePriorities() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 300000, // 5분
       shouldRetryOnError: false,
+      keepPreviousData: true,
       onError: (err) => {
         console.error('[usePriorities] Failed to fetch priorities:', err);
       },
@@ -249,8 +255,9 @@ export function useScopes() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-      dedupingInterval: 60000,
+      dedupingInterval: 300000, // 5분
       shouldRetryOnError: false,
+      keepPreviousData: true,
       onError: (err) => {
         console.error('[useScopes] Failed to fetch scopes:', err);
       },
