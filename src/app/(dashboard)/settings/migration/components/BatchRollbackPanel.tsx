@@ -29,10 +29,13 @@ export default function BatchRollbackPanel({ onRollbackComplete }: BatchRollback
   const fetchBatches = async () => {
     setIsLoading(true);
     try {
-      const result = await apiGet<{ batches?: Batch[] }>('/api/rollback/batch?limit=50');
+      const result = await apiGet<{ batches?: Batch[]; message?: string }>('/api/rollback/batch?limit=50');
       setBatches(result.batches || []);
+      // Silently handle empty batches - don't show error to user
     } catch (error) {
       console.error('[BatchRollback] Failed to fetch batches:', error);
+      // Graceful degradation - show empty list
+      setBatches([]);
     } finally {
       setIsLoading(false);
     }

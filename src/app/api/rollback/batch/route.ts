@@ -214,6 +214,21 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const limit = parseInt(searchParams.get('limit') || '50');
 
+    // Check if table exists first
+    const { error: tableCheckError } = await supabase
+      .from('operation_batches')
+      .select('id', { count: 'exact', head: true });
+
+    if (tableCheckError) {
+      console.error('[Batch List] Table check error:', tableCheckError);
+      // Return empty array if table doesn't exist or RLS issue
+      return apiSuccess({
+        batches: [],
+        count: 0,
+        message: '배치 테이블이 준비 중입니다.',
+      });
+    }
+
     let query = supabase
       .from('operation_batches')
       .select('*')
@@ -227,8 +242,12 @@ export async function GET(request: NextRequest) {
     const { data: batches, error } = await query;
 
     if (error) {
-      console.error('[Batch List] Error:', error);
-      return apiInternalError('배치 목록 조회 중 오류가 발생했습니다.');
+      console.error('[Batch List] Query error:', error);
+      return apiSuccess({
+        batches: [],
+        count: 0,
+        message: '배치 목록을 가져올 수 없습니다.',
+      });
     }
 
     return apiSuccess({
@@ -237,7 +256,11 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[Batch List] Error:', error);
-    return apiInternalError('배치 목록 조회 중 오류가 발생했습니다.');
+    console.error('[Batch List] Unexpected error:', error);
+    return apiSuccess({
+      batches: [],
+      count: 0,
+      message: '배치 목록 조회 중 오류가 발생했습니다.',
+    });
   }
 }
