@@ -18,11 +18,11 @@ export async function DELETE(request: NextRequest) {
 
     const { data: currentUser } = await supabase
       .from('users')
-      .select('*')
+      .select('id, name, email, account_level, roles')
       .eq('id', authUser.id)
       .single();
 
-    if (!currentUser || !isMaster(currentUser)) {
+    if (!currentUser || !isMaster(currentUser as any)) {
       return NextResponse.json(
         { error: '권한이 없습니다.' },
         { status: 403 }

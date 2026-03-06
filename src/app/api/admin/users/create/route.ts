@@ -13,11 +13,11 @@ async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized:
   // Check if user has master or 1st_master role
   const { data: userProfile } = await supabase
     .from('users')
-    .select('roles')
+    .select('account_level')
     .eq('id', user.id)
     .single();
 
-  const isMaster = userProfile?.roles?.includes('master') || userProfile?.roles?.includes('1st_master');
+  const isMaster = userProfile?.account_level === 'master' || userProfile?.account_level === '1st_master';
 
   return {
     authorized: isMaster,
