@@ -34,8 +34,16 @@ export interface ApiResult<T> {
 export async function parseApiResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({})) as ApiResponse;
-    const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
-    console.error('[API Error]', errorMessage, errorData);
+    // Handle both { error: string } and { error: { code, message } } formats
+    let errorMessage: string;
+    if (typeof errorData.error === 'string') {
+      errorMessage = errorData.error;
+    } else if (errorData.error && typeof errorData.error === 'object' && 'message' in errorData.error) {
+      errorMessage = (errorData.error as { message: string }).message;
+    } else {
+      errorMessage = errorData.message || `HTTP ${response.status}`;
+    }
+    console.error('[API Error]', errorMessage, JSON.stringify(errorData));
     throw new ApiError(errorMessage, response.status, errorData);
   }
 
