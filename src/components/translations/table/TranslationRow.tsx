@@ -46,6 +46,7 @@ export interface TranslationRowProps {
   onDevCodeUpdate?: (translationId: string, devCode: string) => Promise<void>;
   onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
   onDelete: (id: string) => void;
+  onAddToGlossary?: (translation: TranslationWithResults) => void;
 }
 
 /**
@@ -70,6 +71,7 @@ const TranslationRow = memo(function TranslationRow({
   onDevCodeUpdate,
   onPlatformsUpdate,
   onDelete,
+  onAddToGlossary,
 }: TranslationRowProps) {
   const { productsMap } = useProducts();
   const { platformsMap } = usePlatforms();
@@ -371,15 +373,28 @@ const TranslationRow = memo(function TranslationRow({
         </div>
       </td>
       <td className="px-0.5 py-0.5 align-top" style={getCellStyle('actions')}>
-        <button
-          onClick={() => onDelete(translation.id)}
-          className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
-          title="삭제"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+        <div className="flex gap-1">
+          {onAddToGlossary && (
+            <button
+              onClick={() => onAddToGlossary(translation)}
+              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
+              title="용어집에 추가"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => onDelete(translation.id)}
+            className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+            title="삭제"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </td>
     </tr>
   );

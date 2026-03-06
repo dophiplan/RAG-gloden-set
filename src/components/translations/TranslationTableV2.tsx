@@ -81,6 +81,7 @@ export default memo(function TranslationTableV2({
   onDelete,
   onRefresh,
   onSelectionChange,
+  onAddToGlossary,
   selectedIds: externalSelectedIds,
   loading = false,
   currentPage = 1,
@@ -261,6 +262,7 @@ export default memo(function TranslationTableV2({
                     onDevCodeUpdate={onDevCodeUpdate}
                     onPlatformsUpdate={onPlatformsUpdate}
                     onDelete={onDelete}
+                    onAddToGlossary={onAddToGlossary}
                   />
                 ))
               )}

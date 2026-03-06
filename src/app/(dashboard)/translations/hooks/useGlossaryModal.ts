@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { LanguageCode, ProductCode } from '@/types';
+import { LanguageCode, ProductCode, Translation } from '@/types';
 import { showSuccess, showError } from '@/lib/notifications';
 import { apiPost } from '@/lib/api-utils';
 
@@ -15,14 +15,14 @@ export function useGlossaryModal() {
     setIsGlossaryModalOpen(true);
   }, []);
 
-  const handleAddToGlossary = useCallback((sourceText: string) => {
-    setGlossaryTerm(sourceText);
+  const handleAddToGlossary = useCallback((translation: Translation) => {
+    setGlossaryTerm(translation.source_text);
     setGlossaryTranslation('');
     setGlossaryLanguage('en');
-    setGlossaryContext('');
+    setGlossaryContext(translation.context || '');
     setGlossaryProductCodes([]);
     setIsGlossaryModalOpen(true);
-  }, []);
+  }, [])
 
   const handleGlossaryCreate = useCallback(async () => {
     if (!glossaryTerm.trim() || !glossaryTranslation.trim()) {
