@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, memo } from 'react';
 import { TranslationStatus, STATUS_COLORS } from '@/types';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -6,7 +6,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   status?: TranslationStatus;
 }
 
-export default function Badge({
+function BadgeComponent({
   className = '',
   variant = 'default',
   status,
@@ -43,3 +43,7 @@ export default function Badge({
     </span>
   );
 }
+
+const Badge = memo(BadgeComponent);
+Badge.displayName = 'Badge';
+export default Badge;

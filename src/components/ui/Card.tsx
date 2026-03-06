@@ -1,13 +1,13 @@
 'use client';
 
 import { useTheme } from '@/context/ThemeContext';
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, memo } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-export default function Card({
+function CardComponent({
   className = '',
   padding = 'md',
   children,
@@ -37,6 +37,10 @@ export default function Card({
     </div>
   );
 }
+
+const Card = memo(CardComponent);
+Card.displayName = 'Card';
+export default Card;
 
 export function CardHeader({
   className = '',
