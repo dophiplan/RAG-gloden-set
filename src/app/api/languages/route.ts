@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { languageCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
-import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/lib/api/response';
+import { apiCachedSuccess, apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/lib/api/response';
 
 /**
  * GET - List all languages
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return apiSuccess({ languages });
+    return apiCachedSuccess({ languages });
   } catch (error) {
     console.error('Error fetching languages:', error);
     return apiInternalError('언어 목록을 불러오는데 실패했습니다.');

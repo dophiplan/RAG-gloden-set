@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { productCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
-import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
+import { apiCachedSuccess, apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
 
 /**
  * GET - List all products
@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return apiSuccess({ products });
+    // Cache for 5 minutes (static reference data)
+    return apiCachedSuccess({ products }, undefined, 300);
   } catch (error) {
     console.error('Error fetching products:', error);
     return apiInternalError('제품 목록을 불러오는데 실패했습니다.');

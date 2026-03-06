@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { statusCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
-import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
+import { apiCachedSuccess, apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Cache for 1 hour
@@ -29,7 +29,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    return apiSuccess({ statuses });
+    return apiCachedSuccess({ statuses });
   } catch (error) {
     console.error('Error fetching statuses:', error);
     return apiInternalError('상태 목록을 불러오는데 실패했습니다.');
