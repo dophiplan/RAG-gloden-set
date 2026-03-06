@@ -1,11 +1,12 @@
 import type { LanguageCode } from './languages';
 import type { ProductCode } from './products';
+import type { ScopeType } from './common';
 
 // Translation status
 export type TranslationStatus = 'pending' | 'in_progress' | 'reviewed' | 'deployed' | 're_request' | 'not_used' | 're_deploy_request';
 
-// Scope types (제품 분류)
-export type Scope = 'SaaS' | 'Solution' | '정부과제' | '기타';
+// Scope types - re-export from common for backwards compatibility
+export type Scope = ScopeType;
 
 export const STATUS_COLORS: Record<TranslationStatus, { bg: string; text: string; label: string }> = {
   re_request: { bg: 'bg-amber-100', text: 'text-amber-800', label: '재요청' },           // 노란색
@@ -155,10 +156,14 @@ export interface TranslationUpdateInput {
   version?: string;
   product_code?: ProductCode; // Deprecated
   product_codes?: ProductCode[]; // Use this for multiple products
-  scope?: 'SaaS' | 'Solution' | null;
+  scope?: ScopeType | null;
   priority?: PriorityLevel;
   notes?: string | null;
   updated_at?: string; // For optimistic locking - send current timestamp to detect conflicts
+  // Additional fields used in API
+  dev_code?: string | null;
+  platform_codes?: string[];
+  version_updated_at?: string | null;
 }
 
 // Dashboard stats

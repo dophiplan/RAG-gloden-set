@@ -41,6 +41,7 @@ export interface User {
   account_level: AccountLevel;
   // New fields from Phase 1
   roles: UserRole[];
+  permissions: string[];
   work_products: ProductCode[];
   work_scope: string[];
   work_languages: string[];
