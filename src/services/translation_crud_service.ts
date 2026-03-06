@@ -9,7 +9,7 @@ import {
   TranslationResultCreateData,
   TranslationProductCreateData,
 } from '@/repositories';
-import { Translation, TranslationStatus, ProductCode, LanguageCode, PriorityLevel } from '@/types';
+import { Translation, TranslationStatus, ProductCode, LanguageCode, PriorityLevel, ScopeType } from '@/types';
 import { GlossaryAutoMatcher } from './glossary_auto_matcher';
 import { TranslationAuditLogger } from './translation_audit_logger';
 
@@ -19,7 +19,7 @@ export interface TranslationCreateInput {
   version?: string;
   productCode?: ProductCode;
   productCodes?: ProductCode[];
-  scope?: 'SaaS' | 'Solution';
+  scope?: ScopeType;
   priority?: PriorityLevel;
   completionDate?: string;
   userId: string;
