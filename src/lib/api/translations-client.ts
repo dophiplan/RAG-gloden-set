@@ -12,6 +12,7 @@ import type {
 } from '@/types/translations';
 import type { ProductCode } from '@/types/products';
 import type { LanguageCode } from '@/types/languages';
+import type { ScopeType } from '@/types/common';
 
 export interface TranslationListParams {
   status?: TranslationStatus;
@@ -102,7 +103,7 @@ export class TranslationsClient extends ApiClient {
   /**
    * Update scope
    */
-  async updateScope(id: string, scope: 'SaaS' | 'Solution' | null): Promise<Translation> {
+  async updateScope(id: string, scope: ScopeType | null): Promise<Translation> {
     return this.update(id, { scope });
   }
 
