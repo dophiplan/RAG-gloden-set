@@ -35,26 +35,6 @@ export default function GlossaryPage() {
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
   const [selectedHistoryTerm, setSelectedHistoryTerm] = useState<{ id: string; term: string; version?: number } | null>(null);
   
-  // Rollback hook
-  const {
-    isLoading: isRollbackLoading,
-    isHistoryLoading,
-    auditHistory,
-    conflicts,
-    showConflictModal,
-    fetchAuditHistory,
-    rollbackField,
-    bulkRollback,
-    resolveConflicts,
-    closeConflictModal,
-  } = useGlossaryRollback(() => {
-    // On success callback - refresh data
-    fetchTerms();
-    if (selectedHistoryTerm) {
-      fetchAuditHistory(selectedHistoryTerm.id);
-    }
-  });
-
   // Fetch reference data from DB
   const { productsMap } = useProducts();
   const { languages, languagesMap } = useLanguages();
@@ -128,6 +108,26 @@ export default function GlossaryPage() {
     paginatedTerms,
     totalTerms,
   } = useGlossaryData();
+
+  // Rollback hook - must be called after useGlossaryData to access fetchTerms
+  const {
+    isLoading: isRollbackLoading,
+    isHistoryLoading,
+    auditHistory,
+    conflicts,
+    showConflictModal,
+    fetchAuditHistory,
+    rollbackField,
+    bulkRollback,
+    resolveConflicts,
+    closeConflictModal,
+  } = useGlossaryRollback(() => {
+    // On success callback - refresh data
+    fetchTerms();
+    if (selectedHistoryTerm) {
+      fetchAuditHistory(selectedHistoryTerm.id);
+    }
+  });
 
   const sourceTypeLabels: Record<string, string> = {
     manual: '수동',
