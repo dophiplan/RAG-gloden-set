@@ -9,20 +9,36 @@ export async function PATCH(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !authUser) {
+    // Development mode bypass
+    let currentUser: any = null;
+    let isDevBypass = false;
+    
+    if ((authError || !authUser) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/admin/users/bulk-update');
+      isDevBypass = true;
+      currentUser = {
+        id: 'dev-mode-user',
+        account_level: '1st_master',
+        roles: ['1st_master'],
+      };
+    } else if (authError || !authUser) {
       return NextResponse.json(
         { error: '인증되지 않은 사용자입니다.' },
         { status: 401 }
       );
     }
 
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
+    // Fetch current user if not in dev bypass mode
+    if (!isDevBypass) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, name, email, account_level, roles')
+        .eq('id', authUser!.id)
+        .single();
+      currentUser = userData;
+    }
 
-    if (!currentUser || !canManageUsers(currentUser)) {
+    if (!currentUser || !canManageUsers(currentUser as any)) {
       console.log('User permission check failed:', {
         userId: currentUser?.id,
         email: currentUser?.email,
@@ -45,19 +61,34 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Protect 1st master from account level changes
+    // Prevent users from changing their own account level (security protection)
+    // Skip this check in dev bypass mode
+    const isChangingSelf = !isDevBypass && user_ids.length === 1 && user_ids[0] === authUser?.id;
+    if (isChangingSelf && account_level !== undefined) {
+      return NextResponse.json(
+        { error: '본인의 계정 권한은 변경할 수 없습니다.' },
+        { status: 400 }
+      );
+    }
+
+    // Protect 1st master from being demoted by non-1st-master users
     if (account_level !== undefined) {
       const adminClient = createAdminClient();
       const { data: selectedUsers } = await adminClient
         .from('users')
-        .select('account_level')
+        .select('id, account_level')
         .in('id', user_ids);
 
-      const has1stMaster = selectedUsers?.some(u => u.account_level === '1st_master');
-      if (has1stMaster) {
+      // Check if current user is 1st_master
+      const isCurrentUser1stMaster = currentUser?.account_level === '1st_master';
+
+      // Only 1st_master can change other 1st_master's account level
+      // Non-1st-master users cannot change 1st_master's account level
+      const has1stMasterTarget = selectedUsers?.some(u => u.account_level === '1st_master');
+      if (has1stMasterTarget && !isCurrentUser1stMaster) {
         return NextResponse.json(
           { error: '1st Master의 계정 권한은 변경할 수 없습니다.' },
-          { status: 400 }
+          { status: 403 }
         );
       }
     }
