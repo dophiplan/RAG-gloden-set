@@ -105,6 +105,13 @@ export async function PATCH(request: NextRequest) {
     // Use admin client to bypass RLS
     const adminClient = createAdminClient();
 
+    // Get old settings for audit log
+    const { data: oldSettings } = await adminClient
+      .from('organization_settings')
+      .select('*')
+      .eq('domain', RSUPPORT_DOMAIN)
+      .maybeSingle();
+
     // Try upsert
     const { data: updatedSettings, error } = await adminClient
       .from('organization_settings')
@@ -121,6 +128,23 @@ export async function PATCH(request: NextRequest) {
         { error: '설정 저장에 실패했습니다.', details: error.message },
         { status: 500 }
       );
+    }
+
+    // Create audit log (non-blocking)
+    const changedKeys = Object.keys(updateData).filter(k => k !== 'updated_at');
+    for (const key of changedKeys) {
+      void adminClient.from('settings_audit_logs').insert({
+        user_id: user.id,
+        user_email: user.email,
+        action: 'update_org_settings',
+        setting_category: 'organization',
+        setting_key: key,
+        old_value: key.includes('api_key') ? '***' : JSON.stringify(oldSettings?.[key as keyof typeof oldSettings]),
+        new_value: key.includes('api_key') ? '***' : JSON.stringify(updateData[key]),
+        is_sensitive: key.includes('api_key'),
+      }).then(({ error }) => {
+        if (error) console.error('[Audit Log] Failed to log org settings update:', error);
+      });
     }
 
     return NextResponse.json({ settings: updatedSettings });

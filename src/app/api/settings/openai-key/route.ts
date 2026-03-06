@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get old value for audit log
+    const { data: oldSettings } = await supabase
+      .from('user_settings')
+      .select('openai_api_key')
+      .eq('user_id', user.id)
+      .single();
+
     // Upsert user settings
     const { error } = await supabase
       .from('user_settings')
@@ -42,6 +49,20 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) throw error;
+
+    // Create audit log (non-blocking)
+    void supabase.from('settings_audit_logs').insert({
+      user_id: user.id,
+      user_email: user.email,
+      action: 'update_openai_key',
+      setting_category: 'openai',
+      setting_key: 'openai_api_key',
+      old_value: oldSettings?.openai_api_key ? '***' : null,
+      new_value: '***',
+      is_sensitive: true,
+    }).then(({ error }) => {
+      if (error) console.error('[Audit Log] Failed to log OpenAI key update:', error);
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -63,6 +84,13 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get old value for audit log
+    const { data: oldSettings } = await supabase
+      .from('user_settings')
+      .select('openai_api_key')
+      .eq('user_id', user.id)
+      .single();
+
     const { error } = await supabase
       .from('user_settings')
       .update({
@@ -72,6 +100,20 @@ export async function DELETE() {
       .eq('user_id', user.id);
 
     if (error) throw error;
+
+    // Create audit log (non-blocking)
+    void supabase.from('settings_audit_logs').insert({
+      user_id: user.id,
+      user_email: user.email,
+      action: 'delete_openai_key',
+      setting_category: 'openai',
+      setting_key: 'openai_api_key',
+      old_value: oldSettings?.openai_api_key ? '***' : null,
+      new_value: null,
+      is_sensitive: true,
+    }).then(({ error }) => {
+      if (error) console.error('[Audit Log] Failed to log OpenAI key deletion:', error);
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

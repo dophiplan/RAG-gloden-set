@@ -101,6 +101,8 @@ export default function GlobalChangeHistory() {
       const [
         { data: translationLogs },
         { data: glossaryLogs },
+        { data: userLogs },
+        { data: settingsLogs },
       ] = await Promise.all([
         supabase
           .from('translation_audit_logs')
@@ -109,6 +111,16 @@ export default function GlobalChangeHistory() {
           .limit(50),
         supabase
           .from('glossary_audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('user_audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('settings_audit_logs')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(50),
@@ -143,6 +155,34 @@ export default function GlobalChangeHistory() {
           created_at: log.created_at as string,
           is_rolled_back: (log.is_rolled_back as boolean) || false,
         })),
+        ...(userLogs || []).map((log: Record<string, unknown>) => ({
+          id: log.id as string,
+          entity_type: 'user' as const,
+          entity_id: (log.target_user_id || log.user_id) as string,
+          action: log.action as string,
+          user_name: log.user_name as string | null,
+          user_email: (log.user_email || 'unknown') as string,
+          field_name: log.field_name as string | null,
+          old_value: log.old_value as string | null,
+          new_value: log.new_value as string | null,
+          page_name: 'users',
+          created_at: log.created_at as string,
+          is_rolled_back: false,
+        })),
+        ...(settingsLogs || []).map((log: Record<string, unknown>) => ({
+          id: log.id as string,
+          entity_type: 'setting' as const,
+          entity_id: log.user_id as string,
+          action: log.action as string,
+          user_name: log.user_name as string | null,
+          user_email: (log.user_email || 'unknown') as string,
+          field_name: log.setting_key as string | null,
+          old_value: log.is_sensitive ? '***' : (log.old_value as string | null),
+          new_value: log.is_sensitive ? '***' : (log.new_value as string | null),
+          page_name: 'settings',
+          created_at: log.created_at as string,
+          is_rolled_back: false,
+        })),
       ];
 
       // Sort by created_at desc
@@ -156,10 +196,10 @@ export default function GlobalChangeHistory() {
         dashboard: [],
         translations: (allItems || []).filter(i => i.page_name === 'translations'),
         glossary: (allItems || []).filter(i => i.page_name === 'glossary'),
-        users: [],
-        settings: [],
+        users: (allItems || []).filter(i => i.page_name === 'users'),
+        settings: (allItems || []).filter(i => i.page_name === 'settings'),
         upload: [],
-        migration: [],
+        migration: (allItems || []).filter(i => i.page_name === 'migration'),
       };
       
       setPageHistory(byPage);

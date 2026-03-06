@@ -168,6 +168,20 @@ export async function PATCH(
       .eq('id', userId)
       .single();
 
+    // Create audit log (non-blocking)
+    void adminClient.from('user_audit_logs').insert({
+      user_id: authUser.id,
+      user_email: authUser.email,
+      action: 'update',
+      target_user_id: userId,
+      target_user_email: targetUser?.email,
+      field_name: Object.keys(updateData).join(', ') || 'permissions',
+      old_value: JSON.stringify({ name: targetUser?.email }), // Simplified old value
+      new_value: JSON.stringify(updateData),
+    }).then(({ error }) => {
+      if (error) console.error('[Audit Log] Failed to log user update:', error);
+    });
+
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error('Error updating user:', error);

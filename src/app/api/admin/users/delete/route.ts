@@ -32,7 +32,14 @@ async function verifyMasterUser(supabase: SupabaseClient): Promise<{ authorized:
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { authorized } = await verifyMasterUser(supabase);
+    const { authorized, userId: currentUserId } = await verifyMasterUser(supabase);
+    
+    // Get current user info for audit log
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', currentUserId || '')
+      .single();
 
     if (!authorized) {
       return NextResponse.json(
@@ -91,6 +98,24 @@ export async function POST(request: NextRequest) {
 
     if (errors.length > 0) {
       console.error('Errors during user deletion:', errors);
+    }
+
+    // Create audit logs for deleted users (non-blocking)
+    for (const user of targetUsers || []) {
+      if (!user.roles?.includes('1st_master')) { // Don't log 1st_master (shouldn't happen due to check above)
+        void supabase.from('user_audit_logs').insert({
+          user_id: currentUserId,
+          user_name: currentUser?.name,
+          user_email: currentUser?.email,
+          action: 'delete',
+          target_user_id: user.id,
+          target_user_email: user.email,
+          field_name: 'user',
+          old_value: JSON.stringify({ email: user.email, roles: user.roles }),
+        }).then(({ error }) => {
+          if (error) console.error('[Audit Log] Failed to log user deletion:', error);
+        });
+      }
     }
 
     return NextResponse.json({
