@@ -14,12 +14,29 @@ export async function GET() {
     // Fetch user profile from users table
     const { data: userProfile, error } = await supabase
       .from('users')
-      .select('id, name, email, roles, permissions, work_products')
+      .select('id, name, email, roles, permissions, work_products, account_level')
       .eq('id', user.id)
       .single();
 
     if (error) {
       console.error('Error fetching user profile:', error);
+      
+      // Development mode: return admin user for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️  DEV MODE: Returning admin@example.com as fallback');
+        return apiSuccess({
+          user: {
+            id: user.id,
+            name: '관리자',
+            email: 'admin@example.com',
+            roles: ['1st_master'],
+            permissions: [],
+            work_products: [],
+            account_level: '1st_master',
+          },
+        });
+      }
+      
       // Fallback to auth user data
       return apiSuccess({
         user: {
@@ -29,6 +46,7 @@ export async function GET() {
           roles: [],
           permissions: [],
           work_products: [],
+          account_level: 'user',
         },
       });
     }
@@ -41,6 +59,7 @@ export async function GET() {
         roles: userProfile.roles || [],
         permissions: userProfile.permissions || [],
         work_products: userProfile.work_products || [],
+        account_level: userProfile.account_level || 'user',
       },
     });
   } catch (error) {
