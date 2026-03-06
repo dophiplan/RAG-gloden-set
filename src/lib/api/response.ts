@@ -44,16 +44,38 @@ export function apiError(
  * Returns a standardized success response
  * @param data - Response data
  * @param meta - Optional metadata (pagination, counts, etc.)
+ * @param cacheControl - Optional cache control header (e.g., 'public, max-age=300')
  */
 export function apiSuccess<T>(
   data: T,
-  meta?: Record<string, any>
+  meta?: Record<string, any>,
+  cacheControl?: string
 ): NextResponse<ApiSuccessResponse<T>> {
   const body: ApiSuccessResponse<T> = {
     data,
     ...(meta !== undefined && { meta }),
   };
-  return NextResponse.json(body);
+  
+  const headers: Record<string, string> = {};
+  if (cacheControl) {
+    headers['Cache-Control'] = cacheControl;
+  }
+  
+  return NextResponse.json(body, { headers: Object.keys(headers).length > 0 ? headers : undefined });
+}
+
+/**
+ * Returns a cached success response for static reference data
+ * @param data - Response data
+ * @param meta - Optional metadata
+ * @param maxAgeSeconds - Cache duration in seconds (default: 300 = 5 minutes)
+ */
+export function apiCachedSuccess<T>(
+  data: T,
+  meta?: Record<string, any>,
+  maxAgeSeconds: number = 300
+): NextResponse<ApiSuccessResponse<T>> {
+  return apiSuccess(data, meta, `public, max-age=${maxAgeSeconds}, stale-while-revalidate=60`);
 }
 
 /**
