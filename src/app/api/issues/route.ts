@@ -9,7 +9,11 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // Development mode bypass
+    if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/issues');
+      // Continue without auth check
+    } else if (authError || !user) {
       return apiUnauthorized();
     }
 
@@ -53,7 +57,12 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // Development mode bypass
+    let userId = user?.id;
+    if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/issues');
+      userId = 'dev-mode-user';
+    } else if (authError || !user) {
       return apiUnauthorized();
     }
 
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
         issue_type,
         description,
         file_names,
-        user_id: user.id,
+        user_id: userId,
         resolved: false,
       })
       .select()
