@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useRollback } from '@/hooks/useRollback';
+import RollbackConflictModal from '@/components/rollback/RollbackConflictModal';
+import DiffView, { UserAvatar, getUserColors } from '@/components/rollback/DiffView';
 
 // Page types for filtering
 type PageType = 'all' | 'dashboard' | 'translations' | 'glossary' | 'users' | 'settings' | 'upload' | 'migration';
@@ -18,6 +21,7 @@ interface ChangeHistoryItem {
   new_value?: string | null;
   page_name: string;
   created_at: string;
+  is_rolled_back?: boolean;
 }
 
 const pageOptions: Array<{ id: PageType; label: string }> = [
@@ -65,8 +69,29 @@ export default function GlobalChangeHistory() {
     upload: [],
     migration: [],
   });
+  
+  // 선택된 이력 (diff 뷰용)
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  
+  // 롤백 상태 관리
+  const [currentRollbackType, setCurrentRollbackType] = useState<'translation' | 'glossary'>('translation');
+  
+  const translationRollback = useRollback('translation', () => {
+    fetchAllHistory();
+    setSelectedItemId(null);
+  });
+  
+  const glossaryRollback = useRollback('glossary', () => {
+    fetchAllHistory();
+    setSelectedItemId(null);
+  });
 
   const supabase = createClient();
+  
+  // 현재 선택된 타입의 롤백 훅 반환
+  const getCurrentRollback = () => {
+    return currentRollbackType === 'translation' ? translationRollback : glossaryRollback;
+  };
 
   // Fetch all change history
   const fetchAllHistory = async () => {
@@ -102,6 +127,7 @@ export default function GlobalChangeHistory() {
           new_value: log.new_value as string | null,
           page_name: 'translations',
           created_at: log.created_at as string,
+          is_rolled_back: (log.is_rolled_back as boolean) || false,
         })),
         ...(glossaryLogs || []).map((log: Record<string, unknown>) => ({
           id: log.id as string,
@@ -115,6 +141,7 @@ export default function GlobalChangeHistory() {
           new_value: log.new_value as string | null,
           page_name: 'glossary',
           created_at: log.created_at as string,
+          is_rolled_back: (log.is_rolled_back as boolean) || false,
         })),
       ];
 
@@ -176,6 +203,11 @@ export default function GlobalChangeHistory() {
 
   const currentHistory = pageHistory[selectedPage] || [];
   const currentPageLabel = pageOptions.find(p => p.id === selectedPage)?.label || '변경 이력';
+  
+  // 선택된 아이템 찾기
+  const selectedItem = useMemo(() => {
+    return currentHistory.find(item => item.id === selectedItemId);
+  }, [currentHistory, selectedItemId]);
 
   return (
     <>
@@ -271,14 +303,28 @@ export default function GlobalChangeHistory() {
             </div>
           ) : (
             <div className="space-y-3">
-              {(currentHistory || []).map((item) => (
+              {(currentHistory || []).map((item) => {
+                const colors = getUserColors(item.user_name || item.user_email);
+                const isSelected = selectedItemId === item.id;
+                
+                return (
                 <div
                   key={item.id}
-                  className="bg-white p-4 rounded-xl border border-gray-200 hover:border-amber-300 hover:shadow-sm transition-all"
+                  onClick={() => setSelectedItemId(isSelected ? null : item.id)}
+                  className={`bg-white p-4 rounded-xl border transition-all cursor-pointer ${
+                    isSelected 
+                      ? `${colors.border} shadow-md ring-1 ring-${colors.border.replace('border-', '')}` 
+                      : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
+                  }`}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2 flex-wrap">
+                      <UserAvatar 
+                        userName={item.user_name} 
+                        userEmail={item.user_email} 
+                        size="sm" 
+                      />
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         item.action === 'create' ? 'bg-green-100 text-green-700' :
                         item.action === 'update' ? 'bg-blue-100 text-blue-700' :
@@ -302,45 +348,77 @@ export default function GlobalChangeHistory() {
                     </time>
                   </div>
 
-                  {/* User */}
-                  <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    {item.user_name || item.user_email}
-                  </p>
+                  {/* User Name Badge */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${colors.bg} ${colors.text}`}>
+                      {item.user_name || item.user_email}
+                    </span>
+                  </div>
 
-                  {/* Change Details */}
-                  {item.field_name && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
+                  {/* Diff View (when selected) */}
+                  {isSelected && item.field_name && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
                       {/* Field Name Badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                          {item.field_name}
+                        </span>
+                        <span className="text-xs text-gray-400">필드 변경 상세</span>
+                      </div>
+                      
+                      {/* Diff View */}
+                      <DiffView
+                        oldValue={item.old_value || null}
+                        newValue={item.new_value || null}
+                        userName={item.user_name}
+                        showInline={false}
+                      />
+                      
+                      {/* Rollback Button - 선택된 항목에만 표시 */}
+                      {!item.is_rolled_back && item.action !== 'rollback' && item.action !== 'delete' && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const targetType = item.entity_type === 'translation' ? 'translation' : 'glossary';
+                              setCurrentRollbackType(targetType);
+                              const rollback = targetType === 'translation' ? translationRollback : glossaryRollback;
+                              
+                              const result = await rollback.rollbackWithConfirm(
+                                item.id,
+                                item.entity_id,
+                                { fieldName: item.field_name }
+                              );
+                              
+                              if (result) {
+                                fetchAllHistory();
+                              }
+                            }}
+                            disabled={getCurrentRollback().isLoading || getCurrentRollback().isChecking}
+                            className="flex items-center gap-2 text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            이 버전으로 롤백
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Collapsed View (not selected) */}
+                  {!isSelected && item.field_name && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded">
                           {item.field_name}
                         </span>
-                        <span className="text-xs text-gray-400">필드 변경</span>
+                        <span className="text-xs text-gray-400">클릭하여 변경 내용 보기</span>
                       </div>
-                      
-                      {/* Before/After Comparison */}
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-medium text-red-500 w-10 shrink-0">Before</span>
-                          <p className="text-xs text-red-600 bg-red-50 px-2 py-1.5 rounded flex-1 break-all">
-                            {item.old_value || '(없음)'}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-center">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                          </svg>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs font-medium text-green-500 w-10 shrink-0">After</span>
-                          <p className="text-xs text-green-600 bg-green-50 px-2 py-1.5 rounded flex-1 break-all">
-                            {item.new_value || '(없음)'}
-                          </p>
-                        </div>
-                      </div>
+                      <p className="text-xs text-gray-500 truncate">
+                        {item.old_value || '(없음)'} → {item.new_value || '(없음)'}
+                      </p>
                     </div>
                   )}
 
@@ -354,7 +432,8 @@ export default function GlobalChangeHistory() {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>
@@ -376,6 +455,27 @@ export default function GlobalChangeHistory() {
           </button>
         </div>
       </div>
+      
+      {/* Rollback Conflict Modal */}
+      {translationRollback.showConflictModal && (
+        <RollbackConflictModal
+          isOpen={translationRollback.showConflictModal}
+          conflicts={translationRollback.conflicts}
+          onResolve={(resolution) => {
+            translationRollback.resolveAndExecute(resolution);
+          }}
+        />
+      )}
+      
+      {glossaryRollback.showConflictModal && (
+        <RollbackConflictModal
+          isOpen={glossaryRollback.showConflictModal}
+          conflicts={glossaryRollback.conflicts}
+          onResolve={(resolution) => {
+            glossaryRollback.resolveAndExecute(resolution);
+          }}
+        />
+      )}
     </>
   );
 }
