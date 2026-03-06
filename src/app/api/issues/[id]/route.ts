@@ -35,7 +35,7 @@ export async function PATCH(
       return apiNotFound('이슈');
     }
 
-    if (issue.user_id !== user.id && !isMaster(currentUser)) {
+    if (issue.user_id !== user.id && !isMaster(currentUser as any)) {
       return apiForbidden('권한이 없습니다.');
     }
 
@@ -108,7 +108,7 @@ export async function DELETE(
       return apiNotFound('이슈');
     }
 
-    if (issue.user_id !== user.id && !isMaster(currentUser)) {
+    if (issue.user_id !== user.id && !isMaster(currentUser as any)) {
       return apiForbidden('권한이 없습니다.');
     }
 

@@ -25,7 +25,7 @@ export async function PATCH(
       .single();
 
     // Only masters can update users
-    if (!isMaster(currentUser)) {
+    if (!isMaster(currentUser as any)) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 
@@ -142,7 +142,7 @@ export async function DELETE(
       .single();
 
     // Only masters can delete users
-    if (!isMaster(currentUser)) {
+    if (!isMaster(currentUser as any)) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
 

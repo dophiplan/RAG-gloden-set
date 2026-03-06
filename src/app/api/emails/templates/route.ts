@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (!isMaster(currentUser)) {
+    if (!isMaster(currentUser as any)) {
       return NextResponse.json({ error: 'Master 권한이 필요합니다.' }, { status: 403 });
     }
 
