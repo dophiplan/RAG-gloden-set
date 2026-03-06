@@ -18,9 +18,18 @@ export function hasAnyRole(user: User | null, roles: UserRole[]): boolean {
 
 /**
  * Check if user is a master (admin)
+ * Checks account_level first, falls back to roles for backwards compatibility
  */
 export function isMaster(user: User | null): boolean {
-  return hasRole(user, 'master');
+  if (!user) return false;
+  
+  // Check account_level if available
+  if (user.account_level) {
+    return user.account_level === 'master' || user.account_level === '1st_master';
+  }
+  
+  // Fallback: check roles for backwards compatibility
+  return hasRole(user, 'master') || hasRole(user, '1st_master');
 }
 
 /**
