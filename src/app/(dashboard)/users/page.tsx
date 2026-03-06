@@ -6,6 +6,7 @@ import Card, { CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import Modal from '@/components/ui/Modal';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
 import { FIRST_MASTER_EMAIL } from '@/types/users';
 import { useProducts } from '@/hooks/useReferenceData';
@@ -19,6 +20,9 @@ interface SystemUser {
   roles: string[];
   permissions: string[];
   work_products: string[];
+  work_scope?: string[];
+  work_languages?: string[];
+  account_level?: string;
   translatorLanguages?: string[];
   created_at: string;
 }
@@ -28,6 +32,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([]);
+  const [accountLevel, setAccountLevel] = useState<string>('');
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   // Fetch products from DB
   const { products } = useProducts();
@@ -89,6 +95,33 @@ export default function UsersPage() {
       return true;
     });
   }, [systemUsers, filterProduct, filterPermission, filterAccountLevel, searchQuery]);
+
+  // Check authorization on mount
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(result => {
+        const userData = result.data?.user || result.data || result.user;
+        if (userData) {
+          setCurrentUserEmail(userData.email || '');
+          setCurrentUserRoles(userData.roles || []);
+          const level = userData.account_level || '';
+          setAccountLevel(level);
+          
+          // Only master and 1st_master can access this page
+          const isMasterUser = level === 'master' || level === '1st_master';
+          setIsAuthorized(isMasterUser);
+          
+          if (!isMasterUser) {
+            showError('접근 권한이 없습니다. 관리자만 접근할 수 있습니다.');
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching current user:', error);
+        setIsAuthorized(false);
+      });
+  }, []);
 
   const fetchSystemUsers = async () => {
     setLoading(true);
@@ -264,6 +297,37 @@ export default function UsersPage() {
       .catch(console.error);
   }, []);
 
+  // Show loading state while checking authorization
+  if (isAuthorized === null) {
+    return (
+      <DashboardLayout title="사용자 관리" subtitle="">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#818CF8]"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show access denied for non-master users
+  if (!isAuthorized) {
+    return (
+      <DashboardLayout title="접근 불가" subtitle="">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h2>
+            <p className="text-gray-600 mb-6">이 페이지는 관리자만 접근할 수 있습니다.</p>
+            <Button variant="primary" onClick={() => window.location.href = '/'}>
+              대시보드로 돌아가기
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout
       title="사용자 관리"
@@ -408,6 +472,8 @@ export default function UsersPage() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">제품</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">이름</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">이메일</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">작업 범위</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">언어</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">작업 권한</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-700">번역 언어</th>
                   </tr>
@@ -415,13 +481,13 @@ export default function UsersPage() {
                 <tbody className="divide-y">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (filteredUsers || []).length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
                         {(systemUsers || []).length === 0 ? '등록된 사용자가 없습니다.' : '필터 조건에 맞는 사용자가 없습니다.'}
                       </td>
                     </tr>
@@ -455,23 +521,22 @@ export default function UsersPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
-                            {systemUser.roles && systemUser.roles.length > 0 ? (
-                              (systemUser.roles || []).map((role) => (
-                                <span
-                                  key={role}
-                                  className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
-                                    role === '1st_master'
-                                      ? 'bg-red-100 text-red-800'
-                                      : role === 'master'
-                                      ? 'bg-purple-100 text-purple-800'
-                                      : role === 'manager'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {role === '1st_master' ? '1st Master' : role === 'master' ? 'Master' : role === 'manager' ? 'Manager' : 'User'}
-                                </span>
-                              ))
+                            {systemUser.account_level ? (
+                              <span
+                                className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${
+                                  systemUser.account_level === '1st_master'
+                                    ? 'bg-red-100 text-red-800'
+                                    : systemUser.account_level === 'master'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : systemUser.account_level === 'manager'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {systemUser.account_level === '1st_master' ? '1st Master' : 
+                                 systemUser.account_level === 'master' ? 'Master' : 
+                                 systemUser.account_level === 'manager' ? 'Manager' : 'User'}
+                              </span>
                             ) : (
                               <span className="text-xs text-gray-400">-</span>
                             )}
@@ -498,6 +563,38 @@ export default function UsersPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {systemUser.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {systemUser.work_scope && systemUser.work_scope.length > 0 ? (
+                              (systemUser.work_scope || []).map((scope) => (
+                                <span
+                                  key={scope}
+                                  className="inline-block px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 rounded"
+                                >
+                                  {scope}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {systemUser.work_languages && systemUser.work_languages.length > 0 ? (
+                              (systemUser.work_languages || []).map((lang) => (
+                                <span
+                                  key={lang}
+                                  className="inline-block px-2 py-0.5 text-xs font-medium bg-teal-100 text-teal-800 rounded"
+                                >
+                                  {lang.toUpperCase()}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-2">
@@ -558,37 +655,22 @@ export default function UsersPage() {
       </div>
 
       {/* Add User Modal */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}
-        >
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between px-6 py-3 border-b">
-              <h3 className="text-base font-semibold text-gray-900">
-                {editingUserId ? '사용자 수정' : '사용자 추가'}
-              </h3>
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingUserId(null);
-                  setModalData(defaultModalData);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingUserId(null);
+          setModalData(defaultModalData);
+        }}
+        title={editingUserId ? '사용자 수정' : '사용자 추가'}
+        size="md"
+      >
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto p-1">
               {/* Account Level - First */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  계정 권한 *
-                </label>
-                <select
+                <Select
+                  label="계정 권한"
+                  required
                   value={modalData.accountLevel}
                   onChange={(e) => {
                     const level = e.target.value as '1st_master' | 'master' | 'manager' | 'user';
@@ -603,13 +685,13 @@ export default function UsersPage() {
                       setModalData({ ...modalData, accountLevel: level });
                     }
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="user">사용자</option>
-                  <option value="manager">중간 관리자</option>
-                  <option value="master">마스터</option>
-                  <option value="1st_master">최고 관리자</option>
-                </select>
+                  options={[
+                    { value: 'user', label: '사용자' },
+                    { value: 'manager', label: '중간 관리자' },
+                    { value: 'master', label: '마스터' },
+                    { value: '1st_master', label: '최고 관리자' },
+                  ]}
+                />
                 {(modalData.accountLevel === 'master' || modalData.accountLevel === '1st_master') && (
                   <p className="text-xs text-blue-600 mt-1">
                     ℹ️ {modalData.accountLevel === '1st_master' ? '최고 관리자' : '마스터'}는 모든 제품과 권한에 자동으로 접근할 수 있습니다.
@@ -752,29 +834,27 @@ export default function UsersPage() {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-6 py-3 border-t bg-gray-50">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingUserId(null);
-                  setModalData(defaultModalData);
-                }}
-              >
-                취소
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={editingUserId ? handleEditUser : handleAddUser}
-              >
-                {editingUserId ? '수정' : '추가'}
-              </Button>
-            </div>
-          </div>
+        <div className="flex items-center justify-end gap-3 pt-4 border-t mt-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setIsModalOpen(false);
+              setEditingUserId(null);
+              setModalData(defaultModalData);
+            }}
+          >
+            취소
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={editingUserId ? handleEditUser : handleAddUser}
+          >
+            {editingUserId ? '수정' : '추가'}
+          </Button>
         </div>
-      )}
+      </Modal>
 
       {/* Bulk Action Bar */}
       <UserBulkActionBar
@@ -782,7 +862,28 @@ export default function UsersPage() {
         selectedIds={selectedUserIds}
         onClearSelection={() => setSelectedUserIds([])}
         onRefresh={fetchSystemUsers}
+        onDelete={handleDeleteUsers}
       />
+    </DashboardLayout>
+  );
+}
+
+// Access Denied Component
+function AccessDenied() {
+  return (
+    <DashboardLayout title="접근 불가" subtitle="">
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h2>
+          <p className="text-gray-600 mb-4">이 페이지는 관리자만 접근할 수 있습니다.</p>
+          <Button variant="primary" onClick={() => window.location.href = '/'}>
+            대시보드로 돌아가기
+          </Button>
+        </div>
+      </div>
     </DashboardLayout>
   );
 }
