@@ -7,6 +7,20 @@ const nextConfig: NextConfig = {
   // Compression
   compress: true,
 
+  // Turbopack configuration (empty = use defaults)
+  turbopack: {},
+
+  // Experimental optimizations
+  experimental: {
+    // Optimize package imports for commonly used libraries
+    optimizePackageImports: [
+      'lucide-react',
+      '@heroicons/react',
+      'react-icons',
+      'date-fns',
+    ],
+  },
+
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -16,9 +30,11 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
       },
     ],
+    // Cache optimized images
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
 
-  // Security headers
+  // Security headers with performance
   async headers() {
     return [
       {
@@ -37,6 +53,16 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https:",
               "connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.openai.com",
             ].join('; '),
+          },
+        ],
+      },
+      // Cache static assets
+      {
+        source: '/:all*(svg|jpg|png|webp|avif|ico|woff|woff2)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
