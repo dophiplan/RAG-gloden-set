@@ -26,10 +26,19 @@ interface FieldMappingProps {
   platforms?: { code: string; name: string }[]; // 플랫폼 목록
 }
 
-// 전역 드래그 상태
-let globalDragType: 'column' | 'version' | null = null;
-let globalDragValue: string | null = null;
-let globalDragSourceVersion: string | null = null; // 드래그 시작한 버전
+// 드래그 상태 타입
+type DragState = {
+  type: 'column' | 'version' | null;
+  value: string | null;
+  sourceVersion: string | null;
+};
+
+// 전역 드래그 상태 (모듈 레벨에서 관리)
+const globalDragState: DragState = {
+  type: null,
+  value: null,
+  sourceVersion: null,
+};
 
 export default function FieldMapping({
   sheetsData,
@@ -139,9 +148,9 @@ export default function FieldMapping({
     // selectedVersion이 없으면 드롭 무시
     if (!selectedVersion) return;
     
-    const type = globalDragType;
-    const value = globalDragValue;
-    const sourceVersion = globalDragSourceVersion;
+    const type = globalDragState.type;
+    const value = globalDragState.value;
+    const sourceVersion = globalDragState.sourceVersion;
     
     if (!value || !type) return;
     
@@ -513,8 +522,8 @@ function VersionItem({ sheet, isSelected, hasMapping, isDisabled, onSelect }: Ve
     isDragging.current = false;
     clickTimer.current = setTimeout(() => {
       isDragging.current = true;
-      globalDragType = 'version';
-      globalDragValue = sheet.name;
+      globalDragState.type = 'version';
+      globalDragState.value = sheet.name;
     }, 200);
   };
 
@@ -539,16 +548,16 @@ function VersionItem({ sheet, isSelected, hasMapping, isDisabled, onSelect }: Ve
       clickTimer.current = null;
     }
     isDragging.current = true;
-    globalDragType = 'version';
-    globalDragValue = sheet.name;
-    globalDragSourceVersion = sheet.name; // 버전 자체를 드래그하므로 자신의 이름 저장
+    globalDragState.type = 'version';
+    globalDragState.value = sheet.name;
+    globalDragState.sourceVersion = sheet.name; // 버전 자체를 드래그하므로 자신의 이름 저장
     e.dataTransfer.effectAllowed = 'copy';
   };
 
   const handleDragEnd = () => {
     setTimeout(() => {
-      globalDragType = null;
-      globalDragValue = null;
+      globalDragState.type = null;
+      globalDragState.value = null;
       isDragging.current = false;
     }, 0);
   };
@@ -741,17 +750,17 @@ function FileColumnList({ fileColumns, selectedVersion, currentMappings, onMappi
   };
 
   const handleDragStart = (e: React.DragEvent, columns: string[]) => {
-    globalDragType = 'column';
-    globalDragValue = JSON.stringify(columns); // 여러 컬럼을 JSON으로 전달
-    globalDragSourceVersion = selectedVersion;
+    globalDragState.type = 'column';
+    globalDragState.value = JSON.stringify(columns); // 여러 컬럼을 JSON으로 전달
+    globalDragState.sourceVersion = selectedVersion;
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('columns', JSON.stringify(columns));
   };
 
   const handleDragEnd = () => {
-    globalDragType = null;
-    globalDragValue = null;
-    globalDragSourceVersion = null;
+    globalDragState.type = null;
+    globalDragState.value = null;
+    globalDragState.sourceVersion = null;
     setSelectedColumns([]); // 드래그 후 선택 해제
   };
 
