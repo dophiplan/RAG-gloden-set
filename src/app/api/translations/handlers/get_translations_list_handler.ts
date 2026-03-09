@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
 import { TranslationCrudService } from '@/services';
 import { apiSuccess, apiInternalError } from '@/lib/api/response';
@@ -13,11 +13,14 @@ import { TranslationStatus, ProductCode, ScopeType } from '@/types';
 export async function handleGetTranslationsList(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { user, error: authError } = await getAuthUser(supabase);
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return unauthorizedResponse ? unauthorizedResponse() : apiInternalError('Unauthorized');
     }
+
+    // Use admin client to bypass RLS for data fetching
+    const dataClient = adminClient || createAdminClient();
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -58,8 +61,8 @@ export async function handleGetTranslationsList(request: NextRequest) {
       createdBefore: createdBefore || undefined,
     };
 
-    // Call service
-    const service = new TranslationCrudService(supabase);
+    // Call service with admin client to bypass RLS
+    const service = new TranslationCrudService(dataClient);
     const result = await service.getTranslationsList(filters, { page, limit });
 
     return apiSuccess({
