@@ -245,11 +245,15 @@ export function VersionHistoryPanel({
 
                   {/* 내용 카드 */}
                   <div className={`rounded-lg border ${isCurrent ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-white'} p-3 shadow-sm`}>
-                    {/* 상단: 사용자 + 시간 */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <UserAvatar userName={log.changedBy} size="sm" />
-                      <span className="text-sm font-medium text-gray-900">{log.changedBy}</span>
-                      <span className="text-xs text-gray-400 ml-auto">{formatDateTime(log.createdAt)}</span>
+                    {/* 상단: 사용자 정보 강조 */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0">
+                        <UserAvatar userName={log.changedBy} size="md" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-base font-bold text-gray-900">{log.changedBy}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{formatDateTime(log.createdAt)}</div>
+                      </div>
                     </div>
 
                     {/* 변경 유형 배지 */}
