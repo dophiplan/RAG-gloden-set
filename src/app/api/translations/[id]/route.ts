@@ -28,7 +28,7 @@ export async function GET(
       .select(`
         *,
         translation_results (*),
-        translation_platforms (*)
+        translation_products (*)
       `)
       .eq('id', id)
       .single();
@@ -154,14 +154,13 @@ export async function PATCH(
       }
     }
 
-    // Fetch updated translation with products and platforms
+    // Fetch updated translation with products
     const { data: updatedTranslation } = await dbClient
       .from('translations')
       .select(`
         *,
         translation_results (*),
-        translation_products (*),
-        translation_platforms (*)
+        translation_products (*)
       `)
       .eq('id', id)
       .single();

@@ -207,12 +207,18 @@ export async function POST(request: NextRequest) {
       warning = '자동 번역 중 오류가 발생했습니다.';
     }
 
-    // Create audit logs
+    // Create audit logs - fetch user profile for accurate name
+    const { data: userProfile } = await adminClient
+      .from('users')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    
     await adminClient.from('translation_audit_logs').insert(
       (data || []).map((t: any) => ({
         translation_id: t.id,
         user_id: user.id,
-        user_name: (user as any).name || null,
+        user_name: userProfile?.name || null,
         user_email: user.email || 'unknown',
         action: 'create',
         new_value: t.source_text,
