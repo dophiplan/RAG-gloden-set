@@ -12,6 +12,7 @@ type TabType = 'manual' | 'pdf';
 interface CreateTranslationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialProductCode?: ProductCode | null;
   onCreate: (
     sourceText: string,
     context: string,
@@ -38,6 +39,7 @@ interface CreateTranslationModalProps {
 export default function CreateTranslationModal({
   isOpen,
   onClose,
+  initialProductCode,
   onCreate,
   onPDFUpload,
 }: CreateTranslationModalProps) {
@@ -47,7 +49,7 @@ export default function CreateTranslationModal({
   const [newSourceText, setNewSourceText] = useState('');
   const [newContext, setNewContext] = useState('');
   const [newVersion, setNewVersion] = useState('');
-  const [newProductCode, setNewProductCode] = useState<ProductCode | ''>('');
+  const [newProductCode, setNewProductCode] = useState<ProductCode | ''>(initialProductCode || '');
   const [newScope, setNewScope] = useState<ScopeType>('');
   const [newPriority, setNewPriority] = useState<PriorityLevel>('medium');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
@@ -57,13 +59,21 @@ export default function CreateTranslationModal({
   // PDF upload states
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
   const [pdfVersion, setPdfVersion] = useState('');
-  const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>('');
+  const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>(initialProductCode || '');
   const [pdfScope, setPdfScope] = useState<ScopeType>('');
   const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('medium');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [pdfSelectedPlatforms, setPdfSelectedPlatforms] = useState<string[]>([]);
   const [pdfCompletionDate, setPdfCompletionDate] = useState('');
   const [uploading, setUploading] = useState(false);
+  
+  // Update product code when modal opens with new initial value
+  useEffect(() => {
+    if (isOpen && initialProductCode) {
+      setNewProductCode(initialProductCode);
+      setPdfProductCode(initialProductCode);
+    }
+  }, [isOpen, initialProductCode]);
   const [pdfError, setPdfError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

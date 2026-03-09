@@ -182,6 +182,7 @@ function TranslationsContent() {
         <CreateTranslationModal
           isOpen={modals.isCreateModalOpen}
           onClose={modals.closeCreateModal}
+          initialProductCode={filters.selectedProduct}
           onCreate={handlers.handleCreateTranslation}
           onPDFUpload={handlers.handlePDFUpload}
         />

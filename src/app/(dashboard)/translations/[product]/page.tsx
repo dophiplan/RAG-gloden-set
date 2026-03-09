@@ -280,6 +280,7 @@ function TranslationsProductContent() {
         <CreateTranslationModal
           isOpen={modals.isCreateModalOpen}
           onClose={modals.closeCreateModal}
+          initialProductCode={productCode}
           onCreate={mutations.handleCreate}
           onPDFUpload={handlers.handlePDFUpload}
         />
