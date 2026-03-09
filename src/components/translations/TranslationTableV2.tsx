@@ -267,7 +267,6 @@ export default memo(function TranslationTableV2({
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* Pagination */}
