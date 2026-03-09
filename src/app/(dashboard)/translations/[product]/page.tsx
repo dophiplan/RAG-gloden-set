@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import TranslationTableV2 from '@/components/translations/TranslationTableV2';
@@ -28,7 +28,7 @@ import TranslationFiltersBar from '../components/TranslationFiltersBar';
 import CreateTranslationModal from '../components/CreateTranslationModal';
 import GlossaryAddModal from '../components/GlossaryAddModal';
 import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
-import { BulkVersionHistoryPanel } from '../components/VersionHistory';
+import { BulkVersionHistoryPanel, VersionHistoryPanel } from '../components/VersionHistory';
 
 function TranslationsProductContent() {
   const params = useParams();
@@ -70,8 +70,11 @@ function TranslationsProductContent() {
   // Modal states
   const modals = useModalStates(translations);
   
-  // Debug log
-  console.log('[Product Page] modals.selectedIds:', modals.selectedIds, 'modals.selectedTranslations:', modals.selectedTranslations.length);
+  // Debug log - 개발 모드에서만 출력
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.log('[Product Page] modals.selectedIds:', modals.selectedIds, 'modals.selectedTranslations:', modals.selectedTranslations.length);
+  }
 
   // Event handlers
   const handlers = useTranslationEventHandlers({
@@ -80,6 +83,8 @@ function TranslationsProductContent() {
     openEmailModal: modals.openEmailModal,
     openDeploymentModal: modals.openDeploymentModal,
     selectedTranslationsCount: modals.selectedTranslations.length,
+    translations,
+    selectedTranslations: modals.selectedTranslations,
   });
 
   // URL params handling
@@ -114,6 +119,41 @@ function TranslationsProductContent() {
   const availableLanguages = useMemo(() => {
     return getAllDisplayableLanguages();
   }, []);
+
+  // 개별 번역 항목 히스토리 모달 상태
+  const [individualHistoryModal, setIndividualHistoryModal] = useState<{
+    open: boolean;
+    translationId: string | null;
+    languageCode: string;
+    curre[기밀마스킹]ext: string;
+  }>({
+    open: false,
+    translationId: null,
+    languageCode: 'ko',
+    curre[기밀마스킹]ext: '',
+  });
+
+  // 번역 텍스트 가져오기 헬퍼
+  const getTranslationText = useCallback((translation: typeof translations[0], languageCode: string): string => {
+    const result = translation.translation_results?.find(
+      (r) => r.language_code === languageCode
+    );
+    return result?.translated_text || '';
+  }, []);
+
+  // 히스토리 버튼 클릭 핸들러
+  const handleHistoryClick = useCallback((translationId: string) => {
+    const translation = translations.find(t => t.id === translationId);
+    if (translation) {
+      const langCode = filters.selectedLanguageColumns?.[0] || 'ko';
+      setIndividualHistoryModal({
+        open: true,
+        translationId,
+        languageCode: langCode,
+        curre[기밀마스킹]ext: getTranslationText(translation, langCode),
+      });
+    }
+  }, [translations, filters.selectedLanguageColumns, getTranslationText]);
 
   // Request list data
   const [requests, setRequests] = useState<DashboardRequest[]>([]);
@@ -253,6 +293,7 @@ function TranslationsProductContent() {
           onPriorityChange={mutations.handlePriorityChange}
           onDelete={mutations.handleDelete}
           onAddToGlossary={glossary.handleOpenModal}
+          onHistoryClick={handleHistoryClick}
           onToggleSelectAll={modals.toggleSelectAll}
           onToggleSelect={modals.toggleSelect}
           selectedIds={modals.selectedIds}
@@ -269,7 +310,7 @@ function TranslationsProductContent() {
           selectedCount={modals.selectedIds.length}
           selectedIds={modals.selectedIds}
           onClearSelection={modals.clearSelection}
-          onBulkStatusChange={mutations.handleBulkStatusChange}
+          onBulkStatusChange={(status) => mutations.handleBulkStatusChange(modals.selectedIds, status)}
           onBulkDelete={mutations.handleBulkDelete}
           onBulkExport={handlers.handleBulkExport}
           onVersionHistoryClick={modals.openVersionHistoryPanel}
@@ -328,7 +369,7 @@ function TranslationsProductContent() {
           onSave={glossary.handleGlossaryCreate}
         />
 
-        {/* Version History Sidebar */}
+        {/* Version History Sidebar (Bulk) */}
         {modals.isVersionHistoryPanelOpen && modals.selectedTranslations.length > 0 && (
           <div className="fixed inset-y-0 right-0 w-96 bg-white border-l shadow-xl z-50 flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
@@ -350,6 +391,32 @@ function TranslationsProductContent() {
                   fetchTranslations();
                 }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* 개별 번역 히스토리 모달 */}
+        {individualHistoryModal.open && individualHistoryModal.translationId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="font-semibold text-gray-900">버전 기록</h3>
+                <button
+                  onClick={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <VersionHistoryPanel
+                  translationId={individualHistoryModal.translationId}
+                  languageCode={individualHistoryModal.languageCode}
+                  curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
+                />
+              </div>
             </div>
           </div>
         )}

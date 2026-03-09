@@ -47,6 +47,7 @@ export interface TranslationRowProps {
   onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
   onDelete: (id: string) => void;
   onAddToGlossary?: (translation: TranslationWithResults) => void;
+  onHistoryClick?: (translationId: string) => void;
 }
 
 /**
@@ -72,6 +73,7 @@ const TranslationRow = memo(function TranslationRow({
   onPlatformsUpdate,
   onDelete,
   onAddToGlossary,
+  onHistoryClick,
 }: TranslationRowProps) {
   const { productsMap } = useProducts();
   const { platformsMap } = usePlatforms();
@@ -375,6 +377,20 @@ const TranslationRow = memo(function TranslationRow({
       </td>
       <td className="px-0.5 py-0.5 align-top" style={getCellStyle('actions')}>
         <div className="flex gap-1">
+          {onHistoryClick && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onHistoryClick(translation.id);
+              }}
+              className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+              title="버전 기록"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          )}
           {onAddToGlossary && (
             <button
               onClick={(e) => {

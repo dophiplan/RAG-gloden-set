@@ -78,10 +78,35 @@ export function useTranslationMutations({
     handleProductsUpdate,
     handlePlatformsUpdate,
     handlePlatformUpdate: handlePlatformsUpdate, // Alias for backward compatibility
-    handleScreenUpdate: async () => {}, // Placeholder
+    handleScreenUpdate: handleDevCodeUpdate, // 화면 코드 업데이트 (dev_code 필드)
     handleDelete,
     handleBulkCreate,
-    handleBulkStatusChange: async () => {}, // Placeholder
+    handleBulkStatusChange: async (ids: string[], status: import('@/types/translations').TranslationStatus) => {
+      if (!ids || ids.length === 0) {
+        showError('변경할 항목을 선택해주세요.');
+        return;
+      }
+
+      if (!status) {
+        showError('변경할 상태를 선택해주세요.');
+        return;
+      }
+
+      try {
+        const result = await apiFetch<{ updated: number }>('/api/translations/bulk-update', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            translation_ids: ids,
+            status,
+          }),
+        });
+        showSuccess(`${result.updated}개 항목의 상태가 변경되었습니다.`);
+        fetchTranslations();
+      } catch (error) {
+        console.error('Bulk status change error:', error);
+        showError(error instanceof Error ? error.message : '상태 변경 중 오류가 발생했습니다.');
+      }
+    },
     handleBulkDelete: async (ids: string[]) => {
       if (!showConfirm(`${(ids || []).length}개 항목을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
         return;

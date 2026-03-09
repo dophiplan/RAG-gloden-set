@@ -150,13 +150,12 @@ export function invalidateCache(key: string | RegExp) {
   if (typeof key === 'string') {
     globalMutate(key, undefined, { revalidate: true });
   } else {
-    // Invalidate all keys matching pattern
-    const cache = new Map();
-    cache.forEach((_, k) => {
-      if (key.test(k)) {
-        globalMutate(k, undefined, { revalidate: true });
-      }
-    });
+    // Invalidate all keys matching pattern using SWR's mutate filter
+    globalMutate(
+      (k) => typeof k === 'string' && key.test(k),
+      undefined,
+      { revalidate: true }
+    );
   }
 }
 

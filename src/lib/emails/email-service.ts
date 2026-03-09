@@ -1,7 +1,9 @@
 /**
  * Email Service Interface and Implementations
- * Supports mock (for development) and real email providers (SMTP, SendGrid)
+ * Supports mock (for development), SMTP, and SendGrid providers
  */
+
+import nodemailer from 'nodemailer';
 
 export interface EmailParams {
   to: string[];
@@ -39,32 +41,134 @@ export class MockEmailService implements EmailService {
     }
     console.log('='.repeat(80));
 
-    // Simulate success
     return { success: true };
   }
 }
 
 /**
- * SMTP Email Service - For future implementation
+ * SMTP Email Service - Production-ready SMTP implementation
  */
 export class SMTPEmailService implements EmailService {
+  private transporter: nodemailer.Transporter | null = null;
+
+  constructor() {
+    const host = process.env.SMTP_HOST;
+    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const secure = process.env.SMTP_SECURE === 'true';
+
+    if (!host || !user || !pass) {
+      console.warn('[SMTP] Missing required environment variables. Falling back to mock.');
+      return;
+    }
+
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user, pass },
+      // Connection pool settings
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      // Timeout settings
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+    });
+  }
+
   async send(params: EmailParams): Promise<{ success: boolean; error?: string }> {
-    // TODO: Implement SMTP email sending
-    // Use nodemailer or similar library
-    console.warn('SMTP Email Service not implemented yet, using mock');
-    return new MockEmailService().send(params);
+    if (!this.transporter) {
+      console.warn('[SMTP] Transporter not initialized. Using mock.');
+      return new MockEmailService().send(params);
+    }
+
+    try {
+      const from = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@example.com';
+      const fromName = process.env.SMTP_FROM_NAME || 'Translation Manager';
+
+      const result = await this.transporter.sendMail({
+        from: `"${fromName}" <${from}>`,
+        to: params.to.join(', '),
+        cc: params.cc?.join(', '),
+        subject: params.subject,
+        text: params.text,
+        html: params.html,
+      });
+
+      console.log('[SMTP] Email sent:', result.messageId);
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[SMTP] Failed to send email:', errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 }
 
 /**
- * SendGrid Email Service - For future implementation
+ * SendGrid Email Service - Production-ready SendGrid implementation
  */
 export class SendGridEmailService implements EmailService {
+  private sgMail: typeof import('@sendgrid/mail') | null = null;
+
+  constructor() {
+    const apiKey = process.env.SENDGRID_API_KEY;
+
+    if (!apiKey) {
+      console.warn('[SendGrid] SENDGRID_API_KEY not set. Falling back to mock.');
+      return;
+    }
+
+    try {
+      // Dynamic import to avoid loading if not used
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(apiKey);
+      this.sgMail = sgMail;
+    } catch (error) {
+      console.warn('[SendGrid] Failed to initialize. Falling back to mock:', error);
+    }
+  }
+
   async send(params: EmailParams): Promise<{ success: boolean; error?: string }> {
-    // TODO: Implement SendGrid email sending
-    // Use @sendgrid/mail library
-    console.warn('SendGrid Email Service not implemented yet, using mock');
-    return new MockEmailService().send(params);
+    if (!this.sgMail) {
+      console.warn('[SendGrid] Not initialized. Using mock.');
+      return new MockEmailService().send(params);
+    }
+
+    try {
+      const from = process.env.SENDGRID_FROM || process.env.SMTP_FROM || 'noreply@example.com';
+      const fromName = process.env.SENDGRID_FROM_NAME || process.env.SMTP_FROM_NAME || 'Translation Manager';
+
+      const msg = {
+        to: params.to,
+        cc: params.cc,
+        from: { email: from, name: fromName },
+        subject: params.subject,
+        text: params.text,
+        html: params.html,
+      };
+
+      await this.sgMail.send(msg);
+      console.log('[SendGrid] Email sent to:', params.to.join(', '));
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[SendGrid] Failed to send email:', errorMessage);
+      
+      // SendGrid specific error handling
+      if (error && typeof error === 'object' && 'response' in error) {
+        const sgError = error as { response?: { body?: { errors?: Array<{ message: string }> } } };
+        const sgErrors = sgError.response?.body?.errors;
+        if (sgErrors && sgErrors.length > 0) {
+          console.error('[SendGrid] Errors:', sgErrors.map(e => e.message).join(', '));
+        }
+      }
+      
+      return { success: false, error: errorMessage };
+    }
   }
 }
 

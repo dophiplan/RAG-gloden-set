@@ -14,7 +14,7 @@ interface TranslationBulkActionBarProps {
   onOpenEmailModal?: (templateType: 'translation_request') => void;
   onOpenDeploymentModal?: () => void;
   // Additional handlers for backward compatibility
-  onBulkStatusChange?: (status: string) => Promise<void>;
+  onBulkStatusChange?: (status: TranslationStatus) => Promise<void>;
   onBulkDelete?: (ids: string[]) => Promise<void>;
   onBulkExport?: () => Promise<void>;
   onVersionHistoryClick?: () => void;
@@ -38,6 +38,7 @@ export default function TranslationBulkActionBar({
   onRefresh,
   onOpenEmailModal,
   onOpenDeploymentModal,
+  onBulkStatusChange,
   onBulkDelete,
 }: TranslationBulkActionBarProps) {
   const { products } = useProducts();
@@ -103,6 +104,13 @@ export default function TranslationBulkActionBar({
 
     if (!targetStatus) {
       showError('상태를 선택해주세요.');
+      return;
+    }
+
+    // 외부에서 onBulkStatusChange prop이 전달되면 사용
+    if (onBulkStatusChange) {
+      await onBulkStatusChange(targetStatus);
+      setSelectedStatus('');
       return;
     }
 

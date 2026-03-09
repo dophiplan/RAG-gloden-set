@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Translation, EmailTemplateType } from '@/types';
+import { EmailTemplateType } from '@/types';
+import type { TranslationWithAudit } from './useTranslationData';
 
 /**
  * Hook for managing all modal states in the translations page
  * Centralizes modal open/close logic and selection state
  */
-export function useModalStates(translations: Translation[]) {
+export function useModalStates(translations: TranslationWithAudit[]) {
   // Create translation modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -21,7 +22,7 @@ export function useModalStates(translations: Translation[]) {
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedTranslations, setSelectedTranslations] = useState<Translation[]>([]);
+  const [selectedTranslations, setSelectedTranslations] = useState<TranslationWithAudit[]>([]);
 
   // Update selected translations when selection or translations change
   useEffect(() => {

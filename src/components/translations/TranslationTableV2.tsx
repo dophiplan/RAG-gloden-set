@@ -43,6 +43,7 @@ interface TranslationTableV2Props {
   onScreenUpdate?: (translationId: string, screenCode: string) => Promise<void>;
   onDelete: (id: string) => void;
   onAddToGlossary?: (translation: any) => void;
+  onHistoryClick?: (translationId: string) => void;
   onRefresh?: () => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onToggleSelectAll?: () => void;
@@ -79,9 +80,10 @@ export default memo(function TranslationTableV2({
   onDevCodeUpdate,
   onPlatformsUpdate,
   onDelete,
+  onAddToGlossary,
+  onHistoryClick,
   onRefresh,
   onSelectionChange,
-  onAddToGlossary,
   selectedIds: externalSelectedIds,
   loading = false,
   currentPage = 1,
@@ -262,6 +264,7 @@ export default memo(function TranslationTableV2({
                     onPlatformsUpdate={onPlatformsUpdate}
                     onDelete={onDelete}
                     onAddToGlossary={onAddToGlossary}
+                    onHistoryClick={onHistoryClick}
                   />
                 ))
               )}
