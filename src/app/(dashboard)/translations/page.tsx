@@ -103,7 +103,7 @@ function TranslationsContent() {
       title="번역 관리"
       subtitle="번역된 언어들을 전체 볼 수 있습니다."
     >
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-x-auto pb-4">
         {/* Product Tabs with Create Button */}
         <div className="flex items-center justify-between">
           <div className="flex-1">

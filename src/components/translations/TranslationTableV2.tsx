@@ -209,11 +209,10 @@ export default memo(function TranslationTableV2({
   );
 
   return (
-    <div className="space-y-4">
-      {/* Table */}
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="overflow-auto">
-          <table className="w-full table-auto text-xs">
+    <div className="space-y-4 min-w-max">
+      {/* Table - Page-level horizontal scroll */}
+      <div className="bg-white border rounded-lg">
+        <table className="w-full table-auto text-xs">
             <ResizableTableHeader
               showProductColumn={showProductColumn}
               displayLanguages={displayLanguages}
