@@ -376,7 +376,10 @@ const TranslationRow = memo(function TranslationRow({
         <div className="flex gap-1">
           {onAddToGlossary && (
             <button
-              onClick={() => onAddToGlossary(translation)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToGlossary(translation);
+              }}
               className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50 transition-colors"
               title="용어집에 추가"
             >
@@ -386,7 +389,10 @@ const TranslationRow = memo(function TranslationRow({
             </button>
           )}
           <button
-            onClick={() => onDelete(translation.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(translation.id);
+            }}
             className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
             title="삭제"
           >
