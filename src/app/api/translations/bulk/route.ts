@@ -212,6 +212,8 @@ export async function POST(request: NextRequest) {
       (data || []).map((t: any) => ({
         translation_id: t.id,
         user_id: user.id,
+        user_name: (user as any).name || null,
+        user_email: user.email || 'unknown',
         action: 'create',
         new_value: t.source_text,
       }))
