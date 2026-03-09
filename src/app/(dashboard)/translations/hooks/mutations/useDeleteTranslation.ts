@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
 import { apiDelete } from '@/lib/api-utils';
@@ -10,11 +10,24 @@ interface UseDeleteTranslationParams {
 /**
  * Hook for deleting translations
  * Includes confirmation dialog and optimistic removal
+ * Prevents duplicate deletions with processing ref
  */
 export function useDeleteTranslation({ setTranslations }: UseDeleteTranslationParams) {
+  // Track IDs currently being deleted to prevent duplicates
+  const deletingIds = useRef<Set<string>>(new Set());
+
   const handleDelete = useCallback(
     async (id: string) => {
+      // Prevent duplicate deletion requests
+      if (deletingIds.current.has(id)) {
+        console.log('[useDeleteTranslation] Already deleting:', id);
+        return;
+      }
+
       if (!showConfirm('정말 삭제하시겠습니까?')) return;
+
+      // Mark as deleting
+      deletingIds.current.add(id);
 
       try {
         await apiDelete(`/api/translations/${id}`);
@@ -23,6 +36,9 @@ export function useDeleteTranslation({ setTranslations }: UseDeleteTranslationPa
       } catch (error) {
         console.error('Error deleting translation:', error);
         showError('삭제 중 오류가 발생했습니다.');
+      } finally {
+        // Remove from deleting set
+        deletingIds.current.delete(id);
       }
     },
     [setTranslations]
