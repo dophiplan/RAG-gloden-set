@@ -39,8 +39,16 @@ interface ParseResult {
   error?: string;
 }
 
-// Step indicator component
-function StepIndicator({ currentStep }: { currentStep: number }) {
+// Step indicator component - 클릭 가능하게 수정
+function StepIndicator({ 
+  currentStep, 
+  onStepClick,
+  availableSteps 
+}: { 
+  currentStep: number;
+  onStepClick: (step: number) => void;
+  availableSteps: number[];
+}) {
   const steps = [
     { num: 1, label: '파일 업로드' },
     { num: 2, label: '정보 입력' },
@@ -49,42 +57,63 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 
   return (
     <div className="flex items-center justify-center mb-8">
-      {steps.map((step, index) => (
-        <div key={step.num} className="flex items-center">
-          <div className="flex flex-col items-center">
-            <div
-              className={`
-                w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
-                transition-all duration-200
-                ${
-                  currentStep >= step.num
-                    ? 'bg-primary text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-500'
-                }
-              `}
+      {steps.map((step, index) => {
+        const isClickable = availableSteps.includes(step.num);
+        const isActive = currentStep === step.num;
+        const isCompleted = currentStep > step.num;
+        
+        return (
+          <div key={step.num} className="flex items-center">
+            <button
+              onClick={() => isClickable && onStepClick(step.num)}
+              disabled={!isClickable}
+              className={`flex flex-col items-center transition-all duration-200 ${
+                isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+              }`}
             >
-              {currentStep > step.num ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                step.num
-              )}
-            </div>
-            <span className={`mt-2 text-xs font-medium ${currentStep >= step.num ? 'text-primary-active' : 'text-gray-500'}`}>
-              {step.label}
-            </span>
+              <div
+                className={`
+                  w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                  transition-all duration-200
+                  ${isActive 
+                    ? 'bg-primary text-white shadow-lg ring-4 ring-primary/20' 
+                    : isCompleted
+                      ? 'bg-primary text-white shadow-lg'
+                      : isClickable
+                        ? 'bg-white text-primary border-2 border-primary'
+                        : 'bg-gray-200 text-gray-400'
+                  }
+                `}
+              >
+                {isCompleted ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  step.num
+                )}
+              </div>
+              <span className={`mt-2 text-xs font-medium ${
+                isActive 
+                  ? 'text-primary font-bold' 
+                  : isCompleted || isClickable
+                    ? 'text-primary'
+                    : 'text-gray-400'
+              }`}>
+                {step.label}
+              </span>
+            </button>
+            {index < steps.length - 1 && (
+              <div
+                className={`
+                  w-24 h-1 mx-4 rounded transition-all duration-200
+                  ${isCompleted ? 'bg-primary' : 'bg-gray-200'}
+                `}
+              />
+            )}
           </div>
-          {index < steps.length - 1 && (
-            <div
-              className={`
-                w-24 h-1 mx-4 rounded transition-all duration-200
-                ${currentStep > step.num ? 'bg-primary' : 'bg-gray-200'}
-              `}
-            />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -416,7 +445,20 @@ export default function UploadPage() {
 
       <div className="max-w-6xl mx-auto">
         {/* Step Indicator */}
-        <StepIndicator currentStep={currentStep} />
+        <StepIndicator 
+          currentStep={currentStep}
+          onStepClick={(step) => {
+            // 현재 스텝 이후로는 이동 불가 (데이터 유실 방지)
+            if (step <= currentStep || (step === 2 && uploadedFiles.length > 0) || (step === 3 && parseResult)) {
+              setCurrentStep(step);
+            }
+          }}
+          availableSteps={[
+            1, // 파일 업로드는 항상 가능
+            ...(uploadedFiles.length > 0 ? [2] : []), // 파일 업로드 후 정보 입력 가능
+            ...(parseResult ? [3] : []), // 파싱 후 텍스트 확인 가능
+          ]}
+        />
 
         {/* Step Container with horizontal layout */}
         <div className="relative overflow-hidden">
@@ -675,11 +717,22 @@ export default function UploadPage() {
 
                     return (allTexts || []).length > 0 ? (
                       <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-sm font-semibold text-gray-700">
-                            텍스트 선택 ({selectedTexts.size}/{(allTexts || []).length})
-                          </h4>
-                          <label className="flex items-center gap-2 cursor-pointer">
+                        {/* 통계 및 전체 선택 */}
+                        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-gray-600">
+                              전체: <span className="font-semibold text-gray-900">{(allTexts || []).length}개</span>
+                            </span>
+                            <span className="text-gray-400">|</span>
+                            <span className="text-green-600">
+                              선택: <span className="font-semibold">{selectedTexts.size}개</span>
+                            </span>
+                            <span className="text-gray-400">|</span>
+                            <span className="text-gray-600">
+                              미선택: <span className="font-semibold text-gray-900">{(allTexts || []).length - selectedTexts.size}개</span>
+                            </span>
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 bg-white rounded-lg border hover:bg-gray-50 transition-colors">
                             <input
                               type="checkbox"
                               checked={allSelected}
@@ -689,28 +742,71 @@ export default function UploadPage() {
                             <span className="text-sm font-medium text-gray-700">전체 선택</span>
                           </label>
                         </div>
-                        <div className="space-y-2 max-h-96 overflow-y-auto">
-                          {(allTexts || []).map((text, index) => (
-                            <label
-                              key={index}
-                              className={`
-                                flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                ${
-                                  selectedTexts.has(index)
-                                    ? 'border-primary bg-green-50'
-                                    : 'border-gray-200 bg-white hover:border-gray-300'
-                                }
-                              `}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedTexts.has(index)}
-                                onChange={() => toggleText(index)}
-                                className="mt-0.5 w-4 h-4 text-[#818CF8] rounded border-gray-300 focus:ring-[#818CF8]"
-                              />
-                              <p className="text-sm text-gray-900 flex-1">{text}</p>
-                            </label>
-                          ))}
+                        
+                        {/* 텍스트 리스트 */}
+                        <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                          {(allTexts || []).map((text, index) => {
+                            const isSelected = selectedTexts.has(index);
+                            const isLongText = text.length > 100;
+                            
+                            return (
+                              <label
+                                key={index}
+                                className={`
+                                  flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                  ${isSelected
+                                    ? 'border-green-500 bg-green-50 shadow-sm'
+                                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                                  }
+                                `}
+                              >
+                                {/* 번호 */}
+                                <span className={`
+                                  flex-shrink-0 w-8 h-6 flex items-center justify-center rounded text-xs font-mono
+                                  ${isSelected ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}
+                                `}>
+                                  {String(index + 1).padStart(3, '0')}
+                                </span>
+                                
+                                {/* 체크박스 */}
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleText(index)}
+                                  className="mt-1 w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                />
+                                
+                                {/* 텍스트 */}
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm text-gray-900 break-all ${isLongText ? 'line-clamp-2' : ''}`}>
+                                    {text}
+                                  </p>
+                                  {isLongText && (
+                                    <span className="text-xs text-gray-400 mt-1 inline-block">
+                                      긴 텍스트 (100자+)
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* 복사 버튼 */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(text);
+                                    showSuccess('텍스트가 복사되었습니다.');
+                                  }}
+                                  className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                  title="텍스트 복사"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                </button>
+                              </label>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null;
