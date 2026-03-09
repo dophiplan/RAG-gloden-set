@@ -49,6 +49,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
       label: lang.toUpperCase(),
       resizable: true,
     })),
+    { key: 'completionDate', label: '완료일', resizable: true },
     { key: 'status', label: '번역 상태', resizable: true },
     { key: 'notes', label: '비고', resizable: true },
     { key: 'actions', label: '작업', resizable: false },

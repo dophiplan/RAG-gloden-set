@@ -366,6 +366,17 @@ const TranslationRow = memo(function TranslationRow({
           <option value="not_used">사용안함</option>
         </select>
       </td>
+      <td className="px-0.5 py-0.5 align-top" style={getCellStyle('completionDate')}>
+        <div className="text-xs">
+          {translation.completion_date 
+            ? new Date(translation.completion_date).toLocaleDateString('ko-KR', {
+                month: '2-digit',
+                day: '2-digit',
+              })
+            : '-'
+          }
+        </div>
+      </td>
       <td className="px-0.5 py-0.5 align-top" style={getCellStyle('notes')}>
         <div className="text-xs truncate">
           <EditableCell

@@ -116,6 +116,7 @@ export default memo(function TranslationTableV2({
     ...Object.fromEntries(
       (displayLanguagesForWidth || []).map((lang) => [`lang_${lang}`, 150])
     ),
+    completionDate: 100,
     status: 120,
     notes: 180,
     actions: 100,
@@ -134,6 +135,7 @@ export default memo(function TranslationTableV2({
     ...Object.fromEntries(
       (displayLanguagesForWidth || []).map((lang) => [`lang_${lang}`, 100])
     ),
+    completionDate: 80,
     status: 100,
     notes: 120,
     actions: 80,
