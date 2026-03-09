@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
@@ -6,6 +8,8 @@ import FileUploader, { UploadedFile } from '@/components/FileUploader';
 import TranslationFormFields from '@/components/translations/TranslationFormFields';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
+import { apiPost } from '@/lib/api-utils';
+import { showError, showSuccess } from '@/lib/notifications';
 
 type TabType = 'manual' | 'pdf';
 
@@ -36,6 +40,17 @@ interface CreateTranslationModalProps {
   ) => Promise<void>;
 }
 
+const LANGUAGE_LABELS: Record<string, string> = {
+  en: '영어',
+  ja: '일본어',
+  zh: '중국어(간체)',
+  'zh-TW': '중국어(번체)',
+  fr: '프랑스어',
+  es: '스페인어',
+  de: '독일어',
+  pt: '포르투갈어',
+};
+
 export default function CreateTranslationModal({
   isOpen,
   onClose,
@@ -55,6 +70,11 @@ export default function CreateTranslationModal({
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [newCompletionDate, setNewCompletionDate] = useState('');
+  
+  // AI Translation states
+  const [aiTranslations, setAiTranslations] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   // PDF upload states
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
@@ -67,6 +87,9 @@ export default function CreateTranslationModal({
   const [pdfCompletionDate, setPdfCompletionDate] = useState('');
   const [uploading, setUploading] = useState(false);
   
+  const [pdfError, setPdfError] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Update product code when modal opens with new initial value
   useEffect(() => {
     if (isOpen && initialProductCode) {
@@ -74,8 +97,6 @@ export default function CreateTranslationModal({
       setPdfProductCode(initialProductCode);
     }
   }, [isOpen, initialProductCode]);
-  const [pdfError, setPdfError] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update languages when product changes - for manual form
   useEffect(() => {
@@ -97,6 +118,68 @@ export default function CreateTranslationModal({
     }
   }, [pdfProductCode]);
 
+  // Auto-translate when source text or languages change (with debounce)
+  useEffect(() => {
+    if (!newSourceText.trim() || newSourceText.length < 2) {
+      setAiTranslations({});
+      setShowPreview(false);
+      return;
+    }
+    
+    // Skip if no languages selected
+    if (!selectedLanguages || selectedLanguages.length === 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      handleAutoTranslate();
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [newSourceText, newContext, selectedLanguages]);
+
+  const handleAutoTranslate = async () => {
+    if (!newSourceText.trim()) return;
+    
+    // Validate languages
+    if (!selectedLanguages || selectedLanguages.length === 0) {
+      console.log('[AutoTranslate] No languages selected, skipping');
+      return;
+    }
+    
+    setIsTranslating(true);
+    console.log('[AutoTranslate] Starting with languages:', selectedLanguages);
+    
+    try {
+      const requestBody = {
+        sourceText: newSourceText.trim(),
+        context: newContext.trim() || undefined,
+        targetLanguages: selectedLanguages,
+      };
+      console.log('[AutoTranslate] Request:', requestBody);
+      
+      const result = await apiPost<{
+        translations: { languageCode: string; translatedText: string }[];
+        provider: string;
+      }>('/api/ai/translate', requestBody);
+
+      console.log('[AutoTranslate] Success:', result);
+      
+      const translationsMap: Record<string, string> = {};
+      result.translations.forEach((t) => {
+        translationsMap[t.languageCode] = t.translatedText;
+      });
+      
+      setAiTranslations(translationsMap);
+      setShowPreview(true);
+    } catch (error) {
+      console.error('[AutoTranslate] Error:', error);
+      // Silent fail - don't show error for auto-translate
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const handleCreate = async () => {
     if (selectedLanguages.length === 0) {
       setPdfError('번역 언어를 최소 1개 이상 선택해주세요.');
@@ -107,11 +190,17 @@ export default function CreateTranslationModal({
     
     setIsSubmitting(true);
     try {
+      // Create translation first
       const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
+      
       if (success) {
+        showSuccess('번역이 생성되었습니다.');
         resetManualForm();
         onClose();
       }
+    } catch (error) {
+      console.error('Create error:', error);
+      showError('번역 생성에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +214,7 @@ export default function CreateTranslationModal({
       return;
     }
 
-    setPdfError('');  // 에러 초기화
+    setPdfError('');
     setUploading(true);
     try {
       await onPDFUpload(pdfFiles, pdfVersion, pdfProductCode, pdfScope, pdfPriority, pdfSelectedLanguages, pdfSelectedPlatforms, pdfCompletionDate);
@@ -150,6 +239,8 @@ export default function CreateTranslationModal({
     setSelectedLanguages(['en', 'ja']);
     setSelectedPlatforms([]);
     setNewCompletionDate('');
+    setAiTranslations({});
+    setShowPreview(false);
   };
 
   const resetPDFForm = () => {
@@ -243,6 +334,42 @@ export default function CreateTranslationModal({
             placeholder="이 텍스트가 사용되는 화면이나 상황을 설명하세요"
           />
 
+          {/* AI Translation Preview */}
+          {showPreview && Object.keys(aiTranslations).length > 0 && (
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-blue-800 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  AI 자동 번역 미리보기
+                </h4>
+                {isTranslating && (
+                  <span className="text-xs text-blue-600 animate-pulse">번역 중...</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                {selectedLanguages.map((lang) => (
+                  <div key={lang} className="bg-white rounded p-2.5 border border-blue-100">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 w-24 shrink-0">
+                        {LANGUAGE_LABELS[lang] || lang}
+                      </span>
+                      <p className="text-sm text-gray-800">
+                        {aiTranslations[lang] || (
+                          <span className="text-gray-400 italic">번역 중...</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                * AI 번역 결과는 저장 후에도 수정할 수 있습니다.
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={handleClose}>
               취소
@@ -252,7 +379,7 @@ export default function CreateTranslationModal({
               disabled={!newSourceText.trim() || !newScope || selectedLanguages.length === 0 || isSubmitting}
               loading={isSubmitting}
             >
-              {isSubmitting ? '생성 중...' : '추가'}
+              {isSubmitting ? '생성 중...' : 'AI 번역하고 추가'}
             </Button>
           </div>
         </div>

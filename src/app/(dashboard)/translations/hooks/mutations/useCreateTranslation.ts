@@ -49,6 +49,7 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
           product_code: productCode || undefined,
           scope: scope || undefined,
           priority: priority,
+          platform_codes: _platformCodes?.length ? _platformCodes : undefined,
         });
         
         // Extract ID from response (handle both {data: {...}} and direct {...} formats)

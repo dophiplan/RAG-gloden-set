@@ -10,6 +10,9 @@ export function useModalStates(translations: TranslationWithAudit[]) {
   // Create translation modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Quick add translation modal
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+
   // Email modal
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailTemplateType, setEmailTemplateType] = useState<EmailTemplateType>('translation_request');
@@ -33,6 +36,9 @@ export function useModalStates(translations: TranslationWithAudit[]) {
   // Helper functions
   const openCreateModal = () => setIsCreateModalOpen(true);
   const closeCreateModal = () => setIsCreateModalOpen(false);
+
+  const openQuickAddModal = () => setIsQuickAddModalOpen(true);
+  const closeQuickAddModal = () => setIsQuickAddModalOpen(false);
 
   const openEmailModal = (templateType: EmailTemplateType) => {
     setEmailTemplateType(templateType);
@@ -71,6 +77,11 @@ export function useModalStates(translations: TranslationWithAudit[]) {
     isCreateModalOpen,
     openCreateModal,
     closeCreateModal,
+
+    // Quick add modal
+    isQuickAddModalOpen,
+    openQuickAddModal,
+    closeQuickAddModal,
 
     // Email modal
     isEmailModalOpen,

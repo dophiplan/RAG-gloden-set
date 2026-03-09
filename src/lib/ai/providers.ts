@@ -389,7 +389,7 @@ Please provide translations for ALL specified languages.`;
           { role: 'user', content: userPrompt },
         ],
         temperature: 1,
-        response_format: { type: 'json_object' },
+        // Note: Kimi API requires temperature=1, may not support response_format
       })
     );
 

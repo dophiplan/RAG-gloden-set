@@ -182,9 +182,12 @@ export async function POST(request: NextRequest) {
     console.error('Error in AI translate:', error);
     
     if (error instanceof Error) {
+      console.error('Error details:', error.message);
       if (error.message.includes('401') || error.message.includes('Authentication')) {
         return apiInternalError('AI API 키가 유효하지 않습니다. 설정에서 확인해주세요.');
       }
+      // Return more specific error message for debugging
+      return apiInternalError(`번역 중 오류: ${error.message}`);
     }
     
     return apiInternalError('번역 중 오류가 발생했습니다.');
