@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { mutate } from 'swr';
 import { ProductCode, LanguageCode, PriorityLevel, ScopeType, EmailTemplateType } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
 import { apiPost, apiFetch } from '@/lib/api-utils';
@@ -108,6 +109,9 @@ export function useTranslationEventHandlers({
       }, TIMEOUTS.STATE_UPDATE_SHORT_DELAY_MS);
 
       showSuccess(`${bulkData.created || allTexts.length}개의 번역 항목이 저장되었습니다.`);
+      
+      // Clear SWR cache to show new data immediately
+      mutate((key) => typeof key === 'string' && key.startsWith('/api/translations'), undefined, { revalidate: true });
     } catch (error) {
       console.error('PDF upload error:', error);
       showError('PDF 업로드 중 오류가 발생했습니다.');
@@ -144,6 +148,10 @@ export function useTranslationEventHandlers({
         completion_date: completionDate || undefined,
       });
       fetchTranslations();
+      
+      // Clear SWR cache to show new data immediately
+      mutate((key) => typeof key === 'string' && key.startsWith('/api/translations'), undefined, { revalidate: true });
+      
       if (productCode) {
         setSelectedProduct(productCode as ProductCode);
       }
