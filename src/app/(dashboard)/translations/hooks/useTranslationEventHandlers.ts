@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { ProductCode, LanguageCode, PriorityLevel, ScopeType, EmailTemplateType } from '@/types';
 import { showError, showSuccess } from '@/lib/notifications';
-import { apiPost } from '@/lib/api-utils';
+import { apiPost, apiFetch } from '@/lib/api-utils';
 import type { UploadedFile } from '@/components/FileUploader';
 import { TIMEOUTS } from '@/lib/constants';
 
@@ -63,7 +63,10 @@ export function useTranslationEventHandlers({
       if (scope) formData.append('scope', scope);
 
       // Step 1: Parse PDF to extract texts
-      const parseData = await apiPost<{ results?: { success?: boolean; texts?: string[] }[] }>('/api/files/parse', formData);
+      const parseData = await apiFetch<{ results?: { success?: boolean; texts?: string[] }[] }>('/api/files/parse', {
+        method: 'POST',
+        body: formData,
+      });
 
       // Collect all extracted texts from all files
       const allTexts: string[] = [];
