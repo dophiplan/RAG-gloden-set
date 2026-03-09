@@ -55,8 +55,8 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
   ];
 
   return (
-    <thead className="bg-gray-50 border-b">
-      <tr>
+    <thead className="bg-gray-50 border-b border-gray-200">
+      <tr className="divide-x divide-gray-200">
         {columns.map((column) => {
           const width = columnWidths[column.key];
           const style = width ? { width: `${width}px`, minWidth: `${width}px` } : {};

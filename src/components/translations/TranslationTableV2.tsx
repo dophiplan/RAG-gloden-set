@@ -213,9 +213,9 @@ export default memo(function TranslationTableV2({
   return (
     <div className="space-y-4 min-w-max">
       {/* Table - Page-level horizontal scroll */}
-      <div className="bg-white border rounded-lg">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <table className="w-full border-collapse text-xs">
-            <ResizableTableHeader
+          <ResizableTableHeader
               showProductColumn={showProductColumn}
               displayLanguages={displayLanguages}
               allSelected={selectedIds.length === (translations || []).length}
@@ -223,7 +223,7 @@ export default memo(function TranslationTableV2({
               columnWidths={columnWidths}
               onResizeStart={startResize}
             />
-            <tbody className="divide-y">
+          <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
                   <td
@@ -268,8 +268,8 @@ export default memo(function TranslationTableV2({
                   />
                 ))
               )}
-            </tbody>
-          </table>
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination */}

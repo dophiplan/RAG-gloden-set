@@ -145,7 +145,7 @@ const TranslationRow = memo(function TranslationRow({
       style={{ backgroundColor: isHovered ? colors.hover : colors.bg }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`transition-colors duration-150 ${
+      className={`transition-colors duration-150 divide-x divide-gray-100 ${
         isNotUsed ? 'text-white line-through' : ''
       }`}
     >
