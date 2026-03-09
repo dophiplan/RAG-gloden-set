@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
@@ -8,13 +8,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import TranslationFormFields from '@/components/translations/TranslationFormFields';
-import ExtractedTextItem from '@/components/upload/ExtractedTextItem';
-import GlossaryAddModal from '@/components/upload/GlossaryAddModal';
-import UploadBulkActionBar from '@/components/upload/UploadBulkActionBar';
 import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { Holiday } from '@/types/api';
-import { ExtractedTextItem as ExtractedTextItemType, DuplicateCheckResponse } from '@/types/upload';
-import { GlossaryTerm } from '@/types/glossary';
 import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
 import { calculateDeadline, formatDeadline } from '@/shared/date_time/holiday_checker';
@@ -106,7 +101,7 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [extractedItems, setExtractedItems] = useState<ExtractedTextItemType[]>([]);
+  const [selectedTexts, setSelectedTexts] = useState<Set<number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [dragCounter, setDragCounter] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
@@ -114,17 +109,7 @@ export default function UploadPage() {
   const [dateWarning, setDateWarning] = useState('');
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [isInvalidDate, setIsInvalidDate] = useState(false);
-  
-  // 용어집 관련 상태
-  const [glossaryTerms, setGlossaryTerms] = useState<GlossaryTerm[]>([]);
-  const [isLoadingGlossary, setIsLoadingGlossary] = useState(false);
-  
-  // 모달 상태
-  const [isGlossaryModalOpen, setIsGlossaryModalOpen] = useState(false);
-  const [selectedGlossaryText, setSelectedGlossaryText] = useState('');
-  
-  // 일괄 처리 상태
-  const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+
 
   // Navigation handlers
   const goToNextStep = () => {
@@ -189,92 +174,8 @@ export default function UploadPage() {
     setUploadedFiles(files);
     setParseResult(null);
     setError(null);
-    setExtractedItems([]);
+    setSelectedTexts(new Set());
   };
-
-  // 용어집 로드
-  const loadGlossaryTerms = useCallback(async () => {
-    if (!productCode) return;
-    
-    setIsLoadingGlossary(true);
-    try {
-      // 한 번에 1000개 로드
-      const result = await apiGet<{ terms: GlossaryTerm[] }>(
-        `/api/glossary?product_code=${productCode}&limit=1000`
-      );
-      if (result.terms) {
-        setGlossaryTerms(result.terms);
-      }
-    } catch (error) {
-      console.error('Failed to load glossary:', error);
-    } finally {
-      setIsLoadingGlossary(false);
-    }
-  }, [productCode]);
-
-  // 용어집 매칭 체크
-  const checkGlossaryMatch = useCallback((text: string): { exists: boolean; translations?: Record<string, string> } => {
-    const matches = glossaryTerms.filter(term => term.term === text);
-    if (matches.length === 0) {
-      return { exists: false };
-    }
-    
-    const translations: Record<string, string> = {};
-    matches.forEach(match => {
-      translations[match.language_code] = match.translation;
-    });
-    
-    return { exists: true, translations };
-  }, [glossaryTerms]);
-
-  // 중복 체크
-  const checkDuplicates = useCallback(async (texts: string[]): Promise<DuplicateCheckResponse['results']> => {
-    try {
-      const result = await apiPost<DuplicateCheckResponse>('/api/translations/check-duplicates', {
-        texts,
-      });
-      return result.results;
-    } catch (error) {
-      console.error('Failed to check duplicates:', error);
-      return texts.map(text => ({ 
-        text, 
-        status: 'new' as const,
-        existingTranslation: undefined,
-        completedAt: undefined,
-        similarity: undefined,
-      }));
-    }
-  }, []);
-
-  // 추출된 텍스트 처리
-  const processExtractedTexts = useCallback(async (texts: string[]) => {
-    // 용어집 로드
-    await loadGlossaryTerms();
-    
-    // 중복 체크
-    const duplicateResults = await checkDuplicates(texts);
-    
-    // 아이템 생성
-    const items: ExtractedTextItemType[] = texts.map((text, index) => {
-      const glossaryMatch = checkGlossaryMatch(text);
-      const duplicateResult = duplicateResults.find(r => r.text === text);
-      
-      return {
-        id: index,
-        text,
-        selected: true,
-        glossaryMatch,
-        duplicateCheck: duplicateResult ? {
-          status: duplicateResult.status,
-          existingTranslation: duplicateResult.existingTranslation,
-          completedAt: duplicateResult.completedAt,
-          similarity: duplicateResult.similarity,
-        } : { status: 'new' as const },
-      };
-    });
-    
-    setExtractedItems(items);
-  }, [loadGlossaryTerms, checkDuplicates, checkGlossaryMatch]);
 
   // Auto-select all texts when parse result is available
   useEffect(() => {
@@ -285,11 +186,9 @@ export default function UploadPage() {
           allTexts.push(...result.texts);
         }
       });
-      
-      // 텍스트 처리 (용어집 매칭 + 중복 체크)
-      processExtractedTexts(allTexts);
+      setSelectedTexts(new Set((allTexts || []).map((_, index) => index)));
     }
-  }, [parseResult, processExtractedTexts]);
+  }, [parseResult]);
 
   const handleParse = async () => {
     if ((uploadedFiles || []).length === 0) {
@@ -310,7 +209,6 @@ export default function UploadPage() {
     setIsUploading(true);
     setError(null);
     setParseResult(null);
-    setExtractedItems([]);
 
     try {
       const formData = new FormData();
@@ -400,7 +298,7 @@ export default function UploadPage() {
         setUploadedFiles(uploadedFileObjects);
         setParseResult(null);
         setError(null);
-        setExtractedItems([]);
+        setSelectedTexts(new Set());
       }
     };
 
@@ -427,9 +325,18 @@ export default function UploadPage() {
   }, []);
 
   const handleAddTranslations = async () => {
-    const selectedTextsArray = extractedItems
-      .filter(item => item.selected)
-      .map(item => item.text);
+    if (!parseResult) return;
+
+    const allTexts: string[] = [];
+    if (parseResult.results && Array.isArray(parseResult.results)) {
+      parseResult.results.forEach((result) => {
+        if (result.success && result.texts && Array.isArray(result.texts)) {
+          allTexts.push(...result.texts);
+        }
+      });
+    }
+
+    const selectedTextsArray = allTexts.filter((_, index) => selectedTexts.has(index));
 
     if ((selectedTextsArray || []).length === 0) {
       showError('선택된 텍스트가 없습니다.');
@@ -476,68 +383,6 @@ export default function UploadPage() {
       showError('번역 항목 추가 중 오류가 발생했습니다.');
     }
   };
-
-  // 텍스트 토글
-  const toggleTextSelection = (id: number) => {
-    setExtractedItems(prev => prev.map(item => 
-      item.id === id ? { ...item, selected: !item.selected } : item
-    ));
-  };
-
-  // 전체 선택/해제
-  const toggleAllSelection = () => {
-    const allSelected = extractedItems.every(item => item.selected);
-    setExtractedItems(prev => prev.map(item => ({ ...item, selected: !allSelected })));
-  };
-
-  // 선택 해제
-  const clearSelection = () => {
-    setExtractedItems(prev => prev.map(item => ({ ...item, selected: false })));
-  };
-
-  // 용어집 추가 모달 열기
-  const openGlossaryModal = (text: string) => {
-    setSelectedGlossaryText(text);
-    setIsGlossaryModalOpen(true);
-  };
-
-  // 용어집 추가 성공 핸들러
-  const handleGlossaryAddSuccess = async () => {
-    // 용어집 재로드 및 매칭 업데이트
-    await loadGlossaryTerms();
-    
-    // 현재 아이템들의 용어집 매칭 상태 업데이트
-    setExtractedItems(prev => prev.map(item => ({
-      ...item,
-      glossaryMatch: checkGlossaryMatch(item.text),
-    })));
-  };
-
-  // 텍스트 복사
-  const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    showSuccess('텍스트가 복사되었습니다.');
-  };
-
-  // 일괄 용어집 추가 핸들러
-  const handleBulkGlossaryAdd = async () => {
-    const selectedNonGlossaryItems = extractedItems.filter(
-      item => item.selected && !item.glossaryMatch?.exists
-    );
-
-    if (selectedNonGlossaryItems.length === 0) {
-      showError('용어집에 추가할 선택된 항목이 없습니다.');
-      return;
-    }
-
-    // 첫 번째 항목으로 모달 열기
-    setSelectedGlossaryText(selectedNonGlossaryItems[0].text);
-    setIsGlossaryModalOpen(true);
-  };
-
-  // 선택된 항목 수
-  const selectedCount = extractedItems.filter(item => item.selected).length;
-  const allSelected = extractedItems.length > 0 && extractedItems.every(item => item.selected);
 
   return (
     <DashboardLayout
@@ -694,7 +539,7 @@ export default function UploadPage() {
                           setUploadedFiles([]);
                           setParseResult(null);
                           setError(null);
-                          setExtractedItems([]);
+                          setSelectedTexts(new Set());
                           setCurrentStep(1);
                         }}
                       >
@@ -708,6 +553,7 @@ export default function UploadPage() {
 
             {/* Step 3: Parse Results */}
             <div className="w-full flex-shrink-0 px-4">
+
         {/* Error Display */}
         {error && (
           <Card className="mb-6 border-red-200 bg-red-50">
@@ -754,8 +600,7 @@ export default function UploadPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">추출된 텍스트 확인</h3>
                     <p className="text-sm text-gray-600">
-                      {extractedItems.length}개의 텍스트가 추출되었습니다
-                      {isLoadingGlossary && ' (용어집 로드 중...)'}
+                      {parseResult.summary?.totalTexts || 0}개의 텍스트가 추출되었습니다
                     </p>
                   </div>
                 </div>
@@ -799,44 +644,86 @@ export default function UploadPage() {
                   )}
 
                   {/* Extracted Texts */}
-                  {extractedItems.length > 0 ? (
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-semibold text-gray-700">
-                          텍스트 선택 ({selectedCount}/{extractedItems.length})
-                        </h4>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allSelected}
-                            onChange={toggleAllSelection}
-                            className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
-                          />
-                          <span className="text-sm font-medium text-gray-700">전체 선택</span>
-                        </label>
+                  {(() => {
+                    const allTexts: string[] = [];
+                    if (parseResult.results && Array.isArray(parseResult.results)) {
+                      parseResult.results.forEach((result) => {
+                        if (result.success && result.texts && Array.isArray(result.texts)) {
+                          allTexts.push(...result.texts);
+                        }
+                      });
+                    }
+
+                    const allSelected = (allTexts || []).length > 0 && selectedTexts.size === (allTexts || []).length;
+                    const toggleAll = () => {
+                      if (allSelected) {
+                        setSelectedTexts(new Set());
+                      } else {
+                        setSelectedTexts(new Set((allTexts || []).map((_, index) => index)));
+                      }
+                    };
+
+                    const toggleText = (index: number) => {
+                      const newSelected = new Set(selectedTexts);
+                      if (newSelected.has(index)) {
+                        newSelected.delete(index);
+                      } else {
+                        newSelected.add(index);
+                      }
+                      setSelectedTexts(newSelected);
+                    };
+
+                    return (allTexts || []).length > 0 ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-sm font-semibold text-gray-700">
+                            텍스트 선택 ({selectedTexts.size}/{(allTexts || []).length})
+                          </h4>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={allSelected}
+                              onChange={toggleAll}
+                              className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                            />
+                            <span className="text-sm font-medium text-gray-700">전체 선택</span>
+                          </label>
+                        </div>
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {(allTexts || []).map((text, index) => (
+                            <label
+                              key={index}
+                              className={`
+                                flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                ${
+                                  selectedTexts.has(index)
+                                    ? 'border-primary bg-green-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                }
+                              `}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedTexts.has(index)}
+                                onChange={() => toggleText(index)}
+                                className="mt-0.5 w-4 h-4 text-[#818CF8] rounded border-gray-300 focus:ring-[#818CF8]"
+                              />
+                              <p className="text-sm text-gray-900 flex-1">{text}</p>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {extractedItems.map((item) => (
-                          <ExtractedTextItem
-                            key={item.id}
-                            item={item}
-                            onToggle={toggleTextSelection}
-                            onGlossaryAdd={openGlossaryModal}
-                            onCopy={handleCopyText}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                    ) : null;
+                  })()}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3 pt-6 border-t">
                     <Button
                       onClick={handleAddTranslations}
-                      disabled={selectedCount === 0}
+                      disabled={selectedTexts.size === 0}
                       className="flex-1"
                     >
-                      번역 요청 생성하기 ({selectedCount}개)
+                      번역 요청 생성하기 ({selectedTexts.size}개)
                     </Button>
                     <Button
                       variant="secondary"
@@ -844,7 +731,7 @@ export default function UploadPage() {
                         setUploadedFiles([]);
                         setParseResult(null);
                         setError(null);
-                        setExtractedItems([]);
+                        setSelectedTexts(new Set());
                         setCurrentStep(1);
                       }}
                     >
@@ -914,27 +801,6 @@ export default function UploadPage() {
         </div>
       </div>
       </div>
-
-      {/* 용어집 추가 모달 */}
-      <GlossaryAddModal
-        isOpen={isGlossaryModalOpen}
-        onClose={() => setIsGlossaryModalOpen(false)}
-        text={selectedGlossaryText}
-        productCode={productCode}
-        languageCodes={selectedLanguages}
-        onSuccess={handleGlossaryAddSuccess}
-      />
-
-      {/* 일괄 작업 바 */}
-      {currentStep === 3 && selectedCount > 0 && (
-        <UploadBulkActionBar
-          selectedCount={selectedCount}
-          selectedItems={extractedItems.filter(item => item.selected)}
-          onClearSelection={clearSelection}
-          onBulkGlossaryAdd={handleBulkGlossaryAdd}
-          isProcessing={isProcessingBulk}
-        />
-      )}
     </DashboardLayout>
   );
 }

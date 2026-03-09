@@ -10,4 +10,3 @@ export * from './issues';
 export * from './api';
 export * from './optimistic_lock';
 export * from './audit';
-export * from './upload';
