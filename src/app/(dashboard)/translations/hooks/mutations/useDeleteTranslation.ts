@@ -15,6 +15,8 @@ interface UseDeleteTranslationParams {
 export function useDeleteTranslation({ setTranslations }: UseDeleteTranslationParams) {
   // Track IDs currently being deleted to prevent duplicates
   const deletingIds = useRef<Set<string>>(new Set());
+  // Track if confirmation dialog is already shown
+  const confirmingId = useRef<string | null>(null);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -24,7 +26,17 @@ export function useDeleteTranslation({ setTranslations }: UseDeleteTranslationPa
         return;
       }
 
-      if (!showConfirm('정말 삭제하시겠습니까?')) return;
+      // Prevent duplicate confirmation dialogs
+      if (confirmingId.current === id) {
+        console.log('[useDeleteTranslation] Already confirming:', id);
+        return;
+      }
+      
+      confirmingId.current = id;
+      const confirmed = showConfirm('정말 삭제하시겠습니까?');
+      confirmingId.current = null;
+      
+      if (!confirmed) return;
 
       // Mark as deleting
       deletingIds.current.add(id);

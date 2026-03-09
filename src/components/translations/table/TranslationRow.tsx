@@ -78,6 +78,7 @@ const TranslationRow = memo(function TranslationRow({
   const statusInfo = STATUS_COLORS[translation.status];
   const [showPlatformDropdown, setShowPlatformDropdown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getTranslationForLanguage = (languageCode: LanguageCode): string => {
     const result = translation.translation_results?.find(
@@ -391,9 +392,14 @@ const TranslationRow = memo(function TranslationRow({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (isDeleting) return;
+              setIsDeleting(true);
               onDelete(translation.id);
+              // Reset after a short delay to allow future deletes
+              setTimeout(() => setIsDeleting(false), 1000);
             }}
-            className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+            disabled={isDeleting}
+            className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="삭제"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

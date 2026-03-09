@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { TranslationWithAudit } from './useTranslationData';
 import {
   useUpdateTranslationField,
@@ -62,7 +63,8 @@ export function useTranslationMutations({
   // Creation
   const { handleCreate, handleBulkCreate } = useCreateTranslation({ fetchTranslations });
 
-  return {
+  // Memoize mutations object to prevent unnecessary re-renders
+  return useMemo(() => ({
     handleStatusChange,
     handleTranslationUpdate,
     handleSourceTextUpdate,
@@ -98,5 +100,21 @@ export function useTranslationMutations({
       }
     },
     handleCreate,
-  };
+  }), [
+    handleStatusChange,
+    handleTranslationUpdate,
+    handleSourceTextUpdate,
+    handleContextUpdate,
+    handleScopeUpdate,
+    handlePriorityUpdate,
+    handleNotesUpdate,
+    handleVersionUpdate,
+    handleDevCodeUpdate,
+    handleProductsUpdate,
+    handlePlatformsUpdate,
+    handleDelete,
+    handleBulkCreate,
+    handleCreate,
+    fetchTranslations,
+  ]);
 }
