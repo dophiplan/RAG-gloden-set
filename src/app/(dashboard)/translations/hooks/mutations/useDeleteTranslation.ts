@@ -20,34 +20,43 @@ export function useDeleteTranslation({ setTranslations }: UseDeleteTranslationPa
 
   const handleDelete = useCallback(
     async (id: string) => {
+      console.log('[useDeleteTranslation] Called with id:', id);
+      
       // Prevent duplicate deletion requests
       if (deletingIds.current.has(id)) {
-        console.log('[useDeleteTranslation] Already deleting:', id);
+        console.log('[useDeleteTranslation] Already deleting, skipping:', id);
         return;
       }
 
       // Prevent duplicate confirmation dialogs
       if (confirmingId.current === id) {
-        console.log('[useDeleteTranslation] Already confirming:', id);
+        console.log('[useDeleteTranslation] Already confirming, skipping:', id);
         return;
       }
       
       confirmingId.current = id;
+      console.log('[useDeleteTranslation] Showing confirm for:', id);
       const confirmed = showConfirm('정말 삭제하시겠습니까?');
       confirmingId.current = null;
       
-      if (!confirmed) return;
+      if (!confirmed) {
+        console.log('[useDeleteTranslation] User cancelled');
+        return;
+      }
 
       // Mark as deleting
       deletingIds.current.add(id);
+      console.log('[useDeleteTranslation] Calling API for:', id);
 
       try {
         await apiDelete(`/api/translations/${id}`);
+        console.log('[useDeleteTranslation] API success for:', id);
         setTranslations((prev) => prev.filter((t) => t.id !== id));
         showSuccess('삭제되었습니다.');
       } catch (error) {
-        console.error('Error deleting translation:', error);
+        console.error('[useDeleteTranslation] API error:', error);
         showError('삭제 중 오류가 발생했습니다.');
+        throw error; // Re-throw so caller knows it failed
       } finally {
         // Remove from deleting set
         deletingIds.current.delete(id);

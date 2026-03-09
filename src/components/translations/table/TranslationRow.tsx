@@ -390,13 +390,22 @@ const TranslationRow = memo(function TranslationRow({
             </button>
           )}
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              if (isDeleting) return;
+              e.preventDefault();
+              if (isDeleting) {
+                console.log('[TranslationRow] Already deleting, skipping');
+                return;
+              }
               setIsDeleting(true);
-              onDelete(translation.id);
-              // Reset after a short delay to allow future deletes
-              setTimeout(() => setIsDeleting(false), 1000);
+              console.log('[TranslationRow] Delete clicked for:', translation.id);
+              try {
+                await onDelete(translation.id);
+              } catch (err) {
+                console.error('[TranslationRow] Delete error:', err);
+              } finally {
+                setIsDeleting(false);
+              }
             }}
             disabled={isDeleting}
             className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
