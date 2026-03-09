@@ -1,8 +1,9 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { TranslationUpdateInput } from '@/types';
 import { TranslationRepository } from '@/repositories';
 import { apiSuccess, apiError, apiUnauthorized, apiNotFound, apiInternalError, apiConflict } from '@/lib/api/response';
+import { getAuthUser } from '@/lib/api-auth';
 
 // GET - Get single translation
 export async function GET(
@@ -11,15 +12,18 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();
     }
 
     const { id } = await params;
+    
+    // Use admin client to bypass RLS
+    const dbClient = adminClient || createAdminClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('translations')
       .select(`
         *,
@@ -50,18 +54,21 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();
     }
 
     const { id } = await params;
+    
+    // Use admin client to bypass RLS
+    const dbClient = adminClient || createAdminClient();
     const body: TranslationUpdateInput & { version_updated_at?: string | null; platform_codes?: string[] } = await request.json();
 
     // Optimistic Locking: Check for concurrent edits using Repository
     if (body.updated_at) {
-      const repository = new TranslationRepository(supabase);
+      const repository = new TranslationRepository(dbClient);
       const lockResult = await repository.checkVersion(id, undefined, body.updated_at);
 
       if (!lockResult.success) {
@@ -90,7 +97,7 @@ export async function PATCH(
     if (body.version_updated_at !== undefined) updateData.version_updated_at = body.version_updated_at;
     if ((body as any).dev_code !== undefined) updateData.dev_code = (body as any).dev_code?.trim() || null;
 
-    const { data, error } = await supabase
+    const { data, error } = await dbClient
       .from('translations')
       .update(updateData)
       .eq('id', id)
@@ -110,7 +117,7 @@ export async function PATCH(
     // Handle product_codes update if provided
     if (body.product_codes !== undefined) {
       // Delete existing product associations
-      await supabase
+      await dbClient
         .from('translation_products')
         .delete()
         .eq('translation_id', id);
@@ -124,14 +131,14 @@ export async function PATCH(
           version_updated_at: typeof item === 'object' && item.version ? new Date().toISOString() : null,
         }));
 
-        await supabase.from('translation_products').insert(productLinks);
+        await dbClient.from('translation_products').insert(productLinks);
       }
     }
 
     // Handle platform_codes update if provided
     if (body.platform_codes !== undefined) {
       // Delete existing platform associations
-      await supabase
+      await dbClient
         .from('translation_platforms')
         .delete()
         .eq('translation_id', id);
@@ -143,12 +150,12 @@ export async function PATCH(
           platform_code: platformCode,
         }));
 
-        await supabase.from('translation_platforms').insert(platformLinks);
+        await dbClient.from('translation_platforms').insert(platformLinks);
       }
     }
 
     // Fetch updated translation with products and platforms
-    const { data: updatedTranslation } = await supabase
+    const { data: updatedTranslation } = await dbClient
       .from('translations')
       .select(`
         *,
@@ -173,16 +180,19 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();
     }
 
     const { id } = await params;
+    
+    // Use admin client to bypass RLS
+    const dbClient = adminClient || createAdminClient();
 
     // Fetch translation data before deletion for audit log
-    const { data: translation, error: fetchError } = await supabase
+    const { data: translation, error: fetchError } = await dbClient
       .from('translations')
       .select('source_text, context')
       .eq('id', id)
@@ -196,7 +206,7 @@ export async function DELETE(
     }
 
     // Delete translation
-    const { error } = await supabase
+    const { error } = await dbClient
       .from('translations')
       .delete()
       .eq('id', id);
@@ -206,14 +216,14 @@ export async function DELETE(
     }
 
     // Get user profile for audit log
-    const { data: userProfile } = await supabase
+    const { data: userProfile } = await dbClient
       .from('users')
       .select('name')
       .eq('id', user.id)
       .single();
 
     // Create audit log (non-blocking)
-    void supabase.from('translation_audit_logs').insert({
+    void dbClient.from('translation_audit_logs').insert({
       translation_id: id,
       user_id: user.id,
       user_name: userProfile?.name,
