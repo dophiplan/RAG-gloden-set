@@ -176,18 +176,32 @@ async function processPDFFile(
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const pdfValidation = await parseAndValidatePDF(buffer, file.name);
+    let pdfValidation;
+    try {
+      pdfValidation = await parseAndValidatePDF(buffer, file.name);
+    } catch (pdfError) {
+      console.error(`PDF parsing library error for ${file.name}:`, pdfError);
+      // PDF 라이브러리 오류 시 폴드백: 빈 결과로 처리
+      pdfValidation = {
+        valid: false,
+        rawTextLength: 0,
+        extractedTextCount: 0,
+        texts: [],
+        empty: true,
+        error: 'PDF 라이브러리 로딩 실패. 관리자에게 문의하세요.'
+      };
+    }
 
-    result.texts = pdfValidation.texts;
-    result.success = pdfValidation.valid;
+    result.texts = pdfValidation.texts || [];
+    result.success = pdfValidation.valid && !pdfValidation.empty;
 
-    // If no text was extracted, create an issue
-    if (pdfValidation.empty) {
+    // If no text was extracted or error occurred, create an issue
+    if (pdfValidation.empty || pdfValidation.error) {
       result.issueId = await createFileIssue(
         context,
         file,
         'pdf_parse_error',
-        `PDF 파일에서 텍스트를 추출하지 못했습니다: ${file.name}`
+        pdfValidation.error || `PDF 파일에서 텍스트를 추출하지 못했습니다: ${file.name}`
       );
     }
 
