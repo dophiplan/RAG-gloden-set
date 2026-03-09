@@ -118,7 +118,7 @@ export default memo(function TranslationTableV2({
     ),
     status: 120,
     notes: 180,
-    actions: 50,
+    actions: 100,
   };
 
   const minWidths: { [key: string]: number } = {
@@ -136,7 +136,7 @@ export default memo(function TranslationTableV2({
     ),
     status: 100,
     notes: 120,
-    actions: 40,
+    actions: 80,
   };
 
   const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
@@ -214,7 +214,7 @@ export default memo(function TranslationTableV2({
     <div className="space-y-4 min-w-max">
       {/* Table - Page-level horizontal scroll */}
       <div className="bg-white border rounded-lg">
-        <table className="w-full table-auto text-xs">
+        <table className="w-full border-collapse text-xs">
             <ResizableTableHeader
               showProductColumn={showProductColumn}
               displayLanguages={displayLanguages}

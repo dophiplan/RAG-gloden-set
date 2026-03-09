@@ -376,7 +376,7 @@ const TranslationRow = memo(function TranslationRow({
         </div>
       </td>
       <td className="px-0.5 py-0.5 align-top" style={getCellStyle('actions')}>
-        <div className="flex gap-1">
+        <div className="flex gap-0.5 justify-center">
           {onHistoryClick && (
             <button
               onClick={(e) => {
