@@ -268,6 +268,7 @@ function TranslationsContent() {
           onRefresh={fetchTranslations}
           onOpenEmailModal={handlers.handleOpenEmailModal}
           onOpenDeploymentModal={handlers.handleOpenDeploymentModal}
+          onBulkDelete={mutations.handleBulkDelete}
         />
       </div>
     </DashboardLayout>
