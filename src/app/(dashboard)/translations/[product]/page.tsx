@@ -281,6 +281,7 @@ function TranslationsProductContent() {
           isOpen={modals.isCreateModalOpen}
           onClose={modals.closeCreateModal}
           onCreate={mutations.handleCreate}
+          onPDFUpload={handlers.handlePDFUpload}
         />
 
         <EmailTemplateModal

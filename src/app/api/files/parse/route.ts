@@ -26,7 +26,12 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { user } = await getAuthUser(supabase);
 
-    if (!user) {
+    // Development mode bypass
+    let userId = user?.id;
+    if (!user && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/files/parse');
+      userId = 'dev-mode-user';
+    } else if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest) {
     // Prepare upload context
     const context: FileUploadContext = {
       supabase,
-      userId: user.id,
+      userId: userId || user?.id || 'unknown',
       productCode,
     };
 
