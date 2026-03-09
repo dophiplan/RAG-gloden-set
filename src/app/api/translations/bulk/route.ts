@@ -54,6 +54,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '번역 항목 생성에 실패했습니다.' }, { status: 500 });
     }
 
+    // Create translation_products links
+    if (body.product_code) {
+      const translationProducts = data.map((translation: any) => ({
+        translation_id: translation.id,
+        product_code: body.product_code,
+      }));
+      await adminClient.from('translation_products').insert(translationProducts);
+    }
+
     // Create translation results for each language
     const languages = body.languages || [];
     const allLanguages = languages.includes('ko') ? languages : ['ko', ...languages];
