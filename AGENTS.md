@@ -1,6 +1,6 @@
 # 🤖 AI 개발 규칙 (Development Guidelines)
 
-> **버전**: 1.3  
+> **버전**: 1.4  
 > **마지막 업데이트**: 2026-03-09  
 > **적용 대상**: 모든 AI 코드 생성 작업
 
@@ -146,6 +146,7 @@ try {
 
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
+| 2026-03-09 | 1.4 | **빌드 Warning 무시 금지** - 빌드 출력 확인 규칙 강화, **Architect Agent 전체 판 분석** 체계 개선 |
 | 2026-03-09 | 1.3 | **Architect Agent 추가** - 개발 전 아키텍처 분석 및 영향 범위 파악 프로세스 도입 |
 | 2026-03-09 | 1.2 | **서브 에이전트 QA/TQC 프로세스 필수화** - 모든 코드 수정 후 서브 에이전트를 통한 자동 QA 수행 |
 | 2026-02-24 | 1.1 | 계획 수립 규칙 및 사이드 이펙트 금지 규칙 강화 추가 |
@@ -187,28 +188,90 @@ try {
 - **해결**: `useRef<Set<string>>`로 삭제 중인 ID 추적
 - **참고**: `useDeleteTranslation.ts` 참조
 
+### 패턴 7: 빌드 Warning 무시 (치명적)
+- **실수**: "빌드 성공"만 보고 warning 무시 → Syntax Error, Hydration Error 등 런타임 오류 발생
+- **해결**: **빌드 출력의 모든 warning을 에러처럼 처리, 0개 확인 전 커밋 금지**
+- **체크리스트**:
+  - [ ] 빌드 출력 전체 스크롤 확인
+  - [ ] warning 메시지 전부 해결
+  - [ ] Client/Server Component 경고 확인
+  - [ ] 브라우저 개발자 도구 콘솔 확인
+
 ---
 
 ## 🏗️ 아키텍처 설계 서브 에이전트 (Architect Agent)
 
 > **2026-03-09 추가**: 개발 전 반드시 아키텍처 분석 및 영향 범위 파악
 
-### 11. Architect Agent 역할
+### 11. Architect Agent 역할 - 전체 판 분석
 
-**목적**: 사용자-메인 에이전트 논의 내용을 바탕으로 시스템 아키텍처 분석 및 수정 영향 범위 파악
+**목적**: 사용자-메인 에이전트 논의 내용을 바탕으로 **전체 시스템 아키텍처를 조망**하고 수정 영향 범위 파악
 
-**실행 시점**: 
+**핵심 원칙**: "나무(tree)가 아닌 숲(forest)을 본다"
+```
+❌ 틀린 접근: "이 파일만 수정하면 되겠지"
+✅ 올바른 접근: "이 수정이 시스템 전체에 미치는 영향은?"
+```
+
+**실행 시점 (필수)**:
 - ✅ 새로운 기능 개발 전
 - ✅ 기존 기능 수정/리팩토링 전  
 - ✅ 버그 수정으로 인해 다른 영역 영향 가능성 있을 때
+- ✅ **작은 수정이라도 연결된 영역 있을 때**
 
-**필수 대화 주제**:
+**전체 판 분석 체계**:
+
 ```
-1. "이 수정으로 영향받을 수 있는 컴포넌트/모듈은?"
-2. "DB 스키마 변경이 필요한가?"
-3. "API 응답 형식 변경 시 하위 호환성은?"
-4. "이 수정으로 인해 깨질 수 있는 테스트는?"
-5. "파생된 수정이 필요한 영역 리스트업"
+┌─────────────────────────────────────────────────────────────────────┐
+│                    전체 시스템 아키텍처 맵                           │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Presentation Layer]                                               │
+│   ├── Pages (Route) ←→ Layout                                       │
+│   ├── Components                                                    │
+│   │     ├── UI Components                                           │
+│   │     └── Feature Components ←→ Hooks                             │
+│   └── State Management (SWR/Context)                                │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Application Layer]                                                │
+│   ├── API Routes (/api/*)                                           │
+│   ├── Services (Business Logic)                                     │
+│   └── Repositories (Data Access)                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Data Layer]                                                       │
+│   ├── Database Schema                                               │
+│   ├── RLS Policies                                                  │
+│   └── External APIs                                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  [Shared Layer]                                                     │
+│   ├── Types/Interfaces                                              │
+│   ├── Utils/Helpers                                                 │
+│   └── Constants                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**필수 분석 질문** (답변 없이 진행 금지):
+```
+□ 1단계 - 직접 영역 (Primary)
+   └─ "이 수정으로 직접 변경되는 파일은?"
+
+□ 2단계 - 연결 영역 (Secondary)  
+   └─ "이 파일을 import/use하는 곳은?"
+   └─ "이 파일이 import/use하는 곳은?"
+
+□ 3단계 - 파생 영역 (Derived)
+   └─ "API 변경 시 클라이언트는?"
+   └─ "타입 변경 시 사용처는?"
+   └─ "DB 변경 시 마이그레이션은?"
+
+□ 4단계 - 테스트 영역
+   └─ "깨질 수 있는 unit test?"
+   └─ "깨질 수 있는 characterization test?"
+   └─ "추가해야 할 테스트는?"
+
+□ 5단계 - 사이드 이펙트
+   └─ "하위 호환성 깨지는가?"
+   └─ "성능에 영향 있는가?"
+   └─ "보안에 영향 있는가?"
 ```
 
 ### 12. Architect Agent 워크플로우
@@ -248,16 +311,35 @@ try {
 
 ### 13. Architect Agent 분석 체크리스트
 
-**분석 시 확인 항목**:
+**분석 시 확인 항목 (전체 판 관점)**:
 
-| 카테고리 | 확인 항목 | 예시 |
-|---------|----------|------|
-| **컴포넌트** | 수정 파일과 연결된 컴포넌트 | TranslationTable → TranslationRow, TranslationFilters |
-| **API** | API 변경 시 영향받는 클라이언트 | /api/translations 수정 → dashboard, glossary 페이지 |
-| **DB** | 스키마 변경 필요 여부 | 새 컬럼 추가 → 마이그레이션 필요 |
-| **타입** | 타입 변경 시 영향 | interface 수정 → 사용처 모두 업데이트 |
-| **훅** | 커스텀 훅 변경 시 | useTranslationData 수정 → 사용 컴포넌트 확인 |
-| **테스트** | 깨질 수 있는 테스트 | API 응답 변경 → characterization test 실패 |
+| 레벨 | 카테고리 | 확인 항목 | 체크 방법 | 예시 |
+|------|---------|----------|----------|------|
+| 1 | **파일 시스템** | 직접 수정 파일 | 파일 열어보기 | `TranslationTableV2.tsx` |
+| 2 | **Import/Export** | 연결된 파일 | `grep import` / `grep "from './"` | `TranslationRow`, `TranslationFilters` |
+| 3 | **Props/Context** | Props drilling | 타입 정의 확인 | `onDelete: (id) => void` |
+| 4 | **Hooks** | 커스텀 훅 사용처 | `grep -r "useHookName"` | `useDeleteTranslation` 사용처 |
+| 5 | **API Routes** | API 엔드포인트 | `/app/api/**/route.ts` 목록 | `GET/POST/PATCH/DELETE /api/translations` |
+| 6 | **Services** | 비즈니스 로직 | `src/services/*.ts` | `TranslationCrudService` |
+| 7 | **Repositories** | 데이터 접근 | `src/repositories/*.ts` | `TranslationRepository` |
+| 8 | **DB Schema** | 테이블/컬럼 | Supabase 타입 또는 마이그레이션 | `translations`, `translation_products` |
+| 9 | **RLS Policies** | 권한 정책 | Supabase 콘솔 또는 SQL | `ENABLE ROW LEVEL SECURITY` |
+| 10 | **Types** | 공유 타입 | `src/types/*.ts` | `Translation`, `TranslationStatus` |
+| 11 | **Tests** | 관련 테스트 | `tests/**/*.test.ts` | `characterization`, `unit` 테스트 |
+| 12 | **Config** | 설정 파일 | `next.config.ts`, `tailwind.config.ts` | 환경 변수, 라우트 설정 |
+
+**전체 판 시각화 도구**:
+```bash
+# 파일 의존성 확인
+grep -r "import.*from.*components/translations" src/app/
+grep -r "import.*from.*hooks/useTranslation" src/components/
+
+# API 사용처 확인
+grep -r "/api/translations" src/components/ src/app/
+
+# 훅 사용처 확인
+grep -r "useDeleteTranslation\|useCreateTranslation" src/
+```
 
 **산출물**:
 ```markdown
@@ -324,13 +406,32 @@ try {
 | **Sub Agent 3 (API Test)** | API 엔드포인트 직접 호출 테스트 | `curl` 또는 HTTP 클라이언트 |
 | **Sub Agent 4 (Integration)** | 브라우저 콘솔 에러, 네트워크 탭 확인 | 수동 확인 또는 자동화 도구 |
 
-### 16. QA/TQC 실행 기준
+### 16. QA/TQC 실행 기준 (필수)
+
+**빌드 출력 확인 (절대 무시 금지)**
+```
+❌ 틀린 예: "빌드 성공"이라고만 확인하고 warning 무시
+✅ 올바른 예: 빌드 출력의 모든 warning, error 메시지 확인 및 해결
+```
+
+**필수 확인 항목**:
+1. **Syntax Error** - 빨간색 오류 메시지 (빌드 실패)
+2. **Type Error** - TypeScript 타입 오류 (빌드 실패)
+3. **Warning** - 노란색 경고 (빌드 성공 but 문제 있음)
+   - Unused imports
+   - Missing dependencies
+   - Deprecated APIs
+   - Hydration mismatch
+4. **Client/Server Component** - 컴포넌트 타입 경고
 
 **필수 실행 (수정 후 반드시)**
 - [ ] **빌드 테스트** (`npm run build`) - Sub Agent 1
+  - 출력 메시지 **모두** 확인 (warning 포함)
+  - warning 있으면 반드시 해결 후 재빌드
 - [ ] **유닛 테스트** (`npm test`) - Sub Agent 2 (테스트 있을 경우)
 - [ ] **API 테스트** - Sub Agent 3 (API 수정 시)
 - [ ] **통합 테스트** - Sub Agent 4 (UI 수정 시)
+- [ ] **브라우저 콘솔** - 개발자 도구 에러 확인
 
 **API 테스트 예시**
 ```bash
