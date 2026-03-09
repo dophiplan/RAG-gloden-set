@@ -45,13 +45,14 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const [statsData, requestsData] = await Promise.all([
+        const [statsData, requestsResult] = await Promise.all([
           apiGet<DashboardStats>('/api/dashboard/stats', { start_date: startDate, end_date: endDate }),
           apiGet<{ requests: DashboardRequest[] }>('/api/dashboard/requests'),
         ]);
 
         setStats(statsData);
-        setRequests(requestsData.requests || []);
+        // API returns { data: { requests: [...] } }, parseApiResponse extracts data
+        setRequests(requestsResult?.requests || []);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         showError('대시보드 데이터를 불러오는데 실패했습니다.');

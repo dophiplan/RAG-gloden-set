@@ -194,7 +194,7 @@ export async function GET() {
       return bDate - aDate;
     });
 
-    return apiSuccess(allRequests.slice(0, 10));
+    return apiSuccess({ requests: allRequests.slice(0, 10) });
   } catch (error) {
     console.error('Dashboard requests API error:', error);
     return apiInternalError(
