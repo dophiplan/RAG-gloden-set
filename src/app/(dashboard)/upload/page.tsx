@@ -13,7 +13,7 @@ import { Holiday } from '@/types/api';
 import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
 import { calculateDeadline, formatDeadline } from '@/shared/date_time/holiday_checker';
-import { apiGet, apiPost } from '@/lib/api-utils';
+import { apiGet, apiPost, apiFetch } from '@/lib/api-utils';
 
 interface ParseResult {
   success: boolean;
@@ -221,7 +221,10 @@ export default function UploadPage() {
       if (productCode) formData.append('product_code', productCode);
       if (version) formData.append('version', version);
 
-      const data = await apiPost<ParseResult>('/api/files/parse', formData);
+      const data = await apiFetch<ParseResult>('/api/files/parse', {
+        method: 'POST',
+        body: formData,
+      });
 
       setParseResult(data);
 
