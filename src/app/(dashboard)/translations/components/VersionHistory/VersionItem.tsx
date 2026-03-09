@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import DiffView, { UserAvatar } from '@/components/rollback/DiffView';
 
 interface VersionItemProps {
   log: {
@@ -39,70 +40,109 @@ function formatTime(dateString: string): string {
   });
 }
 
+// 필드별 아이콘
+const fieldIcons: Record<string, string> = {
+  status: '📊',
+  source_text: '📝',
+  translated_text: '🌐',
+  context: '💬',
+  priority: '⚡',
+  scope: '📁',
+};
+
 export function VersionItem({ log, isCurrent, onRevert }: VersionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const hasDiff = log.previousValue && log.newValue && 
+    log.previousValue !== log.newValue &&
+    (log.fieldName === 'translated_text' || log.fieldName === 'source_text' || log.fieldName === 'context');
+
+  const isShortText = Boolean(log.newValue && String(log.newValue).length < 100 && !String(log.newValue).includes('\n'));
+
   return (
-    <div className={`p-3 ${isCurrent ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-      {/* 헤더 */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            {isCurrent && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                현재
-              </span>
-            )}
-            <span className="text-xs text-gray-500">{formatTime(log.createdAt)}</span>
-          </div>
-          <p className="text-xs text-gray-600 mt-1">{log.changedBy}</p>
+    <div className={`p-4 ${isCurrent ? 'bg-blue-50' : 'hover:bg-gray-50'} border-b border-gray-100 last:border-b-0`}>
+      {/* 상단: 사용자 + 시간 + 현재 배지 */}
+      <div className="flex items-center gap-2 mb-2">
+        <UserAvatar userName={log.changedBy} size="sm" />
+        <span className="text-sm font-medium text-gray-900">{log.changedBy}</span>
+        <span className="text-xs text-gray-400 ml-auto">{formatTime(log.createdAt)}</span>
+        {isCurrent && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+            현재
+          </span>
+        )}
+      </div>
+
+      {/* 변경 유형 배지 */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-base">{fieldIcons[log.fieldName] || '📄'}</span>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+          log.type === 'audit'
+            ? 'bg-purple-100 text-purple-800'
+            : 'bg-green-100 text-green-800'
+        }`}>
+          {log.changeDescription}
+        </span>
+      </div>
+
+      {/* 상태 변경 표시 */}
+      {log.fieldName === 'status' && log.previousValue && log.newValue && (
+        <div className="text-sm text-gray-700 mb-2 flex items-center gap-2">
+          <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-600 line-through">{log.previousValue}</span>
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+          <span className="px-2 py-0.5 bg-blue-100 rounded text-blue-700">{log.newValue}</span>
         </div>
+      )}
+
+      {/* Diff 뷰 또는 텍스트 */}
+      {hasDiff && isExpanded ? (
+        <div className="mt-2">
+          <DiffView
+            oldValue={log.previousValue}
+            newValue={log.newValue}
+            userName={log.changedBy}
+            showInline={isShortText}
+          />
+        </div>
+      ) : log.newValue ? (
+        <p className="text-sm text-gray-700 mt-2" title={log.newValue}>
+          {String(log.newValue).slice(0, 100)}{String(log.newValue).length > 100 ? '...' : ''}
+        </p>
+      ) : null}
+
+      {/* 액션 버튼들 */}
+      <div className="flex items-center gap-2 mt-3">
+        {/* Diff 토글 버튼 (변경 내용이 있는 경우) */}
+        {hasDiff && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <svg 
+              className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            {isExpanded ? '접기' : '변경 내용 보기'}
+          </button>
+        )}
 
         {/* 복구 버튼 */}
         {!isCurrent && onRevert && (
           <button
             onClick={onRevert}
-            className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-700 whitespace-nowrap"
+            className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-700 ml-auto flex items-center gap-1 transition-colors"
           >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
             복구
           </button>
-        )}
-      </div>
-
-      {/* 변경 내용 */}
-      <div className="mt-2">
-        {/* 변경 설명 */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-            log.type === 'audit'
-              ? 'bg-purple-100 text-purple-800'
-              : 'bg-green-100 text-green-800'
-          }`}>
-            {log.changeDescription}
-          </span>
-        </div>
-
-        {/* 새 값 */}
-        {log.newValue && (
-          <p className="text-sm text-gray-900 mt-1" title={log.newValue}>
-            {log.newValue}
-          </p>
-        )}
-
-        {/* 변경 전 값 표시 (접힌 상태) */}
-        {!isCurrent && log.previousValue && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-xs text-gray-400 mt-1 hover:text-gray-600"
-          >
-            {isExpanded ? '숨기기' : '변경 전 보기'}
-          </button>
-        )}
-
-        {isExpanded && log.previousValue && (
-          <p className="text-xs text-gray-400 mt-1 line-through">
-            {log.previousValue}
-          </p>
         )}
       </div>
     </div>

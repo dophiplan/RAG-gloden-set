@@ -415,6 +415,7 @@ function TranslationsProductContent() {
                   translationId={individualHistoryModal.translationId}
                   languageCode={individualHistoryModal.languageCode}
                   curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
+                  onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
                 />
               </div>
             </div>
