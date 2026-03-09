@@ -91,9 +91,16 @@ export async function POST(request: NextRequest) {
       processingTime: ((Date.now() - startTime) / 1000).toFixed(2),
     });
   } catch (error) {
-    console.error('File parsing error:', error);
+    console.error('=== File Parsing Error ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     return NextResponse.json(
-      { error: '파일 파싱 중 오류가 발생했습니다.' },
+      { 
+        error: '파일 파싱 중 오류가 발생했습니다.',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

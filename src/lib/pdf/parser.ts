@@ -20,14 +20,23 @@ async function loadUnpdf() {
  * Extract text from PDF buffer using unpdf
  */
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  console.log('=== extractTextFromPDF called ===');
+  console.log('Buffer size:', buffer.length);
+  
   try {
+    console.log('Loading unpdf library...');
     const extract = await loadUnpdf();
     if (!extract) {
       throw new Error('PDF 라이브러리를 로드할 수 없습니다');
     }
+    console.log('Unpdf loaded successfully');
     
     const uint8Array = new Uint8Array(buffer);
+    console.log('Converting to Uint8Array, size:', uint8Array.length);
+    
+    console.log('Calling extractText...');
     const result = await extract(uint8Array);
+    console.log('Extract result:', { hasText: !!result.text, isArray: Array.isArray(result.text) });
     
     // text can be string or array of strings
     if (Array.isArray(result.text)) {
@@ -35,10 +44,12 @@ export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     }
     return result.text || '';
   } catch (error) {
-    console.error('PDF text extraction failed:', error);
-    // 라이브러리 로딩 실패 시 빈 문자열 반환 (상위에서 처리)
+    console.error('=== PDF text extraction failed ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
     throw error;
-  }}
+  }
+}
 
 /**
  * Extract quoted text patterns from PDF content
