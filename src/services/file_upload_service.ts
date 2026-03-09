@@ -176,27 +176,13 @@ async function processPDFFile(
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    let pdfValidation;
-    try {
-      pdfValidation = await parseAndValidatePDF(buffer, file.name);
-    } catch (pdfError) {
-      console.error(`PDF parsing library error for ${file.name}:`, pdfError);
-      // PDF 라이브러리 오류 시 폴드백: 빈 결과로 처리
-      pdfValidation = {
-        valid: false,
-        rawTextLength: 0,
-        extractedTextCount: 0,
-        texts: [],
-        empty: true,
-        error: 'PDF 라이브러리 로딩 실패. 관리자에게 문의하세요.'
-      };
-    }
+    const pdfValidation = await parseAndValidatePDF(buffer, file.name);
 
     result.texts = pdfValidation.texts || [];
     result.success = pdfValidation.valid && !pdfValidation.empty;
 
-    // If no text was extracted or error occurred, create an issue
-    if (pdfValidation.empty || pdfValidation.error) {
+    // If no text was extracted, create an issue
+    if (pdfValidation.empty) {
       result.issueId = await createFileIssue(
         context,
         file,

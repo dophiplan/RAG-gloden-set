@@ -1,53 +1,33 @@
 import { ExtractedText } from '@/types';
 
-// unpdf 라이브러리는 서버 환경에서 WASM 로딩 문제가 있어 동적 임포트 사용
-let extractText: typeof import('unpdf').extractText | null = null;
+// pdf-parse는 서버 환경에서 동적으로 로드
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pdfParse: any = null;
 
-async function loadUnpdf() {
-  if (!extractText) {
-    try {
-      const unpdf = await import('unpdf');
-      extractText = unpdf.extractText;
-    } catch (error) {
-      console.error('Failed to load unpdf:', error);
-      throw new Error('PDF 라이브러리 로딩 실패');
-    }
+async function loadPdfParse() {
+  if (!pdfParse) {
+    // 동적 import로 CommonJS 모듈 로드
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const module: any = await import('pdf-parse');
+    pdfParse = module.default || module;
   }
-  return extractText;
+  return pdfParse;
 }
 
 /**
- * Extract text from PDF buffer using unpdf
+ * Extract text from PDF buffer using pdf-parse
  */
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  console.log('=== extractTextFromPDF called ===');
-  console.log('Buffer size:', buffer.length);
-  
   try {
-    console.log('Loading unpdf library...');
-    const extract = await loadUnpdf();
-    if (!extract) {
-      throw new Error('PDF 라이브러리를 로드할 수 없습니다');
+    const parse = await loadPdfParse();
+    if (!parse) {
+      throw new Error('PDF 파서를 로드할 수 없습니다');
     }
-    console.log('Unpdf loaded successfully');
-    
-    const uint8Array = new Uint8Array(buffer);
-    console.log('Converting to Uint8Array, size:', uint8Array.length);
-    
-    console.log('Calling extractText...');
-    const result = await extract(uint8Array);
-    console.log('Extract result:', { hasText: !!result.text, isArray: Array.isArray(result.text) });
-    
-    // text can be string or array of strings
-    if (Array.isArray(result.text)) {
-      return result.text.join('\n');
-    }
-    return result.text || '';
+    const data = await parse(buffer);
+    return data.text || '';
   } catch (error) {
-    console.error('=== PDF text extraction failed ===');
-    console.error('Error type:', typeof error);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    throw error;
+    console.error('PDF text extraction failed:', error);
+    throw new Error('PDF 파싱 실패: ' + (error instanceof Error ? error.message : '알 수 없는 오류'));
   }
 }
 
@@ -59,41 +39,7 @@ export function extractQuotedText(text: string): ExtractedText[] {
   const results: ExtractedText[] = [];
   const lines = text.split('\n');
 
-  // Debug: Log character codes for lines that look like they have quotes
-  console.log('=== extractQuotedText called ===');
-  console.log('Total lines:', (lines || []).length);
-
-  // Find lines that might have quotes by looking for Korean text patterns
-  const potentialQuoteLines = (lines || []).filter((line, idx) => {
-    // Lines that start with a quote-like character
-    if (idx < 30) {
-      const firstChar = line.charCodeAt(0);
-      const hasQuoteLikeChar = (
-        firstChar === 0x27 ||   // '
-        firstChar === 0x22 ||   // "
-        firstChar === 0x2018 || // '
-        firstChar === 0x2019 || // '
-        firstChar === 0x201C || // "
-        firstChar === 0x201D || // "
-        firstChar === 0x60 ||   // `
-        firstChar === 0xB4     // ´
-      );
-      if (hasQuoteLikeChar || line.includes("'") || line.includes("'")) {
-        console.log(`Line ${idx}: "${line.substring(0, 50)}" | First char code: U+${firstChar.toString(16).toUpperCase().padStart(4, '0')}`);
-        // Log all character codes for short lines
-        if (line.length < 30) {
-          const codes = [...line].map((c, i) => `${i}:U+${c.charCodeAt(0).toString(16).toUpperCase()}`).join(' ');
-          console.log(`  Codes: ${codes}`);
-        }
-      }
-      return hasQuoteLikeChar;
-    }
-    return false;
-  });
-
-  console.log('Lines starting with quote-like char:', (potentialQuoteLines || []).length);
-
-  // Comprehensive quote patterns - explicit patterns to avoid escaping issues
+  // Comprehensive quote patterns
   const quotePatterns = [
     // Standard ASCII single quotes U+0027
     /\'([^\']{2,})\'/g,
@@ -128,9 +74,7 @@ export function extractQuotedText(text: string): ExtractedText[] {
     /\'([^\u2019]{2,})\u2019/g,
   ];
 
-  console.log('Using', (quotePatterns || []).length, 'quote patterns');
-
-  (lines || []).forEach((line, index) => {
+  lines.forEach((line, index) => {
     const lineNumber = index + 1;
 
     for (const pattern of quotePatterns) {
@@ -139,7 +83,6 @@ export function extractQuotedText(text: string): ExtractedText[] {
       while ((match = pattern.exec(line)) !== null) {
         const extractedText = match[1].trim();
         if (extractedText && extractedText.length > 0 && !isNumericOnly(extractedText)) {
-          console.log(`Match found on line ${lineNumber}: "${extractedText}"`);
           results.push({
             text: extractedText,
             lineNumber,
@@ -150,11 +93,9 @@ export function extractQuotedText(text: string): ExtractedText[] {
     }
   });
 
-  console.log('Total matches before dedup:', results.length);
-
   // Remove duplicates while preserving order
   const seen = new Set<string>();
-  return (results || []).filter((item) => {
+  return results.filter((item) => {
     if (seen.has(item.text)) {
       return false;
     }
@@ -222,7 +163,7 @@ export function extractAllText(text: string): ExtractedText[] {
   const combined = [...quoted, ...tagged];
   const seen = new Set<string>();
 
-  return (combined || []).filter((item) => {
+  return combined.filter((item) => {
     if (seen.has(item.text)) {
       return false;
     }

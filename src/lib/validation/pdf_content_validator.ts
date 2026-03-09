@@ -115,6 +115,7 @@ export async function parseAndValidatePDF(
     // Validate content
     return validatePDFContent(rawText, extractedTexts);
   } catch (error) {
+    console.error(`PDF parsing error for ${fileName}:`, error);
     return {
       valid: false,
       rawTextLength: 0,
