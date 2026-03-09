@@ -90,7 +90,8 @@ export function useTranslationData({
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, languageFilter, searchTerm, selectedProduct, requestIdFilter, scopeFilter, versionFilter, page, setTotalPages, createdAfter, createdBefore]);
+  }, [statusFilter, languageFilter, searchTerm, selectedProduct, requestIdFilter, scopeFilter, versionFilter, page, createdAfter, createdBefore]);
+  // Note: setTotalPages는 React의 state setter로 stable하므로 의존성에서 제외
 
   useEffect(() => {
     const controller = new AbortController();
