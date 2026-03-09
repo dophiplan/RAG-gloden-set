@@ -23,6 +23,7 @@ export interface TranslationCreateInput {
   priority?: PriorityLevel;
   completionDate?: string;
   userId: string;
+  platformCodes?: string[];
   translations?: Array<{
     languageCode: LanguageCode;
     translatedText: string;
@@ -47,8 +48,10 @@ export class TranslationCrudService {
   private productRepo: TranslationProductRepository;
   private glossaryMatcher: GlossaryAutoMatcher;
   private auditLogger: TranslationAuditLogger;
+  private supabase: SupabaseClient;
 
   constructor(supabase: SupabaseClient) {
+    this.supabase = supabase;
     this.translationRepo = new TranslationRepository(supabase);
     this.resultRepo = new TranslationResultRepository(supabase);
     this.productRepo = new TranslationProductRepository(supabase);
@@ -191,6 +194,18 @@ export class TranslationCrudService {
       }));
 
       await this.productRepo.createMany(productLinks);
+    }
+
+    // Create platform links if provided
+    if ((input.platformCodes || []).length > 0) {
+      const platformLinks = (input.platformCodes || []).map(platformCode => ({
+        translation_id: translation.id,
+        platform_code: platformCode,
+      }));
+      
+      await this.supabase
+        .from('translation_platforms')
+        .insert(platformLinks);
     }
 
     // Fetch complete translation with relations

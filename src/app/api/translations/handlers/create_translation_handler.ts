@@ -88,6 +88,7 @@ export async function handleCreateTranslation(request: NextRequest) {
         priority: body.priority as PriorityLevel | undefined,
         completionDate: body.completion_date,
         userId: user.id,
+        platformCodes: body.platform_codes,
         translations,
       },
       {

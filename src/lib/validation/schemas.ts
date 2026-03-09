@@ -30,6 +30,7 @@ export const translationCreateSchema = z.object({
     })
   ).optional(),
   product_codes: z.array(z.string()).optional(),
+  platform_codes: z.array(z.string()).optional(),
   completion_date: z.string().optional(),
 });
 
