@@ -1,18 +1,44 @@
 import { ExtractedText } from '@/types';
-import { extractText } from 'unpdf';
+
+// unpdf 라이브러리는 서버 환경에서 WASM 로딩 문제가 있어 동적 임포트 사용
+let extractText: typeof import('unpdf').extractText | null = null;
+
+async function loadUnpdf() {
+  if (!extractText) {
+    try {
+      const unpdf = await import('unpdf');
+      extractText = unpdf.extractText;
+    } catch (error) {
+      console.error('Failed to load unpdf:', error);
+      throw new Error('PDF 라이브러리 로딩 실패');
+    }
+  }
+  return extractText;
+}
 
 /**
  * Extract text from PDF buffer using unpdf
  */
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  const uint8Array = new Uint8Array(buffer);
-  const result = await extractText(uint8Array);
-  // text can be string or array of strings
-  if (Array.isArray(result.text)) {
-    return result.text.join('\n');
-  }
-  return result.text || '';
-}
+  try {
+    const extract = await loadUnpdf();
+    if (!extract) {
+      throw new Error('PDF 라이브러리를 로드할 수 없습니다');
+    }
+    
+    const uint8Array = new Uint8Array(buffer);
+    const result = await extract(uint8Array);
+    
+    // text can be string or array of strings
+    if (Array.isArray(result.text)) {
+      return result.text.join('\n');
+    }
+    return result.text || '';
+  } catch (error) {
+    console.error('PDF text extraction failed:', error);
+    // 라이브러리 로딩 실패 시 빈 문자열 반환 (상위에서 처리)
+    throw error;
+  }}
 
 /**
  * Extract quoted text patterns from PDF content
