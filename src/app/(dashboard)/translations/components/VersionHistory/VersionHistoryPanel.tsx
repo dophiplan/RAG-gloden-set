@@ -223,7 +223,8 @@ export function VersionHistoryPanel({
             {timelineItems.map((log, index) => {
               const colors = getUserColors(log.changedBy);
               const isCurrent = log.action === 'current';
-              const canRevert = !isCurrent && log.type === 'translation' && log.fieldName === 'translated_text';
+              // 모든 변경 유형에 대해 복구 가능 (현재 버전 제외)
+              const canRevert = !isCurrent;
               const hasDiff = log.previousValue && log.newValue && 
                 log.previousValue !== log.newValue &&
                 (log.fieldName === 'translated_text' || log.fieldName === 'source_text' || log.fieldName === 'context');
@@ -326,13 +327,13 @@ export function VersionHistoryPanel({
                       </div>
                     )}
 
-                    {/* 복구 버튼 */}
+                    {/* 복구 버튼 - 모든 변경 유형에 대해 표시 */}
                     {canRevert && (
                       <div className="mt-3 pt-2 border-t border-gray-100">
                         <button
                           onClick={() => handleRevert(log)}
                           disabled={isReverting === log.id}
-                          className="text-xs px-3 py-1.5 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+                          className="w-full text-xs px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                         >
                           {isReverting === log.id ? (
                             <>
