@@ -1,27 +1,31 @@
 import { ExtractedText } from '@/types';
 
-// pdf-parse v1.1.1 - 서버에서만 동작
+// unpdf 라이브러리 - pdf.js 기반, 더 나은 텍스트 추출
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let pdfParse: any = null;
+let extractTextFn: any = null;
 
-async function loadPdfParse() {
-  if (!pdfParse) {
-    // 서버 환경에서만 동적 로드
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const module: any = await import('pdf-parse');
-    pdfParse = module.default || module;
+async function loadUnpdf() {
+  if (!extractTextFn) {
+    const unpdf = await import('unpdf');
+    extractTextFn = unpdf.extractText;
   }
-  return pdfParse;
+  return extractTextFn;
 }
 
 /**
- * Extract text from PDF buffer using pdf-parse v1.1.1
+ * Extract text from PDF buffer using unpdf
  */
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const parse = await loadPdfParse();
-    const data = await parse(buffer);
-    return data.text || '';
+    const extract = await loadUnpdf();
+    const uint8Array = new Uint8Array(buffer);
+    const result = await extract(uint8Array);
+    
+    // text can be string or array of strings
+    if (Array.isArray(result.text)) {
+      return result.text.join('\n');
+    }
+    return result.text || '';
   } catch (error) {
     console.error('PDF text extraction failed:', error);
     throw new Error('PDF 파싱 실패: ' + (error instanceof Error ? error.message : '알 수 없는 오류'));
