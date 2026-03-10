@@ -23,7 +23,7 @@ interface TranslationRowProps {
   translation: TranslationWithResults;
   isSelected: boolean;
   isExpanded?: boolean;
-  showProductColumn?: boolean;
+
   displayLanguages?: LanguageCode[];
   columnWidths?: { [key: string]: number };
   onToggleSelect: (id: string) => void;
@@ -52,7 +52,7 @@ const TranslationRow = memo(function TranslationRow({
   translation,
   isSelected,
   isExpanded = false,
-  showProductColumn = true,
+
   displayLanguages = [],
   columnWidths = {},
   onToggleSelect,
@@ -91,10 +91,7 @@ const TranslationRow = memo(function TranslationRow({
     );
   };
 
-  const productCodes = translation.translation_products?.map(tp => tp.product_code) || [];
-  const productNames = productCodes
-    .map((code) => productsMap[code]?.name || code)
-    .join(', ') || '-';
+  // Product info removed - determined by page context
 
   const isNotUsed = translation.status === 'not_used';
   const selectedPlatformCodes =
@@ -186,10 +183,6 @@ const TranslationRow = memo(function TranslationRow({
           />
         </td>
 
-        {/* Product */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('product')}>
-          <TruncatedText text={productNames} maxLength={10} cellKey={`${translation.id}-product`} />
-        </td>
 
         {/* Scope */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('scope')}>

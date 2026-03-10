@@ -94,7 +94,7 @@ export default memo(function TranslationTableV2({
 }: TranslationTableV2Props) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const showProductColumn = true;
+  // Product column removed - determined by page context
 
   // Get display languages first (max 8 for translations page)
   const displayLanguages = useMemo(() => {
@@ -112,16 +112,15 @@ export default memo(function TranslationTableV2({
   // Slide view hook
   const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
 
-  // Page 1: Basic Info columns
+  // Page 1: Basic Info columns (product removed)
   const infoPageWidths = {
     checkbox: 36,
     priority: 60,
-    product: 70,
     scope: 80,
     platform: 90,
     version: 70,
     devCode: 100,
-    sourceText: 220,
+    sourceText: 240,
     status: 80,
     actions: 90,
   };
@@ -232,7 +231,7 @@ export default memo(function TranslationTableV2({
               <table className="w-full border-collapse text-xs table-fixed">
                 <ResizableTableHeader
                   page="info"
-                  showProductColumn={showProductColumn}
+
                   allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
                   onToggleSelectAll={toggleSelectAll}
                   columnWidths={columnWidths}
@@ -241,13 +240,13 @@ export default memo(function TranslationTableV2({
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (translations || []).length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
                         번역 항목이 없습니다.
                       </td>
                     </tr>
@@ -259,7 +258,7 @@ export default memo(function TranslationTableV2({
                         translation={translation}
                         isSelected={selectedIds.includes(translation.id)}
                         isExpanded={expandedId === translation.id}
-                        showProductColumn={showProductColumn}
+      
                         columnWidths={columnWidths}
                         onToggleSelect={toggleSelect}
                         onToggleExpand={() => toggleExpand(translation.id)}
@@ -295,13 +294,13 @@ export default memo(function TranslationTableV2({
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (translations || []).length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                         번역 항목이 없습니다.
                       </td>
                     </tr>

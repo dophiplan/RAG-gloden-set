@@ -5,7 +5,7 @@ import { LanguageCode } from '@/types';
 
 export interface ResizableTableHeaderProps {
   page?: 'info' | 'translations';
-  showProductColumn?: boolean;
+  // showProductColumn removed - product is determined by page context
   displayLanguages?: LanguageCode[];
   allSelected: boolean;
   onToggleSelectAll: () => void;
@@ -26,7 +26,7 @@ interface ColumnDef {
  */
 const ResizableTableHeader = memo(function ResizableTableHeader({
   page = 'info',
-  showProductColumn = true,
+
   displayLanguages = [],
   allSelected,
   onToggleSelectAll,
@@ -40,7 +40,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
           // Page 1: Basic Info
           { key: 'checkbox', label: '', resizable: false },
           { key: 'priority', label: '중요', resizable: true },
-          ...(showProductColumn ? [{ key: 'product', label: '제품', resizable: true as const }] : []),
+
           { key: 'scope', label: '분류', resizable: true },
           { key: 'platform', label: '플랫폼', resizable: true },
           { key: 'version', label: '버전', resizable: true },
