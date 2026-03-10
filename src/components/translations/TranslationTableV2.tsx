@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import TranslationRow from '@/components/translations/table/TranslationRow';
 import ResizableTableHeader from '@/components/translations/table/ResizableTableHeader';
 import TranslationTablePagination from '@/components/translations/table/TranslationTablePagination';
+import TableSlideIndicator from '@/components/translations/table/TableSlideIndicator';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
+import { useTableSlide } from '@/components/translations/hooks/useTableSlide';
 import {
   Translation,
   TranslationResult,
@@ -61,9 +63,9 @@ interface TranslationTableV2Props {
 }
 
 /**
- * Main translation table component - Compact design without horizontal scroll
- * Columns: Checkbox | Priority | Product | Scope | Platform | Version | Source | Status | Actions
- * Expanded row shows: Context + Language translations
+ * Slide View Translation Table
+ * Page 1: Basic Info (중요|제품|분류|플랫폼|버전|KEY/ID|원문|상태)
+ * Page 2: Translations (원문|EN|JA|ZH|...)
  */
 export default memo(function TranslationTableV2({
   translations,
@@ -94,36 +96,65 @@ export default memo(function TranslationTableV2({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const showProductColumn = true;
 
-  // Compact column widths - total ~950px max (no horizontal scroll on 1024px+)
-  const defaultWidths: { [key: string]: number } = {
+  // Get display languages first (max 8 for translations page)
+  const displayLanguages = useMemo(() => {
+    const allLanguages = getAllDisplayableLanguages();
+    let langs: LanguageCode[] = [];
+    if (selectedLanguageColumns && selectedLanguageColumns.length > 0) {
+      langs = allLanguages.filter((lang) => selectedLanguageColumns.includes(lang));
+    } else {
+      langs = allLanguages;
+    }
+    // Limit to max 8 languages
+    return langs.slice(0, 8);
+  }, [selectedLanguageColumns]);
+
+  // Slide view hook
+  const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
+
+  // Page 1: Basic Info columns
+  const infoPageWidths = {
     checkbox: 36,
     priority: 60,
     product: 70,
     scope: 80,
     platform: 90,
     version: 70,
-    devCode: 100, // KEY/id column
-    sourceText: 220, // Reduced slightly
+    devCode: 100,
+    sourceText: 220,
     status: 80,
     actions: 90,
   };
 
-  const minWidths: { [key: string]: number } = {
-    checkbox: 36,
-    priority: 50,
-    product: 60,
-    scope: 60,
-    platform: 70,
-    version: 60,
-    devCode: 80,
-    sourceText: 180,
-    status: 70,
-    actions: 80,
-  };
+  // Page 2: Translations columns (source + max 8 languages)
+  const translationPageWidths = useMemo(() => {
+    const widths: { [key: string]: number } = {
+      checkbox: 36,
+      sourceText: 200,
+      actions: 90,
+    };
+    // Max 8 languages, evenly distribute remaining width
+    const langWidth = Math.floor((950 - 36 - 200 - 90) / 8);
+    displayLanguages.forEach((lang) => {
+      widths[`lang_${lang}`] = langWidth;
+    });
+    return widths;
+  }, [displayLanguages]);
 
   const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
-    defaultWidths,
-    minWidths,
+    defaultWidths: slidePage === 'info' ? infoPageWidths : translationPageWidths,
+    minWidths: {
+      checkbox: 36,
+      priority: 50,
+      product: 60,
+      scope: 60,
+      platform: 70,
+      version: 60,
+      devCode: 80,
+      sourceText: 150,
+      status: 70,
+      actions: 80,
+    },
     storageKey: 'translation-table-column-widths-v2',
   });
 
@@ -158,14 +189,6 @@ export default memo(function TranslationTableV2({
     [onSelectionChange]
   );
 
-  const displayLanguages = useMemo(() => {
-    const allLanguages = getAllDisplayableLanguages();
-    if (selectedLanguageColumns && selectedLanguageColumns.length > 0) {
-      return allLanguages.filter((lang) => selectedLanguageColumns.includes(lang));
-    }
-    return allLanguages;
-  }, [selectedLanguageColumns]);
-
   const toggleSelectAll = () => {
     if (selectedIds.length === translations.length) {
       handleSelectionChange([]);
@@ -191,65 +214,118 @@ export default memo(function TranslationTableV2({
 
   return (
     <div className="space-y-4">
-      {/* Table - No horizontal scroll */}
+      {/* Slide Indicator */}
+      <TableSlideIndicator
+        currentPage={slidePage}
+        onPageChange={goToPage}
+      />
+
+      {/* Slide Container */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <table className="w-full border-collapse text-xs table-fixed">
-          <ResizableTableHeader
-            showProductColumn={showProductColumn}
-            allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
-            onToggleSelectAll={toggleSelectAll}
-            columnWidths={columnWidths}
-            onResizeStart={startResize}
-          />
-          <tbody className="divide-y divide-gray-200">
-            {loading ? (
-              <tr>
-                <td
-                  colSpan={9}
-                  className="px-4 py-12 text-center text-sm text-gray-500"
-                >
-                  로딩 중...
-                </td>
-              </tr>
-            ) : (translations || []).length === 0 ? (
-              <tr>
-                <td
-                  colSpan={9}
-                  className="px-4 py-12 text-center text-sm text-gray-500"
-                >
-                  번역 항목이 없습니다.
-                </td>
-              </tr>
-            ) : (
-              (translations || []).map((translation) => (
-                <TranslationRow
-                  key={translation.id}
-                  translation={translation}
-                  isSelected={selectedIds.includes(translation.id)}
-                  isExpanded={expandedId === translation.id}
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-300 ease-in-out"
+            style={transformStyle}
+          >
+            {/* Page 1: Basic Info Table */}
+            <div className="w-full flex-shrink-0">
+              <table className="w-full border-collapse text-xs table-fixed">
+                <ResizableTableHeader
+                  page="info"
                   showProductColumn={showProductColumn}
+                  allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
+                  onToggleSelectAll={toggleSelectAll}
                   columnWidths={columnWidths}
-                  onToggleSelect={toggleSelect}
-                  onToggleExpand={() => toggleExpand(translation.id)}
-                  onStatusChange={onStatusChange}
-                  onTranslationUpdate={onTranslationUpdate}
-                  onSourceTextUpdate={onSourceTextUpdate}
-                  onContextUpdate={onContextUpdate}
-                  onScopeUpdate={onScopeUpdate}
-                  onVersionUpdate={onVersionUpdate}
-                  onPriorityUpdate={onPriorityUpdate}
-                  onNotesUpdate={onNotesUpdate}
-                  onDevCodeUpdate={onDevCodeUpdate}
-                  onPlatformsUpdate={onPlatformsUpdate}
-                  onDelete={onDelete}
-                  onAddToGlossary={onAddToGlossary}
-                  onHistoryClick={onHistoryClick}
-                  displayLanguages={displayLanguages}
+                  onResizeStart={startResize}
                 />
-              ))
-            )}
-          </tbody>
-        </table>
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                        로딩 중...
+                      </td>
+                    </tr>
+                  ) : (translations || []).length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                        번역 항목이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    (translations || []).map((translation) => (
+                      <TranslationRow
+                        key={translation.id}
+                        page="info"
+                        translation={translation}
+                        isSelected={selectedIds.includes(translation.id)}
+                        isExpanded={expandedId === translation.id}
+                        showProductColumn={showProductColumn}
+                        columnWidths={columnWidths}
+                        onToggleSelect={toggleSelect}
+                        onToggleExpand={() => toggleExpand(translation.id)}
+                        onStatusChange={onStatusChange}
+                        onSourceTextUpdate={onSourceTextUpdate}
+                        onContextUpdate={onContextUpdate}
+                        onScopeUpdate={onScopeUpdate}
+                        onVersionUpdate={onVersionUpdate}
+                        onPriorityUpdate={onPriorityUpdate}
+                        onDevCodeUpdate={onDevCodeUpdate}
+                        onPlatformsUpdate={onPlatformsUpdate}
+                        onDelete={onDelete}
+                        onAddToGlossary={onAddToGlossary}
+                        onHistoryClick={onHistoryClick}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Page 2: Translations Table */}
+            <div className="w-full flex-shrink-0">
+              <table className="w-full border-collapse text-xs table-fixed">
+                <ResizableTableHeader
+                  page="translations"
+                  displayLanguages={displayLanguages}
+                  allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
+                  onToggleSelectAll={toggleSelectAll}
+                  columnWidths={columnWidths}
+                  onResizeStart={startResize}
+                />
+                <tbody className="divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
+                        로딩 중...
+                      </td>
+                    </tr>
+                  ) : (translations || []).length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
+                        번역 항목이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    (translations || []).map((translation) => (
+                      <TranslationRow
+                        key={translation.id}
+                        page="translations"
+                        translation={translation}
+                        isSelected={selectedIds.includes(translation.id)}
+                        displayLanguages={displayLanguages}
+                        columnWidths={columnWidths}
+                        onToggleSelect={toggleSelect}
+                        onTranslationUpdate={onTranslationUpdate}
+                        onSourceTextUpdate={onSourceTextUpdate}
+                        onDelete={onDelete}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Pagination */}

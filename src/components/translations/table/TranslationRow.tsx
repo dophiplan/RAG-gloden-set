@@ -19,39 +19,41 @@ interface TranslationWithResults extends Translation {
 }
 
 interface TranslationRowProps {
+  page?: 'info' | 'translations';
   translation: TranslationWithResults;
   isSelected: boolean;
-  isExpanded: boolean;
-  showProductColumn: boolean;
-  displayLanguages: LanguageCode[];
+  isExpanded?: boolean;
+  showProductColumn?: boolean;
+  displayLanguages?: LanguageCode[];
   columnWidths?: { [key: string]: number };
   onToggleSelect: (id: string) => void;
-  onToggleExpand: () => void;
-  onStatusChange: (id: string, status: TranslationStatus) => Promise<void>;
-  onTranslationUpdate: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
-  onSourceTextUpdate: (translationId: string, sourceText: string) => Promise<void>;
-  onContextUpdate: (translationId: string, context: string) => Promise<void>;
-  onScopeUpdate: (translationId: string, scope: Scope | null) => Promise<void>;
-  onVersionUpdate: (translationId: string, version: string) => Promise<void>;
+  onToggleExpand?: () => void;
+  onStatusChange?: (id: string, status: TranslationStatus) => Promise<void>;
+  onTranslationUpdate?: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
+  onSourceTextUpdate?: (translationId: string, sourceText: string) => Promise<void>;
+  onContextUpdate?: (translationId: string, context: string) => Promise<void>;
+  onScopeUpdate?: (translationId: string, scope: Scope | null) => Promise<void>;
+  onVersionUpdate?: (translationId: string, version: string) => Promise<void>;
   onPriorityUpdate?: (translationId: string, priority: PriorityLevel) => Promise<void>;
-  onNotesUpdate?: (translationId: string, notes: string) => Promise<void>;
   onDevCodeUpdate?: (translationId: string, devCode: string) => Promise<void>;
   onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   onAddToGlossary?: (translation: TranslationWithResults) => void;
   onHistoryClick?: (translationId: string) => void;
 }
 
 /**
- * Compact Translation Row with expand feature
- * No row background colors (removed yellow/blue/green backgrounds)
+ * Slide View Translation Row
+ * Page 1 (info): Basic Info
+ * Page 2 (translations): Source + Language translations
  */
 const TranslationRow = memo(function TranslationRow({
+  page = 'info',
   translation,
   isSelected,
-  isExpanded,
-  showProductColumn,
-  displayLanguages,
+  isExpanded = false,
+  showProductColumn = true,
+  displayLanguages = [],
   columnWidths = {},
   onToggleSelect,
   onToggleExpand,
@@ -62,7 +64,6 @@ const TranslationRow = memo(function TranslationRow({
   onScopeUpdate,
   onVersionUpdate,
   onPriorityUpdate,
-  onNotesUpdate,
   onDevCodeUpdate,
   onPlatformsUpdate,
   onDelete,
@@ -90,185 +91,78 @@ const TranslationRow = memo(function TranslationRow({
     );
   };
 
-  // Get product codes
   const productCodes = translation.translation_products?.map(tp => tp.product_code) || [];
   const productNames = productCodes
     .map((code) => productsMap[code]?.name || code)
     .join(', ') || '-';
 
   const isNotUsed = translation.status === 'not_used';
-
-  // Get selected platform codes
   const selectedPlatformCodes =
     translation.translation_platforms?.map((tp) => tp.platform_code) || [];
 
-  // Get cell style with width
   const getCellStyle = (columnKey: string) => {
     const width = columnWidths[columnKey];
     return width ? { width: `${width}px`, minWidth: `${width}px`, maxWidth: `${width}px` } : {};
   };
 
-  // Priority badge component
-  const PriorityBadge = ({ level }: { level: PriorityLevel }) => {
-    const colors: Record<PriorityLevel, string> = {
-      urgent: 'text-red-600',
-      high: 'text-orange-500',
-      medium: 'text-yellow-600',
-      low: 'text-gray-500',
-    };
-    const icons: Record<PriorityLevel, string> = {
-      urgent: '🔴',
-      high: '🟠',
-      medium: '🟡',
-      low: '🟢',
-    };
+  // Page 2: Translations Row
+  if (page === 'translations') {
     return (
-      <select
-        value={level}
-        onChange={(e) => onPriorityUpdate?.(translation.id, e.target.value as PriorityLevel)}
-        className={`text-xs bg-transparent border-0 p-0 cursor-pointer ${colors[level]} hover:opacity-70`}
-        style={{ width: 'auto' }}
+      <tr
+        className={`transition-colors duration-150 hover:bg-gray-50 ${
+          isSelected ? 'bg-blue-50' : ''
+        } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
       >
-        <option value="urgent">{icons.urgent}</option>
-        <option value="high">{icons.high}</option>
-        <option value="medium">{icons.medium}</option>
-        <option value="low">{icons.low}</option>
-      </select>
-    );
-  };
+        {/* Checkbox */}
+        <td className="px-2 py-2 align-middle" style={getCellStyle('checkbox')}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelect(translation.id)}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+        </td>
 
-  // Truncated text with tooltip
-  const TruncatedText = ({ text, maxLength = 30, cellKey }: { text: string; maxLength?: number; cellKey: string }) => {
-    const isTruncated = text.length > maxLength;
-    const displayText = isTruncated ? text.slice(0, maxLength) + '...' : text;
-    
-    return (
-      <div
-        className="relative"
-        onMouseEnter={() => isTruncated && setShowTooltip(cellKey)}
-        onMouseLeave={() => setShowTooltip(null)}
-      >
-        <span className="text-xs text-gray-800">{displayText || '-'}</span>
-        {showTooltip === cellKey && (
-          <div className="absolute z-50 left-0 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs whitespace-normal break-words">
-            {text}
-            <div className="absolute left-2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
-          </div>
-        )}
-      </div>
-    );
-  };
+        {/* Source Text */}
+        <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
+          <EditableSourceCell
+            value={translation.source_text}
+            onSave={(v) => onSourceTextUpdate?.(translation.id, v)}
+          />
+        </td>
 
-  // Editable cell with double-click
-  const EditableTextCell = ({ 
-    value, 
-    onSave, 
-    placeholder = '-',
-    maxLength = 30 
-  }: { 
-    value: string; 
-    onSave: (val: string) => void; 
-    placeholder?: string;
-    maxLength?: number;
-  }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    
-    if (isEditing) {
-      return (
-        <EditableCell
-          value={value}
-          onSave={(newVal) => {
-            onSave(newVal);
-            setIsEditing(false);
-          }}
-          placeholder={placeholder}
-        />
-      );
-    }
+        {/* Language Translations */}
+        {displayLanguages.map((lang) => (
+          <td key={lang} className="px-2 py-2 align-middle" style={getCellStyle(`lang_${lang}`)}>
+            <EditableTranslationCell
+              language={lang}
+              value={getTranslationForLanguage(lang)}
+              onSave={(v) => onTranslationUpdate?.(translation.id, lang, v)}
+            />
+          </td>
+        ))}
 
-    return (
-      <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-        <TruncatedText text={value || placeholder} maxLength={maxLength} cellKey={`${translation.id}-edit`} />
-      </div>
-    );
-  };
-
-  // Editable platform cell with double-click
-  const EditablePlatformCell = ({
-    selectedCodes,
-    platformsMap,
-    onSave,
-  }: {
-    selectedCodes: string[];
-    platformsMap: Record<string, { name: string; code: string; display_order: number }>;
-    onSave: (codes: string[]) => void;
-  }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [tempSelected, setTempSelected] = useState<string[]>(selectedCodes);
-
-    if (isEditing) {
-      return (
-        <div className="relative bg-white border border-blue-500 rounded p-2 shadow-lg z-50 min-w-[200px]">
-          <div className="max-h-40 overflow-y-auto space-y-1">
-            {Object.values(platformsMap)
-              .sort((a, b) => a.display_order - b.display_order)
-              .map((platform) => (
-                <label
-                  key={platform.code}
-                  className="flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    checked={tempSelected.includes(platform.code)}
-                    onChange={() => {
-                      setTempSelected((prev) =>
-                        prev.includes(platform.code)
-                          ? prev.filter((c) => c !== platform.code)
-                          : [...prev, platform.code]
-                      );
-                    }}
-                    className="rounded border-gray-300 text-blue-600 mr-2"
-                  />
-                  <span>{platform.name}</span>
-                </label>
-              ))}
-          </div>
-          <div className="flex gap-2 mt-2 pt-2 border-t">
+        {/* Actions */}
+        <td className="px-2 py-2 align-middle" style={getCellStyle('actions')}>
+          <div className="flex items-center justify-end gap-1">
             <button
-              onClick={() => {
-                onSave(tempSelected);
-                setIsEditing(false);
-              }}
-              className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+              onClick={(e) => { e.stopPropagation(); onDelete?.(translation.id); }}
+              className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              title="삭제"
             >
-              저장
-            </button>
-            <button
-              onClick={() => {
-                setTempSelected(selectedCodes);
-                setIsEditing(false);
-              }}
-              className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
-            >
-              취소
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
             </button>
           </div>
-        </div>
-      );
-    }
-
-    const displayText = selectedCodes.map((c) => platformsMap[c]?.name || c).join(', ') || '-';
-    
-    return (
-      <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-        <TruncatedText text={displayText} maxLength={12} cellKey={`${translation.id}-platform`} />
-      </div>
+        </td>
+      </tr>
     );
-  };
+  }
 
+  // Page 1: Info Row (기본)
   return (
     <>
-      {/* Main Row */}
       <tr
         className={`transition-colors duration-150 hover:bg-gray-50 ${
           isSelected ? 'bg-blue-50' : ''
@@ -286,7 +180,10 @@ const TranslationRow = memo(function TranslationRow({
 
         {/* Priority */}
         <td className="px-2 py-2 align-middle text-center" style={getCellStyle('priority')}>
-          <PriorityBadge level={translation.priority || 'medium'} />
+          <PriorityBadge
+            level={translation.priority || 'medium'}
+            onChange={(p) => onPriorityUpdate?.(translation.id, p)}
+          />
         </td>
 
         {/* Product */}
@@ -298,7 +195,7 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('scope')}>
           <select
             value={translation.scope || ''}
-            onChange={(e) => onScopeUpdate(translation.id, e.target.value === '' ? null : e.target.value as Scope)}
+            onChange={(e) => onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope)}
             className="text-xs border-0 bg-transparent p-0 cursor-pointer text-gray-700 hover:text-blue-600"
           >
             <option value="">-</option>
@@ -309,9 +206,9 @@ const TranslationRow = memo(function TranslationRow({
           </select>
         </td>
 
-        {/* Platform - Double click to edit */}
+        {/* Platform */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('platform')}>
-          <EditablePlatformCell 
+          <EditablePlatformCell
             selectedCodes={selectedPlatformCodes}
             platformsMap={platformsMap}
             onSave={(codes) => onPlatformsUpdate?.(translation.id, codes)}
@@ -320,31 +217,27 @@ const TranslationRow = memo(function TranslationRow({
 
         {/* Version */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('version')}>
-          <EditableTextCell 
-            value={translation.version || ''} 
-            onSave={(v) => onVersionUpdate(translation.id, v)}
+          <EditableTextCell
+            value={translation.version || ''}
+            onSave={(v) => onVersionUpdate?.(translation.id, v)}
             maxLength={8}
           />
         </td>
 
-        {/* KEY/ID (dev_code) */}
+        {/* KEY/ID */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('devCode')}>
-          <EditableTextCell 
-            value={translation.dev_code || ''} 
+          <EditableTextCell
+            value={translation.dev_code || ''}
             onSave={(v) => onDevCodeUpdate?.(translation.id, v)}
             maxLength={15}
           />
         </td>
 
-        {/* Source Text - Double click to edit */}
-        <td 
-          className="px-2 py-2 align-middle" 
-          style={getCellStyle('sourceText')}
-          onDoubleClick={() => {/* Enable inline edit */}}
-        >
-          <EditableTextCell 
-            value={translation.source_text} 
-            onSave={(v) => onSourceTextUpdate(translation.id, v)}
+        {/* Source Text */}
+        <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
+          <EditableTextCell
+            value={translation.source_text}
+            onSave={(v) => onSourceTextUpdate?.(translation.id, v)}
             maxLength={40}
           />
         </td>
@@ -353,7 +246,7 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('status')}>
           <select
             value={translation.status}
-            onChange={(e) => onStatusChange(translation.id, e.target.value as TranslationStatus)}
+            onChange={(e) => onStatusChange?.(translation.id, e.target.value as TranslationStatus)}
             className={`text-xs border rounded px-1.5 py-0.5 w-full ${statusInfo.bg} ${statusInfo.text}`}
           >
             <option value="pending">요청</option>
@@ -365,10 +258,9 @@ const TranslationRow = memo(function TranslationRow({
           </select>
         </td>
 
-        {/* Actions + Expand */}
+        {/* Actions */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('actions')}>
           <div className="flex items-center justify-end gap-1">
-            {/* Glossary Add Button - Moved from detail panel */}
             {onAddToGlossary && (
               <button
                 onClick={(e) => { e.stopPropagation(); onAddToGlossary(translation); }}
@@ -380,7 +272,6 @@ const TranslationRow = memo(function TranslationRow({
                 </svg>
               </button>
             )}
-            
             {onHistoryClick && (
               <button
                 onClick={(e) => { e.stopPropagation(); onHistoryClick(translation.id); }}
@@ -397,7 +288,7 @@ const TranslationRow = memo(function TranslationRow({
                 e.stopPropagation();
                 if (isDeleting) return;
                 setIsDeleting(true);
-                try { await onDelete(translation.id); } 
+                try { await onDelete?.(translation.id); }
                 finally { setIsDeleting(false); }
               }}
               disabled={isDeleting}
@@ -408,7 +299,6 @@ const TranslationRow = memo(function TranslationRow({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-            {/* Expand Button */}
             <button
               onClick={onToggleExpand}
               className={`p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all ${isExpanded ? 'rotate-180' : ''}`}
@@ -422,18 +312,18 @@ const TranslationRow = memo(function TranslationRow({
         </td>
       </tr>
 
-      {/* Expanded Detail Panel */}
+      {/* Expanded Panel - Only on Info Page */}
       {isExpanded && (
         <tr className="bg-blue-50/30">
-          <td colSpan={9} className="px-4 py-4 border-l-4 border-blue-400">
+          <td colSpan={10} className="px-4 py-4 border-l-4 border-blue-400">
             <div className="space-y-4">
-              {/* Description / Context */}
+              {/* Description */}
               <div>
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">설명</h4>
                 <div className="text-sm text-gray-700 bg-white p-2 rounded border">
-                  <EditableTextCell 
-                    value={translation.context || ''} 
-                    onSave={(v) => onContextUpdate(translation.id, v)}
+                  <EditableTextCell
+                    value={translation.context || ''}
+                    onSave={(v) => onContextUpdate?.(translation.id, v)}
                     maxLength={200}
                   />
                 </div>
@@ -447,18 +337,15 @@ const TranslationRow = memo(function TranslationRow({
                     const result = getTranslationResultForLanguage(lang);
                     const text = getTranslationForLanguage(lang);
                     const labels: Record<string, string> = { en: '영어', ja: '일본어', zh: '중국어' };
-                    
                     return (
                       <div key={lang} className="bg-white p-3 rounded border">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium text-gray-500">{labels[lang] || lang}</span>
-                          {result?.source_type && (
-                            <TranslationSourceBadge sourceType={result.source_type} />
-                          )}
+                          {result?.source_type && <TranslationSourceBadge sourceType={result.source_type} />}
                         </div>
-                        <EditableTextCell 
-                          value={text} 
-                          onSave={(v) => onTranslationUpdate(translation.id, lang as LanguageCode, v)}
+                        <EditableTextCell
+                          value={text}
+                          onSave={(v) => onTranslationUpdate?.(translation.id, lang as LanguageCode, v)}
                           maxLength={100}
                         />
                       </div>
@@ -467,16 +354,11 @@ const TranslationRow = memo(function TranslationRow({
                 </div>
               </div>
 
-              {/* Meta Info */}
+              {/* Meta */}
               <div className="flex flex-wrap gap-4 text-xs text-gray-500">
                 <span>요청일: {new Date(translation.created_at).toLocaleDateString('ko-KR')}</span>
                 <span>수정일: {new Date(translation.updated_at).toLocaleDateString('ko-KR')}</span>
-                {translation.completion_date && (
-                  <span>완료일: {new Date(translation.completion_date).toLocaleDateString('ko-KR')}</span>
-                )}
               </div>
-
-              {/* Detail Actions - Removed per UX feedback */}
             </div>
           </td>
         </tr>
@@ -484,5 +366,141 @@ const TranslationRow = memo(function TranslationRow({
     </>
   );
 });
+
+// Sub-components
+const PriorityBadge = ({ level, onChange }: { level: PriorityLevel; onChange: (p: PriorityLevel) => void }) => {
+  const icons: Record<PriorityLevel, string> = { urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
+  return (
+    <select
+      value={level}
+      onChange={(e) => onChange(e.target.value as PriorityLevel)}
+      className="text-xs bg-transparent border-0 p-0 cursor-pointer hover:opacity-70"
+      style={{ width: 'auto' }}
+    >
+      <option value="urgent">{icons.urgent}</option>
+      <option value="high">{icons.high}</option>
+      <option value="medium">{icons.medium}</option>
+      <option value="low">{icons.low}</option>
+    </select>
+  );
+};
+
+const TruncatedText = ({ text, maxLength = 30, cellKey }: { text: string; maxLength?: number; cellKey: string }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const isTruncated = text.length > maxLength;
+  const displayText = isTruncated ? text.slice(0, maxLength) + '...' : text;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => isTruncated && setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <span className="text-xs text-gray-800">{displayText || '-'}</span>
+      {showTooltip && (
+        <div className="absolute z-50 left-0 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs whitespace-normal break-words">
+          {text}
+          <div className="absolute left-2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EditableTextCell = ({ value, onSave, placeholder = '-', maxLength = 30 }: { value: string; onSave: (val: string) => void; placeholder?: string; maxLength?: number }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) {
+    return (
+      <EditableCell
+        value={value}
+        onSave={(newVal) => { onSave(newVal); setIsEditing(false); }}
+        placeholder={placeholder}
+      />
+    );
+  }
+  return (
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
+      <TruncatedText text={value || placeholder} maxLength={maxLength} cellKey={value} />
+    </div>
+  );
+};
+
+const EditableSourceCell = ({ value, onSave }: { value: string; onSave: (val: string) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) {
+    return (
+      <EditableCell
+        value={value}
+        onSave={(newVal) => { onSave(newVal); setIsEditing(false); }}
+        placeholder="원문"
+      />
+    );
+  }
+  return (
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
+      <span className="text-xs text-gray-800">{value || '-'}</span>
+    </div>
+  );
+};
+
+const EditableTranslationCell = ({ language, value, onSave }: { language: string; value: string; onSave: (val: string) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) {
+    return (
+      <EditableCell
+        value={value}
+        onSave={(newVal) => { onSave(newVal); setIsEditing(false); }}
+        placeholder="-"
+      />
+    );
+  }
+  return (
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
+      <span className="text-xs text-gray-800">{value || '-'}</span>
+    </div>
+  );
+};
+
+const EditablePlatformCell = ({ selectedCodes, platformsMap, onSave }: { selectedCodes: string[]; platformsMap: Record<string, { name: string; code: string; display_order: number }>; onSave: (codes: string[]) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempSelected, setTempSelected] = useState<string[]>(selectedCodes);
+
+  if (isEditing) {
+    return (
+      <div className="relative bg-white border border-blue-500 rounded p-2 shadow-lg z-50 min-w-[200px]">
+        <div className="max-h-40 overflow-y-auto space-y-1">
+          {Object.values(platformsMap)
+            .sort((a, b) => a.display_order - b.display_order)
+            .map((platform) => (
+              <label key={platform.code} className="flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer text-xs">
+                <input
+                  type="checkbox"
+                  checked={tempSelected.includes(platform.code)}
+                  onChange={() => {
+                    setTempSelected((prev) =>
+                      prev.includes(platform.code) ? prev.filter((c) => c !== platform.code) : [...prev, platform.code]
+                    );
+                  }}
+                  className="rounded border-gray-300 text-blue-600 mr-2"
+                />
+                <span>{platform.name}</span>
+              </label>
+            ))}
+        </div>
+        <div className="flex gap-2 mt-2 pt-2 border-t">
+          <button onClick={() => { onSave(tempSelected); setIsEditing(false); }} className="flex-1 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">저장</button>
+          <button onClick={() => { setTempSelected(selectedCodes); setIsEditing(false); }} className="flex-1 px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300">취소</button>
+        </div>
+      </div>
+    );
+  }
+
+  const displayText = selectedCodes.map((c) => platformsMap[c]?.name || c).join(', ') || '-';
+  return (
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
+      <TruncatedText text={displayText} maxLength={12} cellKey={`platform-${selectedCodes.join(',')}`} />
+    </div>
+  );
+};
 
 export default TranslationRow;
