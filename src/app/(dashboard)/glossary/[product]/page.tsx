@@ -10,7 +10,6 @@ import Select from '@/components/ui/Select';
 import Badge from '@/components/ui/Badge';
 import EditableCell from '@/components/EditableCell';
 import { LanguageCode, ProductCode } from '@/types';
-import type { DashboardRequest } from '@/types/translations';
 import { useGlossaryData } from '../hooks/useGlossaryData';
 import { useProducts, useLanguages } from '@/hooks/useReferenceData';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
@@ -19,7 +18,7 @@ import ExportModal from '../components/ExportModal';
 import BulkActionBar from '../components/BulkActionBar';
 import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
 import { showError, showSuccess } from '@/lib/notifications';
-import { apiGet, apiPatch } from '@/lib/api-utils';
+import { apiPatch } from '@/lib/api-utils';
 
 function GlossaryProductContent() {
   const params = useParams();
@@ -64,7 +63,9 @@ function GlossaryProductContent() {
     setEditingTerm,
     isReviewing,
     suggestionCount,
+    stats,
     fetchTerms,
+    fetchStats,
     formSourceText,
     setFormSourceText,
     formContext,
@@ -224,32 +225,13 @@ function GlossaryProductContent() {
     setSelectedLanguageColumns(newSelection);
   };
 
-  // Request list data
-  const [requests, setRequests] = useState<DashboardRequest[]>([]);
-  const [requestsLoading, setRequestsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchRequests() {
-      try {
-        const result = await apiGet('/api/dashboard/requests') as { data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] };
-        const requestsData = result.data?.requests || result.requests || [];
-        // Filter by product
-        const filteredRequests = productCode
-          ? requestsData.filter((req: DashboardRequest) =>
-              req.products.some(p => p.code === productCode)
-            )
-          : requestsData;
-        setRequests(filteredRequests);
-      } catch (error) {
-        console.error('Error fetching requests:', error);
-        showError('요청 목록을 불러오는데 실패했습니다.');
-      } finally {
-        setRequestsLoading(false);
-      }
-    }
-
-    fetchRequests();
-  }, [productCode]);
+  // Glossary stats by status - each product independent
+  const glossaryStats = {
+    pending: stats.pending_terms,
+    approved: stats.approved_terms,
+    rejected: stats.rejected_terms,
+    not_used: stats.not_used_terms,
+  };
 
   const handleGlossaryStatusChange = async (ids: string[], newStatus: 'pending' | 'approved' | 'rejected' | 'not_used') => {
     try {
@@ -259,55 +241,49 @@ function GlossaryProductContent() {
       }) as { updated: number };
       showSuccess(`${result.updated}개 용어의 상태가 변경되었습니다.`);
       fetchTerms();
+      fetchStats(); // Refresh stats after status change
     } catch (error) {
       console.error('Status change error:', error);
       showError('상태 변경에 실패했습니다.');
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: import('@/types/translations').TranslationStatus) => {
-    try {
-      await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
-
-      // Refresh requests
-      const result = await apiGet('/api/dashboard/requests') as { data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] };
-      const requestsData = result.data?.requests || result.requests || [];
-      const filteredRequests = productCode
-        ? requestsData.filter((req: DashboardRequest) =>
-            req.products.some(p => p.code === productCode)
-          )
-        : requestsData;
-      setRequests(filteredRequests);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      showError('상태 업데이트 중 오류가 발생했습니다.');
-    }
-  };
-
   return (
     <DashboardLayout title={`용어집 - ${productCode?.toUpperCase()}`}>
       <div className="space-y-6">
-        {/* Status Tabs */}
+        {/* Glossary Status Tabs - Independent per product */}
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
-            {['pending', 'in_progress', 'reviewed', 'deployed'].map((status) => {
-              const count = requests.filter(r => r.status === status).length;
-              const labels = {
-                pending: '요청',
-                in_progress: '진행중',
-                reviewed: '검수중',
-                deployed: '반영완료'
+            {[
+              { key: 'pending', label: '검수대기', color: 'amber' },
+              { key: 'approved', label: '승인됨', color: 'emerald' },
+              { key: 'rejected', label: '보류', color: 'rose' },
+              { key: 'not_used', label: '사용안함', color: 'gray' },
+            ].map((status) => {
+              const count = glossaryStats[status.key as keyof typeof glossaryStats];
+              const isActive = approvalStatusFilter === status.key;
+              const isEmpty = count === 0;
+              
+              const colorClasses = {
+                amber: { active: 'bg-amber-100 text-amber-700 ring-2 ring-amber-300', inactive: 'bg-amber-50 text-amber-600 hover:bg-amber-100', empty: 'bg-gray-100 text-gray-400' },
+                emerald: { active: 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300', inactive: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100', empty: 'bg-gray-100 text-gray-400' },
+                rose: { active: 'bg-rose-100 text-rose-700 ring-2 ring-rose-300', inactive: 'bg-rose-50 text-rose-600 hover:bg-rose-100', empty: 'bg-gray-100 text-gray-400' },
+                gray: { active: 'bg-gray-200 text-gray-700 ring-2 ring-gray-400', inactive: 'bg-gray-100 text-gray-600 hover:bg-gray-200', empty: 'bg-gray-100 text-gray-400' },
               };
+              
+              const getClass = () => {
+                if (isEmpty) return colorClasses[status.color as keyof typeof colorClasses].empty;
+                if (isActive) return colorClasses[status.color as keyof typeof colorClasses].active;
+                return colorClasses[status.color as keyof typeof colorClasses].inactive;
+              };
+              
               return (
                 <button
-                  key={status}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    count > 0
-                      ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                      : 'bg-gray-100 text-gray-500'
-                  }`}
+                  key={status.key}
+                  onClick={() => setApprovalStatusFilter(isActive ? '' : status.key)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${getClass()}`}
                 >
-                  {labels[status as keyof typeof labels]} ({count})
+                  {status.label} ({count})
                 </button>
               );
             })}
