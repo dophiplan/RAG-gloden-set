@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, Suspense, useState, useCallback } from 'react';
+import { useMemo, Suspense, useState, useCallback, useEffect } from 'react';
+import { apiPatch } from '@/lib/api-utils';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProductTabs from '@/components/ProductTabs';
 import TranslationTableV2 from '@/components/translations/TranslationTableV2';
@@ -12,7 +13,7 @@ import { getAllDisplayableLanguages } from '@/lib/product-languages';
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
 import { useTranslationStats } from './hooks/useTranslationStats';
-import { useTranslationMutations } from './hooks/useTranslationMutations';
+// useTranslationMutations 제거 - 직접 핸들러 구현
 import { useDuplicateCheck } from './hooks/useDuplicateCheck';
 import { useGlossaryModal } from './hooks/useGlossaryModal';
 import { useModalStates } from './hooks/useModalStates';
@@ -55,14 +56,96 @@ function TranslationsContent() {
     refreshStats();
   }, [fetchTranslations, refreshStats]);
 
-  // Mutations
-  const mutations = useTranslationMutations({
-    translations,
-    setTranslations,
-    fetchTranslations,
-    handleRefresh,
-    updateLocalTranslation,
-  });
+  // 직접 핸들러 구현 (useTranslationMutations 대체)
+  const handlePriorityUpdate = useCallback(async (id: string, priority: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { priority });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Priority update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handlePlatformsUpdate = useCallback(async (id: string, platformCodes: string[]) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { platform_codes: platformCodes });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Platforms update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleDevCodeUpdate = useCallback(async (id: string, devCode: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { dev_code: devCode });
+      await handleRefresh();
+    } catch (error) {
+      console.error('DevCode update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleStatusChange = useCallback(async (id: string, status: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}/status`, { status });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Status update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleSourceTextUpdate = useCallback(async (id: string, sourceText: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { source_text: sourceText });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Source text update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleContextUpdate = useCallback(async (id: string, context: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { context });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Context update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleScopeUpdate = useCallback(async (id: string, scope: string | null) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { scope });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Scope update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleVersionUpdate = useCallback(async (id: string, version: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, { version, version_updated_at: new Date().toISOString() });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Version update error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}`, {}); // DELETE 메서드로 변경 필요
+      await handleRefresh();
+    } catch (error) {
+      console.error('Delete error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleTranslationUpdate = useCallback(async (id: string, languageCode: string, text: string) => {
+    try {
+      await apiPatch(`/api/translations/${id}/results`, { language_code: languageCode, translated_text: text });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Translation update error:', error);
+    }
+  }, [handleRefresh]);
   
 
 
@@ -206,17 +289,17 @@ function TranslationsContent() {
           translations={translations}
           selectedProduct={filters.selectedProduct}
           selectedLanguageColumns={filters.selectedLanguageColumns}
-          onStatusChange={mutations.handleStatusChange}
-          onTranslationUpdate={mutations.handleTranslationUpdate}
-          onSourceTextUpdate={mutations.handleSourceTextUpdate}
-          onContextUpdate={mutations.handleContextUpdate}
-          onScopeUpdate={mutations.handleScopeUpdate}
-          onVersionUpdate={handleVersionUpdateWithDuplicateCheck}
-          onPriorityUpdate={mutations.handlePriorityUpdate}
+          onStatusChange={handleStatusChange}
+          onTranslationUpdate={handleTranslationUpdate}
+          onSourceTextUpdate={handleSourceTextUpdate}
+          onContextUpdate={handleContextUpdate}
+          onScopeUpdate={handleScopeUpdate}
+          onVersionUpdate={handleVersionUpdate}
+          onPriorityUpdate={handlePriorityUpdate}
           onNotesUpdate={handleNotesUpdateWithDuplicateCheck}
-          onDevCodeUpdate={mutations.handleDevCodeUpdate}
-          onPlatformsUpdate={mutations.handlePlatformsUpdate}
-          onDelete={mutations.handleDelete}
+          onDevCodeUpdate={handleDevCodeUpdate}
+          onPlatformsUpdate={handlePlatformsUpdate}
+          onDelete={handleDelete}
           onAddToGlossary={glossary.handleOpenModal}
           onHistoryClick={handleHistoryClick}
           onRefresh={handleRefresh}
