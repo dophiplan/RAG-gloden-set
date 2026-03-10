@@ -1,3 +1,4 @@
 export { VersionHistoryPanel } from './VersionHistoryPanel';
 export { VersionItem } from './VersionItem';
 export { BulkVersionHistoryPanel } from './BulkVersionHistoryPanel';
+export { UnifiedVersionHistoryPanel } from './UnifiedVersionHistoryPanel';

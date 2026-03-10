@@ -29,7 +29,7 @@ import CreateTranslationModal from '../components/CreateTranslationModal';
 
 import GlossaryAddModal from '../components/GlossaryAddModal';
 import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
-import { BulkVersionHistoryPanel, VersionHistoryPanel } from '../components/VersionHistory';
+import { UnifiedVersionHistoryPanel } from '../components/VersionHistory';
 
 function TranslationsProductContent() {
   const params = useParams();
@@ -448,26 +448,16 @@ function TranslationsProductContent() {
         {/* Version History Sidebar (Bulk) */}
         {modals.isVersionHistoryPanelOpen && modals.selectedTranslations.length > 0 && (
           <div className="fixed inset-y-0 right-0 w-96 bg-white border-l shadow-xl z-50 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="font-semibold text-gray-900">버전 기록</h3>
-              <button
-                onClick={modals.closeVersionHistoryPanel}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <BulkVersionHistoryPanel
-                translationIds={modals.selectedTranslations.map(t => t.id)}
-                languageCode={filters.selectedLanguageColumns?.[0] || 'ko'}
-                onRevert={() => {
-                  fetchTranslations();
-                }}
-              />
-            </div>
+            <UnifiedVersionHistoryPanel
+              mode="bulk"
+              translationIds={modals.selectedTranslations.map(t => t.id)}
+              languageCode={filters.selectedLanguageColumns?.[0] || 'ko'}
+              onClose={modals.closeVersionHistoryPanel}
+              onRevert={() => {
+                fetchTranslations();
+                modals.clearSelection();
+              }}
+            />
           </div>
         )}
 
@@ -475,25 +465,16 @@ function TranslationsProductContent() {
         {individualHistoryModal.open && individualHistoryModal.translationId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="font-semibold text-gray-900">버전 기록</h3>
-                <button
-                  onClick={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <VersionHistoryPanel
-                  translationId={individualHistoryModal.translationId}
-                  languageCode={individualHistoryModal.languageCode}
-                  curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
-                  onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
-                />
-              </div>
+              <UnifiedVersionHistoryPanel
+                mode="single"
+                translationId={individualHistoryModal.translationId}
+                languageCode={individualHistoryModal.languageCode}
+                curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
+                onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
+                onRevert={() => {
+                  fetchTranslations();
+                }}
+              />
             </div>
           </div>
         )}
