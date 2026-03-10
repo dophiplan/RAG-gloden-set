@@ -26,7 +26,6 @@ interface TranslationRowProps {
   displayLanguages?: LanguageCode[];
   columnWidths?: { [key: string]: number };
   onToggleSelect: (id: string) => void;
-  onRowClick?: () => void;
   onStatusChange?: (id: string, status: TranslationStatus) => Promise<void>;
   onTranslationUpdate?: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
   onSourceTextUpdate?: (translationId: string, sourceText: string) => Promise<void>;
@@ -39,6 +38,7 @@ interface TranslationRowProps {
   onDelete?: (id: string) => void;
   onAddToGlossary?: (translation: TranslationWithResults) => void;
   onHistoryClick?: (translationId: string) => void;
+  onRefresh?: () => void;
 }
 
 /**
@@ -53,7 +53,6 @@ const TranslationRow = memo(function TranslationRow({
   displayLanguages = [],
   columnWidths = {},
   onToggleSelect,
-  onRowClick,
   onStatusChange,
   onTranslationUpdate,
   onSourceTextUpdate,
@@ -66,6 +65,7 @@ const TranslationRow = memo(function TranslationRow({
   onDelete,
   onAddToGlossary,
   onHistoryClick,
+  onRefresh,
 }: TranslationRowProps) {
   const { productsMap } = useProducts();
   const { platformsMap } = usePlatforms();
@@ -121,7 +121,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
           <EditableSourceCell
             value={translation.source_text}
-            onSave={(v) => onSourceTextUpdate?.(translation.id, v)}
+            onSave={async (v) => {
+              await onSourceTextUpdate?.(translation.id, v);
+              onRefresh?.();
+            }}
           />
         </td>
 
@@ -131,7 +134,10 @@ const TranslationRow = memo(function TranslationRow({
             <EditableTranslationCell
               language={lang}
               value={getTranslationForLanguage(lang)}
-              onSave={(v) => onTranslationUpdate?.(translation.id, lang, v)}
+              onSave={async (v) => {
+                await onTranslationUpdate?.(translation.id, lang, v);
+                onRefresh?.();
+              }}
             />
           </td>
         ))}
@@ -158,8 +164,7 @@ const TranslationRow = memo(function TranslationRow({
   return (
     <>
       <tr
-        onClick={onRowClick}
-        className={`transition-colors duration-150 hover:bg-gray-50 cursor-pointer ${
+        className={`transition-colors duration-150 hover:bg-gray-50 ${
           isSelected ? 'bg-blue-50' : ''
         } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
       >
@@ -177,7 +182,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle text-center" style={getCellStyle('priority')}>
           <PriorityBadge
             level={translation.priority || 'medium'}
-            onChange={(p) => onPriorityUpdate?.(translation.id, p)}
+            onChange={async (p) => {
+              await onPriorityUpdate?.(translation.id, p);
+              onRefresh?.();
+            }}
           />
         </td>
 
@@ -186,7 +194,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('scope')}>
           <select
             value={translation.scope || ''}
-            onChange={(e) => onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope)}
+            onChange={async (e) => {
+              await onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope);
+              onRefresh?.();
+            }}
             className="text-xs border-0 bg-transparent p-0 cursor-pointer text-gray-700 hover:text-blue-600"
           >
             <option value="">-</option>
@@ -210,7 +221,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('version')}>
           <EditableTextCell
             value={translation.version || ''}
-            onSave={(v) => onVersionUpdate?.(translation.id, v)}
+            onSave={async (v) => {
+              await onVersionUpdate?.(translation.id, v);
+              onRefresh?.();
+            }}
             maxLength={8}
           />
         </td>
@@ -219,7 +233,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('devCode')}>
           <EditableTextCell
             value={translation.dev_code || ''}
-            onSave={(v) => onDevCodeUpdate?.(translation.id, v)}
+            onSave={async (v) => {
+              await onDevCodeUpdate?.(translation.id, v);
+              onRefresh?.();
+            }}
             maxLength={15}
           />
         </td>
@@ -228,7 +245,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
           <EditableTextCell
             value={translation.source_text}
-            onSave={(v) => onSourceTextUpdate?.(translation.id, v)}
+            onSave={async (v) => {
+              await onSourceTextUpdate?.(translation.id, v);
+              onRefresh?.();
+            }}
             maxLength={40}
           />
         </td>
@@ -237,7 +257,10 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('status')}>
           <select
             value={translation.status}
-            onChange={(e) => onStatusChange?.(translation.id, e.target.value as TranslationStatus)}
+            onChange={async (e) => {
+              await onStatusChange?.(translation.id, e.target.value as TranslationStatus);
+              onRefresh?.();
+            }}
             className={`text-xs border rounded px-1.5 py-0.5 w-full ${statusInfo.bg} ${statusInfo.text}`}
           >
             <option value="pending">요청</option>

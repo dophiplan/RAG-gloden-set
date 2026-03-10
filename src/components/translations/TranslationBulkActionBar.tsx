@@ -18,6 +18,7 @@ interface TranslationBulkActionBarProps {
   onBulkDelete?: (ids: string[]) => Promise<void>;
   onBulkExport?: () => Promise<void>;
   onVersionHistoryClick?: () => void;
+  onBulkAutoTranslate?: (ids: string[]) => Promise<void>;
 }
 
 /**
@@ -40,6 +41,7 @@ export default function TranslationBulkActionBar({
   onOpenDeploymentModal,
   onBulkStatusChange,
   onBulkDelete,
+  onBulkAutoTranslate,
 }: TranslationBulkActionBarProps) {
   const { products } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<ProductCode | ''>('');
@@ -186,6 +188,53 @@ export default function TranslationBulkActionBar({
     }
   };
 
+  const handleBulkAutoTranslate = async () => {
+    if (!selectedIds || selectedIds.length === 0) {
+      showError('번역할 항목을 선택해주세요.');
+      return;
+    }
+
+    if (onBulkAutoTranslate) {
+      // Use parent handler
+      setIsProcessing(true);
+      try {
+        await onBulkAutoTranslate(selectedIds);
+        onClearSelection();
+      } catch (error) {
+        // Error is already handled by parent
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Default: individual API calls for each translation
+    if (!showConfirm(`${selectedCount}개 항목의 누락된 번역을 자동으로 채우시겠습니까?`)) {
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      let successCount = 0;
+      for (const id of selectedIds) {
+        try {
+          await apiPatch(`/api/translations/${id}/auto-translate`, {});
+          successCount++;
+        } catch (error) {
+          console.error(`Auto translate failed for ${id}:`, error);
+        }
+      }
+      showSuccess(`${successCount}개 항목의 자동 번역이 완료되었습니다.`);
+      onClearSelection();
+      onRefresh?.();
+    } catch (error) {
+      console.error('Bulk auto translate error:', error);
+      showError(error instanceof Error ? error.message : '자동 번역 중 오류가 발생했습니다.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -220,6 +269,23 @@ export default function TranslationBulkActionBar({
                 반영 완료 체크
               </Button>
             )}
+
+            <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+            {/* 추가 번역하기 */}
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleBulkAutoTranslate}
+              disabled={isProcessing}
+              loading={isProcessing}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              추가 번역하기
+            </Button>
 
             <div className="w-px h-6 bg-gray-300 mx-1"></div>
 

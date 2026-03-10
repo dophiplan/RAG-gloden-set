@@ -10,8 +10,8 @@ import DuplicateEditModal from '@/components/translations/DuplicateEditModal';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
 import type { DashboardRequest } from '@/types/translations';
 import type { ProductCode } from '@/types';
-import { showError } from '@/lib/notifications';
-import { apiGet, apiPatch } from '@/lib/api-utils';
+import { showError, showSuccess } from '@/lib/notifications';
+import { apiGet, apiPatch, apiPost } from '@/lib/api-utils';
 
 import { useTranslationFilters } from '../hooks/useTranslationFilters';
 import { useTranslationData } from '../hooks/useTranslationData';
@@ -31,7 +31,6 @@ import CreateTranslationModal from '../components/CreateTranslationModal';
 import GlossaryAddModal from '../components/GlossaryAddModal';
 import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
 import { UnifiedVersionHistoryPanel } from '../components/VersionHistory';
-import { TranslationDetailPanel } from '@/components/translations/TranslationDetailPanel';
 
 function TranslationsProductContent() {
   const params = useParams();
@@ -81,26 +80,6 @@ function TranslationsProductContent() {
 
   // Modal states
   const modals = useModalStates(translations);
-
-  // Detail panel state
-  const [selectedTranslationId, setSelectedTranslationId] = useState<string | null>(null);
-
-  // Handle row click to open detail panel
-  const handleRowClick = useCallback((id: string) => {
-    setSelectedTranslationId(id);
-  }, []);
-
-  // Handle panel close
-  const handlePanelClose = useCallback(() => {
-    setSelectedTranslationId(null);
-  }, []);
-
-  // Handle panel update - update local translation data
-  const handlePanelUpdate = useCallback((id: string, updates: any) => {
-    updateLocalTranslation(id, updates);
-    // Also refresh stats if needed
-    refreshStats();
-  }, [updateLocalTranslation, refreshStats]);
   
   // Debug log - 개발 모드에서만 출력
   if (process.env.NODE_ENV === 'development') {
@@ -431,23 +410,9 @@ function TranslationsProductContent() {
           page={filters.page}
           totalPages={filters.totalPages}
           onPageChange={filters.setPage}
-          onRowClick={handleRowClick}
         />
 
         {/* Detail Panel */}
-        {selectedTranslationId && (() => {
-          const selectedTranslation = translations.find(t => t.id === selectedTranslationId);
-          if (!selectedTranslation) return null;
-          return (
-            <TranslationDetailPanel
-              translation={selectedTranslation}
-              displayLanguages={getAllDisplayableLanguages()}
-              onClose={handlePanelClose}
-              onUpdate={handlePanelUpdate}
-            />
-          );
-        })()}
-
         {/* Bulk Action Bar */}
         <TranslationBulkActionBar
           selectedCount={modals.selectedIds.length}
@@ -458,6 +423,19 @@ function TranslationsProductContent() {
           onBulkExport={handlers.handleBulkExport}
           onVersionHistoryClick={modals.openVersionHistoryPanel}
           onRefresh={handleRefresh}
+          onBulkAutoTranslate={async (ids) => {
+            // Auto translate for selected items
+            showSuccess(`${ids.length}개 항목의 자동 번역을 시작합니다...`);
+            for (const id of ids) {
+              try {
+                await apiPost(`/api/translations/${id}/auto-translate`, {});
+              } catch (error) {
+                console.error(`Auto translate failed for ${id}:`, error);
+              }
+            }
+            handleRefresh();
+            showSuccess('자동 번역이 완료되었습니다.');
+          }}
         />
 
         {/* Modals */}
