@@ -63,6 +63,8 @@ function TranslationsContent() {
     handleRefresh,
     updateLocalTranslation,
   });
+  
+  console.log('[page.tsx] mutations.handlePriorityUpdate:', mutations.handlePriorityUpdate);
 
   // Modal states
   const modals = useModalStates(translations);
