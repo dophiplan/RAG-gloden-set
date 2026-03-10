@@ -44,7 +44,7 @@ export function useTranslationMutations({
     handleNotesUpdate,
     handleVersionUpdate,
     handleDevCodeUpdate,
-  } = useUpdateTranslationField({ setTranslations });
+  } = useUpdateTranslationField({ setTranslations, fetchTranslations });
 
   // Translation result updates
   const { handleTranslationUpdate } = useUpdateTranslationResult({

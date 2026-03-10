@@ -1,89 +1,139 @@
 import { useCallback } from 'react';
 import { TranslationStatus, PriorityLevel, Scope } from '@/types';
-import { useOptimisticUpdate } from './useOptimisticUpdate';
+import { apiPatch } from '@/lib/api-utils';
+import { showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
 
 interface UseUpdateTranslationFieldParams {
   setTranslations: React.Dispatch<React.SetStateAction<TranslationWithAudit[]>>;
+  fetchTranslations: () => Promise<void>;
 }
 
 /**
  * Hook for updating individual translation fields
- * Provides handlers for status, source text, context, scope, priority, etc.
+ * API call first, then refresh data
  */
 export function useUpdateTranslationField({
   setTranslations,
+  fetchTranslations,
 }: UseUpdateTranslationFieldParams) {
-  const { optimisticPatch } = useOptimisticUpdate({ setTranslations });
-
+  
   const handleStatusChange = useCallback(
     async (id: string, status: TranslationStatus) => {
-      await optimisticPatch(id, { status }, { status }, '상태가 변경되었습니다.');
+      try {
+        await apiPatch(`/api/translations/${id}/status`, { status });
+        await fetchTranslations();
+        showSuccess('상태가 변경되었습니다.');
+      } catch (error) {
+        console.error('Error updating status:', error);
+        showError('상태 변경 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleSourceTextUpdate = useCallback(
     async (translationId: string, sourceText: string) => {
-      await optimisticPatch(
-        translationId,
-        { source_text: sourceText },
-        { source_text: sourceText },
-        '원문이 수정되었습니다.'
-      );
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { source_text: sourceText });
+        await fetchTranslations();
+        showSuccess('원문이 수정되었습니다.');
+      } catch (error) {
+        console.error('Error updating source text:', error);
+        showError('원문 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleContextUpdate = useCallback(
     async (translationId: string, context: string) => {
-      await optimisticPatch(translationId, { context }, { context });
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { context });
+        await fetchTranslations();
+      } catch (error) {
+        console.error('Error updating context:', error);
+        showError('설명 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleScopeUpdate = useCallback(
     async (translationId: string, scope: Scope | null) => {
-      await optimisticPatch(translationId, { scope }, { scope });
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { scope });
+        await fetchTranslations();
+      } catch (error) {
+        console.error('Error updating scope:', error);
+        showError('분류 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handlePriorityUpdate = useCallback(
     async (translationId: string, priority: PriorityLevel) => {
-      await optimisticPatch(translationId, { priority }, { priority });
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { priority });
+        await fetchTranslations();
+      } catch (error) {
+        console.error('Error updating priority:', error);
+        showError('중요도 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleNotesUpdate = useCallback(
     async (translationId: string, notes: string) => {
-      await optimisticPatch(translationId, { notes }, { notes });
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { notes });
+        await fetchTranslations();
+      } catch (error) {
+        console.error('Error updating notes:', error);
+        showError('메모 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleVersionUpdate = useCallback(
     async (translationId: string, version: string) => {
-      await optimisticPatch(
-        translationId,
-        { version, version_updated_at: new Date().toISOString() },
-        { version }
-      );
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { 
+          version, 
+          version_updated_at: new Date().toISOString() 
+        });
+        await fetchTranslations();
+      } catch (error) {
+        console.error('Error updating version:', error);
+        showError('버전 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   const handleDevCodeUpdate = useCallback(
     async (translationId: string, devCode: string) => {
-      await optimisticPatch(
-        translationId,
-        { dev_code: devCode },
-        { dev_code: devCode },
-        'Dev Code가 수정되었습니다.'
-      );
+      try {
+        await apiPatch(`/api/translations/${translationId}`, { dev_code: devCode });
+        await fetchTranslations();
+        showSuccess('KEY/ID가 수정되었습니다.');
+      } catch (error) {
+        console.error('Error updating dev code:', error);
+        showError('KEY/ID 수정 중 오류가 발생했습니다.');
+        throw error;
+      }
     },
-    [optimisticPatch]
+    [fetchTranslations]
   );
 
   return {
