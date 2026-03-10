@@ -251,6 +251,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const adminClient = createAdminClient();
     const { user } = await getAuthUser(supabase);
 
     if (!user) {
@@ -265,20 +266,20 @@ export async function DELETE(request: NextRequest) {
 
     const { ids } = body;
 
-    // Get old values for audit log
-    const { data: oldData } = await supabase
+    // Get old values for audit log (using admin client to bypass RLS)
+    const { data: oldData } = await adminClient
       .from('translations')
       .select('id, source_text')
       .in('id', ids);
 
     // Delete translation results first (foreign key constraint)
-    await supabase
+    await adminClient
       .from('translation_results')
       .delete()
       .in('translation_id', ids);
 
-    // Delete translations
-    const { data, error } = await supabase
+    // Delete translations (using admin client to bypass RLS)
+    const { data, error } = await adminClient
       .from('translations')
       .delete()
       .in('id', ids)
@@ -288,7 +289,7 @@ export async function DELETE(request: NextRequest) {
 
     // Create audit logs
     if (oldData) {
-      await supabase.from('translation_audit_logs').insert(
+      await adminClient.from('translation_audit_logs').insert(
         oldData.map((t: any) => ({
           translation_id: t.id,
           user_id: user.id,
