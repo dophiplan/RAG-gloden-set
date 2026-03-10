@@ -110,6 +110,82 @@ function TranslationsProductContent() {
   // Glossary modal
   const glossary = useGlossaryModal();
 
+  // Wrapper for create with product code from URL
+  const handleCreateWithProduct = useCallback(async (
+    sourceText: string,
+    context: string,
+    version: string,
+    scope: import('@/types').ScopeType,
+    priority: import('@/types').PriorityLevel,
+    languages: import('@/types').LanguageCode[],
+    platformCodes: string[],
+    completionDate: string
+  ) => {
+    // Call the original handleCreate with additional product code logic via API
+    const { apiPost } = await import('@/lib/api-utils');
+    const { showSuccess, showError } = await import('@/lib/notifications');
+    const { invalidateCache } = await import('@/hooks/useSWRData');
+    
+    if (!sourceText.trim()) return false;
+    
+    try {
+      // Create translation with product code from URL
+      const createdTranslation = await apiPost<{
+        data?: { id: string };
+        id: string;
+      }>('/api/translations', {
+        source_text: sourceText,
+        context: context || undefined,
+        version: version || undefined,
+        product_code: productCode, // From URL
+        scope: scope || undefined,
+        priority,
+        platform_codes: platformCodes?.length ? platformCodes : undefined,
+      });
+      
+      const translationId = createdTranslation.data?.id || createdTranslation.id;
+      
+      if (!translationId) {
+        showError('번역 ID를 찾을 수 없습니다.');
+        return false;
+      }
+      
+      showSuccess('번역이 생성되었습니다. AI 번역을 진행 중입니다...');
+      fetchTranslations();
+      
+      // Auto-translate
+      if (languages && languages.length > 0) {
+        (async () => {
+          try {
+            const result = await apiPost<{
+              translations?: unknown[];
+              provider: string;
+            }>('/api/ai/translate', {
+              translationId: translationId,
+              sourceText: sourceText,
+              context: context || undefined,
+              targetLanguages: languages,
+            });
+            
+            if (result) {
+              showSuccess(`AI 번역 완료: ${result.translations?.length || 0}개 언어 (${result.provider})`);
+              setTimeout(() => fetchTranslations(), 500);
+            }
+          } catch (aiError) {
+            console.error('[AutoTranslate] Error:', aiError);
+          }
+        })();
+      }
+      
+      invalidateCache(/^\/api\/(translations|dashboard)/);
+      return true;
+    } catch (error) {
+      console.error('Error creating translation:', error);
+      showError('번역 생성 중 오류가 발생했습니다.');
+      return false;
+    }
+  }, [productCode, fetchTranslations]);
+
   // Duplicate-checked update handlers
   const handleVersionUpdateWithDuplicateCheck = duplicateCheck.makeVersionUpdateWithDuplicateCheck(
     mutations.handleVersionUpdate as (id: string, value: string | string[] | null) => Promise<void>
@@ -322,8 +398,7 @@ function TranslationsProductContent() {
         <CreateTranslationModal
           isOpen={modals.isCreateModalOpen}
           onClose={modals.closeCreateModal}
-          initialProductCode={productCode}
-          onCreate={mutations.handleCreate}
+          onCreate={handleCreateWithProduct}
           onPDFUpload={handlers.handlePDFUpload}
         />
 
