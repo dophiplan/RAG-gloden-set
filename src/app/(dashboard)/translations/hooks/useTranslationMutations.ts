@@ -47,8 +47,6 @@ export function useTranslationMutations({
     handleVersionUpdate,
     handleDevCodeUpdate,
   } = useUpdateTranslationField({ setTranslations, fetchTranslations });
-  
-  console.log('[useTranslationMutations] handlePriorityUpdate:', handlePriorityUpdate);
 
   // Translation result updates
   const { handleTranslationUpdate } = useUpdateTranslationResult({
