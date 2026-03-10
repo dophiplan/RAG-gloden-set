@@ -77,7 +77,9 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
       <tr>
         {columns.map((column) => {
           const width = columnWidths[column.key];
-          const style = width ? { width: `${width}px`, minWidth: `${width}px` } : {};
+          // Support both pixel (>100) and percentage (<100) widths
+          const widthValue = width ? (width < 100 ? `${width}%` : `${width}px`) : undefined;
+          const style = widthValue ? { width: widthValue, minWidth: widthValue } : {};
 
           // Checkbox column
           if (column.key === 'checkbox') {

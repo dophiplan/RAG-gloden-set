@@ -126,18 +126,22 @@ export default memo(function TranslationTableV2({
   };
 
   // Page 2: Translations columns (source + selected languages)
+  // Use PERCENTAGE-based widths to ensure table always fills container
   const translationPageWidths = useMemo(() => {
-    const widths: { [key: string]: number } = {
-      checkbox: 36,
-      sourceText: 200,
-      actions: 90,
-    };
-    // Distribute remaining width evenly based on ACTUAL selected language count
+    const widths: { [key: string]: number } = {};
+    
+    // Fixed columns as percentages
+    widths.checkbox = 5;   // 5%
+    widths.sourceText = 20; // 20%
+    widths.actions = 8;    // 8%
+    
+    // Language columns: distribute remaining ~67% evenly
     const langCount = Math.max(displayLanguages.length, 1);
-    const availableWidth = 950 - 36 - 200 - 90;
-    const langWidth = Math.floor(availableWidth / langCount);
+    const remainingPercent = 67; // 100 - 5 - 20 - 8 = 67
+    const langPercent = Math.floor(remainingPercent / langCount);
+    
     displayLanguages.forEach((lang) => {
-      widths[`lang_${lang}`] = langWidth;
+      widths[`lang_${lang}`] = langPercent;
     });
     return widths;
   }, [displayLanguages]);
@@ -304,13 +308,13 @@ export default memo(function TranslationTableV2({
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (translations || []).length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
                         번역 항목이 없습니다.
                       </td>
                     </tr>
