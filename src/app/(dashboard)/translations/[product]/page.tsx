@@ -31,6 +31,7 @@ import CreateTranslationModal from '../components/CreateTranslationModal';
 import GlossaryAddModal from '../components/GlossaryAddModal';
 import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
 import { UnifiedVersionHistoryPanel } from '../components/VersionHistory';
+import { TranslationDetailPanel } from '@/components/translations/TranslationDetailPanel';
 
 function TranslationsProductContent() {
   const params = useParams();
@@ -80,6 +81,26 @@ function TranslationsProductContent() {
 
   // Modal states
   const modals = useModalStates(translations);
+
+  // Detail panel state
+  const [selectedTranslationId, setSelectedTranslationId] = useState<string | null>(null);
+
+  // Handle row click to open detail panel
+  const handleRowClick = useCallback((id: string) => {
+    setSelectedTranslationId(id);
+  }, []);
+
+  // Handle panel close
+  const handlePanelClose = useCallback(() => {
+    setSelectedTranslationId(null);
+  }, []);
+
+  // Handle panel update - update local translation data
+  const handlePanelUpdate = useCallback((id: string, updates: any) => {
+    updateLocalTranslation(id, updates);
+    // Also refresh stats if needed
+    refreshStats();
+  }, [updateLocalTranslation, refreshStats]);
   
   // Debug log - 개발 모드에서만 출력
   if (process.env.NODE_ENV === 'development') {
@@ -410,7 +431,18 @@ function TranslationsProductContent() {
           page={filters.page}
           totalPages={filters.totalPages}
           onPageChange={filters.setPage}
+          onRowClick={handleRowClick}
         />
+
+        {/* Detail Panel */}
+        {selectedTranslationId && (
+          <TranslationDetailPanel
+            translationId={selectedTranslationId}
+            displayLanguages={getAllDisplayableLanguages()}
+            onClose={handlePanelClose}
+            onUpdate={handlePanelUpdate}
+          />
+        )}
 
         {/* Bulk Action Bar */}
         <TranslationBulkActionBar
