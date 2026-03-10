@@ -142,7 +142,7 @@ export default memo(function TranslationTableV2({
     return widths;
   }, [displayLanguages]);
 
-  const { columnWidths, startResize, resize, stopResize } = useResizableColumns({
+  const { columnWidths, startResize, resize, stopResize, resetWidths } = useResizableColumns({
     defaultWidths: slidePage === 'info' ? infoPageWidths : translationPageWidths,
     minWidths: {
       checkbox: 36,
@@ -156,8 +156,16 @@ export default memo(function TranslationTableV2({
       status: 70,
       actions: 80,
     },
-    storageKey: 'translation-table-column-widths-v2',
+    // Include language count in storage key to invalidate when languages change
+    storageKey: `translation-table-column-widths-v2-lang${displayLanguages.length}`,
   });
+
+  // Reset column widths when language selection changes on translations page
+  useEffect(() => {
+    if (slidePage === 'translations') {
+      resetWidths();
+    }
+  }, [displayLanguages.length, slidePage, resetWidths]);
 
   // Global mouse handlers for column resizing
   useEffect(() => {
