@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
 import { apiPatch } from '@/lib/api-utils';
 
 interface UseOptimisticUpdateParams {
-  translations: TranslationWithAudit[];
-  updateLocalTranslation: (id: string, updates: Partial<TranslationWithAudit>) => void;
+  setTranslations: React.Dispatch<React.SetStateAction<TranslationWithAudit[]>>;
 }
 
 /**
@@ -14,15 +13,8 @@ interface UseOptimisticUpdateParams {
  * Rolls back on failure
  */
 export function useOptimisticUpdate({
-  translations,
-  updateLocalTranslation,
+  setTranslations,
 }: UseOptimisticUpdateParams) {
-  // Use ref to always access latest translations without dependency
-  const translationsRef = useRef(translations);
-  useEffect(() => {
-    translationsRef.current = translations;
-  }, [translations]);
-
   const optimisticPatch = useCallback(
     async (
       id: string,
@@ -30,9 +22,15 @@ export function useOptimisticUpdate({
       body: Record<string, unknown>,
       successMessage?: string
     ) => {
-      // Get previous value from ref to ensure we have latest data
-      const prev = translationsRef.current.find((t) => t.id === id);
-      updateLocalTranslation(id, localUpdates);
+      // Store previous value for rollback using functional update
+      let prevValue: TranslationWithAudit | undefined;
+
+      // Optimistic update using functional setState
+      setTranslations((prev) => {
+        const target = prev.find((t) => t.id === id);
+        prevValue = target;
+        return prev.map((t) => (t.id === id ? { ...t, ...localUpdates } : t));
+      });
 
       try {
         await apiPatch(`/api/translations/${id}`, body);
@@ -41,11 +39,16 @@ export function useOptimisticUpdate({
         }
       } catch (error) {
         console.error('Error updating translation:', error);
-        if (prev) updateLocalTranslation(id, prev);
+        // Rollback
+        if (prevValue) {
+          setTranslations((prev) =>
+            prev.map((t) => (t.id === id ? prevValue! : t))
+          );
+        }
         showError('수정 중 오류가 발생했습니다.');
       }
     },
-    [updateLocalTranslation] // Remove translations dependency
+    [setTranslations]
   );
 
   return { optimisticPatch };

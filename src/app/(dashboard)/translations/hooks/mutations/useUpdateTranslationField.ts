@@ -4,8 +4,7 @@ import { useOptimisticUpdate } from './useOptimisticUpdate';
 import type { TranslationWithAudit } from '../useTranslationData';
 
 interface UseUpdateTranslationFieldParams {
-  translations: TranslationWithAudit[];
-  updateLocalTranslation: (id: string, updates: Partial<TranslationWithAudit>) => void;
+  setTranslations: React.Dispatch<React.SetStateAction<TranslationWithAudit[]>>;
 }
 
 /**
@@ -13,10 +12,9 @@ interface UseUpdateTranslationFieldParams {
  * Provides handlers for status, source text, context, scope, priority, etc.
  */
 export function useUpdateTranslationField({
-  translations,
-  updateLocalTranslation,
+  setTranslations,
 }: UseUpdateTranslationFieldParams) {
-  const { optimisticPatch } = useOptimisticUpdate({ translations, updateLocalTranslation });
+  const { optimisticPatch } = useOptimisticUpdate({ setTranslations });
 
   const handleStatusChange = useCallback(
     async (id: string, status: TranslationStatus) => {
