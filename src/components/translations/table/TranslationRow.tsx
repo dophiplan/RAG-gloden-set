@@ -99,10 +99,7 @@ const TranslationRow = memo(function TranslationRow({
 
   const getCellStyle = (columnKey: string) => {
     const width = columnWidths[columnKey];
-    // Support both pixel (>100) and percentage (<100) widths
-    if (!width) return {};
-    const widthValue = width < 100 ? `${width}%` : `${width}px`;
-    return { width: widthValue, minWidth: widthValue, maxWidth: widthValue };
+    return width ? { width: `${width}px`, minWidth: `${width}px` } : {};
   };
 
   // Page 2: Translations Row

@@ -113,36 +113,35 @@ export default memo(function TranslationTableV2({
   const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
 
   // Page 1: Basic Info columns (product removed)
-  // Narrow columns for metadata, wide for source text
   const infoPageWidths = {
-    checkbox: 36,
-    priority: 50,
-    scope: 70,
-    platform: 80,
-    version: 60,
-    devCode: 90,
-    sourceText: 350,  // Wide for readability
-    status: 70,
-    actions: 90,
+    checkbox: 40,
+    priority: 60,
+    scope: 80,
+    platform: 90,
+    version: 70,
+    devCode: 100,
+    sourceText: 280,
+    status: 80,
+    actions: 100,
   };
 
   // Page 2: Translations columns (source + selected languages)
-  // Wider source text, narrower language columns
   const translationPageWidths = useMemo(() => {
-    const widths: { [key: string]: number } = {};
-    
-    // Fixed columns as percentages
-    widths.checkbox = 4;   // 4% - small
-    widths.sourceText = 32; // 32% - wide for readability
-    widths.actions = 8;    // 8%
-    
-    // Language columns: distribute remaining ~56% evenly
+    const widths: { [key: string]: number } = {
+      checkbox: 40,
+      sourceText: 280,
+      actions: 100,
+    };
+    // Distribute remaining width evenly based on actual selected language count
+    // Container width ~1200px
+    const fixedWidth = 40 + 280 + 100; // checkbox + sourceText + actions
+    const containerWidth = 1200;
+    const availableWidth = containerWidth - fixedWidth;
     const langCount = Math.max(displayLanguages.length, 1);
-    const remainingPercent = 56; // 100 - 4 - 32 - 8 = 56
-    const langPercent = Math.floor(remainingPercent / langCount);
+    const langWidth = Math.max(Math.floor(availableWidth / langCount), 100); // min 100px
     
     displayLanguages.forEach((lang) => {
-      widths[`lang_${lang}`] = langPercent;
+      widths[`lang_${lang}`] = langWidth;
     });
     return widths;
   }, [displayLanguages]);
