@@ -149,41 +149,36 @@ export default function TranslationBulkActionBar({
   };
 
   const handleBulkDelete = async () => {
-    console.log('[TranslationBulkActionBar] handleBulkDelete called, selectedIds:', selectedIds);
-    
     if (!selectedIds || selectedIds.length === 0) {
-      console.log('[TranslationBulkActionBar] No items selected');
       showError('삭제할 항목을 선택해주세요.');
       return;
     }
 
-    const confirmed = showConfirm(`${selectedCount}개 항목을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
-    console.log('[TranslationBulkActionBar] Confirm result:', confirmed);
-    
-    if (!confirmed) {
-      console.log('[TranslationBulkActionBar] User cancelled');
-      return;
-    }
-
     if (onBulkDelete) {
-      console.log('[TranslationBulkActionBar] Using onBulkDelete prop');
-      await onBulkDelete(selectedIds);
+      // Use parent handler (it will show confirm and handle API)
+      try {
+        await onBulkDelete(selectedIds);
+        onClearSelection(); // Clear selection after successful deletion
+      } catch (error) {
+        // Error is already handled by parent
+      }
+      return;
     } else {
       // Direct API call if handler not provided
-      console.log('[TranslationBulkActionBar] Direct API call');
+      const confirmed = showConfirm(`${selectedCount}개 항목을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+      if (!confirmed) return;
+
       setIsProcessing(true);
       try {
-        console.log('[TranslationBulkActionBar] Calling API with ids:', selectedIds);
         const result = await apiFetch<{ deleted: number }>('/api/translations/bulk', { 
           method: 'DELETE',
           body: JSON.stringify({ ids: selectedIds })
         });
-        console.log('[TranslationBulkActionBar] API success:', result);
         showSuccess(`${result.deleted}개 항목이 삭제되었습니다.`);
         onClearSelection();
         onRefresh?.();
       } catch (error) {
-        console.error('[TranslationBulkActionBar] Bulk delete error:', error);
+        console.error('Bulk delete error:', error);
         showError(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다.');
       } finally {
         setIsProcessing(false);
