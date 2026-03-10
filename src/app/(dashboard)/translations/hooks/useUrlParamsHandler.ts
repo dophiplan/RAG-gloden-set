@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ProductCode } from '@/types';
+import { ProductCode, PriorityLevel, ScopeType } from '@/types';
 import { TIMEOUTS } from '@/lib/constants';
 
 interface UseUrlParamsHandlerParams {
@@ -9,7 +9,7 @@ interface UseUrlParamsHandlerParams {
   requestIdFilter: string | null;
   setRequestIdFilter: (id: string) => void;
   fetchTranslations: () => Promise<void>;
-  handleBulkCreate: (texts: string[], version?: string, productCode?: ProductCode) => Promise<void>;
+  handleBulkCreate: (texts: string[], version?: string, scope?: ScopeType, priority?: PriorityLevel) => Promise<void>;
 }
 
 /**
@@ -48,7 +48,7 @@ export function useUrlParamsHandler({
       try {
         const texts = JSON.parse(decodeURIComponent(newTexts));
         if (Array.isArray(texts) && texts.length > 0) {
-          handleBulkCreate(texts, version || undefined, product || undefined);
+          handleBulkCreate(texts, version || undefined);
         }
       } catch (e) {
         // Ignore parsing errors for legacy param

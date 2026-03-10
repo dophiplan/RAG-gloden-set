@@ -53,7 +53,6 @@ export function useTranslationEventHandlers({
   const handlePDFUpload = useCallback(async (
     files: UploadedFile[],
     version: string,
-    productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
     languages: LanguageCode[],
@@ -66,7 +65,6 @@ export function useTranslationEventHandlers({
         formData.append('files', uploadedFile.file);
       });
       if (version) formData.append('version', version);
-      if (productCode) formData.append('product_code', productCode);
       if (scope) formData.append('scope', scope);
 
       // Step 1: Parse PDF to extract texts
@@ -96,18 +94,12 @@ export function useTranslationEventHandlers({
       const bulkData = await apiPost<{ created?: number }>('/api/translations/bulk', {
         texts: allTexts,
         version: version || undefined,
-        product_code: productCode || undefined,
         scope: scope || undefined,
         priority: priority,
         languages: languages,
         platform_codes: platformCodes,
         completion_date: completionDate || undefined,
       });
-
-      // Switch to selected product tab FIRST
-      if (productCode) {
-        setSelectedProduct(productCode as ProductCode);
-      }
 
       // Wait for state update to complete before fetching
       setTimeout(() => {
@@ -122,13 +114,12 @@ export function useTranslationEventHandlers({
       console.error('PDF upload error:', error);
       showError('PDF 업로드 중 오류가 발생했습니다.');
     }
-  }, [fetchTranslations, setSelectedProduct]);
+  }, [fetchTranslations]);
 
   const handleCreateTranslation = useCallback(async (
     sourceText: string,
     context: string,
     version: string,
-    productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
     languages: LanguageCode[],
@@ -146,7 +137,6 @@ export function useTranslationEventHandlers({
         source_text: sourceText,
         context: context || undefined,
         version: version || undefined,
-        product_codes: productCode ? [productCode] : undefined,
         scope: scope || undefined,
         priority,
         translations: translationsArray,
@@ -158,14 +148,11 @@ export function useTranslationEventHandlers({
       // Clear SWR cache to show new data immediately (including dashboard)
       invalidateCache(/^\/api\/(translations|dashboard)/);
       
-      if (productCode) {
-        setSelectedProduct(productCode as ProductCode);
-      }
       return true;
     } catch (error) {
       return false;
     }
-  }, [fetchTranslations, setSelectedProduct]);
+  }, [fetchTranslations]);
 
   // Excel 다운로드 헬퍼 함수
   const exportToExcel = useCallback((data: TranslationWithAudit[], filename: string) => {

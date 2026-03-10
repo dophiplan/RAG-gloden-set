@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
+import { PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { showSuccess, showError, showWarning } from '@/lib/notifications';
 import { apiPost } from '@/lib/api-utils';
 
@@ -20,7 +20,6 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
       sourceText: string,
       context: string,
       version: string,
-      productCode: ProductCode | '',
       scope: ScopeType,
       priority?: PriorityLevel,
       languages?: LanguageCode[],
@@ -46,7 +45,7 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
           source_text: sourceText,
           context: context || undefined,
           version: version || undefined,
-          product_code: productCode || undefined,
+
           scope: scope || undefined,
           priority: priority,
           platform_codes: _platformCodes?.length ? _platformCodes : undefined,
@@ -126,12 +125,11 @@ export function useCreateTranslation({ fetchTranslations }: UseCreateTranslation
     async (
       texts: string[],
       version?: string,
-      productCode?: ProductCode,
       scope?: ScopeType,
       priority?: PriorityLevel
     ) => {
       try {
-        await apiPost('/api/translations/bulk', { texts, version, product_code: productCode, scope, priority });
+        await apiPost('/api/translations/bulk', { texts, version, scope, priority });
         fetchTranslations();
         window.history.replaceState({}, '', '/translations');
         showSuccess(`${texts.length}개의 번역이 생성되었습니다.`);
