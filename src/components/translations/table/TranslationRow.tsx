@@ -305,52 +305,29 @@ const TranslationRow = memo(function TranslationRow({
         </td>
       </tr>
 
-      {/* Expanded Panel - Only on Info Page */}
+      {/* Expanded Panel - Overlay Style */}
       {isExpanded && (
-        <tr className="bg-blue-50/30">
-          <td colSpan={10} className="px-4 py-4 border-l-4 border-blue-400">
-            <div className="space-y-4">
-              {/* Description */}
-              <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">설명</h4>
-                <div className="text-sm text-gray-700 bg-white p-2 rounded border">
-                  <EditableTextCell
-                    value={translation.context || ''}
-                    onSave={(v) => onContextUpdate?.(translation.id, v)}
-                    maxLength={200}
-                  />
+        <tr className="relative">
+          <td colSpan={9} className="p-0 relative">
+            <div className="absolute left-0 right-0 top-0 z-50 bg-blue-50 border-l-4 border-blue-400 border-b border-r shadow-lg px-4 py-4">
+              <div className="space-y-3">
+                {/* Description + Meta in same row */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">설명</h4>
+                    <div className="flex gap-3 text-xs text-gray-500">
+                      <span>요청일: {new Date(translation.created_at).toLocaleDateString('ko-KR')}</span>
+                      <span>수정일: {new Date(translation.updated_at).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-700 bg-white p-2 rounded border text-left">
+                    <EditableTextCell
+                      value={translation.context || ''}
+                      onSave={(v) => onContextUpdate?.(translation.id, v)}
+                      maxLength={200}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Language Translations */}
-              <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">번역</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {displayLanguages.map((lang) => {
-                    const result = getTranslationResultForLanguage(lang);
-                    const text = getTranslationForLanguage(lang);
-                    const labels: Record<string, string> = { en: '영어', ja: '일본어', zh: '중국어' };
-                    return (
-                      <div key={lang} className="bg-white p-3 rounded border">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-gray-500">{labels[lang] || lang}</span>
-                          {result?.source_type && <TranslationSourceBadge sourceType={result.source_type} />}
-                        </div>
-                        <EditableTextCell
-                          value={text}
-                          onSave={(v) => onTranslationUpdate?.(translation.id, lang as LanguageCode, v)}
-                          maxLength={100}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Meta */}
-              <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-                <span>요청일: {new Date(translation.created_at).toLocaleDateString('ko-KR')}</span>
-                <span>수정일: {new Date(translation.updated_at).toLocaleDateString('ko-KR')}</span>
               </div>
             </div>
           </td>
