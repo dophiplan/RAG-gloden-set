@@ -290,8 +290,8 @@ function TranslationsProductContent() {
           <div className="flex items-center gap-2">
             {[
               { key: 'pending', label: '요청', count: stats.pending, color: 'yellow' },
-              { key: 'in_progress', label: '진행중', count: translations.filter(t => t.status === 'in_progress').length, color: 'blue' },
-              { key: 'reviewed', label: '검수중', count: stats.reviewed, color: 'indigo' },
+              { key: 'in_progress', label: '진행', count: translations.filter(t => t.status === 'in_progress').length, color: 'blue' },
+              { key: 'reviewed', label: '검토', count: stats.reviewed, color: 'indigo' },
               { key: 'deployed', label: '반영완료', count: stats.deployed, color: 'green' },
               { key: 're_request', label: '재요청', count: translations.filter(t => t.status === 're_request').length, color: 'orange' },
               { key: 'not_used', label: '미사용', count: translations.filter(t => t.status === 'not_used').length, color: 'gray' },
