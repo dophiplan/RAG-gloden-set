@@ -253,6 +253,19 @@ const TranslationRow = memo(function TranslationRow({
           />
         </td>
 
+        {/* Context / Description */}
+        <td className="px-2 py-2 align-middle" style={getCellStyle('context')}>
+          <EditableTextCell
+            value={translation.context || ''}
+            onSave={async (v) => {
+              await onContextUpdate?.(translation.id, v);
+              await onRefresh?.();
+            }}
+            placeholder="-"
+            maxLength={30}
+          />
+        </td>
+
         {/* Status */}
         <td className="px-2 py-2 align-middle" style={getCellStyle('status')}>
           <select
@@ -417,6 +430,7 @@ const EditableTranslationCell = ({ language, value, onSave }: { language: string
 const EditablePlatformCell = ({ selectedCodes, platformsMap, onSave }: { selectedCodes: string[]; platformsMap: Record<string, { name: string; code: string; display_order: number }>; onSave: (codes: string[]) => void }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempSelected, setTempSelected] = useState<string[]>(selectedCodes);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   if (isEditing) {
     return (
@@ -448,10 +462,31 @@ const EditablePlatformCell = ({ selectedCodes, platformsMap, onSave }: { selecte
     );
   }
 
-  const displayText = selectedCodes.map((c) => platformsMap[c]?.name || c).join(', ') || '-';
+  // 플랫폼 표시: 첫 번째 + 나머지 개수
+  const platformNames = selectedCodes.map((c) => platformsMap[c]?.name || c);
+  const displayText = platformNames.length === 0
+    ? '-'
+    : platformNames.length === 1
+      ? platformNames[0]
+      : `${platformNames[0]} +${platformNames.length - 1}`;
+
+  const fullText = platformNames.join(', ');
+  const hasTooltip = platformNames.length > 1;
+
   return (
-    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-      <TruncatedText text={displayText} maxLength={12} cellKey={`platform-${selectedCodes.join(',')}`} />
+    <div
+      onDoubleClick={() => setIsEditing(true)}
+      className="cursor-text relative"
+      onMouseEnter={() => hasTooltip && setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <span className="text-xs text-gray-800">{displayText}</span>
+      {showTooltip && hasTooltip && (
+        <div className="absolute z-50 left-0 bottom-full mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded shadow-lg max-w-xs whitespace-normal break-words">
+          {fullText}
+          <div className="absolute left-2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+        </div>
+      )}
     </div>
   );
 };

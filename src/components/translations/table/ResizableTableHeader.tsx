@@ -46,6 +46,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
           { key: 'version', label: '버전', resizable: true },
           { key: 'devCode', label: 'KEY/ID', resizable: true },
           { key: 'sourceText', label: '원문', resizable: true },
+          { key: 'context', label: '설명', resizable: true },
           { key: 'status', label: '상태', resizable: true },
           { key: 'actions', label: '', resizable: false },
         ]

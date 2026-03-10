@@ -115,12 +115,13 @@ export default memo(function TranslationTableV2({
   // Very narrow metadata columns (2/3 of current), wider source text
   const infoPageWidths = {
     checkbox: 36,
-    priority: 35,   // 좁게
-    scope: 40,      // 좁게
-    platform: 45,   // 좁게
-    version: 35,    // 좁게
-    devCode: 55,    // 좁게
-    sourceText: 450, // 원문 넓게
+    priority: 40,
+    scope: 50,
+    platform: 60,
+    version: 50,
+    devCode: 80,
+    sourceText: 350, // 원문 넓게
+    context: 120,   // 설명
     status: 45,     // 좁게
     actions: 90,
   };
@@ -150,13 +151,14 @@ export default memo(function TranslationTableV2({
     defaultWidths: slidePage === 'info' ? infoPageWidths : translationPageWidths,
     minWidths: {
       checkbox: 36,
-      priority: 50,
+      priority: 40,
       product: 60,
-      scope: 60,
-      platform: 70,
-      version: 60,
+      scope: 50,
+      platform: 60,
+      version: 50,
       devCode: 80,
       sourceText: 150,
+      context: 80,
       status: 70,
       actions: 80,
     },
@@ -250,13 +252,13 @@ export default memo(function TranslationTableV2({
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (translations || []).length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
                         번역 항목이 없습니다.
                       </td>
                     </tr>

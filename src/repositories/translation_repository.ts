@@ -109,12 +109,14 @@ export class TranslationRepository {
       ? `
         *,
         translation_results (*),
-        translation_products!inner (*)
+        translation_products!inner (*),
+        translation_platforms (*)
       `
       : `
         *,
         translation_results (*),
-        translation_products (*)
+        translation_products (*),
+        translation_platforms (*)
       `;
 
     let query = this.supabase
