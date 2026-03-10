@@ -254,13 +254,13 @@ export default memo(function TranslationTableV2({
                 <tbody className="divide-y divide-gray-200">
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                         로딩 중...
                       </td>
                     </tr>
                   ) : (translations || []).length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-500">
                         번역 항목이 없습니다.
                       </td>
                     </tr>

@@ -115,6 +115,7 @@ export class TranslationCrudService {
       priority,
       completionDate,
       userId,
+      platformCodes,
       translations: inputTranslations,
     } = input;
 
@@ -197,8 +198,8 @@ export class TranslationCrudService {
     }
 
     // Create platform links if provided
-    if ((input.platformCodes || []).length > 0) {
-      const platformLinks = (input.platformCodes || []).map(platformCode => ({
+    if ((platformCodes || []).length > 0) {
+      const platformLinks = (platformCodes || []).map(platformCode => ({
         translation_id: translation.id,
         platform_code: platformCode,
       }));
