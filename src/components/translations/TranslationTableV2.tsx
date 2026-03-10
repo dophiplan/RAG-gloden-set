@@ -113,17 +113,17 @@ export default memo(function TranslationTableV2({
   const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
 
   // Page 1: Basic Info columns (product removed)
-  // Narrow metadata columns, wider source text
+  // Very narrow metadata columns (2/3 of current), wider source text
   const infoPageWidths = {
-    checkbox: 40,
-    priority: 50,   // 좁게
-    scope: 60,      // 좁게
-    platform: 70,   // 좁게
-    version: 55,    // 좁게
-    devCode: 80,    // 좁게
-    sourceText: 360, // 원문 넓게
-    status: 70,     // 좁게
-    actions: 100,
+    checkbox: 36,
+    priority: 35,   // 좁게
+    scope: 40,      // 좁게
+    platform: 45,   // 좁게
+    version: 35,    // 좁게
+    devCode: 55,    // 좁게
+    sourceText: 450, // 원문 넓게
+    status: 45,     // 좁게
+    actions: 90,
   };
 
   // Page 2: Translations columns (source + selected languages)
