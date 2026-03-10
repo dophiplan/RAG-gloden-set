@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, Suspense, useState, useCallback, useEffect } from 'react';
-import { apiPatch } from '@/lib/api-utils';
+import { apiPatch, apiDelete } from '@/lib/api-utils';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProductTabs from '@/components/ProductTabs';
 import TranslationTableV2 from '@/components/translations/TranslationTableV2';
@@ -58,11 +58,14 @@ function TranslationsContent() {
 
   // 직접 핸들러 구현 (useTranslationMutations 대체)
   const handlePriorityUpdate = useCallback(async (id: string, priority: string) => {
+    console.log('🚀 [TEST] handlePriorityUpdate called!', { id, priority });
     try {
-      await apiPatch(`/api/translations/${id}`, { priority });
+      const result = await apiPatch(`/api/translations/${id}`, { priority });
+      console.log('✅ [TEST] API success:', result);
       await handleRefresh();
+      console.log('✅ [TEST] Refresh completed');
     } catch (error) {
-      console.error('Priority update error:', error);
+      console.error('❌ [TEST] Priority update error:', error);
     }
   }, [handleRefresh]);
 
@@ -131,7 +134,7 @@ function TranslationsContent() {
 
   const handleDelete = useCallback(async (id: string) => {
     try {
-      await apiPatch(`/api/translations/${id}`, {}); // DELETE 메서드로 변경 필요
+      await apiDelete(`/api/translations/${id}`);
       await handleRefresh();
     } catch (error) {
       console.error('Delete error:', error);
@@ -146,8 +149,24 @@ function TranslationsContent() {
       console.error('Translation update error:', error);
     }
   }, [handleRefresh]);
-  
 
+  const handleBulkCreate = useCallback(async (data: any[]) => {
+    try {
+      await apiPatch('/api/translations/bulk', { items: data });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Bulk create error:', error);
+    }
+  }, [handleRefresh]);
+
+  const handleBulkDelete = useCallback(async (ids: string[]) => {
+    try {
+      await apiPatch('/api/translations/bulk-delete', { ids });
+      await handleRefresh();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+    }
+  }, [handleRefresh]);
 
   // Modal states
   const modals = useModalStates(translations);
@@ -168,7 +187,7 @@ function TranslationsContent() {
     requestIdFilter: filters.requestIdFilter,
     setRequestIdFilter: filters.setRequestIdFilter,
     fetchTranslations,
-    handleBulkCreate: mutations.handleBulkCreate,
+    handleBulkCreate: handleBulkCreate,
   });
 
   // Language column management
@@ -185,7 +204,7 @@ function TranslationsContent() {
 
   // Duplicate-checked update handlers
   const handleVersionUpdateWithDuplicateCheck = duplicateCheck.makeVersionUpdateWithDuplicateCheck(
-    mutations.handleVersionUpdate as (id: string, value: string | string[] | null) => Promise<void>
+    handleVersionUpdate as (id: string, value: string | string[] | null) => Promise<void>
   );
   const handleNotesUpdateWithDuplicateCheck = duplicateCheck.makeNotesUpdateWithDuplicateCheck();
 
@@ -407,7 +426,7 @@ function TranslationsContent() {
           onRefresh={handleRefresh}
           onOpenEmailModal={handlers.handleOpenEmailModal}
           onOpenDeploymentModal={handlers.handleOpenDeploymentModal}
-          onBulkDelete={mutations.handleBulkDelete}
+          onBulkDelete={handleBulkDelete}
         />
       </div>
     </DashboardLayout>

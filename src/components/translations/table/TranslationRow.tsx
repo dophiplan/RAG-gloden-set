@@ -180,10 +180,18 @@ const TranslationRow = memo(function TranslationRow({
 
         {/* Priority */}
         <td className="px-2 py-2 align-middle text-center" style={getCellStyle('priority')}>
+          {(() => { console.log('[TranslationRow] onPriorityUpdate:', typeof onPriorityUpdate); return null; })()}
           <PriorityBadge
             level={translation.priority || 'medium'}
             onChange={async (p) => {
-              await onPriorityUpdate?.(translation.id, p);
+              console.log('[TranslationRow] PriorityBadge onChange called:', p);
+              if (onPriorityUpdate) {
+                console.log('[TranslationRow] Calling onPriorityUpdate...');
+                await onPriorityUpdate(translation.id, p);
+                console.log('[TranslationRow] onPriorityUpdate completed');
+              } else {
+                console.error('[TranslationRow] onPriorityUpdate is undefined!');
+              }
               await onRefresh?.();
             }}
           />
