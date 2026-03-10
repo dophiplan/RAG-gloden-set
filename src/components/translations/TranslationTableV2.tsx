@@ -125,15 +125,17 @@ export default memo(function TranslationTableV2({
     actions: 90,
   };
 
-  // Page 2: Translations columns (source + max 8 languages)
+  // Page 2: Translations columns (source + selected languages)
   const translationPageWidths = useMemo(() => {
     const widths: { [key: string]: number } = {
       checkbox: 36,
       sourceText: 200,
       actions: 90,
     };
-    // Max 8 languages, evenly distribute remaining width
-    const langWidth = Math.floor((950 - 36 - 200 - 90) / 8);
+    // Distribute remaining width evenly based on ACTUAL selected language count
+    const langCount = Math.max(displayLanguages.length, 1);
+    const availableWidth = 950 - 36 - 200 - 90;
+    const langWidth = Math.floor(availableWidth / langCount);
     displayLanguages.forEach((lang) => {
       widths[`lang_${lang}`] = langWidth;
     });
