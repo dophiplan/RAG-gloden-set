@@ -121,9 +121,8 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
           <EditableSourceCell
             value={translation.source_text}
-            onSave={async (v) => {
-              await onSourceTextUpdate?.(translation.id, v);
-              onRefresh?.();
+            onSave={(v) => {
+              onSourceTextUpdate?.(translation.id, v).then(() => onRefresh?.());
             }}
           />
         </td>
@@ -134,9 +133,8 @@ const TranslationRow = memo(function TranslationRow({
             <EditableTranslationCell
               language={lang}
               value={getTranslationForLanguage(lang)}
-              onSave={async (v) => {
-                await onTranslationUpdate?.(translation.id, lang, v);
-                onRefresh?.();
+              onSave={(v) => {
+                onTranslationUpdate?.(translation.id, lang, v).then(() => onRefresh?.());
               }}
             />
           </td>
@@ -182,9 +180,8 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle text-center" style={getCellStyle('priority')}>
           <PriorityBadge
             level={translation.priority || 'medium'}
-            onChange={async (p) => {
-              await onPriorityUpdate?.(translation.id, p);
-              onRefresh?.();
+            onChange={(p) => {
+              onPriorityUpdate?.(translation.id, p).then(() => onRefresh?.());
             }}
           />
         </td>
@@ -194,9 +191,9 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('scope')}>
           <select
             value={translation.scope || ''}
-            onChange={async (e) => {
-              await onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope);
-              onRefresh?.();
+            onChange={(e) => {
+              onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope)
+                .then(() => onRefresh?.());
             }}
             className="text-xs border-0 bg-transparent p-0 cursor-pointer text-gray-700 hover:text-blue-600"
           >
@@ -221,9 +218,8 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('version')}>
           <EditableTextCell
             value={translation.version || ''}
-            onSave={async (v) => {
-              await onVersionUpdate?.(translation.id, v);
-              onRefresh?.();
+            onSave={(v) => {
+              onVersionUpdate?.(translation.id, v).then(() => onRefresh?.());
             }}
             maxLength={8}
           />
@@ -233,9 +229,8 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('devCode')}>
           <EditableTextCell
             value={translation.dev_code || ''}
-            onSave={async (v) => {
-              await onDevCodeUpdate?.(translation.id, v);
-              onRefresh?.();
+            onSave={(v) => {
+              onDevCodeUpdate?.(translation.id, v).then(() => onRefresh?.());
             }}
             maxLength={15}
           />
@@ -257,9 +252,9 @@ const TranslationRow = memo(function TranslationRow({
         <td className="px-2 py-2 align-middle" style={getCellStyle('status')}>
           <select
             value={translation.status}
-            onChange={async (e) => {
-              await onStatusChange?.(translation.id, e.target.value as TranslationStatus);
-              onRefresh?.();
+            onChange={(e) => {
+              onStatusChange?.(translation.id, e.target.value as TranslationStatus)
+                .then(() => onRefresh?.());
             }}
             className={`text-xs border rounded px-1.5 py-0.5 w-full ${statusInfo.bg} ${statusInfo.text}`}
           >
