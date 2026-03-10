@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { showSuccess, showError } from '@/lib/notifications';
 import type { TranslationWithAudit } from '../useTranslationData';
 import { apiPatch } from '@/lib/api-utils';
@@ -17,6 +17,12 @@ export function useOptimisticUpdate({
   translations,
   updateLocalTranslation,
 }: UseOptimisticUpdateParams) {
+  // Use ref to always access latest translations without dependency
+  const translationsRef = useRef(translations);
+  useEffect(() => {
+    translationsRef.current = translations;
+  }, [translations]);
+
   const optimisticPatch = useCallback(
     async (
       id: string,
@@ -24,7 +30,8 @@ export function useOptimisticUpdate({
       body: Record<string, unknown>,
       successMessage?: string
     ) => {
-      const prev = translations.find((t) => t.id === id);
+      // Get previous value from ref to ensure we have latest data
+      const prev = translationsRef.current.find((t) => t.id === id);
       updateLocalTranslation(id, localUpdates);
 
       try {
@@ -38,7 +45,7 @@ export function useOptimisticUpdate({
         showError('수정 중 오류가 발생했습니다.');
       }
     },
-    [translations, updateLocalTranslation]
+    [updateLocalTranslation] // Remove translations dependency
   );
 
   return { optimisticPatch };

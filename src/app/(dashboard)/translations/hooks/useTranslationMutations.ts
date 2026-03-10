@@ -141,5 +141,6 @@ export function useTranslationMutations({
     handleBulkCreate,
     handleCreate,
     fetchTranslations,
+    translations, // Add translations to ensure mutations update when data changes
   ]);
 }
