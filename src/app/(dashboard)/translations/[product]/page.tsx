@@ -46,7 +46,7 @@ function TranslationsProductContent() {
   }, [productCode, filters.setSelectedProduct]);
 
   // Data
-  const { translations, setTranslations, loading, fetchTranslations, updateLocalTranslation } = useTranslationData({
+  const { translations, setTranslations, loading, stats, fetchTranslations, updateLocalTranslation } = useTranslationData({
     statusFilter: filters.statusFilter,
     languageFilter: filters.languageFilter,
     searchTerm: filters.searchTerm,
@@ -288,24 +288,27 @@ function TranslationsProductContent() {
         {/* Status Tabs with Create Button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {['pending', 'in_progress', 'reviewed', 'deployed'].map((status) => {
-              const count = requests.filter(r => r.status === status).length;
-              const labels = {
-                pending: '요청',
-                in_progress: '진행중',
-                reviewed: '검수중',
-                deployed: '반영완료'
-              };
+            {[
+              { key: 'pending', label: '요청', count: stats.pending },
+              { key: 'in_progress', label: '진행중', count: translations.filter(t => t.status === 'in_progress').length },
+              { key: 'reviewed', label: '검수중', count: stats.reviewed },
+              { key: 'deployed', label: '반영완료', count: stats.deployed },
+            ].map((tab) => {
+              const isActive = filters.statusFilter === tab.key;
+              const hasItems = tab.count > 0;
               return (
                 <button
-                  key={status}
+                  key={tab.key}
+                  onClick={() => filters.setStatusFilter(isActive ? '' : tab.key as any)}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    count > 0
-                      ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                      : 'bg-gray-100 text-gray-500'
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : hasItems
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        : 'bg-gray-100 text-gray-500'
                   }`}
                 >
-                  {labels[status as keyof typeof labels]} ({count})
+                  {tab.label} ({tab.count})
                 </button>
               );
             })}
