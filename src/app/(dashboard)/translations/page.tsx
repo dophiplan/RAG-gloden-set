@@ -28,6 +28,8 @@ import TranslationBulkActionBar from '@/components/translations/TranslationBulkA
 import { UnifiedVersionHistoryPanel } from './components/VersionHistory';
 
 function TranslationsContent() {
+  console.log('[page.tsx] TranslationsContent render START');
+  
   // Filters
   const filters = useTranslationFilters();
 
@@ -64,7 +66,9 @@ function TranslationsContent() {
     updateLocalTranslation,
   });
   
-  console.log('[page.tsx] mutations.handlePriorityUpdate:', mutations.handlePriorityUpdate);
+  console.log('[page.tsx] === mutations ===');
+  console.log('[page.tsx] mutations keys:', Object.keys(mutations));
+  console.log('[page.tsx] mutations.handlePriorityUpdate:', typeof mutations.handlePriorityUpdate);
 
   // Modal states
   const modals = useModalStates(translations);
