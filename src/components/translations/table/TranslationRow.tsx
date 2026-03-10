@@ -22,12 +22,11 @@ interface TranslationRowProps {
   page?: 'info' | 'translations';
   translation: TranslationWithResults;
   isSelected: boolean;
-  isExpanded?: boolean;
 
   displayLanguages?: LanguageCode[];
   columnWidths?: { [key: string]: number };
   onToggleSelect: (id: string) => void;
-  onToggleExpand?: () => void;
+  onRowClick?: () => void;
   onStatusChange?: (id: string, status: TranslationStatus) => Promise<void>;
   onTranslationUpdate?: (translationId: string, languageCode: LanguageCode, text: string) => Promise<void>;
   onSourceTextUpdate?: (translationId: string, sourceText: string) => Promise<void>;
@@ -51,12 +50,10 @@ const TranslationRow = memo(function TranslationRow({
   page = 'info',
   translation,
   isSelected,
-  isExpanded = false,
-
   displayLanguages = [],
   columnWidths = {},
   onToggleSelect,
-  onToggleExpand,
+  onRowClick,
   onStatusChange,
   onTranslationUpdate,
   onSourceTextUpdate,
@@ -161,7 +158,8 @@ const TranslationRow = memo(function TranslationRow({
   return (
     <>
       <tr
-        className={`transition-colors duration-150 hover:bg-gray-50 ${
+        onClick={onRowClick}
+        className={`transition-colors duration-150 hover:bg-gray-50 cursor-pointer ${
           isSelected ? 'bg-blue-50' : ''
         } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
       >
@@ -292,47 +290,9 @@ const TranslationRow = memo(function TranslationRow({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-            <button
-              onClick={onToggleExpand}
-              className={`p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-all ${isExpanded ? 'rotate-180' : ''}`}
-              title={isExpanded ? "접기" : "펼치기"}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
           </div>
         </td>
       </tr>
-
-      {/* Expanded Panel - Overlay Style */}
-      {isExpanded && (
-        <tr className="relative">
-          <td colSpan={9} className="p-0 relative">
-            <div className="absolute left-0 right-0 top-0 z-50 bg-blue-50 border-l-4 border-blue-400 border-b border-r shadow-lg px-4 py-4">
-              <div className="space-y-3">
-                {/* Description + Meta in same row */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">설명</h4>
-                    <div className="flex gap-3 text-xs text-gray-500">
-                      <span>요청일: {new Date(translation.created_at).toLocaleDateString('ko-KR')}</span>
-                      <span>수정일: {new Date(translation.updated_at).toLocaleDateString('ko-KR')}</span>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-700 bg-white p-2 rounded border text-left">
-                    <EditableTextCell
-                      value={translation.context || ''}
-                      onSave={(v) => onContextUpdate?.(translation.id, v)}
-                      maxLength={200}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
     </>
   );
 });

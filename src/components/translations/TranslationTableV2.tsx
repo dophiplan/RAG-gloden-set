@@ -47,6 +47,7 @@ interface TranslationTableV2Props {
   onAddToGlossary?: (translation: any) => void;
   onHistoryClick?: (translationId: string) => void;
   onRefresh?: () => void;
+  onRowClick?: (translationId: string) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onToggleSelectAll?: () => void;
   onToggleSelect?: (id: string) => void;
@@ -85,6 +86,7 @@ export default memo(function TranslationTableV2({
   onAddToGlossary,
   onHistoryClick,
   onRefresh,
+  onRowClick,
   onSelectionChange,
   selectedIds: externalSelectedIds,
   loading = false,
@@ -93,7 +95,6 @@ export default memo(function TranslationTableV2({
   onPageChange,
 }: TranslationTableV2Props) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   // Product column removed - determined by page context
 
   // Get display languages first (max 8 for translations page)
@@ -222,10 +223,6 @@ export default memo(function TranslationTableV2({
     [selectedIds, onSelectionChange]
   );
 
-  const toggleExpand = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
   return (
     <div className="space-y-4">
       {/* Slide Indicator */}
@@ -272,11 +269,9 @@ export default memo(function TranslationTableV2({
                         page="info"
                         translation={translation}
                         isSelected={selectedIds.includes(translation.id)}
-                        isExpanded={expandedId === translation.id}
-      
                         columnWidths={columnWidths}
                         onToggleSelect={toggleSelect}
-                        onToggleExpand={() => toggleExpand(translation.id)}
+                        onRowClick={() => onRowClick?.(translation.id)}
                         onStatusChange={onStatusChange}
                         onSourceTextUpdate={onSourceTextUpdate}
                         onContextUpdate={onContextUpdate}
