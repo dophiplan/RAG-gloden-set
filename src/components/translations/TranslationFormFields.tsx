@@ -4,14 +4,13 @@ import { useMemo } from 'react';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
-import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
+import { PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { getAllSelectableLanguages } from '@/lib/product-languages';
-import { useProducts, useScopes, usePriorities, useLanguages, usePlatforms } from '@/hooks/useReferenceData';
+import { useScopes, usePriorities, useLanguages, usePlatforms } from '@/hooks/useReferenceData';
 
 export interface TranslationFormFieldsProps {
   // Field values
   priority: PriorityLevel;
-  productCode: ProductCode | '';
   scope: ScopeType;
   selectedLanguages: LanguageCode[];
   completionDate: string;
@@ -20,7 +19,6 @@ export interface TranslationFormFieldsProps {
 
   // Change handlers
   onPriorityChange: (priority: PriorityLevel) => void;
-  onProductCodeChange: (productCode: ProductCode | '') => void;
   onScopeChange: (scope: ScopeType) => void;
   onLanguagesChange: (languages: LanguageCode[]) => void;
   onCompletionDateChange: (date: string) => void;
@@ -45,14 +43,12 @@ export interface TranslationFormFieldsProps {
  */
 export default function TranslationFormFields({
   priority,
-  productCode,
   scope,
   selectedLanguages,
   completionDate,
   selectedPlatforms,
   version,
   onPriorityChange,
-  onProductCodeChange,
   onScopeChange,
   onLanguagesChange,
   onCompletionDateChange,
@@ -63,18 +59,12 @@ export default function TranslationFormFields({
   isInvalidDate = false,
 }: TranslationFormFieldsProps) {
   // Fetch reference data from DB
-  const { products } = useProducts();
   const { scopes } = useScopes();
   const { priorities } = usePriorities();
   const { languagesMap } = useLanguages();
   const { platforms } = usePlatforms();
 
   // Generate select options dynamically
-  const productSelectOptions = useMemo(() => [
-    { value: '', label: '제품 선택' },
-    ...products.map(p => ({ value: p.code, label: p.name }))
-  ], [products]);
-
   const scopeOptions = useMemo(() => [
     { value: '', label: '제품 분류 선택' },
     ...scopes.map(s => ({ value: s.code, label: s.name }))
@@ -108,20 +98,13 @@ export default function TranslationFormFields({
 
   return (
     <div className="space-y-4">
-      {/* Row 1: 필수 값 (중요도, 제품, 제품 분류, 번역 언어 선택) */}
-      <div className="grid grid-cols-4 gap-4">
+      {/* Row 1: 필수 값 (중요도, 제품 분류, 번역 언어 선택) */}
+      <div className="grid grid-cols-3 gap-4">
         <Select
           label="중요도"
           value={priority}
           onChange={(e) => onPriorityChange(e.target.value as PriorityLevel)}
           options={priorityOptions}
-          required
-        />
-        <Select
-          label="제품"
-          value={productCode}
-          onChange={(e) => onProductCodeChange(e.target.value as ProductCode | '')}
-          options={productSelectOptions}
           required
         />
         <Select
