@@ -73,29 +73,7 @@ export default function TranslationsHeader({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        {/* 버전 기록 버튼 */}
-        {onShowHistory && (
-          <button
-            onClick={onShowHistory}
-            disabled={selectedCount === 0}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-colors ${
-              selectedCount > 0
-                ? 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
-                : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            title={selectedCount > 0 ? '버전 기록 보기' : '번역을 선택하세요'}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm font-medium">버전 기록</span>
-            {selectedCount > 0 && (
-              <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                {selectedCount}
-              </span>
-            )}
-          </button>
-        )}
+        {/* 버전 기록 버튼은 TranslationBulkActionBar로 이동 */}
       </div>
 
       <div className="flex items-center gap-4">
