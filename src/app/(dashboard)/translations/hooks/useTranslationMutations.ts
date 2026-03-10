@@ -14,6 +14,7 @@ interface UseTranslationMutationsParams {
   translations: TranslationWithAudit[];
   setTranslations: React.Dispatch<React.SetStateAction<TranslationWithAudit[]>>;
   fetchTranslations: () => Promise<void>;
+  handleRefresh: () => void; // Refreshes both translations and stats
   updateLocalTranslation: (id: string, updates: Partial<TranslationWithAudit>) => void;
 }
 
@@ -32,9 +33,10 @@ export function useTranslationMutations({
   translations,
   setTranslations,
   fetchTranslations,
+  handleRefresh,
   updateLocalTranslation,
 }: UseTranslationMutationsParams) {
-  // Field updates
+  // Field updates - use handleRefresh for stats update too
   const {
     handleStatusChange,
     handleSourceTextUpdate,
@@ -52,9 +54,9 @@ export function useTranslationMutations({
     updateLocalTranslation,
   });
 
-  // Relation updates
+  // Relation updates - use handleRefresh for full refresh
   const { handleProductsUpdate, handlePlatformsUpdate } = useUpdateRelations({
-    fetchTranslations,
+    handleRefresh,
   });
 
   // Deletion

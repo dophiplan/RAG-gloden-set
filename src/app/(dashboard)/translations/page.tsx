@@ -60,6 +60,7 @@ function TranslationsContent() {
     translations,
     setTranslations,
     fetchTranslations,
+    handleRefresh,
     updateLocalTranslation,
   });
 

@@ -75,6 +75,7 @@ function TranslationsProductContent() {
     translations,
     setTranslations,
     fetchTranslations,
+    handleRefresh,
     updateLocalTranslation,
   });
 
