@@ -15,22 +15,30 @@ export function useResizableColumns({
   minWidths,
   storageKey,
 }: UseResizableColumnsOptions) {
-  // Load saved widths from localStorage
-  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(() => {
-    if (typeof window === 'undefined') return defaultWidths;
+  // Use ref to store defaultWidths to avoid dependency changes
+  const defaultWidthsRef = useRef(defaultWidths);
+  
+  // Start with default widths to avoid hydration mismatch
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>(defaultWidthsRef.current);
+  const hasLoaded = useRef(false);
+  
+  // Load saved widths from localStorage on client side only (once)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (hasLoaded.current) return;
 
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         // Merge with defaults to ensure all columns have widths
-        return { ...defaultWidths, ...parsed };
+        setColumnWidths({ ...defaultWidthsRef.current, ...parsed });
       }
+      hasLoaded.current = true;
     } catch (e) {
       console.error('Failed to load column widths:', e);
     }
-    return defaultWidths;
-  });
+  }, [storageKey]);
 
   const resizingColumn = useRef<string | null>(null);
   const startX = useRef<number>(0);
@@ -51,13 +59,13 @@ export function useResizableColumns({
     (columnKey: string, clientX: number) => {
       resizingColumn.current = columnKey;
       startX.current = clientX;
-      startWidth.current = columnWidths[columnKey] || defaultWidths[columnKey];
+      startWidth.current = columnWidths[columnKey] || defaultWidthsRef.current[columnKey];
 
       // Prevent text selection while resizing
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'col-resize';
     },
-    [columnWidths, defaultWidths]
+    [columnWidths]
   );
 
   const resize = useCallback(
@@ -86,8 +94,8 @@ export function useResizableColumns({
   }, []);
 
   const resetWidths = useCallback(() => {
-    setColumnWidths(defaultWidths);
-  }, [defaultWidths]);
+    setColumnWidths(defaultWidthsRef.current);
+  }, []);
 
   // Alias for backward compatibility
   const onResizeStart = startResize;
