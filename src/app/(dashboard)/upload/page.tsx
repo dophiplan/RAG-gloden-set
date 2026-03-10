@@ -8,9 +8,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import TranslationFormFields from '@/components/translations/TranslationFormFields';
-import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
+import { PriorityLevel, LanguageCode, ScopeType } from '@/types';
 import { Holiday } from '@/types/api';
-import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
 import { showError, showSuccess } from '@/lib/notifications';
 import { calculateDeadline, formatDeadline } from '@/shared/date_time/holiday_checker';
 import { apiGet, apiPost, apiFetch } from '@/lib/api-utils';
@@ -93,7 +92,6 @@ export default function UploadPage() {
   const router = useRouter();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [scope, setScope] = useState<ScopeType>('');
-  const [productCode, setProductCode] = useState<ProductCode | ''>('');
   const [version, setVersion] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
@@ -117,7 +115,7 @@ export default function UploadPage() {
       showError('파일을 먼저 업로드해주세요.');
       return;
     }
-    if (currentStep === 2 && (!priority || !productCode || !scope || (selectedLanguages || []).length === 0)) {
+    if (currentStep === 2 && (!priority || !scope || (selectedLanguages || []).length === 0)) {
       showError('필수 정보를 입력해주세요.');
       return;
     }
@@ -134,19 +132,9 @@ export default function UploadPage() {
 
   const canGoNext = () => {
     if (currentStep === 1) return (uploadedFiles || []).length > 0;
-    if (currentStep === 2) return priority && productCode && scope && (selectedLanguages || []).length > 0;
+    if (currentStep === 2) return priority && scope && (selectedLanguages || []).length > 0;
     return false;
   };
-
-  // Update languages when product changes
-  useEffect(() => {
-    if (productCode) {
-      const defaultLangs = getDefaultLanguagesForProduct(productCode);
-      setSelectedLanguages(defaultLangs);
-    } else {
-      setSelectedLanguages(['en', 'ja']);
-    }
-  }, [productCode]);
 
   // Fetch Korean and Japanese holidays
   useEffect(() => {
@@ -196,11 +184,6 @@ export default function UploadPage() {
       return;
     }
 
-    if (!productCode) {
-      showError('제품을 선택해주세요.');
-      return;
-    }
-
     if (!scope) {
       showError('제품 분류를 선택해주세요.');
       return;
@@ -218,7 +201,6 @@ export default function UploadPage() {
       });
 
       if (scope) formData.append('scope', scope);
-      if (productCode) formData.append('product_code', productCode);
       if (version) formData.append('version', version);
 
       const data = await apiFetch<ParseResult>('/api/files/parse', {
@@ -357,7 +339,7 @@ export default function UploadPage() {
       const data = await apiPost<{ warning?: string; created?: number }>('/api/translations/bulk', {
         texts: selectedTextsArray,
         version: version || undefined,
-        product_code: productCode || undefined,
+
         scope: scope || undefined,
         priority: priority,
         languages: selectedLanguages,
@@ -373,11 +355,7 @@ export default function UploadPage() {
 
       showSuccess(`${data.created}개의 번역 항목이 추가되었습니다.`);
 
-      if (productCode) {
-        router.push(`/translations?product=${productCode}&refresh=${Date.now()}`);
-      } else {
-        router.push(`/translations?refresh=${Date.now()}`);
-      }
+      router.push('/translations?refresh=' + Date.now());
     } catch (error) {
       console.error('Error adding translations:', error);
       showError('번역 항목 추가 중 오류가 발생했습니다.');
@@ -470,14 +448,12 @@ export default function UploadPage() {
                     <h4 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h4>
                     <TranslationFormFields
                       priority={priority}
-                      productCode={productCode}
                       scope={scope}
                       selectedLanguages={selectedLanguages}
                       completionDate={completionDate}
                       selectedPlatforms={selectedPlatforms}
                       version={version}
                       onPriorityChange={setPriority}
-                      onProductCodeChange={setProductCode}
                       onScopeChange={setScope}
                       onLanguagesChange={setSelectedLanguages}
                       onCompletionDateChange={(date) => {
@@ -529,7 +505,7 @@ export default function UploadPage() {
                           }
                         }}
                         loading={isUploading}
-                        disabled={isUploading || !priority || !productCode || !scope || (selectedLanguages || []).length === 0}
+                        disabled={isUploading || !priority || !scope || (selectedLanguages || []).length === 0}
                       >
                         {isUploading ? '파싱 중...' : '텍스트 추출하기'}
                       </Button>
