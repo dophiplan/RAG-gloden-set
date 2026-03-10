@@ -15,6 +15,7 @@ import { apiGet, apiPatch } from '@/lib/api-utils';
 
 import { useTranslationFilters } from '../hooks/useTranslationFilters';
 import { useTranslationData } from '../hooks/useTranslationData';
+import { useTranslationStats } from '../hooks/useTranslationStats';
 import { useTranslationMutations } from '../hooks/useTranslationMutations';
 import { useDuplicateCheck } from '../hooks/useDuplicateCheck';
 import { useGlossaryModal } from '../hooks/useGlossaryModal';
@@ -46,7 +47,7 @@ function TranslationsProductContent() {
   }, [productCode, filters.setSelectedProduct]);
 
   // Data
-  const { translations, setTranslations, loading, stats, fetchTranslations, updateLocalTranslation } = useTranslationData({
+  const { translations, setTranslations, loading, fetchTranslations, updateLocalTranslation } = useTranslationData({
     statusFilter: filters.statusFilter,
     languageFilter: filters.languageFilter,
     searchTerm: filters.searchTerm,
@@ -59,6 +60,15 @@ function TranslationsProductContent() {
     createdAfter: filters.createdAfter,
     createdBefore: filters.createdBefore,
   });
+
+  // Stats (for tab counts)
+  const { stats, refreshStats } = useTranslationStats(productCode);
+
+  // Combined refresh function
+  const handleRefresh = useCallback(() => {
+    fetchTranslations();
+    refreshStats();
+  }, [fetchTranslations, refreshStats]);
 
   // Mutations
   const mutations = useTranslationMutations({
@@ -151,7 +161,7 @@ function TranslationsProductContent() {
       }
       
       showSuccess('번역이 생성되었습니다. AI 번역을 진행 중입니다...');
-      fetchTranslations();
+      handleRefresh();
       
       // Auto-translate
       if (languages && languages.length > 0) {
@@ -169,7 +179,7 @@ function TranslationsProductContent() {
             
             if (result) {
               showSuccess(`AI 번역 완료: ${result.translations?.length || 0}개 언어 (${result.provider})`);
-              setTimeout(() => fetchTranslations(), 500);
+              setTimeout(() => handleRefresh(), 500);
             }
           } catch (aiError) {
             console.error('[AutoTranslate] Error:', aiError);
@@ -264,8 +274,8 @@ function TranslationsProductContent() {
     try {
       await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
 
-      // Refresh translations table
-      fetchTranslations();
+      // Refresh translations table and stats
+      handleRefresh();
 
       // Refresh requests
       const result = await apiGet<{ data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] }>('/api/dashboard/requests');
@@ -411,7 +421,7 @@ function TranslationsProductContent() {
           onBulkDelete={mutations.handleBulkDelete}
           onBulkExport={handlers.handleBulkExport}
           onVersionHistoryClick={modals.openVersionHistoryPanel}
-          onRefresh={fetchTranslations}
+          onRefresh={handleRefresh}
         />
 
         {/* Modals */}
@@ -435,7 +445,7 @@ function TranslationsProductContent() {
             onClose={modals.closeDeploymentModal}
             translation={modals.selectedTranslations[0]}
             onUpdate={() => {
-              fetchTranslations();
+              handleRefresh();
               modals.clearSelection();
             }}
           />
@@ -474,7 +484,7 @@ function TranslationsProductContent() {
               languageCode={filters.selectedLanguageColumns?.[0] || 'ko'}
               onClose={modals.closeVersionHistoryPanel}
               onRevert={() => {
-                fetchTranslations();
+                handleRefresh();
                 modals.clearSelection();
               }}
             />
@@ -492,7 +502,7 @@ function TranslationsProductContent() {
                 curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
                 onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
                 onRevert={() => {
-                  fetchTranslations();
+                  handleRefresh();
                 }}
               />
             </div>

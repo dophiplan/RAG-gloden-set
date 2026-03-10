@@ -11,6 +11,7 @@ import { getAllDisplayableLanguages } from '@/lib/product-languages';
 
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
+import { useTranslationStats } from './hooks/useTranslationStats';
 import { useTranslationMutations } from './hooks/useTranslationMutations';
 import { useDuplicateCheck } from './hooks/useDuplicateCheck';
 import { useGlossaryModal } from './hooks/useGlossaryModal';
@@ -44,6 +45,15 @@ function TranslationsContent() {
     createdAfter: filters.createdAfter,
     createdBefore: filters.createdBefore,
   });
+
+  // Stats (for tab counts)
+  const { stats, refreshStats } = useTranslationStats(filters.selectedProduct);
+
+  // Combined refresh function
+  const handleRefresh = useCallback(() => {
+    fetchTranslations();
+    refreshStats();
+  }, [fetchTranslations, refreshStats]);
 
   // Mutations
   const mutations = useTranslationMutations({
@@ -206,7 +216,7 @@ function TranslationsContent() {
           onDelete={mutations.handleDelete}
           onAddToGlossary={glossary.handleOpenModal}
           onHistoryClick={handleHistoryClick}
-          onRefresh={fetchTranslations}
+          onRefresh={handleRefresh}
           onSelectionChange={modals.setSelectedIds}
           selectedIds={modals.selectedIds}
           loading={loading}
@@ -254,7 +264,7 @@ function TranslationsContent() {
             onClose={modals.closeDeploymentModal}
             translation={modals.selectedTranslations[0]}
             onUpdate={() => {
-              fetchTranslations();
+              handleRefresh();
               modals.clearSelection();
             }}
           />
@@ -278,7 +288,7 @@ function TranslationsContent() {
               languageCode={filters.selectedLanguageColumns?.[0] || 'ko'}
               onClose={modals.closeHistoryPanel}
               onRevert={() => {
-                fetchTranslations();
+                handleRefresh();
                 modals.clearSelection();
               }}
             />
@@ -296,7 +306,7 @@ function TranslationsContent() {
                 curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
                 onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
                 onRevert={() => {
-                  fetchTranslations();
+                  handleRefresh();
                 }}
               />
             </div>
@@ -308,7 +318,7 @@ function TranslationsContent() {
           selectedCount={(modals.selectedIds || []).length}
           selectedIds={modals.selectedIds}
           onClearSelection={modals.clearSelection}
-          onRefresh={fetchTranslations}
+          onRefresh={handleRefresh}
           onOpenEmailModal={handlers.handleOpenEmailModal}
           onOpenDeploymentModal={handlers.handleOpenDeploymentModal}
           onBulkDelete={mutations.handleBulkDelete}
