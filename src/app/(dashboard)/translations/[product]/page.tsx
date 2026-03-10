@@ -264,6 +264,9 @@ function TranslationsProductContent() {
     try {
       await apiPatch(`/api/translations/${id}/status`, { status: newStatus });
 
+      // Refresh translations table
+      fetchTranslations();
+
       // Refresh requests
       const result = await apiGet<{ data?: { requests?: DashboardRequest[] }; requests?: DashboardRequest[] }>('/api/dashboard/requests');
       const requestsData = result.data?.requests || result.requests || [];

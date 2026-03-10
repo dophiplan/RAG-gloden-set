@@ -113,15 +113,16 @@ export default memo(function TranslationTableV2({
   const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
 
   // Page 1: Basic Info columns (product removed)
+  // Narrow metadata columns, wider source text
   const infoPageWidths = {
     checkbox: 40,
-    priority: 60,
-    scope: 80,
-    platform: 90,
-    version: 70,
-    devCode: 100,
-    sourceText: 280,
-    status: 80,
+    priority: 50,   // 좁게
+    scope: 60,      // 좁게
+    platform: 70,   // 좁게
+    version: 55,    // 좁게
+    devCode: 80,    // 좁게
+    sourceText: 360, // 원문 넓게
+    status: 70,     // 좁게
     actions: 100,
   };
 
