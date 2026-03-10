@@ -113,31 +113,32 @@ export default memo(function TranslationTableV2({
   const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
 
   // Page 1: Basic Info columns (product removed)
+  // Narrow columns for metadata, wide for source text
   const infoPageWidths = {
     checkbox: 36,
-    priority: 60,
-    scope: 80,
-    platform: 90,
-    version: 70,
-    devCode: 100,
-    sourceText: 240,
-    status: 80,
+    priority: 50,
+    scope: 70,
+    platform: 80,
+    version: 60,
+    devCode: 90,
+    sourceText: 350,  // Wide for readability
+    status: 70,
     actions: 90,
   };
 
   // Page 2: Translations columns (source + selected languages)
-  // Use PERCENTAGE-based widths to ensure table always fills container
+  // Wider source text, narrower language columns
   const translationPageWidths = useMemo(() => {
     const widths: { [key: string]: number } = {};
     
     // Fixed columns as percentages
-    widths.checkbox = 5;   // 5%
-    widths.sourceText = 20; // 20%
+    widths.checkbox = 4;   // 4% - small
+    widths.sourceText = 32; // 32% - wide for readability
     widths.actions = 8;    // 8%
     
-    // Language columns: distribute remaining ~67% evenly
+    // Language columns: distribute remaining ~56% evenly
     const langCount = Math.max(displayLanguages.length, 1);
-    const remainingPercent = 67; // 100 - 5 - 20 - 8 = 67
+    const remainingPercent = 56; // 100 - 4 - 32 - 8 = 56
     const langPercent = Math.floor(remainingPercent / langCount);
     
     displayLanguages.forEach((lang) => {
