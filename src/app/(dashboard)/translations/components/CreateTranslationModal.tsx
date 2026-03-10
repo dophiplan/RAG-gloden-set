@@ -6,8 +6,8 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import FileUploader, { UploadedFile } from '@/components/FileUploader';
 import TranslationFormFields from '@/components/translations/TranslationFormFields';
-import { ProductCode, PriorityLevel, LanguageCode, ScopeType } from '@/types';
-import { getDefaultLanguagesForProduct } from '@/lib/product-languages';
+import { PriorityLevel, LanguageCode, ScopeType } from '@/types';
+
 import { apiPost } from '@/lib/api-utils';
 import { showError, showSuccess } from '@/lib/notifications';
 
@@ -16,12 +16,11 @@ type TabType = 'manual' | 'pdf';
 interface CreateTranslationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialProductCode?: ProductCode | null;
+
   onCreate: (
     sourceText: string,
     context: string,
     version: string,
-    productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
     languages: LanguageCode[],
@@ -31,7 +30,6 @@ interface CreateTranslationModalProps {
   onPDFUpload?: (
     files: UploadedFile[],
     version: string,
-    productCode: ProductCode | '',
     scope: ScopeType,
     priority: PriorityLevel,
     languages: LanguageCode[],
@@ -54,7 +52,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 export default function CreateTranslationModal({
   isOpen,
   onClose,
-  initialProductCode,
   onCreate,
   onPDFUpload,
 }: CreateTranslationModalProps) {
@@ -64,7 +61,6 @@ export default function CreateTranslationModal({
   const [newSourceText, setNewSourceText] = useState('');
   const [newContext, setNewContext] = useState('');
   const [newVersion, setNewVersion] = useState('');
-  const [newProductCode, setNewProductCode] = useState<ProductCode | ''>(initialProductCode || '');
   const [newScope, setNewScope] = useState<ScopeType>('');
   const [newPriority, setNewPriority] = useState<PriorityLevel>('medium');
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
@@ -79,7 +75,6 @@ export default function CreateTranslationModal({
   // PDF upload states
   const [pdfFiles, setPdfFiles] = useState<UploadedFile[]>([]);
   const [pdfVersion, setPdfVersion] = useState('');
-  const [pdfProductCode, setPdfProductCode] = useState<ProductCode | ''>(initialProductCode || '');
   const [pdfScope, setPdfScope] = useState<ScopeType>('');
   const [pdfPriority, setPdfPriority] = useState<PriorityLevel>('medium');
   const [pdfSelectedLanguages, setPdfSelectedLanguages] = useState<LanguageCode[]>(['en', 'ja']);
@@ -90,33 +85,7 @@ export default function CreateTranslationModal({
   const [pdfError, setPdfError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update product code when modal opens with new initial value
-  useEffect(() => {
-    if (isOpen && initialProductCode) {
-      setNewProductCode(initialProductCode);
-      setPdfProductCode(initialProductCode);
-    }
-  }, [isOpen, initialProductCode]);
 
-  // Update languages when product changes - for manual form
-  useEffect(() => {
-    if (newProductCode) {
-      const defaultLangs = getDefaultLanguagesForProduct(newProductCode);
-      setSelectedLanguages(defaultLangs);
-    } else {
-      setSelectedLanguages(['en', 'ja']);
-    }
-  }, [newProductCode]);
-
-  // Update languages when product changes - for PDF form
-  useEffect(() => {
-    if (pdfProductCode) {
-      const defaultLangs = getDefaultLanguagesForProduct(pdfProductCode);
-      setPdfSelectedLanguages(defaultLangs);
-    } else {
-      setPdfSelectedLanguages(['en', 'ja']);
-    }
-  }, [pdfProductCode]);
 
   // Auto-translate when source text or languages change (with debounce)
   useEffect(() => {
@@ -191,7 +160,7 @@ export default function CreateTranslationModal({
     setIsSubmitting(true);
     try {
       // Create translation first
-      const success = await onCreate(newSourceText, newContext, newVersion, newProductCode, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
+      const success = await onCreate(newSourceText, newContext, newVersion, newScope, newPriority, selectedLanguages, selectedPlatforms, newCompletionDate);
       
       if (success) {
         showSuccess('번역이 생성되었습니다.');
@@ -217,7 +186,7 @@ export default function CreateTranslationModal({
     setPdfError('');
     setUploading(true);
     try {
-      await onPDFUpload(pdfFiles, pdfVersion, pdfProductCode, pdfScope, pdfPriority, pdfSelectedLanguages, pdfSelectedPlatforms, pdfCompletionDate);
+      await onPDFUpload(pdfFiles, pdfVersion, pdfScope, pdfPriority, pdfSelectedLanguages, pdfSelectedPlatforms, pdfCompletionDate);
       resetPDFForm();
       onClose();
     } catch (error) {
@@ -233,7 +202,7 @@ export default function CreateTranslationModal({
     setNewSourceText('');
     setNewContext('');
     setNewVersion('');
-    setNewProductCode('');
+
     setNewScope('');
     setNewPriority('medium');
     setSelectedLanguages(['en', 'ja']);
@@ -246,7 +215,7 @@ export default function CreateTranslationModal({
   const resetPDFForm = () => {
     setPdfFiles([]);
     setPdfVersion('');
-    setPdfProductCode('');
+
     setPdfScope('');
     setPdfPriority('medium');
     setPdfSelectedLanguages(['en', 'ja']);
@@ -306,14 +275,12 @@ export default function CreateTranslationModal({
         <div className="space-y-4">
           <TranslationFormFields
             priority={newPriority}
-            productCode={newProductCode}
             scope={newScope}
             selectedLanguages={selectedLanguages}
             completionDate={newCompletionDate}
             selectedPlatforms={selectedPlatforms}
             version={newVersion}
             onPriorityChange={setNewPriority}
-            onProductCodeChange={setNewProductCode}
             onScopeChange={setNewScope}
             onLanguagesChange={setSelectedLanguages}
             onCompletionDateChange={setNewCompletionDate}
@@ -390,14 +357,12 @@ export default function CreateTranslationModal({
         <div className="space-y-4">
           <TranslationFormFields
             priority={pdfPriority}
-            productCode={pdfProductCode}
             scope={pdfScope}
             selectedLanguages={pdfSelectedLanguages}
             completionDate={pdfCompletionDate}
             selectedPlatforms={pdfSelectedPlatforms}
             version={pdfVersion}
             onPriorityChange={setPdfPriority}
-            onProductCodeChange={setPdfProductCode}
             onScopeChange={setPdfScope}
             onLanguagesChange={setPdfSelectedLanguages}
             onCompletionDateChange={setPdfCompletionDate}
