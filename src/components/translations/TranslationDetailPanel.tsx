@@ -1,121 +1,67 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { apiPatch, apiGet } from '@/lib/api-utils';
+import { useState, useCallback } from 'react';
+import { apiPatch } from '@/lib/api-utils';
 import { useAutoSave } from '@/app/(dashboard)/translations/hooks/useAutoSave';
 import { usePlatformDeployStatus } from '@/app/(dashboard)/translations/hooks/usePlatformDeployStatus';
 import { usePlatforms } from '@/hooks/useReferenceData';
-import { LanguageCode } from '@/types';
+import { Translation, TranslationResult, LanguageCode } from '@/types';
 
-interface TranslationDetail {
-  id: string;
-  source_text: string;
-  context: string | null;
-  status: string;
-  translation_results: Array<{
-    language_code: LanguageCode;
-    translated_text: string;
-    source_type?: string;
-  }>;
+interface TranslationWithResults extends Translation {
+  translation_results: TranslationResult[];
 }
 
 interface TranslationDetailPanelProps {
-  translationId: string;
+  translation: TranslationWithResults;
   displayLanguages: LanguageCode[];
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<TranslationDetail>) => void;
+  onUpdate: (id: string, updates: Partial<TranslationWithResults>) => void;
 }
 
 export function TranslationDetailPanel({
-  translationId,
+  translation,
   displayLanguages,
   onClose,
   onUpdate,
 }: TranslationDetailPanelProps) {
-  const [translation, setTranslation] = useState<TranslationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [localTranslation, setLocalTranslation] = useState<TranslationWithResults>(translation);
   const { platforms: allPlatforms } = usePlatforms();
-  const { status: deployStatus, updatePlatformStatus, refresh: refreshDeployStatus } = usePlatformDeployStatus(translationId);
-
-  // Fetch translation detail
-  useEffect(() => {
-    const fetchDetail = async () => {
-      setLoading(true);
-      try {
-        const data = await apiGet<{ translation: TranslationDetail }>(`/api/translations/${translationId}`);
-        setTranslation(data.translation);
-      } catch (error) {
-        console.error('Error fetching translation detail:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDetail();
-  }, [translationId]);
+  const { status: deployStatus, updatePlatformStatus } = usePlatformDeployStatus(translation.id);
 
   // Auto-save for context
   const { triggerSave: saveContext, saveStatus: contextSaveStatus } = useAutoSave({
     onSave: async (context: string) => {
-      await apiPatch(`/api/translations/${translationId}`, { context });
-      onUpdate(translationId, { context });
+      await apiPatch(`/api/translations/${translation.id}`, { context });
+      onUpdate(translation.id, { context });
     },
     debounceMs: 500,
   });
 
   // Auto-save for translation
   const handleTranslationUpdate = useCallback(async (languageCode: LanguageCode, text: string) => {
-    await apiPatch(`/api/translations/${translationId}/results`, {
+    await apiPatch(`/api/translations/${translation.id}/results`, {
       language_code: languageCode,
       translated_text: text,
     });
     
     // Update local state
-    setTranslation((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        translation_results: prev.translation_results.map((r) =>
-          r.language_code === languageCode ? { ...r, translated_text: text } : r
-        ),
-      };
-    });
-    
-    onUpdate(translationId, {
-      translation_results: translation?.translation_results.map((r) =>
-        r.language_code === languageCode ? { ...r, translated_text: text } : r
-      ) || [],
-    });
-  }, [translationId, onUpdate, translation?.translation_results]);
+    const newResults = localTranslation.translation_results.map((r) =>
+      r.language_code === languageCode ? { ...r, translated_text: text } : r
+    );
+    setLocalTranslation({ ...localTranslation, translation_results: newResults });
+    onUpdate(translation.id, { translation_results: newResults });
+  }, [translation.id, localTranslation, onUpdate]);
 
   // Handle platform toggle
   const handlePlatformToggle = useCallback(async (platformCode: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
     try {
       await updatePlatformStatus(platformCode, newStatus);
-      // Refresh parent
-      onUpdate(translationId, {});
+      onUpdate(translation.id, {});
     } catch (error) {
       console.error('Error updating platform status:', error);
     }
-  }, [updatePlatformStatus, onUpdate, translationId]);
-
-  if (loading || !translation) {
-    return (
-      <div className="fixed inset-y-0 right-0 w-96 bg-white border-l shadow-xl z-50 flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-semibold text-gray-900">번역 상세</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        </div>
-      </div>
-    );
-  }
+  }, [updatePlatformStatus, onUpdate, translation.id]);
 
   const platformMap = new Map(allPlatforms.map(p => [p.code, p.name]));
   const progress = deployStatus?.progress || 0;
@@ -144,7 +90,7 @@ export function TranslationDetailPanel({
             원문
           </label>
           <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded border">
-            {translation.source_text}
+            {localTranslation.source_text}
           </div>
         </div>
 
@@ -154,10 +100,10 @@ export function TranslationDetailPanel({
             설명
           </label>
           <textarea
-            value={translation.context || ''}
+            value={localTranslation.context || ''}
             onChange={(e) => {
               const newContext = e.target.value;
-              setTranslation({ ...translation, context: newContext });
+              setLocalTranslation({ ...localTranslation, context: newContext });
               saveContext(newContext);
             }}
             className="w-full text-sm text-gray-700 bg-white p-3 rounded border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
@@ -167,7 +113,7 @@ export function TranslationDetailPanel({
         </div>
 
         {/* Platform Deploy Checklist (Only for re_request status) */}
-        {translation.status === 're_request' && deployStatus && (
+        {localTranslation.status === 're_request' && deployStatus && (
           <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -228,7 +174,7 @@ export function TranslationDetailPanel({
           </h4>
           <div className="space-y-3">
             {displayLanguages.map((lang) => {
-              const result = translation.translation_results.find(r => r.language_code === lang);
+              const result = localTranslation.translation_results.find(r => r.language_code === lang);
               const labels: Record<string, string> = { en: '영어', ja: '일본어', zh: '중국어' };
               
               return (
@@ -256,7 +202,9 @@ export function TranslationDetailPanel({
 
         {/* Meta */}
         <div className="pt-4 border-t text-xs text-gray-500 space-y-1">
-          <div>상태: {translation.status}</div>
+          <div>상태: {localTranslation.status}</div>
+          <div>요청일: {new Date(localTranslation.created_at).toLocaleDateString('ko-KR')}</div>
+          <div>수정일: {new Date(localTranslation.updated_at).toLocaleDateString('ko-KR')}</div>
         </div>
       </div>
     </div>

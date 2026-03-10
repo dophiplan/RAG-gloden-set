@@ -435,14 +435,18 @@ function TranslationsProductContent() {
         />
 
         {/* Detail Panel */}
-        {selectedTranslationId && (
-          <TranslationDetailPanel
-            translationId={selectedTranslationId}
-            displayLanguages={getAllDisplayableLanguages()}
-            onClose={handlePanelClose}
-            onUpdate={handlePanelUpdate}
-          />
-        )}
+        {selectedTranslationId && (() => {
+          const selectedTranslation = translations.find(t => t.id === selectedTranslationId);
+          if (!selectedTranslation) return null;
+          return (
+            <TranslationDetailPanel
+              translation={selectedTranslation}
+              displayLanguages={getAllDisplayableLanguages()}
+              onClose={handlePanelClose}
+              onUpdate={handlePanelUpdate}
+            />
+          );
+        })()}
 
         {/* Bulk Action Bar */}
         <TranslationBulkActionBar
