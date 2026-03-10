@@ -289,23 +289,37 @@ function TranslationsProductContent() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {[
-              { key: 'pending', label: '요청', count: stats.pending },
-              { key: 'in_progress', label: '진행중', count: translations.filter(t => t.status === 'in_progress').length },
-              { key: 'reviewed', label: '검수중', count: stats.reviewed },
-              { key: 'deployed', label: '반영완료', count: stats.deployed },
+              { key: 'pending', label: '요청', count: stats.pending, color: 'yellow' },
+              { key: 'in_progress', label: '진행중', count: translations.filter(t => t.status === 'in_progress').length, color: 'blue' },
+              { key: 'reviewed', label: '검수중', count: stats.reviewed, color: 'indigo' },
+              { key: 'deployed', label: '반영완료', count: stats.deployed, color: 'green' },
+              { key: 're_request', label: '재요청', count: translations.filter(t => t.status === 're_request').length, color: 'orange' },
+              { key: 'not_used', label: '미사용', count: translations.filter(t => t.status === 'not_used').length, color: 'gray' },
             ].map((tab) => {
               const isActive = filters.statusFilter === tab.key;
               const hasItems = tab.count > 0;
+              
+              const colorClasses: Record<string, { active: string; inactive: string }> = {
+                yellow: { active: 'bg-yellow-500 text-white', inactive: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
+                blue: { active: 'bg-blue-600 text-white', inactive: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+                indigo: { active: 'bg-indigo-600 text-white', inactive: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
+                green: { active: 'bg-green-600 text-white', inactive: 'bg-green-50 text-green-700 hover:bg-green-100' },
+                orange: { active: 'bg-orange-500 text-white', inactive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
+                gray: { active: 'bg-gray-600 text-white', inactive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
+              };
+              
+              const colors = colorClasses[tab.color];
+              
               return (
                 <button
                   key={tab.key}
                   onClick={() => filters.setStatusFilter(isActive ? '' : tab.key as any)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white shadow-md'
+                      ? colors.active + ' shadow-md'
                       : hasItems
-                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                        : 'bg-gray-100 text-gray-500'
+                        ? colors.inactive
+                        : 'bg-gray-100 text-gray-400'
                   }`}
                 >
                   {tab.label} ({tab.count})
