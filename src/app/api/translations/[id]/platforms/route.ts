@@ -50,6 +50,14 @@ export async function PATCH(
     const completedPlatforms = platforms?.filter(p => p.deploy_status === 'completed').length ?? 0;
     const progress = totalPlatforms > 0 ? Math.round((completedPlatforms / totalPlatforms) * 100) : 0;
 
+    // Auto-update translation status to 'deployed' if all platforms completed
+    if (allCompleted && totalPlatforms > 0) {
+      await supabase
+        .from('translations')
+        .update({ status: 'deployed' })
+        .eq('id', id);
+    }
+
     return apiSuccess({
       message: 'Platform status updated',
       all_completed: allCompleted,
