@@ -6,6 +6,96 @@
 
 ## 완료된 작업
 
+### Phase 3: API 통합 (Unified API) ✅
+
+**목표**: 81개 API를 2개 Unified API로 통합
+
+**결과**:
+- `/api/bulk` - 일괄 작업 통합 API (11개 → 1개)
+- `/api/rollback` - 롤백 작업 통합 API (7개 → 1개)
+- Legacy API 14개 deprecated (2026-06-11 제거 예정)
+
+**마이그레이션 가이드**: [DEPRECATED_MIGRATION.md](./DEPRECATED_MIGRATION.md)
+
+---
+
+### Phase 4: Handler 분리 ✅
+
+**목표**: API Route 파일 크기 감소 및 유지보수성 향상
+
+**결과**:
+- `/api/bulk/route.ts`: 763줄 → 89줄 (**88% 감소**)
+- `/api/rollback/route.ts`: 399줄 → 108줄 (**73% 감소**)
+- 15개 Handler로 비즈니스 로직 분리
+- Handler Registry 패턴 적용
+
+**구조**:
+```
+/api/bulk/
+  ├── handlers/
+  │   ├── translations/     # 7개 handler
+  │   ├── glossary/         # 4개 handler
+  │   ├── users/            # 1개 handler
+  │   └── admin-users/      # 2개 handler
+  ├── lib/                  # 공유 유틸리티
+  └── route.ts             # 89줄 (라우팅만)
+```
+
+---
+
+### Phase 5: 모니터링 및 안정화 ✅
+
+**목표**: Deprecated API 모니터링 및 코드 안정성 확보
+
+**결과**:
+- Deprecated API 모니터링 시스템 구축
+  - `src/lib/monitoring/deprecated-api-monitor.ts`
+  - Console warning 출력
+  - `/api/monitoring/deprecated-usage` 엔드포인트
+- Handler 단위 테스트 37개 추가
+  - `tests/api/bulk/handlers/` (7개 테스트)
+  - `tests/api/rollback/handlers/` (6개 테스트)
+
+---
+
+### Phase 6: Service Layer 완성 ✅
+
+**목표**: 비즈니스 로직 중앙화 및 재사용성 향상
+
+**결과**:
+- **GlossaryService** (`src/services/glossary_service.ts`)
+  - `createBulk()`, `updateBulk()`, `deleteBulk()`, `revertBulk()`
+  - `search()` - 검색 및 필터링
+- **UsersService** (`src/services/users_service.ts`)
+  - `uploadUsers()`, `updateUsers()`, `deleteUsers()`
+  - Self-delete/role-change 검증
+
+**아키텍처**:
+```
+Handler → Service → Repository → DB
+   ↓          ↓           ↓
+Response   Business    Data
+           Logic       Access
+```
+
+---
+
+### Phase 7: 문서 업데이트 ✅
+
+**목표**: 개발자 경험 향상 및 마이그레이션 지원
+
+**결과**:
+- **DEPRECATED_MIGRATION.md** 생성
+  - 14개 Deprecated API → Unified API 마이그레이션 가이드
+  - Before/After 예시 코드
+  - FAQ 및 트러블슈팅
+- **README.md** API 섹션 업데이트
+  - Unified API 우선 표시
+  - 마이그레이션 가이드 링크 추가
+- **REFACTORING_GUIDE.md** 업데이트 (현재 문서)
+
+---
+
 ### Phase 1: 긴급 보안 수정 ✅
 
 1. **인증 미들웨어 재활성화**
