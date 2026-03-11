@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/api-auth';
+import { TranslationCrudService } from '@/services';
 
 interface BulkRevertRequest {
   revertItems: {
@@ -8,11 +10,11 @@ interface BulkRevertRequest {
   }[];
 }
 
-// POST - 여러 번역을 한꺼번에 복구
+// POST - Bulk revert translations
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
@@ -28,58 +30,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const results = [];
-    const errors = [];
+    // Use Service for bulk revert
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
 
-    for (const item of revertItems) {
-      try {
-        // 현재 값 조회
-        const { data: currentResult } = await supabase
-          .from('translation_results')
-          .select('translated_text')
-          .eq('id', item.translationResultId)
-          .single();
-
-        const curre[기밀마스킹]ext = currentResult?.translated_text || '';
-
-        // 같은 값이면 스킵
-        if (curre[기밀마스킹]ext === item.revertText) {
-          continue;
-        }
-
-        // 복구 로그 생성
-        await supabase.from('translation_logs').insert({
-          translation_result_id: item.translationResultId,
-          previous_text: curre[기밀마스킹]ext,
-          new_text: item.revertText,
-          changed_by: user.id,
-        });
-
-        // 번역 결과 업데이트
-        const { data: updated, error: updateError } = await supabase
-          .from('translation_results')
-          .update({
-            translated_text: item.revertText,
-            reviewer_id: user.id,
-            reviewed_at: new Date().toISOString(),
-            source_type: 'manual',
-          })
-          .eq('id', item.translationResultId)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-        results.push(updated);
-      } catch (err) {
-        errors.push({ translationResultId: item.translationResultId, error: err });
-      }
-    }
+    const result = await service.bulkRevertTranslationResults(revertItems, user.id);
 
     return NextResponse.json({
       success: true,
-      message: `${results.length}개 항목이 복구되었습니다.`,
-      revertedCount: results.length,
-      errorCount: errors.length,
+      message: `${result.successCount}개 항목이 복구되었습니다.`,
+      revertedCount: result.successCount,
+      errorCount: result.errorCount,
     });
   } catch (error) {
     console.error('Error bulk reverting translations:', error);

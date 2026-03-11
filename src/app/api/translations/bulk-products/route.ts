@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/api-auth';
+import { TranslationCrudService } from '@/services';
 import { ProductCode } from '@/types';
 
 interface BulkProductUpdateInput {
@@ -11,7 +13,7 @@ interface BulkProductUpdateInput {
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
@@ -33,33 +35,22 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Delete existing product associations for all translations
-    await supabase
-      .from('translation_products')
-      .delete()
-      .in('translation_id', body.ids);
+    // Use Service for bulk product update
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
 
-    // Insert new product associations
-    if (body.product_codes.length > 0) {
-      const productLinks = body.ids.flatMap((translationId) =>
-        body.product_codes.map((item) => ({
-          translation_id: translationId,
-          product_code: item.code,
-          version: item.version || null,
-          version_updated_at: item.version ? new Date().toISOString() : null,
-        }))
-      );
-
-      const { error } = await supabase
-        .from('translation_products')
-        .insert(productLinks);
-
-      if (error) throw error;
-    }
+    const updatedCount = await service.bulkUpdateProductCodesWithVersions(
+      body.ids,
+      body.product_codes,
+      {
+        userId: user.id,
+        userEmail: user.email || '',
+      }
+    );
 
     return NextResponse.json({
       success: true,
-      updated: body.ids.length,
+      updated: updatedCount,
     });
   } catch (error) {
     console.error('Error bulk updating products:', error);
