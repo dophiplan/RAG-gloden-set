@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createGlossaryRollbackService } from '@/services/glossary_rollback_service';
+import { logDeprecatedAPICall } from '@/lib/monitoring/deprecated-api-monitor';
 
 interface RevertRequest {
   glossaryId: string;
@@ -10,6 +11,10 @@ interface RevertRequest {
 }
 
 /**
+ * @deprecated 이 엔드포인트는 /api/rollback으로 통합되었습니다.
+ * 마이그레이션: POST /api/rollback
+ * Body: { operation: 'single', entityType: 'glossary', entityId: '...' }
+ * 
  * POST - Revert a glossary term to a previous version
  * 
  * Request body:
@@ -21,6 +26,9 @@ interface RevertRequest {
  * }
  */
 export async function POST(request: NextRequest) {
+  // Log deprecated API usage
+  logDeprecatedAPICall(request, '/api/glossary/revert');
+  
   try {
     const supabase = await createClient();
     
