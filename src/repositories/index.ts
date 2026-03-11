@@ -5,3 +5,4 @@ export * from './translation_audit_repository';
 export * from './audit_log_repository';
 export * from './translation_product_repository';
 export * from './glossary_repository';
+export * from './users_repository';

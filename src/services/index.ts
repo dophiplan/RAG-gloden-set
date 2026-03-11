@@ -5,3 +5,5 @@ export * from './translation_audit_logger';
 export * from './duplicate_detector';
 export * from './file_upload_service';
 export * from './optimistic_lock_service';
+export * from './glossary_service';
+export * from './users_service';
