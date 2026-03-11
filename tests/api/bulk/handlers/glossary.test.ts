@@ -1,0 +1,109 @@
+import { describe, it, expect, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+import { glossaryCreate } from '@/app/api/bulk/handlers/glossary/create';
+import { glossaryUpdate } from '@/app/api/bulk/handlers/glossary/update';
+import { glossaryDelete } from '@/app/api/bulk/handlers/glossary/delete';
+
+// Helper to create a proper mock chain
+const createMockChain = (overrides: Record<string, any> = {}) => {
+  const chain = {
+    insert: vi.fn(() => chain),
+    update: vi.fn(() => chain),
+    delete: vi.fn(() => chain),
+    select: vi.fn(() => chain),
+    in: vi.fn(() => chain),
+    eq: vi.fn(() => chain),
+    single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    ...overrides,
+  };
+  return chain;
+};
+
+describe('Glossary Bulk Handlers', () => {
+  const mockUser = { id: 'user-123', email: 'test@example.com' };
+
+  describe('glossaryCreate', () => {
+    it('should return 201 on success', async () => {
+      const mockChain = createMockChain({
+        select: vi.fn(() => Promise.resolve({
+          data: [{ id: 'g-1', term: 'API' }, { id: 'g-2', term: 'HTTP' }],
+          error: null,
+        })),
+      });
+      const mockAdminClient = {
+        from: vi.fn(() => mockChain),
+      };
+
+      const request = new NextRequest('http://localhost/api/bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: [
+            { term: 'API', translation: 'API', domain: 'tech' },
+            { term: 'HTTP', translation: 'HTTP', domain: 'tech' },
+          ],
+        }),
+      });
+
+      const response = await glossaryCreate(request, mockUser, mockAdminClient as any);
+      const body = await response.json();
+
+      expect(response.status).toBe(201);
+      expect(body.success).toBe(true);
+    });
+  });
+
+  describe('glossaryUpdate', () => {
+    it('should update items individually', async () => {
+      const mockAdminClient = {
+        from: vi.fn(() => ({
+          update: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              select: vi.fn().mockResolvedValue({ data: [{ id: 'g-1' }], error: null }),
+            })),
+          })),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        })),
+      };
+
+      const request = new NextRequest('http://localhost/api/bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: [
+            { id: 'g-1', translation: '새 번역1' },
+            { id: 'g-2', translation: '새 번역2' },
+          ],
+        }),
+      });
+
+      const response = await glossaryUpdate(request, mockUser, mockAdminClient as any);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.results).toHaveLength(2);
+    });
+  });
+
+  describe('glossaryDelete', () => {
+    it('should delete multiple glossary items', async () => {
+      const mockChain = createMockChain({
+        in: vi.fn(() => Promise.resolve({ error: null })),
+      });
+      const mockAdminClient = {
+        from: vi.fn(() => mockChain),
+      };
+
+      const request = new NextRequest('http://localhost/api/bulk', {
+        method: 'POST',
+        body: JSON.stringify({
+          ids: ['g-1', 'g-2', 'g-3'],
+        }),
+      });
+
+      const response = await glossaryDelete(request, mockUser, mockAdminClient as any);
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body.deletedCount).toBe(3);
+    });
+  });
+});
