@@ -150,29 +150,50 @@ translation-manager/
 
 ## API 엔드포인트
 
-### 번역 관리
+### Unified API (권장)
+
+**일괄 작업 API** (`/api/bulk`)
+- `POST /api/bulk?type=translations&action=create` - 번역 일괄 생성
+- `POST /api/bulk?type=translations&action=update` - 번역 일괄 수정
+- `POST /api/bulk?type=translations&action=delete` - 번역 일괄 삭제
+- `POST /api/bulk?type=glossary&action=create` - 용어 일괄 생성
+- `POST /api/bulk?type=glossary&action=update` - 용어 일괄 수정
+- `POST /api/bulk?type=glossary&action=delete` - 용어 일괄 삭제
+- `POST /api/bulk?type=admin-users&action=update` - 사용자 일괄 수정
+- `POST /api/bulk?type=admin-users&action=delete` - 사용자 일괄 삭제
+
+**롤백 API** (`/api/rollback`)
+- `POST /api/rollback` - 롤백 실행 (single/batch/date-based)
+- `GET /api/rollback` - 롤백 작업 목록 조회
+
+### 기본 CRUD API
+
+**번역 관리**
 - `GET /api/translations` - 번역 목록 조회
 - `POST /api/translations` - 번역 생성
 - `GET /api/translations/[id]` - 번역 상세 조회
 - `PATCH /api/translations/[id]` - 번역 수정
 - `DELETE /api/translations/[id]` - 번역 삭제
-- `POST /api/translations/bulk` - 번역 일괄 생성
-- `PATCH /api/translations/bulk` - 번역 상태 일괄 수정
 - `POST /api/translations/check-duplicates` - 중복 검사
 
-### 용어집
+**용어집**
 - `GET /api/glossary` - 용어집 조회
 - `POST /api/glossary` - 용어 추가
 - `PATCH /api/glossary/[id]` - 용어 수정
 - `DELETE /api/glossary/[id]` - 용어 삭제
 
-### AI
+**AI**
 - `POST /api/ai/context-check` - AI 문맥 검토
 
-### 기타
+**기타**
 - `POST /api/pdf/parse` - PDF 텍스트 추출
 - `POST /api/import` - CSV 가져오기
 - `GET /api/dashboard/stats` - 대시보드 통계
+
+### 마이그레이션 가이드
+
+⚠️ **14개 Legacy API가 2026-06-11에 제거됩니다.**  
+마이그레이션 방법은 [DEPRECATED_MIGRATION.md](./DEPRECATED_MIGRATION.md)를 참고하세요.
 
 ## CSV Import 형식
 
@@ -246,13 +267,19 @@ source_text,context,status,ko,en
 
 ```
 tests/
-  └── characterization/units/
-      ├── validation_schemas.test.ts    # 37 tests
-      ├── format_functions.test.ts      # 10 tests
-      └── similarity_functions.test.ts  # 26 tests
+  ├── characterization/units/           # 75개 테스트
+  │   ├── validation_schemas.test.ts    # 37 tests
+  │   ├── format_functions.test.ts      # 10 tests
+  │   └── similarity_functions.test.ts  # 26 tests
+  ├── services/                         # Service Layer 테스트
+  │   ├── glossary_service.test.ts      # 6 tests
+  │   └── users_service.test.ts         # 13 tests
+  └── api/                              # API 테스트
+      └── bulk/
+          └── handlers/                 # Handler 테스트
 ```
 
-**75개 테스트**로 리팩토링 중 안전성 보장
+**372+개 테스트**로 리팩토링 중 안전성 보장
 
 자세한 내용은 [REFACTORING_REPORT.md](./REFACTORING_REPORT.md)를 참고하세요.
 
