@@ -3,7 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { apiSuccess, apiBadRequest, apiInternalError } from '@/lib/api/response';
 
 /**
- * POST /api/rollback/batch-by-date
+ * @deprecated 이 엔드포인트는 /api/rollback으로 통합되었습니다.
+ * 마이그레이션: POST /api/rollback
+ * Body: { operation: 'date-based', entityType: 'translation|glossary', date: 'YYYY-MM-DD' }
+ * 
  * 날짜별로 모든 작업을 롤백합니다.
  */
 export async function POST(request: NextRequest) {

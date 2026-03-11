@@ -2,6 +2,11 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest } from '@/lib/api/response';
 
+/**
+ * @deprecated 이 엔드포인트는 /api/rollback으로 통합되었습니다.
+ * 마이그레이션: POST /api/rollback
+ * Body: { operation: 'single', entityType: 'translation|glossary', entityId: '...', logId: '...' }
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
