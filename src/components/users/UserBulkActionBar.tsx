@@ -6,7 +6,7 @@ import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
 import { UserRole, ProductCode, USER_WORK_SCOPE_OPTIONS, WORK_LANGUAGE_OPTIONS } from '@/types';
 import { createClient } from '@/lib/supabase/client';
-import { apiPatch } from '@/lib/api-utils';
+import { apiPost } from '@/lib/api-utils';
 
 interface UserBulkActionBarProps {
   selectedCount: number;
@@ -120,9 +120,11 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/admin/users/bulk-update', {
-        user_ids: selectedIds,
-        account_level: selectedAccountLevel,
+      // @deprecated /api/admin/users/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=admin-users&action=update
+      await apiPost('/api/bulk?type=admin-users&action=update', {
+        ids: selectedIds,
+        data: { account_level: selectedAccountLevel },
       });
 
       showSuccess(`${selectedCount}명의 계정 권한이 변경되었습니다.`);
@@ -153,9 +155,11 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/admin/users/bulk-update', {
-        user_ids: selectedIds,
-        work_products: selectedProducts,
+      // @deprecated /api/admin/users/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=admin-users&action=update
+      await apiPost('/api/bulk?type=admin-users&action=update', {
+        ids: selectedIds,
+        data: { work_products: selectedProducts },
       });
 
       showSuccess(`${selectedCount}명의 제품이 변경되었습니다.`);
@@ -184,9 +188,11 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/admin/users/bulk-update', {
-        user_ids: selectedIds,
-        work_scope: selectedWorkScope,
+      // @deprecated /api/admin/users/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=admin-users&action=update
+      await apiPost('/api/bulk?type=admin-users&action=update', {
+        ids: selectedIds,
+        data: { work_scope: selectedWorkScope },
       });
 
       showSuccess(`${selectedCount}명의 작업 범위가 변경되었습니다.`);
@@ -215,9 +221,11 @@ export default function UserBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/admin/users/bulk-update', {
-        user_ids: selectedIds,
-        work_languages: selectedLanguages,
+      // @deprecated /api/admin/users/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=admin-users&action=update
+      await apiPost('/api/bulk?type=admin-users&action=update', {
+        ids: selectedIds,
+        data: { work_languages: selectedLanguages },
       });
 
       showSuccess(`${selectedCount}명의 번역 언어가 변경되었습니다.`);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { apiPost } from '@/lib/api-utils';
+import { apiGet, apiPost } from '@/lib/api-utils';
 import { showSuccess, showError, showConfirm } from '@/lib/notifications';
 
 export type TargetType = 'translation' | 'glossary';
@@ -86,18 +86,18 @@ export function useRollback(
   const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
 
-  // 충돌 검사
+  // 충돌 검사 (통합 API: GET /api/rollback?entity_type=...)
   const checkConflict = useCallback(async (
     auditLogId: string,
     targetId: string
   ): Promise<CheckConflictResult | null> => {
     setIsChecking(true);
     try {
-      const result = await apiPost<CheckConflictResult>('/api/rollback/check', {
-        targetType,
-        auditLogId,
-        targetId,
-      });
+      // @deprecated /api/rollback/check 대신 통합 API 사용
+      // GET /api/rollback?entity_type={targetType}&audit_log_id={auditLogId}
+      const result = await apiGet<CheckConflictResult>(
+        `/api/rollback?entity_type=${targetType}&audit_log_id=${auditLogId}&target_id=${targetId}`
+      );
       return result;
     } catch (error) {
       console.error('[useRollback] Conflict check failed:', error);
@@ -108,7 +108,7 @@ export function useRollback(
     }
   }, [targetType]);
 
-  // 롤백 실행
+  // 롤백 실행 (통합 API: POST /api/rollback)
   const executeRollback = useCallback(async (
     auditLogId: string,
     targetId: string,
@@ -120,10 +120,13 @@ export function useRollback(
 
     setIsLoading(true);
     try {
-      const result = await apiPost<RollbackResult>('/api/rollback/execute', {
-        targetType,
-        auditLogId,
-        targetId,
+      // @deprecated /api/rollback/execute 대신 통합 API 사용
+      // POST /api/rollback (operation: 'single')
+      const result = await apiPost<RollbackResult>('/api/rollback', {
+        operation: 'single',
+        entityType: targetType,
+        entityId: targetId,
+        logId: auditLogId,
         conflictResolution: resolution,
       });
 

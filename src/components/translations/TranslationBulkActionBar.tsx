@@ -4,7 +4,7 @@ import Select from '@/components/ui/Select';
 import { ProductCode, TranslationStatus } from '@/types';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
-import { apiPatch, apiDelete, apiFetch } from '@/lib/api-utils';
+import { apiPost, apiPatch } from '@/lib/api-utils';
 
 interface TranslationBulkActionBarProps {
   selectedCount: number;
@@ -84,9 +84,12 @@ export default function TranslationBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/translations/bulk-update', {
-        translation_ids: selectedIds,
+      // @deprecated /api/translations/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=translations&action=products
+      await apiPost('/api/bulk?type=translations&action=products', {
+        ids: selectedIds,
         product_code: selectedProduct,
+        operation: 'add',
       });
 
       showSuccess(`${selectedCount}개 항목의 제품이 변경되었습니다.`);
@@ -133,8 +136,10 @@ export default function TranslationBulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/translations/bulk-update', {
-        translation_ids: selectedIds,
+      // @deprecated /api/translations/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=translations&action=status
+      await apiPost('/api/bulk?type=translations&action=status', {
+        ids: selectedIds,
         status: targetStatus,
       });
 
@@ -172,11 +177,13 @@ export default function TranslationBulkActionBar({
 
       setIsProcessing(true);
       try {
-        const result = await apiFetch<{ deleted: number }>('/api/translations/bulk', { 
-          method: 'DELETE',
-          body: JSON.stringify({ ids: selectedIds })
+        // @deprecated DELETE /api/translations/bulk 대신 통합 API 사용
+        // POST /api/bulk?type=translations&action=delete
+        const result = await apiPost<{ deletedCount: number }>('/api/bulk?type=translations&action=delete', {
+          ids: selectedIds,
+          permanent: false,
         });
-        showSuccess(`${result.deleted}개 항목이 삭제되었습니다.`);
+        showSuccess(`${result.deletedCount}개 항목이 삭제되었습니다.`);
         onClearSelection();
         onRefresh?.();
       } catch (error) {
