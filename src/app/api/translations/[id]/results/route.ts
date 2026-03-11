@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/api-auth';
+import { TranslationCrudService } from '@/services';
 import { LanguageCode } from '@/types';
 
 interface TranslationResultInput {
@@ -14,7 +16,7 @@ export async function POST(
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
@@ -30,72 +32,36 @@ export async function POST(
       );
     }
 
-    // Check if result already exists for this language
-    const { data: existing } = await supabase
+    // Use Service to update translation result
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
+    
+    const result = await service.updateTranslationResult(
+      translationId,
+      body.language_code,
+      body.translated_text,
+      user.id
+    );
+
+    // Fetch the updated/created result
+    const { data: resultData } = await dbClient
       .from('translation_results')
-      .select('id')
-      .eq('translation_id', translationId)
-      .eq('language_code', body.language_code)
+      .select('*')
+      .eq('id', result.id)
       .single();
 
-    if (existing) {
-      // 기존 값 가져오기
-      const { data: existingResult } = await supabase
-        .from('translation_results')
-        .select('translated_text')
-        .eq('id', existing.id)
-        .single();
-
-      const previousText = existingResult?.translated_text || '';
-      const newText = body.translated_text.trim();
-
-      // 값이 변경된 경우에만 로그 생성
-      if (previousText !== newText) {
-        // 로그 저장
-        await supabase.from('translation_logs').insert({
-          translation_result_id: existing.id,
-          previous_text: previousText,
-          new_text: newText,
-          changed_by: user.id,
-        });
-      }
-
-      // Update existing - mark as manually edited
-      const { data, error } = await supabase
-        .from('translation_results')
-        .update({
-          translated_text: newText,
-          reviewer_id: user.id,
-          reviewed_at: new Date().toISOString(),
-          source_type: 'manual',
-          // glossary_term_id is preserved for reference
-        })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return NextResponse.json(data);
-    } else {
-      // Create new - mark as manually created
-      const { data, error } = await supabase
-        .from('translation_results')
-        .insert({
-          translation_id: translationId,
-          language_code: body.language_code,
-          translated_text: body.translated_text.trim(),
-          source_type: 'manual',
-          reviewer_id: user.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return NextResponse.json(data, { status: 201 });
-    }
+    return NextResponse.json(resultData, { status: result.isNew ? 201 : 200 });
   } catch (error) {
     console.error('Error saving translation result:', error);
+    
+    // Handle "Translation not found" error as 404
+    if (error instanceof Error && error.message === 'Translation not found') {
+      return NextResponse.json(
+        { error: '번역을 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+    
     return NextResponse.json(
       { error: '번역 결과를 저장하는데 실패했습니다.' },
       { status: 500 }

@@ -29,8 +29,15 @@ export default function BatchRollbackPanel({ onRollbackComplete }: BatchRollback
   const fetchBatches = async () => {
     setIsLoading(true);
     try {
-      const result = await apiGet<{ batches?: Batch[]; message?: string }>('/api/rollback/batch?limit=50');
-      setBatches(result.batches || []);
+      // @deprecated /api/rollback/batch 대신 통합 API 사용
+      // GET /api/rollback?limit=50
+      const result = await apiGet<{ 
+        batches?: Batch[]; 
+        operations?: Batch[];
+        message?: string 
+      }>('/api/rollback?limit=50');
+      // 통합 API는 operations를 반환하므로, batches와 호환성 유지
+      setBatches(result.batches || result.operations || []);
       // Silently handle empty batches - don't show error to user
     } catch (error) {
       console.error('[BatchRollback] Failed to fetch batches:', error);
@@ -54,14 +61,18 @@ export default function BatchRollbackPanel({ onRollbackComplete }: BatchRollback
 
     setIsRollingBack(batch.id);
     try {
+      // @deprecated /api/rollback/batch 대신 통합 API 사용
+      // POST /api/rollback (operation: 'batch')
       const result = await apiPost<{
         success?: boolean;
         hasConflict?: boolean;
         message?: string;
         successCount?: number;
         failCount?: number;
-      }>('/api/rollback/batch', {
-        batchId: batch.id,
+      }>('/api/rollback', {
+        operation: 'batch',
+        entityType: 'translation', // 배치 작업은 translation 위주
+        entityIds: [batch.id], // 배치 ID를 entityIds로 전달
       });
 
       if (result.hasConflict) {

@@ -81,7 +81,7 @@ export function VersionHistoryPanel({
     }
   };
 
-  // 개별 복구 처리
+  // 개별 복구 처리 (통합 API 사용)
   const handleRevert = async (log: VersionHistory) => {
     if (!confirm(`이 버전으로 복구하시겠습니까?\n\n${log.changeDescription}`)) {
       return;
@@ -89,9 +89,13 @@ export function VersionHistoryPanel({
 
     try {
       setIsReverting(log.id);
-      await apiPost(`/api/translations/${translationId}/revert`, { 
-        logId: log.id, 
-        languageCode 
+      // @deprecated /api/translations/[id]/revert 대신 통합 API 사용
+      // POST /api/rollback (operation: 'single')
+      await apiPost('/api/rollback', { 
+        operation: 'single',
+        entityType: 'translation',
+        entityId: translationId,
+        logId: log.id
       });
       
       // 성공 후 목록 새로고침

@@ -307,21 +307,43 @@ export default function GlobalChangeHistory() {
     
     setIsBatchRollbackLoading(true);
     try {
-      const result = await apiPost<{
-        success: boolean;
-        rolledBackCount: number;
-        failedCount: number;
-        errors?: string[];
-      }>('/api/rollback/batch-by-date', {
-        targetDate,
-        entityTypes: ['translation', 'glossary'],
-      });
+      // @deprecated /api/rollback/batch-by-date 대신 통합 API 사용
+      // 통합 API는 단일 entityType만 지원하므로 병렬 호출
+      const [translationResult, glossaryResult] = await Promise.all([
+        apiPost<{
+          success: boolean;
+          results?: any[];
+          errors?: string[];
+        }>('/api/rollback', {
+          operation: 'date-based',
+          entityType: 'translation',
+          date: targetDate,
+        }),
+        apiPost<{
+          success: boolean;
+          results?: any[];
+          errors?: string[];
+        }>('/api/rollback', {
+          operation: 'date-based',
+          entityType: 'glossary',
+          date: targetDate,
+        }),
+      ]);
       
-      if (result.success) {
-        alert(`롤백 완료!\n\n✅ 성공: ${result.rolledBackCount}개\n❌ 실패: ${result.failedCount}개`);
+      // 결과 병합
+      const rolledBackCount = 
+        (translationResult.results?.length || 0) + 
+        (glossaryResult.results?.length || 0);
+      const failedCount = 
+        (translationResult.errors?.length || 0) + 
+        (glossaryResult.errors?.length || 0);
+      const hasErrors = !translationResult.success || !glossaryResult.success;
+      
+      if (!hasErrors) {
+        alert(`롤백 완료!\n\n✅ 성공: ${rolledBackCount}개\n❌ 실패: ${failedCount}개`);
         fetchAllHistory();
       } else {
-        alert('롤백 중 오류가 발생했습니다.');
+        alert('롤백 중 일부 오류가 발생했습니다.');
       }
     } catch (error) {
       console.error('Batch rollback error:', error);

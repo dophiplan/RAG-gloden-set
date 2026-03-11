@@ -312,7 +312,7 @@ export class OptimisticLockService {
 
     const { data, error } = await this.supabase
       .from(tableName)
-      .select('id, version, updated_at, updated_by')
+      .select('id, version, updated_at')
       .eq('id', id)
       .single();
 
@@ -332,7 +332,6 @@ export class OptimisticLockService {
       entityType,
       version: data.version || 0,
       updatedAt: data.updated_at,
-      updatedBy: data.updated_by,
     };
   }
 
@@ -355,7 +354,7 @@ export class OptimisticLockService {
 
     const { data, error } = await this.supabase
       .from(tableName)
-      .select('id, version, updated_at, updated_by')
+      .select('id, version, updated_at')
       .in('id', ids);
 
     if (error) {
@@ -370,7 +369,6 @@ export class OptimisticLockService {
         entityType,
         version: item.version || 0,
         updatedAt: item.updated_at,
-        updatedBy: item.updated_by,
       });
     }
 

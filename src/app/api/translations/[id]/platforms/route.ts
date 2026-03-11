@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/api-auth';
+import { TranslationCrudService } from '@/services';
 import { apiSuccess, apiError, apiUnauthorized } from '@/lib/api/response';
 
 /**
@@ -13,7 +14,7 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
-    const { user, error: authError } = await getAuthUser(supabase);
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();
@@ -27,47 +28,32 @@ export async function PATCH(
       return apiError('MISSING_PARAMS', 'platform_code and deploy_status are required', 400);
     }
 
-    // Update platform deploy status
-    const { error } = await supabase
-      .from('translation_platforms')
-      .update({ deploy_status })
-      .eq('translation_id', id)
-      .eq('platform_code', platform_code);
-
-    if (error) {
-      console.error('Error updating platform status:', error);
-      return apiError('UPDATE_FAILED', 'Failed to update platform status', 500);
-    }
-
-    // Check if all platforms are completed
-    const { data: platforms } = await supabase
-      .from('translation_platforms')
-      .select('deploy_status')
-      .eq('translation_id', id);
-
-    const allCompleted = platforms?.every(p => p.deploy_status === 'completed') ?? false;
-    const totalPlatforms = platforms?.length ?? 0;
-    const completedPlatforms = platforms?.filter(p => p.deploy_status === 'completed').length ?? 0;
-    const progress = totalPlatforms > 0 ? Math.round((completedPlatforms / totalPlatforms) * 100) : 0;
-
-    // Auto-update translation status to 'deployed' if all platforms completed
-    if (allCompleted && totalPlatforms > 0) {
-      await supabase
-        .from('translations')
-        .update({ status: 'deployed' })
-        .eq('id', id);
-    }
+    // Use Service to update platform deploy status
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
+    
+    const result = await service.updatePlatformDeployStatus(
+      id,
+      platform_code,
+      deploy_status
+    );
 
     return apiSuccess({
       message: 'Platform status updated',
-      all_completed: allCompleted,
-      progress,
-      completed_count: completedPlatforms,
-      total_count: totalPlatforms,
+      all_completed: result.allCompleted,
+      progress: result.progress,
+      completed_count: result.completedCount,
+      total_count: result.totalCount,
     });
 
   } catch (error) {
     console.error('Error in platform status update:', error);
+    
+    // Handle "Translation not found" error as 404
+    if (error instanceof Error && error.message === 'Translation not found') {
+      return apiError('NOT_FOUND', '번역을 찾을 수 없습니다.', 404);
+    }
+    
     return apiError('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }
@@ -82,7 +68,7 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
-    const { user, error: authError } = await getAuthUser(supabase);
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();
@@ -90,30 +76,28 @@ export async function GET(
 
     const { id } = await params;
 
-    const { data: platforms, error } = await supabase
-      .from('translation_platforms')
-      .select('platform_code, deploy_status')
-      .eq('translation_id', id);
-
-    if (error) {
-      console.error('Error fetching platforms:', error);
-      return apiError('FETCH_FAILED', 'Failed to fetch platforms', 500);
-    }
-
-    const totalPlatforms = platforms?.length ?? 0;
-    const completedPlatforms = platforms?.filter(p => p.deploy_status === 'completed').length ?? 0;
-    const progress = totalPlatforms > 0 ? Math.round((completedPlatforms / totalPlatforms) * 100) : 0;
+    // Use Service to get platform deploy status
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
+    
+    const result = await service.getPlatformDeployStatus(id);
 
     return apiSuccess({
-      platforms: platforms || [],
-      progress,
-      completed_count: completedPlatforms,
-      total_count: totalPlatforms,
-      all_completed: totalPlatforms > 0 && completedPlatforms === totalPlatforms,
+      platforms: result.platforms,
+      progress: result.progress,
+      completed_count: result.completedCount,
+      total_count: result.totalCount,
+      all_completed: result.allCompleted,
     });
 
   } catch (error) {
     console.error('Error fetching platform status:', error);
+    
+    // Handle "Translation not found" error as 404
+    if (error instanceof Error && error.message === 'Translation not found') {
+      return apiError('NOT_FOUND', '번역을 찾을 수 없습니다.', 404);
+    }
+    
     return apiError('INTERNAL_ERROR', 'Internal server error', 500);
   }
 }

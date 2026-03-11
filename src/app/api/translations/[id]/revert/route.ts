@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/api-auth';
+import { TranslationCrudService } from '@/services';
 
 interface RevertRequest {
   logId: string;
   languageCode: string;
 }
 
-// POST - 특정 버전으로 복구
+/**
+ * @deprecated 이 엔드포인트는 /api/rollback으로 통합되었습니다.
+ * 마이그레이션: POST /api/rollback
+ * Body: { operation: 'single', entityType: 'translation', logId: '...', entityId: '...' }
+ */
+// POST - Revert to a previous version
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError, adminClient } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    const { id: translationId } = await params;
     const body: RevertRequest = await request.json();
 
     if (!body.logId || !body.languageCode) {
@@ -29,66 +35,39 @@ export async function POST(
       );
     }
 
-    // 복구할 로그 조회
-    const { data: log, error: logError } = await supabase
-      .from('translation_logs')
-      .select('translation_result_id, previous_text')
-      .eq('id', body.logId)
-      .single();
+    // Use Service to revert translation
+    const dbClient = adminClient || createAdminClient();
+    const service = new TranslationCrudService(dbClient);
 
-    if (logError || !log) {
-      return NextResponse.json(
-        { error: '해당 버전을 찾을 수 없습니다.' },
-        { status: 404 }
-      );
+    try {
+      const result = await service.revertTranslationResult(body.logId, user.id);
+
+      return NextResponse.json({
+        success: true,
+        message: '이전 버전으로 복구되었습니다.',
+        data: {
+          translation_result_id: result.translationResultId,
+          previous_text: result.previousText,
+          reverted_text: result.revertedText,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Log not found') {
+          return NextResponse.json(
+            { error: '해당 버전을 찾을 수 없습니다.' },
+            { status: 404 }
+          );
+        }
+        if (error.message === 'ALREADY_AT_VERSION') {
+          return NextResponse.json(
+            { error: '이미 해당 버전입니다.' },
+            { status: 400 }
+          );
+        }
+      }
+      throw error;
     }
-
-    // 현재 번역 결과 조회 (로그용)
-    const { data: currentResult } = await supabase
-      .from('translation_results')
-      .select('translated_text')
-      .eq('id', log.translation_result_id)
-      .single();
-
-    const curre[기밀마스킹]ext = currentResult?.translated_text || '';
-    const revertText = log.previous_text;
-
-    // 같은 값이면 복구 필요 없음
-    if (curre[기밀마스킹]ext === revertText) {
-      return NextResponse.json(
-        { error: '이미 해당 버전입니다.' },
-        { status: 400 }
-      );
-    }
-
-    // 복구 로그 생성
-    await supabase.from('translation_logs').insert({
-      translation_result_id: log.translation_result_id,
-      previous_text: curre[기밀마스킹]ext,
-      new_text: revertText,
-      changed_by: user.id,
-    });
-
-    // 번역 결과 업데이트
-    const { data: updated, error: updateError } = await supabase
-      .from('translation_results')
-      .update({
-        translated_text: revertText,
-        reviewer_id: user.id,
-        reviewed_at: new Date().toISOString(),
-        source_type: 'manual',
-      })
-      .eq('id', log.translation_result_id)
-      .select()
-      .single();
-
-    if (updateError) throw updateError;
-
-    return NextResponse.json({
-      success: true,
-      message: '이전 버전으로 복구되었습니다.',
-      data: updated,
-    });
   } catch (error) {
     console.error('Error reverting translation:', error);
     return NextResponse.json(

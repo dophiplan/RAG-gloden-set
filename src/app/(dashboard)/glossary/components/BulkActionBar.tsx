@@ -4,7 +4,7 @@ import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
 import { showConfirm, showSuccess, showError } from '@/lib/notifications';
 import { useProducts } from '@/hooks/useReferenceData';
 import { ProductCode } from '@/types';
-import { apiPatch, apiFetch } from '@/lib/api-utils';
+import { apiPost } from '@/lib/api-utils';
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -66,9 +66,10 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/glossary/bulk-update', {
-        glossary_ids: selectedIds,
-        approval_status: 'pending',
+      // @deprecated /api/glossary/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=glossary&action=update
+      await apiPost('/api/bulk?type=glossary&action=update', {
+        items: selectedIds.map(id => ({ id, approval_status: 'pending' })),
       });
 
       showSuccess(`${selectedCount}개 용어의 상태가 변경되었습니다.`);
@@ -106,12 +107,12 @@ export default function BulkActionBar({
       if (onBulkDelete) {
         await onBulkDelete(selectedIds);
       } else {
-        // Default API call
-        const result = await apiFetch<{ deleted: number }>('/api/glossary/bulk', {
-          method: 'DELETE',
-          body: JSON.stringify({ ids: selectedIds }),
+        // @deprecated DELETE /api/glossary/bulk 대신 통합 API 사용
+        // POST /api/bulk?type=glossary&action=delete
+        const result = await apiPost<{ deletedCount: number }>('/api/bulk?type=glossary&action=delete', {
+          ids: selectedIds,
         });
-        showSuccess(`${result.deleted}개 용어가 삭제되었습니다.`);
+        showSuccess(`${result.deletedCount}개 용어가 삭제되었습니다.`);
       }
       
       // Clear selection and refresh
@@ -166,9 +167,13 @@ export default function BulkActionBar({
 
     setIsProcessing(true);
     try {
-      await apiPatch('/api/glossary/bulk-update', {
-        glossary_ids: selectedIds,
-        product_codes: selectedProducts,
+      // @deprecated /api/glossary/bulk-update 대신 통합 API 사용
+      // POST /api/bulk?type=glossary&action=update
+      await apiPost('/api/bulk?type=glossary&action=update', {
+        items: selectedIds.map(id => ({
+          id,
+          product_codes: selectedProducts,
+        })),
       });
 
       showSuccess(`${selectedCount}개 용어의 제품이 변경되었습니다.`);

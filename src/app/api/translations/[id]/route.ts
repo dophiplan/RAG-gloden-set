@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { TranslationUpdateInput } from '@/types';
 import { TranslationRepository } from '@/repositories';
-import { apiSuccess, apiError, apiUnauthorized, apiNotFound, apiInternalError, apiConflict } from '@/lib/api/response';
+import { TranslationCrudService } from '@/services';
+import { apiSuccess, apiUnauthorized, apiNotFound, apiInternalError, apiConflict } from '@/lib/api/response';
 import { getAuthUser } from '@/lib/api-auth';
 
 // GET - Get single translation
@@ -23,24 +24,15 @@ export async function GET(
     // Use admin client to bypass RLS
     const dbClient = adminClient || createAdminClient();
 
-    const { data, error } = await dbClient
-      .from('translations')
-      .select(`
-        *,
-        translation_results (*),
-        translation_products (*)
-      `)
-      .eq('id', id)
-      .single();
+    // Use Service to fetch translation
+    const service = new TranslationCrudService(dbClient);
+    const translation = await service.getTranslation(id);
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return apiNotFound('번역');
-      }
-      throw error;
+    if (!translation) {
+      return apiNotFound('번역');
     }
 
-    return apiSuccess(data);
+    return apiSuccess(translation);
   } catch (error) {
     console.error('Error fetching translation:', error);
     return apiInternalError('번역을 불러오는데 실패했습니다.');
@@ -86,6 +78,10 @@ export async function PATCH(
       }
     }
 
+    // Use Service for update operations
+    const service = new TranslationCrudService(dbClient);
+
+    // Build update data for translation table
     const updateData: Record<string, unknown> = {};
     if (body.source_text !== undefined) updateData.source_text = body.source_text.trim();
     if (body.context !== undefined) updateData.context = body.context?.trim() || null;
@@ -97,75 +93,32 @@ export async function PATCH(
     if (body.version_updated_at !== undefined) updateData.version_updated_at = body.version_updated_at;
     if ((body as any).dev_code !== undefined) updateData.dev_code = (body as any).dev_code?.trim() || null;
 
-    const { data, error } = await dbClient
-      .from('translations')
-      .update(updateData)
-      .eq('id', id)
-      .select(`
-        *,
-        translation_results (*)
-      `)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return apiNotFound('번역');
-      }
-      throw error;
+    // Update translation using Service (with audit logging)
+    if (Object.keys(updateData).length > 0) {
+      await service.updateTranslation(
+        id,
+        updateData,
+        {
+          userId: user.id,
+          userEmail: user.email || '',
+        }
+      );
     }
 
     // Handle product_codes update if provided
     if (body.product_codes !== undefined) {
-      // Delete existing product associations
-      await dbClient
-        .from('translation_products')
-        .delete()
-        .eq('translation_id', id);
-
-      // Insert new product associations with versions
-      if (body.product_codes.length > 0) {
-        const productLinks = (body.product_codes as Array<string | { code: string; version?: string }>).map((item) => ({
-          translation_id: id,
-          product_code: typeof item === 'string' ? item : item.code,
-          version: typeof item === 'object' && item.version ? item.version : null,
-          version_updated_at: typeof item === 'object' && item.version ? new Date().toISOString() : null,
-        }));
-
-        await dbClient.from('translation_products').insert(productLinks);
-      }
+      await service.updateProductCodes(id, body.product_codes, body.version);
     }
 
     // Handle platform_codes update if provided
     if (body.platform_codes !== undefined) {
-      // Delete existing platform associations
-      await dbClient
-        .from('translation_platforms')
-        .delete()
-        .eq('translation_id', id);
-
-      // Insert new platform associations
-      if (body.platform_codes.length > 0) {
-        const platformLinks = body.platform_codes.map((platformCode) => ({
-          translation_id: id,
-          platform_code: platformCode,
-        }));
-
-        await dbClient.from('translation_platforms').insert(platformLinks);
-      }
+      await service.updatePlatformCodes(id, body.platform_codes);
     }
 
-    // Fetch updated translation with products
-    const { data: updatedTranslation } = await dbClient
-      .from('translations')
-      .select(`
-        *,
-        translation_results (*),
-        translation_products (*)
-      `)
-      .eq('id', id)
-      .single();
+    // Fetch updated translation with relations
+    const updatedTranslation = await service.getTranslation(id);
 
-    return apiSuccess(updatedTranslation || data);
+    return apiSuccess(updatedTranslation);
   } catch (error) {
     console.error('Error updating translation:', error);
     return apiInternalError('번역을 업데이트하는데 실패했습니다.');
@@ -190,54 +143,19 @@ export async function DELETE(
     // Use admin client to bypass RLS
     const dbClient = adminClient || createAdminClient();
 
-    // Fetch translation data before deletion for audit log
-    const { data: translation, error: fetchError } = await dbClient
-      .from('translations')
-      .select('source_text, context')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      if (fetchError.code === 'PGRST116') {
-        return apiNotFound('번역');
-      }
-      throw fetchError;
-    }
-
-    // Delete translation
-    const { error } = await dbClient
-      .from('translations')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      throw error;
-    }
-
-    // Get user profile for audit log
-    const { data: userProfile } = await dbClient
-      .from('users')
-      .select('name')
-      .eq('id', user.id)
-      .single();
-
-    // Create audit log (non-blocking)
-    void dbClient.from('translation_audit_logs').insert({
-      translation_id: id,
-      user_id: user.id,
-      user_name: userProfile?.name,
-      user_email: user.email,
-      action: 'delete',
-      old_value: translation.source_text,
-      field_name: 'entire_record',
-    }).then(({ error }) => {
-      if (error) {
-        console.error('[Audit Log] Failed to log translation deletion:', error);
-      }
+    // Use Service for deletion (includes audit logging)
+    const service = new TranslationCrudService(dbClient);
+    
+    await service.deleteTranslation(id, {
+      userId: user.id,
+      userEmail: user.email || '',
     });
 
     return apiSuccess({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Translation not found') {
+      return apiNotFound('번역');
+    }
     console.error('Error deleting translation:', error);
     return apiInternalError('번역을 삭제하는데 실패했습니다.');
   }

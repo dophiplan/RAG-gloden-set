@@ -69,8 +69,13 @@ export function useGlossaryRollback(
   const fetchAuditHistory = useCallback(async (glossaryId: string) => {
     setIsHistoryLoading(true);
     try {
-      const result = await apiGet<{ data?: AuditLogEntry[] }>(`/api/glossary/revert?glossaryId=${glossaryId}&limit=50`);
-      const historyData = (result.data || result) as { data?: AuditLogEntry[] };
+      // @deprecated /api/glossary/revert 대신 통합 API 사용
+      // GET /api/rollback?entity_type=glossary&entity_id={glossaryId}
+      const result = await apiGet<{ data?: AuditLogEntry[]; logs?: AuditLogEntry[]; operations?: any[] }>(
+        `/api/rollback?entity_type=glossary&entity_id=${glossaryId}&limit=50`
+      );
+      // API 응답 형식 호환성 처리
+      const historyData = (result.data || result.logs || result.operations || result) as { data?: AuditLogEntry[] };
       setAuditHistory(historyData.data || []);
     } catch (error) {
       console.error('[useGlossaryRollback] Failed to fetch history:', error);
@@ -96,9 +101,12 @@ export function useGlossaryRollback(
 
     setIsLoading(true);
     try {
-      await apiPost('/api/glossary/revert', {
-        glossaryId,
-        auditLogId,
+      // @deprecated /api/glossary/revert 대신 통합 API 사용
+      // POST /api/rollback (operation: 'single')
+      await apiPost('/api/rollback', {
+        operation: 'single',
+        entityType: 'glossary',
+        entityId: auditLogId,  // glossary는 auditLogId를 entityId로 사용
         expectedVersion,
         conflictResolution: 'reject',
       });
@@ -133,14 +141,17 @@ export function useGlossaryRollback(
 
     setIsLoading(true);
     try {
-      const result = await apiPost<{ data?: { conflicts?: unknown[]; summary?: { success: number; failed?: number } }; conflicts?: unknown[]; summary?: { success: number; failed?: number } }>('/api/glossary/bulk-revert', {
-        items: items.map(item => ({
-          glossaryId: item.glossaryId,
-          auditLogId: item.auditLogId,
-          expectedVersion: item.expectedVersion,
-        })),
-        atomic,
-      });
+      // @deprecated /api/glossary/bulk-revert 대신 통합 API 사용
+      // POST /api/bulk?type=glossary&action=revert
+      const result = await apiPost<{ data?: { conflicts?: unknown[]; summary?: { success: number; failed?: number } }; conflicts?: unknown[]; summary?: { success: number; failed?: number } }>(
+        '/api/bulk?type=glossary&action=revert',
+        {
+          ids: items.map(item => item.glossaryId),
+          auditLogIds: items.map(item => item.auditLogId),
+          expectedVersions: items.map(item => item.expectedVersion),
+          atomic,
+        }
+      );
       const data = (result.data || result);
 
       if (data.conflicts && data.conflicts.length > 0) {
@@ -198,8 +209,12 @@ export function useGlossaryRollback(
         })
       );
 
-      // Retry rollback
-      await apiPost('/api/glossary/bulk-revert', { items: itemsWithVersions });
+      // Retry rollback (통합 API 사용)
+      await apiPost('/api/bulk?type=glossary&action=revert', {
+        ids: itemsWithVersions.map(item => item.glossaryId),
+        auditLogIds: itemsWithVersions.map(item => item.auditLogId),
+        expectedVersions: itemsWithVersions.map(item => item.expectedVersion),
+      });
       showSuccess('충돌을 해결하고 복구했습니다.');
       onSuccess?.();
     } catch (error) {

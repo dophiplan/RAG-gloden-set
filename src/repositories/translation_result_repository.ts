@@ -57,6 +57,33 @@ export class TranslationResultRepository {
   }
 
   /**
+   * Find translation result by translation ID and language code (alias for findOne)
+   */
+  async findByTranslationAndLanguage(
+    translationId: string,
+    languageCode: LanguageCode
+  ): Promise<TranslationResult | null> {
+    return this.findOne(translationId, languageCode);
+  }
+
+  /**
+   * Create a single translation result
+   */
+  async create(result: TranslationResultCreateData): Promise<TranslationResult> {
+    const { data, error } = await this.supabase
+      .from('translation_results')
+      .insert(result)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to create translation result: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  /**
    * Create translation results (bulk insert)
    */
   async createMany(results: TranslationResultCreateData[]): Promise<TranslationResult[]> {
