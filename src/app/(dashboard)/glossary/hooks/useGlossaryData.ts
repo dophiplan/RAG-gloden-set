@@ -5,6 +5,9 @@ import { showError, showConfirm, showSuccess } from '@/lib/notifications';
 import { PAGINATION } from '@/lib/constants';
 import { buildApiUrl } from '@/lib/api/query-builder';
 import { apiFetch, apiGet, apiPost, apiPatch, ApiError } from '@/lib/api-utils';
+import { RetranslateMode } from '../components/RetranslateMenu';
+
+const ITEMS_PER_PAGE = 10;
 
 export function useGlossaryData() {
   const router = useRouter();
@@ -20,7 +23,7 @@ export function useGlossaryData() {
   const [sortBy, setSortBy] = useState<string>('term');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
-  const [isReviewing, setIsReviewing] = useState(false);
+
   const [suggestionCount, setSuggestionCount] = useState(0);
   // 표시할 언어 컬럼 (기본값: 영어)
   const [selectedLanguageColumns, setSelectedLanguageColumns] = useState<LanguageCode[]>(['en']);
@@ -54,6 +57,9 @@ export function useGlossaryData() {
   const [formTerm, setFormTerm] = useState('');
   const [formTranslation, setFormTranslation] = useState('');
   const [formLanguage, setFormLanguage] = useState<LanguageCode>('ko');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchTerms = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -123,7 +129,7 @@ export function useGlossaryData() {
   const fetchStats = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      if (selectedProduct) params.append('product', selectedProduct);
+      if (selectedProduct) params.append('product_code', selectedProduct);
       
       type StatsResponse = { total_terms: number; approved_terms: number; pending_terms: number; rejected_terms: number; not_used_terms: number };
       const result = await apiGet<{ data?: StatsResponse } & StatsResponse>(`/api/glossary/stats?${params.toString()}`);
@@ -250,6 +256,51 @@ export function useGlossaryData() {
     }
   };
 
+  // 다중 용어 삭제 (한 용어의 모든 언어 번역 삭제)
+  const handleDeleteMultiple = async (ids: string[]) => {
+    if (isDeleting || ids.length === 0) return;
+    
+    const confirmMessage = ids.length > 1 
+      ? `정말 ${ids.length}개의 번역을 삭제하시겠습니까?`
+      : '정말 삭제하시겠습니까?';
+    if (!showConfirm(confirmMessage)) return;
+
+    setIsDeleting(true);
+    const failedIds: string[] = [];
+    
+    try {
+      // 순차적으로 삭제 (병렬 삭제 시 race condition 방지)
+      for (const id of ids) {
+        try {
+          await apiFetch(`/api/glossary/${id}`, { method: 'DELETE' });
+        } catch (error) {
+          console.error(`Error deleting glossary term ${id}:`, error);
+          failedIds.push(id);
+        }
+      }
+
+      // 낙관적 업데이트: 성공한 ID들을 로컬 상태에서 제거
+      setTerms(prev => prev.filter(t => !ids.includes(t.id) || failedIds.includes(t.id)));
+      
+      // 삭제 후 통계 새로고침
+      await fetchStats();
+      
+      if (failedIds.length > 0) {
+        showError(`${ids.length - failedIds.length}개 삭제 성공, ${failedIds.length}개 삭제 실패`);
+        // 실패 시 복구를 위해 다시 가져오기
+        await fetchTerms();
+      } else {
+        showSuccess(`${ids.length}개의 용어가 삭제되었습니다.`);
+      }
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      showError(error instanceof Error ? error.message : '용어 삭제에 실패했습니다.');
+      await fetchTerms();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleApprove = async (id: string) => {
     try {
       await apiPatch(`/api/glossary/${id}/approve`, {
@@ -301,7 +352,12 @@ export function useGlossaryData() {
     }
   };
 
-  const handleRetranslate = async (sourceText: string, context: string, languages: LanguageCode[]): Promise<void> => {
+  const handleRetranslate = async (
+    sourceText: string, 
+    context: string, 
+    languages: LanguageCode[],
+    mode: RetranslateMode = 'all'
+  ): Promise<void> => {
     if (isRetranslating) throw new Error('이미 재번역 중입니다.');
     setIsRetranslating(true);
     
@@ -310,6 +366,7 @@ export function useGlossaryData() {
         sourceText,
         context: context || undefined,
         targetLanguages: languages,
+        mode,
       });
 
       await fetchTerms();
@@ -362,15 +419,6 @@ export function useGlossaryData() {
       showError(error instanceof Error ? error.message : '일괄 거부에 실패했습니다.');
     } finally {
       setIsBulkProcessing(false);
-    }
-  };
-
-  const handleAIReview = async () => {
-    setIsReviewing(true);
-    try {
-      showError('AI 일관성 검사 기능은 번역 관리 페이지에서 개별 번역에 대해 사용할 수 있습니다.');
-    } finally {
-      setIsReviewing(false);
     }
   };
 
@@ -441,8 +489,23 @@ export function useGlossaryData() {
     });
   }, [terms]);
 
-  // 페이지네이션 제거 - 전체 데이터 표시
-  // groupedByTerm을 직접 사용
+  // 페이지네이션 로직
+  const totalPages = Math.ceil(groupedByTerm.length / ITEMS_PER_PAGE);
+  
+  const paginatedTerms = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return groupedByTerm.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [groupedByTerm, currentPage]);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  // 필터 변경 시 페이지 초기화
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [languageFilter, selectedProduct, searchTerm, sourceTypeFilter, approvalStatusFilter, importedAfter, importedBefore, sortBy]);
 
   // Quick filter functions
   const setQuickFilter = (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used' | 'unused' | 'pending') => {
@@ -617,7 +680,6 @@ export function useGlossaryData() {
     setIsModalOpen,
     editingTerm,
     setEditingTerm,
-    isReviewing,
     suggestionCount,
     stats,
     fetchStats,
@@ -643,13 +705,13 @@ export function useGlossaryData() {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleDeleteMultiple,
     handleApprove,
     handleReject,
     handleStatusChange,
     handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
-    handleAIReview,
     openEditModal,
     groupedTerms,
     groupedByTerm,
@@ -660,8 +722,12 @@ export function useGlossaryData() {
     handleTermInlineUpdate,
     handleTranslationInlineUpdate,
     handleContextInlineUpdate,
-    // No pagination - use all data
-    paginatedTerms: groupedByTerm, // 전체 데이터 사용
-    totalTerms: groupedByTerm.length, // 원문 기준 총 개수
+    // Pagination
+    paginatedTerms,
+    totalTerms: groupedByTerm.length,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    itemsPerPage: ITEMS_PER_PAGE,
   };
 }

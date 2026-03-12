@@ -27,6 +27,8 @@ export default function MigrationWizard() {
     loadPreview,
     updateEntry,
     updateEntriesBulk,
+    deleteEntry,
+    deleteEntries,
     toggleSelected,
     selectAll,
     clearSelected,
@@ -34,7 +36,7 @@ export default function MigrationWizard() {
     commitMigration,
   } = useMigration();
 
-  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds } = state;
+  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds, versionEntries } = state;
 
   const currentStepIndex = STEP_ORDER.indexOf(currentStep);
   const isFirstStep = currentStepIndex === 0;
@@ -90,37 +92,27 @@ export default function MigrationWizard() {
 
           {/* Step 2: Field Mapping */}
           <div className="w-full flex-shrink-0 px-4">
-            <FieldMapping
-              sheetsData={sheetsData}
-              selectedVersion={selectedVersion}
-              onVersionChange={setSelectedVersion}
-              onMappingChange={updateCurrentMapping}
-              onAllMappingsChange={updateAllMappings}
-              initialMappings={currentMapping}
-            />
+            <FieldMapping sheetsData={sheetsData} />
           </div>
 
           {/* Step 3: Preview & Confirm */}
           <div className="w-full flex-shrink-0 px-4">
             <PreviewCommitStep
-              previewData={entries.map((e) => ({
-                id: e.id,
-                source_text: e.source_text,
-                context: e.context,
-                translations: e.translations,
-                suggested_category: e.suggested_category,
-                duplicate_status: e.duplicate_status,
-                action: (e.action || 'import') as 'import' | 'skip' | 'merge' | 'overwrite',
-              }))}
+              versionEntries={versionEntries}
               selectedIds={selectedIds}
               onToggleSelected={toggleSelected}
               onSelectAll={selectAll}
               onClearSelected={clearSelected}
               onUpdateEntry={updateEntry}
-              onBulkUpdate={(action) => {
-                const targetIds = entries.filter(e => e.action === action).map(e => e.id);
-                if (targetIds.length > 0) {
-                  updateEntriesBulk(targetIds, { action: action as EntryAction });
+              onDeleteEntry={deleteEntry}
+              onBulkUpdate={(category) => {
+                if (selectedIds.length > 0) {
+                  updateEntriesBulk(selectedIds, { category });
+                }
+              }}
+              onBulkDelete={(ids) => {
+                if (confirm(`${ids.length}개 항목을 삭제하시겠습니까?`)) {
+                  deleteEntries(ids);
                 }
               }}
             />

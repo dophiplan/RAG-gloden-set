@@ -22,6 +22,7 @@ import BulkActionBar from './components/BulkActionBar';
 import GlossaryStatsCard from './components/GlossaryStatsCard';
 import GlossaryHistoryPanel from './components/GlossaryHistoryPanel';
 import ConflictResolutionModal from './components/ConflictResolutionModal';
+import RetranslateMenu from './components/RetranslateMenu';
 import { useGlossaryRollback } from './hooks/useGlossaryRollback';
 
 
@@ -69,7 +70,6 @@ export default function GlossaryPage() {
     setIsModalOpen,
     editingTerm,
     setEditingTerm,
-    isReviewing,
     suggestionCount,
     formSourceText,
     setFormSourceText,
@@ -82,13 +82,13 @@ export default function GlossaryPage() {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleDeleteMultiple,
     handleApprove,
     handleReject,
     handleStatusChange,
     handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
-    handleAIReview,
     openEditModal,
     fetchTerms,
     fetchStats,
@@ -107,6 +107,9 @@ export default function GlossaryPage() {
     isBulkProcessing,
     paginatedTerms,
     totalTerms,
+    currentPage,
+    totalPages,
+    handlePageChange,
   } = useGlossaryData();
 
   // Rollback hook - must be called after useGlossaryData to access fetchTerms
@@ -428,13 +431,6 @@ export default function GlossaryPage() {
             >
               Excel 내보내기
             </Button>
-            <Button
-              variant="secondary"
-              onClick={handleAIReview}
-              loading={isReviewing}
-            >
-              AI 일관성 검사
-            </Button>
             <Button onClick={() => setIsModalOpen(true)}>용어 추가</Button>
           </div>
         </div>
@@ -478,10 +474,10 @@ export default function GlossaryPage() {
           </Card>
         ) : (
           <Card padding="none" className="min-w-fit">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-2 py-3 w-8">
+                    <th className="px-2 py-3 w-[32px]">
                       <input
                         type="checkbox"
                         checked={selectedIds.length === (terms || []).length && (terms || []).length > 0}
@@ -495,19 +491,19 @@ export default function GlossaryPage() {
                         className="rounded border-gray-300"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">용어</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[140px]">용어</th>
                     {/* 언어별 번역 컬럼 */}
                     {(languageFilter ? [languageFilter] : displayLanguageColumns).map((langCode) => (
-                      <th key={langCode} className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">
+                      <th key={langCode} className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[120px]">
                         {languagesMap[langCode]?.name || langCode}
                       </th>
                     ))}
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 min-w-[150px]">문맥</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[100px]">제품</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[80px]">출처</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[100px]">검수 상태</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[80px]">사용 횟수</th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[100px]">작업</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[140px]">문맥</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[70px]">제품</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[60px]">출처</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 w-[85px]">검수 상태</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[70px]">사용 횟수</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 w-[90px]">작업</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -617,35 +613,24 @@ export default function GlossaryPage() {
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex justify-center gap-1">
-                              {/* AI 재번역 버튼 (개별) */}
-                              <button
-                                onClick={async () => {
+                              {/* AI 재번역 미니 메뉴 */}
+                              <RetranslateMenu
+                                onRetranslate={async (mode) => {
                                   try {
-                                    const languages = displayLanguageColumns;
-                                    await handleRetranslate(group.term, group.context || '', languages);
-                                    showSuccess(`${languages.length}개 언어로 재번역되었습니다.`);
+                                    await handleRetranslate(group.term, group.context || '', displayLanguageColumns, mode);
+                                    showSuccess('재번역이 완료되었습니다.');
                                   } catch (error) {
                                     console.error('Retranslate error:', error);
                                     showError('재번역에 실패했습니다.');
                                   }
                                 }}
                                 disabled={isRetranslating}
-                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="AI 재번역"
-                              >
-                                {isRetranslating ? (
-                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.101 5.79 2.929 7.907l3.032-3.032z"></path>
-                                  </svg>
-                                ) : (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                  </svg>
-                                )}
-                              </button>
+                                loading={isRetranslating}
+                                displayLanguages={displayLanguageColumns}
+                                termLanguages={Object.keys(group.translations) as LanguageCode[]}
+                              />
                               <button
-                                onClick={() => allIds.forEach((id: string) => handleDelete(id))}
+                                onClick={() => handleDeleteMultiple(allIds)}
                                 disabled={isDeleting}
                                 className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="삭제"
@@ -690,6 +675,88 @@ export default function GlossaryPage() {
               </table>
             
           </Card>
+        )}
+
+        {/* Pagination - 숫자 형태 */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              이전
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {/* 첫 페이지 */}
+              <button
+                onClick={() => handlePageChange(1)}
+                className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                  currentPage === 1 
+                    ? 'bg-[#818CF8] text-white font-medium' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                1
+              </button>
+              
+              {/* 왼쪽 생략 (...) */}
+              {currentPage > 4 && (
+                <span className="px-1 text-gray-400">...</span>
+              )}
+              
+              {/* 중간 페이지들 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => page !== 1 && page !== totalPages && page >= currentPage - 2 && page <= currentPage + 2)
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                      currentPage === page 
+                        ? 'bg-[#818CF8] text-white font-medium' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              
+              {/* 오른쪽 생략 (...) */}
+              {currentPage < totalPages - 3 && (
+                <span className="px-1 text-gray-400">...</span>
+              )}
+              
+              {/* 마지막 페이지 */}
+              {totalPages > 1 && (
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                    currentPage === totalPages 
+                      ? 'bg-[#818CF8] text-white font-medium' 
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              )}
+            </div>
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              다음
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         )}
 
         {/* Create Modal */}

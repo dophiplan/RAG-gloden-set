@@ -14,6 +14,7 @@ interface PreviewEntry {
   version?: string;
   key?: string;
   note?: string;
+  product_category?: string;
   translations: Record<string, string>;
   suggested_category: 'glossary' | 'translation';
   word_count: number;
@@ -23,15 +24,18 @@ interface PreviewEntry {
     existing_id?: string;
     existing_translations?: Record<string, string>;
   };
+  category?: 'glossary' | 'translation';
+  existing_in_glossary: boolean;
+  existing_in_translation: boolean;
 }
 
 interface ImportRow {
   source_text: string;
   context?: string;
+  product_category?: string;
   [key: string]: string | undefined;
 }
 
-// POST - Preview migration data
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -41,18 +45,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
+    // FIXED: User permission validation (Issue #7)
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('[Preview] Failed to fetch user profile:', profileError);
+      return NextResponse.json({ error: '사용자 정보를 가져올 수 없습니다.' }, { status: 500 });
+    }
+
+    if (!['admin', 'manager'].includes(userProfile?.role)) {
+      return NextResponse.json({ error: '권한이 부족합니다.' }, { status: 403 });
+    }
+    // FIXED: End of permission validation
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const productCodeRaw = formData.get('product_code') as string | null;
     const fieldMappingsRaw = formData.get('field_mappings') as string | null;
-    // Empty string means "ALL" products (common terms)
     const productCode = productCodeRaw && productCodeRaw.trim() !== '' ? productCodeRaw as ProductCode : null;
 
     if (!file) {
       return NextResponse.json({ error: 'CSV 파일을 업로드해주세요.' }, { status: 400 });
     }
 
-    // Parse field mappings
     let fieldMappings: { source: string | null; translations: string[]; metadata: Record<string, string> } | null = null;
     if (fieldMappingsRaw) {
       try {
@@ -69,11 +88,9 @@ export async function POST(request: NextRequest) {
       console.log('[Preview API] No field mappings provided');
     }
 
-    // Debug logging
     console.log('[Preview API] File name:', file.name);
     console.log('[Preview API] File size:', file.size);
     
-    // Get selected version (sheet name)
     const selectedVersion = formData.get('version') as string | null;
     console.log('[Preview API] Selected version (sheet):', selectedVersion);
     
@@ -82,12 +99,10 @@ export async function POST(request: NextRequest) {
     
     try {
       if (fileName.endsWith('.csv')) {
-        // CSV 파일 처리
         const text = await file.text();
         console.log('[Preview API] Parsing as CSV');
         rows = parseCSV(text, fieldMappings);
       } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        // Excel 파일 처리
         console.log('[Preview API] Parsing as Excel');
         rows = await parseExcel(file, selectedVersion, fieldMappings);
       } else {
@@ -128,8 +143,8 @@ export async function POST(request: NextRequest) {
 
       const sourceText = row.source_text.trim();
       const context = row.context?.trim() || undefined;
+      const productCategory = row.product_category?.trim() || undefined;
 
-      // Extract translations from language columns
       const translations: Record<string, string> = {};
       for (const langCode of validLanguages) {
         if (row[langCode]?.trim()) {
@@ -137,7 +152,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Calculate word count (for auto-classification)
       const wordCount = sourceText.split(/\s+/).length;
       const suggestedCategory: 'glossary' | 'translation' = wordCount <= 3 ? 'glossary' : 'translation';
 
@@ -147,7 +161,6 @@ export async function POST(request: NextRequest) {
         translationSuggested++;
       }
 
-      // Check for duplicates
       const duplicateStatus = await checkDuplicates(supabase, sourceText, suggestedCategory, translations);
 
       if (duplicateStatus.status === 'exact') {
@@ -158,17 +171,18 @@ export async function POST(request: NextRequest) {
         newEntries++;
       }
 
-      // Field mappings에서 메타데이터 추출
       const mappedProduct = fieldMappings?.metadata?.product_category 
         ? row[fieldMappings.metadata.product_category] 
         : (row.product || row.product_category || undefined);
       
-      // 플랫폼은 체크박스로 다중 선택된 값이 직접 저장됨 (쉼표 구분)
       const mappedPlatform = fieldMappings?.metadata?.platform || (row.platform || undefined);
       
       const mappedVersion = fieldMappings?.metadata?.version
         ? row[fieldMappings.metadata.version]
         : (row.version || undefined);
+
+      const existingInGlossary = duplicateStatus.status === 'exact' && suggestedCategory === 'glossary';
+      const existingInTranslation = duplicateStatus.status === 'exact' && suggestedCategory === 'translation';
 
       entries.push({
         id: uuidv4(),
@@ -177,19 +191,32 @@ export async function POST(request: NextRequest) {
         product: mappedProduct,
         platform: mappedPlatform,
         version: mappedVersion,
+        product_category: productCategory,
         key: row.key || row.id || row.key_id || undefined,
         note: row.note || row.description || undefined,
         translations,
         suggested_category: suggestedCategory,
         word_count: wordCount,
         duplicate_status: duplicateStatus,
+        category: 'translation',
+        existing_in_glossary: existingInGlossary,
+        existing_in_translation: existingInTranslation,
       });
     }
+
+    const duplicateGlossary = entries.filter(e => e.existing_in_glossary).length;
+    const duplicateTranslation = entries.filter(e => e.existing_in_translation).length;
+    const newGlossarySelected = entries.filter(e => e.suggested_category === 'glossary' && !e.existing_in_glossary).length;
+    const newTranslation = entries.filter(e => !e.existing_in_glossary && !e.existing_in_translation && e.suggested_category === 'translation').length;
 
     return NextResponse.json({
       entries,
       summary: {
         total: entries.length,
+        duplicate_glossary: duplicateGlossary,
+        new_glossary_selected: newGlossarySelected,
+        duplicate_translation: duplicateTranslation,
+        new_translation: newTranslation,
         glossary_suggested: glossarySuggested,
         translation_suggested: translationSuggested,
         exact_matches: exactMatches,
@@ -214,8 +241,6 @@ async function checkDuplicates(
   translations: Record<string, string>
 ) {
   if (category === 'glossary') {
-    // Check in glossary table
-    // For glossary, check if the term exists in any language
     const { data: existing } = await supabase
       .from('glossary')
       .select('id, term, translation, language_code')
@@ -223,10 +248,8 @@ async function checkDuplicates(
       .limit(1);
 
     if (existing && existing.length > 0) {
-      // Exact match found
       const existingTranslations: Record<string, string> = {};
 
-      // Fetch all translations for this term
       const { data: allTranslations } = await supabase
         .from('glossary')
         .select('language_code, translation')
@@ -249,7 +272,6 @@ async function checkDuplicates(
       };
     }
 
-    // Check for similar terms (fuzzy matching)
     const { data: similarTerms } = await supabase
       .from('glossary')
       .select('id, term, translation, language_code')
@@ -268,7 +290,6 @@ async function checkDuplicates(
       }
     }
   } else {
-    // Check in translations table
     const { data: existing } = await supabase
       .from('translations')
       .select('id, source_text, translation_results(*)')
@@ -276,7 +297,6 @@ async function checkDuplicates(
       .single();
 
     if (existing) {
-      // Exact match found
       const existingTranslations: Record<string, string> = {};
       if (existing.translation_results) {
         interface TranslationResultItem {
@@ -295,7 +315,6 @@ async function checkDuplicates(
       };
     }
 
-    // Check for similar translations
     const { data: similarTranslations } = await supabase
       .from('translations')
       .select('id, source_text')
@@ -321,7 +340,6 @@ async function checkDuplicates(
 }
 
 function calculateSimilarity(str1: string, str2: string): number {
-  // Simple Levenshtein distance-based similarity
   const len1 = str1.length;
   const len2 = str2.length;
   const matrix: number[][] = [];
@@ -372,7 +390,6 @@ function parseCSV(
   const columnMapping: Record<string, string> = {};
 
   if (fieldMappings && fieldMappings.source) {
-    // Use field mappings from client
     console.log('[parseCSV] Looking for source field:', fieldMappings.source);
     sourceIndex = header.findIndex((h) => h.trim() === fieldMappings.source);
     console.log('[parseCSV] Source index found:', sourceIndex);
@@ -381,13 +398,11 @@ function parseCSV(
       throw new Error(`원문 필드 "${fieldMappings.source}"를 찾을 수 없습니다. 사용 가능한 필드: ${header.join(', ')}`);
     }
 
-    // Map translation fields
     console.log('[parseCSV] Mapping translations:', fieldMappings.translations);
     fieldMappings.translations.forEach((transField) => {
       const idx = header.findIndex((h) => h.trim() === transField);
       console.log(`[parseCSV] Looking for translation field "${transField}" at index:`, idx);
       if (idx !== -1) {
-        // Extract language code from field name (e.g., "KO" from "KO Translation" or just "KO")
         const langMatch = transField.match(/^(ko|en|ja|zh-CN|zh-TW|es|de|pt|fr)/i);
         if (langMatch) {
           columnMapping[idx] = langMatch[0].toLowerCase();
@@ -401,7 +416,6 @@ function parseCSV(
     });
     console.log('[parseCSV] Final column mapping:', columnMapping);
 
-    // Map metadata fields
     Object.entries(fieldMappings.metadata).forEach(([key, fieldName]) => {
       const idx = header.findIndex((h) => h.trim() === fieldName);
       if (idx !== -1) {
@@ -409,7 +423,6 @@ function parseCSV(
       }
     });
   } else {
-    // Legacy: Auto-detect columns
     sourceIndex = header.findIndex((h) => {
       const normalized = h.toLowerCase().trim();
       return normalized === 'source_text' ||
@@ -422,12 +435,13 @@ function parseCSV(
       throw new Error('source_text 열을 찾을 수 없습니다.');
     }
 
-    // Auto-detect language columns
     header.forEach((h, idx) => {
       const normalized = h.toLowerCase().trim();
 
       if (normalized === '설명' || normalized === 'description' || normalized === '문맥' || normalized === 'context') {
         columnMapping[idx] = 'context';
+      } else if (normalized === 'product_category' || normalized === 'product category' || normalized === '제품분류') {
+        columnMapping[idx] = 'product_category';
       } else if (normalized === 'english' || normalized === 'en') {
         columnMapping[idx] = 'en';
       } else if (normalized === '日本語' || normalized === 'ja' || normalized === 'japanese') {
@@ -448,13 +462,11 @@ function parseCSV(
     });
   }
 
-  // Parse rows
   const rows: ImportRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
     const sourceText = values[sourceIndex] || '';
     
-    // Skip empty rows
     if (!sourceText.trim()) {
       continue;
     }
@@ -463,7 +475,6 @@ function parseCSV(
       source_text: sourceText,
     };
 
-    // Map other columns
     Object.keys(columnMapping).forEach((idx) => {
       const numIdx = parseInt(idx);
       if (numIdx !== sourceIndex && values[numIdx]) {
@@ -509,10 +520,7 @@ function parseCSVLine(line: string): string[] {
   result.push(current.trim());
   return result;
 }
-/**
- * Parse Excel file and return rows
- * Supports field mappings for column selection
- */
+
 async function parseExcel(
   file: File, 
   selectedVersion: string | null,
@@ -524,17 +532,13 @@ async function parseExcel(
   console.log('[parseExcel] Available sheets:', workbook.SheetNames);
   console.log('[parseExcel] Selected version:', selectedVersion);
   
-  // Determine which sheet to parse
   let sheetName: string;
   
   if (selectedVersion && workbook.SheetNames.includes(selectedVersion)) {
-    // Use the selected version as the sheet name
     sheetName = selectedVersion;
   } else if (workbook.SheetNames.length === 1) {
-    // If only one sheet, use it
     sheetName = workbook.SheetNames[0];
   } else if (workbook.SheetNames.length > 1) {
-    // Multiple sheets but no selection - use first one (or could error)
     sheetName = workbook.SheetNames[0];
     console.log('[parseExcel] Warning: Multiple sheets found, using first sheet:', sheetName);
   } else {
@@ -546,7 +550,6 @@ async function parseExcel(
     throw new Error(`시트 "${sheetName}"를 찾을 수 없습니다.`);
   }
   
-  // Convert to JSON with headers
   const jsonData: unknown[][] = XLSX.utils.sheet_to_json(worksheet, { 
     header: 1,
     blankrows: false,
@@ -561,11 +564,9 @@ async function parseExcel(
   console.log('[parseExcel] Headers:', headers);
   console.log('[parseExcel] Total rows:', jsonData.length - 1);
   
-  // Use field mappings if provided, otherwise auto-detect
   const columnMapping: Record<string, number> = {};
   
   if (fieldMappings && fieldMappings.source) {
-    // Map source column
     const sourceIndex = headers.findIndex(h => 
       h?.toString().trim() === fieldMappings.source || 
       h?.toString().trim().toLowerCase() === fieldMappings.source?.toLowerCase()
@@ -576,7 +577,6 @@ async function parseExcel(
     }
     columnMapping['source'] = sourceIndex;
     
-    // Map translation columns - extract language code from column name or detect from sample data
     console.log('[parseExcel] Headers for mapping:', headers);
     fieldMappings.translations.forEach((field) => {
       if (field) {
@@ -586,20 +586,23 @@ async function parseExcel(
         );
         console.log(`[parseExcel] Looking for field "${field}" -> found at index ${fieldIndex}`);
         if (fieldIndex !== -1) {
-          let langCode: string;
+          let langCode = extractLanguageCodeFromColumnName(field);
           
-          // 번역 언어 매핑 - 실제 데이터 2~3줄로 언어 감지
-          const samples: string[] = [];
-          for (let i = 1; i < jsonData.length && samples.length < 3; i++) {
-            const rowData = jsonData[i] as (string | number | null | undefined)[];
-            const value = rowData[fieldIndex]?.toString();
-            if (value && value.trim()) {
-              samples.push(value.trim());
+          if (langCode === 'unknown') {
+            const samples: string[] = [];
+            for (let i = 1; i < jsonData.length && samples.length < 3; i++) {
+              const rowData = jsonData[i] as (string | number | null | undefined)[];
+              const value = rowData[fieldIndex]?.toString();
+              if (value && value.trim()) {
+                samples.push(value.trim());
+              }
             }
+            langCode = detectLanguageFromSamples(samples);
+            console.log(`[parseExcel] Field "${field}" - detected from data: ${langCode}`);
+          } else {
+            console.log(`[parseExcel] Field "${field}" - extracted from column name: ${langCode}`);
           }
-          langCode = detectLanguageFromSamples(samples);
           
-          // 중복 langCode 체크
           const mappingKey = `translation_${langCode}`;
           if (columnMapping[mappingKey] !== undefined) {
             console.log(`[parseExcel] WARNING: Duplicate langCode "${langCode}" for field "${field}". Previous field index: ${columnMapping[mappingKey]}, New: ${fieldIndex}`);
@@ -610,7 +613,6 @@ async function parseExcel(
       }
     });
     
-    // Map metadata columns
     Object.entries(fieldMappings.metadata).forEach(([key, field]) => {
       if (field) {
         const fieldIndex = headers.findIndex(h => 
@@ -623,7 +625,6 @@ async function parseExcel(
       }
     });
   } else {
-    // Auto-detect columns
     headers.forEach((header, idx) => {
       if (!header) return;
       const normalized = header.toString().trim().toLowerCase();
@@ -661,6 +662,8 @@ async function parseExcel(
         columnMapping['context'] = idx;
       } else if (normalized === 'platform' || normalized.includes('platform')) {
         columnMapping['platform'] = idx;
+      } else if (normalized === 'product_category' || normalized.includes('product category') || normalized.includes('제품분류')) {
+        columnMapping['product_category'] = idx;
       } else if (normalized === 'product' || normalized.includes('product')) {
         columnMapping['product'] = idx;
       } else if (normalized === 'version' || normalized.includes('version')) {
@@ -675,13 +678,11 @@ async function parseExcel(
     throw new Error(`원문 필드를 찾을 수 없습니다. 사용 가능한 필드: ${headers.filter(h => h).join(', ')}`);
   }
   
-  // Parse rows
   const rows: ImportRow[] = [];
   for (let i = 1; i < jsonData.length; i++) {
     const rowData = jsonData[i] as (string | number | null | undefined)[];
     const sourceText = rowData[columnMapping['source']]?.toString() || '';
     
-    // Skip empty rows
     if (!sourceText.trim()) {
       continue;
     }
@@ -690,7 +691,6 @@ async function parseExcel(
       source_text: sourceText,
     };
     
-    // Add translations - key format is "translation_{langCode}" (e.g., "translation_ko")
     Object.entries(columnMapping).forEach(([key, idx]) => {
       if (key.startsWith('translation_')) {
         const value = rowData[idx]?.toString();
@@ -717,50 +717,56 @@ async function parseExcel(
   return rows;
 }
 
-/**
- * Extract language code from column name (for non-source fields)
- */
-function extractLanguageCode(columnName: string): string {
+function extractLanguageCodeFromColumnName(columnName: string): string {
   const normalized = columnName.toLowerCase().trim();
   
-  // Common patterns
-  if (normalized.includes('ko') || normalized.includes('korean')) return 'ko';
-  if (normalized.includes('ja') || normalized.includes('japanese') || normalized.includes('日本語')) return 'ja';
-  if (normalized.includes('zh-cn') || normalized.includes('hans') || normalized.includes('simplified') || normalized.includes('简体')) return 'zh-CN';
-  if (normalized.includes('zh-tw') || normalized.includes('hant') || normalized.includes('traditional') || normalized.includes('繁體')) return 'zh-TW';
-  if (normalized.includes('en') || normalized.includes('english')) return 'en';
-  if (normalized.includes('es') || normalized.includes('spanish')) return 'es';
-  if (normalized.includes('fr') || normalized.includes('french')) return 'fr';
-  if (normalized.includes('de') || normalized.includes('german') || normalized.includes('deutsch')) return 'de';
+  if (normalized === 'ko' || normalized === 'kor') return 'ko';
+  if (normalized.includes('korean') || normalized.includes('한국어') || normalized.includes('한글')) return 'ko';
   
-  // Last segment fallback
-  const segments = normalized.split(/[-_]/);
-  const last = segments[segments.length - 1];
-  if (/^[a-z]{2,3}$/.test(last)) return last;
+  if (normalized === 'en' || normalized === 'eng') return 'en';
+  if (normalized === 'english' || normalized.includes('영어')) return 'en';
+  if (/^en[-_].*$/.test(normalized)) return 'en';
   
-  return normalized;
+  if (normalized === 'ja' || normalized === 'jpn') return 'ja';
+  if (normalized.includes('japanese') || normalized.includes('일본어') || normalized.includes('日本語')) return 'ja';
+  
+  if (normalized === 'zh-cn' || normalized === 'zh_cn' || normalized === 'zh-hans' || normalized === 'zh_hans') return 'zh-CN';
+  if (normalized.includes('chinese simplified') || normalized.includes('중국어 간체') || normalized.includes('중국어(간체)') || normalized.includes('中文(简体)') || normalized.includes('簡體')) return 'zh-CN';
+  if (normalized === 'zh' && normalized.includes('간체')) return 'zh-CN';
+  
+  if (normalized === 'zh-tw' || normalized === 'zh_tw' || normalized === 'zh-hant' || normalized === 'zh_hant' || normalized === 'zh-hk') return 'zh-TW';
+  if (normalized.includes('chinese traditional') || normalized.includes('중국어 번체') || normalized.includes('중국어(번체)') || normalized.includes('中文(繁體)') || normalized.includes('繁體')) return 'zh-TW';
+  if (normalized === 'zh' && normalized.includes('번체')) return 'zh-TW';
+  if (normalized.includes('taiwan') || normalized.includes('hong kong') || normalized.includes('대만') || normalized.includes('홍콩')) return 'zh-TW';
+  
+  if (normalized === 'es' || normalized === 'spa') return 'es';
+  if (normalized.includes('spanish') || normalized.includes('español') || normalized.includes('스페인어')) return 'es';
+  
+  if (normalized === 'fr' || normalized === 'fra') return 'fr';
+  if (normalized.includes('french') || normalized.includes('français') || normalized.includes('프랑스어')) return 'fr';
+  
+  if (normalized === 'de' || normalized === 'deu' || normalized === 'ger') return 'de';
+  if (normalized.includes('german') || normalized.includes('deutsch') || normalized.includes('독일어')) return 'de';
+  
+  if (normalized === 'pt' || normalized === 'por') return 'pt';
+  if (normalized.includes('portuguese') || normalized.includes('português') || normalized.includes('포르투갈어')) return 'pt';
+  
+  return 'unknown';
 }
 
-
-/**
- * Detect language from sample text data
- * Analyzes first 2-3 rows to determine the language
- */
 function detectLanguageFromSamples(samples: string[]): string {
   if (samples.length === 0) return 'unknown';
   
   const combinedText = samples.join(' ');
   
-  // 1. 명확한 문자셋 체크 (한국어, 일본어, 중국어)
-  const hasKorean = /[\uAC00-\uD7AF]/.test(combinedText);  // 완성형 한글만 체크
-  const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(combinedText);  // 히라가나/가타칸나
-  const hasChinese = /[\u4E00-\u9FFF]/.test(combinedText);  // 한자
+  const hasKorean = /[\uAC00-\uD7AF]/.test(combinedText);
+  const hasJapanese = /[\u3040-\u309F\u30A0-\u30FF]/.test(combinedText);
+  const hasChinese = /[\u4E00-\u9FFF]/.test(combinedText);
   
   if (hasKorean) return 'ko';
   if (hasJapanese) return 'ja';
   if (hasChinese) return 'zh-CN';
   
-  // 2. Latin 문자 비율로 영어 판단
   const latinChars = combinedText.match(/[a-zA-Z]/g) || [];
   const totalChars = combinedText.replace(/\s/g, '').length;
   const latinRatio = totalChars > 0 ? latinChars.length / totalChars : 0;

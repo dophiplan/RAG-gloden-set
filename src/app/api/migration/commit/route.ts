@@ -6,6 +6,7 @@ interface CommitEntry {
   id: string;
   source_text: string;
   context?: string;
+  product_category?: string;
   translations: Record<string, string>;
   category: 'glossary' | 'translation';
   action: 'import' | 'skip' | 'merge' | 'overwrite';
@@ -13,6 +14,17 @@ interface CommitEntry {
 
 // POST - Commit migration data
 export async function POST(request: NextRequest) {
+  // FIXED: Track created IDs for rollback
+  const createdIds = {
+    glossary: [] as string[],
+    glossaryProducts: [] as string[],
+    translations: [] as string[],
+    translationProducts: [] as string[],
+    translationResults: [] as string[],
+  };
+  
+  let batchId: string | null = null;
+
   try {
     // Allow bypassing auth in development if explicitly enabled
     const isDevBypass = process.env.ALLOW_AUTH_BYPASS === 'true' && process.env.NODE_ENV === 'development';
@@ -24,16 +36,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
-    // TypeScript null check bypass - we've already checked user exists above
+    // FIXED: User permission validation (Issue #7)
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('role, name, email')
+      .eq('id', user!.id)
+      .single();
+
+    if (profileError) {
+      console.error('[Migration] Failed to fetch user profile:', profileError);
+      return NextResponse.json({ error: '사용자 정보를 가져올 수 없습니다.' }, { status: 500 });
+    }
+
+    if (!['admin', 'manager'].includes(userProfile?.role)) {
+      return NextResponse.json({ error: '권한이 부족합니다.' }, { status: 403 });
+    }
+    // FIXED: End of permission validation
+
     const userId = user!.id;
     const userEmail = user!.email;
-
-    // Get user profile for audit log
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('name, email')
-      .eq('id', userId)
-      .single();
 
     // Check if this is simple mode (FormData) or advanced mode (JSON)
     const conte[기밀마스킹]ype = request.headers.get('content-type');
@@ -85,12 +106,14 @@ export async function POST(request: NextRequest) {
       interface PreviewEntry {
         suggested_category: 'glossary' | 'translation';
         duplicate_status: { status: string };
+        product?: string;
         [key: string]: unknown;
       }
       entries = previewData.entries.map((entry: PreviewEntry) => ({
         ...entry,
         category: entry.suggested_category,
         action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
+        product_category: entry.product,
       }));
     } else {
       // Advanced mode: Use provided entries
@@ -141,7 +164,7 @@ export async function POST(request: NextRequest) {
       // Continue without batch - rollback won't be available
     }
     
-    const batchId = batch?.id;
+    batchId = batch?.id || null;
 
     // Separate entries by category
     const glossaryEntries = entries.filter((e) => e.category === 'glossary');
@@ -215,13 +238,26 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (glossaryError) throw glossaryError;
+          
+          // FIXED: Track created ID for rollback (Issue #6)
+          createdIds.glossary.push(glossaryData.id);
 
           // Link to product
-          await supabase.from('glossary_products').insert({
-            glossary_id: glossaryData.id,
-            product_code: product_code,
-            version: version || null,
-          });
+          const { data: glossaryProductData, error: glossaryProductError } = await supabase
+            .from('glossary_products')
+            .insert({
+              glossary_id: glossaryData.id,
+              product_code: product_code,
+              version: version || null,
+              product_category: entry.product_category || null,
+            })
+            .select()
+            .single();
+            
+          if (glossaryProductError) throw glossaryProductError;
+          
+          // FIXED: Track created glossary_product ID for rollback
+          createdIds.glossaryProducts.push(glossaryProductData.id);
           
           // Create audit log for glossary creation (non-blocking)
           void supabase.from('glossary_audit_logs').insert({
@@ -247,6 +283,14 @@ export async function POST(request: NextRequest) {
           row: i + 1,
           message: error instanceof Error ? error.message : '가져오기 실패',
         });
+        
+        // FIXED: Rollback on error (Issue #6)
+        await rollbackOperations(supabase, createdIds, batchId);
+        return NextResponse.json({
+          error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
+          details: error instanceof Error ? error.message : 'Unknown error',
+          results,
+        }, { status: 500 });
       }
     }
 
@@ -302,13 +346,22 @@ export async function POST(request: NextRequest) {
                 // For 'merge', keep existing translation
               } else {
                 // Add new language translation
-                await supabase.from('translation_results').insert({
-                  translation_id: existing.id,
-                  language_code: langCode,
-                  translated_text: translatedText.trim(),
-                  reviewer_id: userId,
-                  reviewed_at: new Date().toISOString(),
-                });
+                const { data: trData, error: trError } = await supabase
+                  .from('translation_results')
+                  .insert({
+                    translation_id: existing.id,
+                    language_code: langCode,
+                    translated_text: translatedText.trim(),
+                    reviewer_id: userId,
+                    reviewed_at: new Date().toISOString(),
+                  })
+                  .select()
+                  .single();
+                  
+                if (trError) throw trError;
+                
+                // FIXED: Track created translation_result ID for rollback
+                createdIds.translationResults.push(trData.id);
               }
             }
 
@@ -325,7 +378,6 @@ export async function POST(request: NextRequest) {
             }).then(({ error }) => {
               if (error) {
                 console.error('[Audit Log] Failed to log migration update:', error);
-                // Don't throw - audit log failure should not break the main operation
               }
             });
 
@@ -353,6 +405,9 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (translationError) throw translationError;
+        
+        // FIXED: Track created translation ID for rollback
+        createdIds.translations.push(translation.id);
 
         // Create translation results for each language
         const translationResults = Object.entries(entry.translations)
@@ -367,16 +422,34 @@ export async function POST(request: NextRequest) {
           }));
 
         if (translationResults.length > 0) {
-          await supabase.from('translation_results').insert(translationResults);
+          const { data: trResults, error: trError } = await supabase
+            .from('translation_results')
+            .insert(translationResults)
+            .select();
+            
+          if (trError) throw trError;
+          
+          // FIXED: Track created translation_result IDs for rollback
+          trResults?.forEach((r) => createdIds.translationResults.push(r.id));
         }
 
         // Link to product
-        await supabase.from('translation_products').insert({
-          translation_id: translation.id,
-          product_code: product_code,
-          version: version || null,
-          version_updated_at: version ? new Date().toISOString() : null,
-        });
+        const { data: tpData, error: tpError } = await supabase
+          .from('translation_products')
+          .insert({
+            translation_id: translation.id,
+            product_code: product_code,
+            version: version || null,
+            version_updated_at: version ? new Date().toISOString() : null,
+            product_category: entry.product_category || null,
+          })
+          .select()
+          .single();
+          
+        if (tpError) throw tpError;
+        
+        // FIXED: Track created translation_product ID for rollback
+        createdIds.translationProducts.push(tpData.id);
 
         // Create audit log (non-blocking)
         void supabase.from('translation_audit_logs').insert({
@@ -391,7 +464,6 @@ export async function POST(request: NextRequest) {
         }).then(({ error }) => {
           if (error) {
             console.error('[Audit Log] Failed to log migration creation:', error);
-            // Don't throw - audit log failure should not break the main operation
           }
         });
 
@@ -402,6 +474,14 @@ export async function POST(request: NextRequest) {
           row: i + 1,
           message: error instanceof Error ? error.message : '가져오기 실패',
         });
+        
+        // FIXED: Rollback on error (Issue #6)
+        await rollbackOperations(supabase, createdIds, batchId);
+        return NextResponse.json({
+          error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
+          details: error instanceof Error ? error.message : 'Unknown error',
+          results,
+        }, { status: 500 });
       }
     }
 
@@ -420,9 +500,77 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error committing migration:', error);
+    
+    // FIXED: Attempt rollback on unexpected error (Issue #6)
+    if (batchId || createdIds.glossary.length > 0 || createdIds.translations.length > 0) {
+      try {
+        const supabase = await createClient();
+        await rollbackOperations(supabase, createdIds, batchId);
+      } catch (rollbackError) {
+        console.error('[Migration] Rollback failed:', rollbackError);
+      }
+    }
+    
     return NextResponse.json(
       { error: '마이그레이션 중 오류가 발생했습니다.' },
       { status: 500 }
     );
+  }
+}
+
+// FIXED: Rollback function for transaction support (Issue #6)
+async function rollbackOperations(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  createdIds: {
+    glossary: string[];
+    glossaryProducts: string[];
+    translations: string[];
+    translationProducts: string[];
+    translationResults: string[];
+  },
+  batchId: string | null
+) {
+  console.log('[Migration] Starting rollback...');
+  
+  try {
+    // Delete in reverse order of creation to respect foreign keys
+    
+    // Delete translation_results
+    if (createdIds.translationResults.length > 0) {
+      await supabase.from('translation_results').delete().in('id', createdIds.translationResults);
+    }
+    
+    // Delete translation_products
+    if (createdIds.translationProducts.length > 0) {
+      await supabase.from('translation_products').delete().in('id', createdIds.translationProducts);
+    }
+    
+    // Delete translations
+    if (createdIds.translations.length > 0) {
+      await supabase.from('translations').delete().in('id', createdIds.translations);
+    }
+    
+    // Delete glossary_products
+    if (createdIds.glossaryProducts.length > 0) {
+      await supabase.from('glossary_products').delete().in('id', createdIds.glossaryProducts);
+    }
+    
+    // Delete glossary
+    if (createdIds.glossary.length > 0) {
+      await supabase.from('glossary').delete().in('id', createdIds.glossary);
+    }
+    
+    // Update batch status to failed
+    if (batchId) {
+      await supabase.from('operation_batches').update({
+        status: 'failed',
+        completed_at: new Date().toISOString(),
+      }).eq('id', batchId);
+    }
+    
+    console.log('[Migration] Rollback completed successfully');
+  } catch (error) {
+    console.error('[Migration] Rollback error:', error);
+    throw error;
   }
 }

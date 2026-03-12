@@ -17,6 +17,7 @@ import GlossaryFormModal from '../components/GlossaryFormModal';
 import ExportModal from '../components/ExportModal';
 import BulkActionBar from '../components/BulkActionBar';
 import GlossaryTableHeader from '@/components/glossary/GlossaryTableHeader';
+import RetranslateMenu from '../components/RetranslateMenu';
 import { showError, showSuccess } from '@/lib/notifications';
 import { apiPatch } from '@/lib/api-utils';
 
@@ -61,7 +62,6 @@ function GlossaryProductContent() {
     setIsModalOpen,
     editingTerm,
     setEditingTerm,
-    isReviewing,
     suggestionCount,
     stats,
     fetchTerms,
@@ -79,16 +79,17 @@ function GlossaryProductContent() {
     formLanguage,
     setFormLanguage,
     isSubmitting,
+    isRetranslating,
     resetForm,
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleDeleteMultiple,
     handleApprove,
     handleReject,
     handleRetranslate,
     handleBulkApprove,
     handleBulkReject,
-    handleAIReview,
     openEditModal,
     groupedTerms,
     groupedByTerm,
@@ -99,6 +100,11 @@ function GlossaryProductContent() {
     handleTermInlineUpdate,
     handleTranslationInlineUpdate,
     handleContextInlineUpdate,
+    paginatedTerms,
+    totalTerms: totalGroupedTerms,
+    currentPage,
+    totalPages,
+    handlePageChange,
   } = useGlossaryData();
 
   // Set product from URL
@@ -139,14 +145,14 @@ function GlossaryProductContent() {
   // Resizable columns setup
   const defaultWidths = {
     checkbox: 32,
-    term: 200,
-    translation: 200,
-    context: 220,
-    product: 120,
-    source: 100,
-    approval: 120,
-    hitCount: 100,
-    actions: 80,
+    term: 140,
+    translation: 120,
+    context: 140,
+    product: 70,
+    source: 60,
+    approval: 85,
+    hitCount: 70,
+    actions: 90,
   };
 
   const minWidths = {
@@ -443,13 +449,6 @@ function GlossaryProductContent() {
             >
               Excel 내보내기
             </Button>
-            <Button
-              variant="secondary"
-              onClick={handleAIReview}
-              loading={isReviewing}
-            >
-              AI 일관성 검사
-            </Button>
             <Button onClick={() => setIsModalOpen(true)}>용어 추가</Button>
           </div>
         </div>
@@ -483,9 +482,12 @@ function GlossaryProductContent() {
                       등록된 용어가 없습니다
                     </td>
                   </tr>
-                ) : groupedByTerm ? (
-                  Object.entries(groupedTerms).map(([term, termsInGroup]) => {
+                ) : paginatedTerms.length > 0 ? (
+                  paginatedTerms.map((group) => {
+                    const term = group.term;
+                    const termsInGroup = Object.values(group.translations);
                     const firstTerm = termsInGroup[0];
+                    const allIds = termsInGroup.map(t => t.id);
                     return (
                       <tr key={`group-${term}`} className="border-b border-border-light hover:bg-gray-50">
                         <td style={{ ...getCellStyle('checkbox'), textAlign: 'center' }}>
@@ -565,24 +567,24 @@ function GlossaryProductContent() {
                         </td>
                         <td style={{ width: '80px', minWidth: '80px', maxWidth: '80px', textAlign: 'center' }}>
                           <div className="flex justify-center gap-2">
-                            {/* AI 재번역 버튼 */}
-                            <button
-                              onClick={async () => {
+                            {/* AI 재번역 미니 메뉴 */}
+                            <RetranslateMenu
+                              onRetranslate={async (mode) => {
                                 try {
-                                  await handleRetranslate(firstTerm.term, firstTerm.context || '', displayLanguageColumns);
+                                  await handleRetranslate(firstTerm.term, firstTerm.context || '', displayLanguageColumns, mode);
+                                  showSuccess('재번역이 완료되었습니다.');
                                 } catch (error) {
                                   console.error('Retranslate error:', error);
+                                  showError('재번역에 실패했습니다.');
                                 }
                               }}
-                              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                              title="AI 재번역"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                            </button>
+                              disabled={isRetranslating}
+                              loading={isRetranslating}
+                              displayLanguages={displayLanguageColumns}
+                              termLanguages={termsInGroup.map(t => t.language_code)}
+                            />
                             <button
-                              onClick={() => handleDelete(firstTerm.id)}
+                              onClick={() => handleDeleteMultiple(allIds)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                               title="삭제"
                             >
@@ -688,6 +690,88 @@ function GlossaryProductContent() {
           </div>
         </Card>
 
+        {/* Pagination - 숫자 형태 */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              이전
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {/* 첫 페이지 */}
+              <button
+                onClick={() => handlePageChange(1)}
+                className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                  currentPage === 1 
+                    ? 'bg-[#818CF8] text-white font-medium' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                1
+              </button>
+              
+              {/* 왼쪽 생략 (...) */}
+              {currentPage > 4 && (
+                <span className="px-1 text-gray-400">...</span>
+              )}
+              
+              {/* 중간 페이지들 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => page !== 1 && page !== totalPages && page >= currentPage - 2 && page <= currentPage + 2)
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                      currentPage === page 
+                        ? 'bg-[#818CF8] text-white font-medium' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              
+              {/* 오른쪽 생략 (...) */}
+              {currentPage < totalPages - 3 && (
+                <span className="px-1 text-gray-400">...</span>
+              )}
+              
+              {/* 마지막 페이지 */}
+              {totalPages > 1 && (
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  className={`min-w-[28px] px-2 py-1 text-sm rounded transition-colors ${
+                    currentPage === totalPages 
+                      ? 'bg-[#818CF8] text-white font-medium' 
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  {totalPages}
+                </button>
+              )}
+            </div>
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              다음
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Bulk Action Bar */}
         <BulkActionBar
           selectedCount={selectedIds.length}
@@ -695,6 +779,12 @@ function GlossaryProductContent() {
           onClearSelection={() => setSelectedIds([])}
           onBulkApprove={handleBulkApprove}
           onBulkReject={handleBulkReject}
+          onBulkDelete={async (ids) => {
+            await handleDeleteMultiple(ids);
+            setSelectedIds([]);
+            fetchTerms();
+            fetchStats();
+          }}
           onBulkRetranslate={async (ids) => {
             const selectedTerms = terms.filter(t => ids.includes(t.id));
             const uniqueTerms = [...new Set(selectedTerms.map(t => t.term))];

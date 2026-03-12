@@ -97,6 +97,7 @@ export async function apiFetch<T>(
   const isFormData = fetchOptions.body instanceof FormData;
   
   const response = await fetch(url, {
+    credentials: 'same-origin', // 쿠키 전송을 위해 필요
     headers: isFormData 
       ? {} // Let browser set Content-Type with boundary for FormData
       : { 'Content-Type': 'application/json' },

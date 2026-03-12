@@ -44,8 +44,9 @@ export interface PreviewEntry {
     existing_translations?: Record<string, string>;
   };
   category?: EntryCategory;
-  action?: EntryAction;
-  duplicate_action?: 'skip' | 'overwrite' | 'merge';
+  // 중복 상태 필드
+  existing_in_glossary: boolean;
+  existing_in_translation: boolean;
   // Additional metadata fields
   key?: string;
   product?: string;
@@ -57,11 +58,17 @@ export interface PreviewEntry {
 /** Migration summary statistics */
 export interface MigrationSummary {
   total: number;
-  glossary_suggested: number;
-  translation_suggested: number;
-  exact_matches: number;
-  similar_matches: number;
-  new_entries: number;
+  // 새로운 통계 구조
+  duplicate_glossary: number;
+  new_glossary_selected: number;
+  duplicate_translation: number;
+  new_translation: number;
+  // 기존 필드 (하위 호환성)
+  glossary_suggested?: number;
+  translation_suggested?: number;
+  exact_matches?: number;
+  similar_matches?: number;
+  new_entries?: number;
 }
 
 /** Sheet data from parsed file */
@@ -146,7 +153,7 @@ interface MigrationState {
   summary: MigrationSummary | null;
 
   // Selection state
-  selectedIds: Set<string>;
+  selectedIds: string[];
 
   // UI state
   loading: boolean;
@@ -185,7 +192,7 @@ const initialState: MigrationState = {
   versionEntries: {},
   summary: null,
 
-  selectedIds: new Set(),
+  selectedIds: [],
 
   loading: false,
   error: null,
@@ -212,7 +219,7 @@ type MigrationAction =
   | { type: 'TOGGLE_SELECTED'; payload: string }
   | { type: 'SELECT_ALL'; payload: string[] }
   | { type: 'CLEAR_SELECTED' }
-  | { type: 'SET_SELECTED'; payload: Set<string> }
+  | { type: 'SET_SELECTED'; payload: string[] }
   // Persistence
   | { type: 'RESTORE_STATE'; payload: Partial<MigrationState> }
 
@@ -233,6 +240,10 @@ type MigrationAction =
   | { type: 'LOAD_VERSION_MAPPING'; payload: string }
   | { type: 'UPDATE_CURRENT_MAPPING'; payload: VersionMapping }
   | { type: 'UPDATE_ALL_MAPPINGS'; payload: VersionMappings }
+  // New mapping actions for unified API
+  | { type: 'SET_MAPPING_FIELD'; payload: { version: string; field: string; value: unknown } }
+  | { type: 'CLEAR_MAPPING_FIELD'; payload: { version: string; field: string } }
+  | { type: 'SET_VERSION_MAPPING'; payload: { version: string; mapping: VersionMapping } }
 
   // Preview data
   | { type: 'LOAD_PREVIEW_START' }
@@ -240,6 +251,8 @@ type MigrationAction =
   | { type: 'LOAD_PREVIEW_ERROR'; payload: string }
   | { type: 'UPDATE_ENTRY'; payload: { id: string; updates: Partial<PreviewEntry> } }
   | { type: 'BULK_UPDATE_ENTRIES'; payload: { ids: string[]; updates: Partial<PreviewEntry> } }
+  | { type: 'DELETE_ENTRY'; payload: string }
+  | { type: 'BULK_DELETE_ENTRIES'; payload: string[] }
   | { type: 'RESET_ENTRIES' }
 
   // Commit
@@ -430,6 +443,74 @@ function migrationReducer(
       };
     }
 
+    // New mapping actions for unified API
+    case 'SET_MAPPING_FIELD': {
+      const { version, field, value } = action.payload;
+      const currentMapping = state.versionMappings[version] || initialState.currentMapping;
+      let newMapping = { ...currentMapping };
+      
+      if (field === 'source') {
+        newMapping.source = value as string | null;
+      } else if (field === 'translations') {
+        newMapping.translations = value as string[];
+      } else if (field === 'metadata') {
+        newMapping.metadata = value as Record<string, string>;
+      } else if (field.startsWith('metadata.')) {
+        const metaKey = field.replace('metadata.', '');
+        newMapping.metadata = { ...currentMapping.metadata, [metaKey]: value as string };
+      }
+      
+      return {
+        ...state,
+        versionMappings: {
+          ...state.versionMappings,
+          [version]: newMapping,
+        },
+        // Update currentMapping if it's the selected version
+        ...(state.selectedVersion === version ? { currentMapping: newMapping } : {}),
+      };
+    }
+
+    case 'CLEAR_MAPPING_FIELD': {
+      const { version, field } = action.payload;
+      const currentMapping = state.versionMappings[version] || initialState.currentMapping;
+      let newMapping = { ...currentMapping };
+      
+      if (field === 'source') {
+        newMapping.source = null;
+      } else if (field === 'translations') {
+        newMapping.translations = [];
+      } else if (field === 'metadata') {
+        newMapping.metadata = {};
+      } else if (field.startsWith('metadata.')) {
+        const metaKey = field.replace('metadata.', '');
+        const newMetadata = { ...currentMapping.metadata };
+        delete newMetadata[metaKey];
+        newMapping.metadata = newMetadata;
+      }
+      
+      return {
+        ...state,
+        versionMappings: {
+          ...state.versionMappings,
+          [version]: newMapping,
+        },
+        ...(state.selectedVersion === version ? { currentMapping: newMapping } : {}),
+      };
+    }
+
+    case 'SET_VERSION_MAPPING': {
+      const { version, mapping } = action.payload;
+      return {
+        ...state,
+        versionMappings: {
+          ...state.versionMappings,
+          [version]: mapping,
+        },
+        ...(state.selectedVersion === version ? { currentMapping: mapping } : {}),
+      };
+    }
+
     // Preview data
     case 'LOAD_PREVIEW_START': {
       return {
@@ -488,6 +569,36 @@ function migrationReducer(
             ),
           ])
         ),
+      };
+    }
+
+    case 'DELETE_ENTRY': {
+      const idToDelete = action.payload;
+      return {
+        ...state,
+        entries: state.entries.filter((e) => e.id !== idToDelete),
+        versionEntries: Object.fromEntries(
+          Object.entries(state.versionEntries).map(([version, entries]) => [
+            version,
+            entries.filter((e) => e.id !== idToDelete),
+          ])
+        ),
+        selectedIds: state.selectedIds.filter((id) => id !== idToDelete),
+      };
+    }
+
+    case 'BULK_DELETE_ENTRIES': {
+      const idsToDelete = action.payload;
+      return {
+        ...state,
+        entries: state.entries.filter((e) => !idsToDelete.includes(e.id)),
+        versionEntries: Object.fromEntries(
+          Object.entries(state.versionEntries).map(([version, entries]) => [
+            version,
+            entries.filter((e) => !idsToDelete.includes(e.id)),
+          ])
+        ),
+        selectedIds: state.selectedIds.filter((id) => !idsToDelete.includes(id)),
       };
     }
 
@@ -571,21 +682,20 @@ function migrationReducer(
 
     // Selection
     case 'TOGGLE_SELECTED': {
-      const newSelected = new Set(state.selectedIds);
-      if (newSelected.has(action.payload)) {
-        newSelected.delete(action.payload);
-      } else {
-        newSelected.add(action.payload);
-      }
+      const id = action.payload;
+      const exists = state.selectedIds.includes(id);
+      const newSelected = exists
+        ? state.selectedIds.filter((sid) => sid !== id)
+        : [...state.selectedIds, id];
       return { ...state, selectedIds: newSelected };
     }
 
     case 'SELECT_ALL': {
-      return { ...state, selectedIds: new Set(action.payload) };
+      return { ...state, selectedIds: action.payload };
     }
 
     case 'CLEAR_SELECTED': {
-      return { ...state, selectedIds: new Set() };
+      return { ...state, selectedIds: [] };
     }
 
     case 'SET_SELECTED': {
@@ -633,6 +743,12 @@ interface MigrationContextType {
   saveCurrentMapping: () => void;
   updateCurrentMapping: (mapping: VersionMapping) => void;
   updateAllMappings: (mappings: VersionMappings) => void;
+  
+  // New unified mapping API (for FieldMapping)
+  setMappingField: (version: string, field: string, value: unknown) => void;
+  clearMappingField: (version: string, field: string) => void;
+  setVersionMapping: (version: string, mapping: VersionMapping) => void;
+  getMappingForVersion: (version: string) => VersionMapping;
 
   // Mapping helpers
   getMappedVersions: () => string[];
@@ -643,6 +759,8 @@ interface MigrationContextType {
   loadPreview: () => Promise<void>;
   updateEntry: (id: string, updates: Partial<PreviewEntry>) => void;
   updateEntriesBulk: (ids: string[], updates: Partial<PreviewEntry>) => void;
+  deleteEntry: (id: string) => void;
+  deleteEntries: (ids: string[]) => void;
 
   // Selection
   toggleSelected: (id: string) => void;
@@ -689,6 +807,8 @@ const STORAGE_KEY = 'migration_state';
 export function MigrationProvider({ children }: MigrationProviderProps) {
   const [state, dispatch] = useReducer(migrationReducer, initialState);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // FIXED: AbortController ref for cancelling duplicate API calls in loadPreview
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // ==========================================================================
   // Persistence - Restore from sessionStorage on mount
@@ -911,6 +1031,26 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     dispatch({ type: 'UPDATE_ALL_MAPPINGS', payload: mappings });
   }, []);
 
+  // ==========================================================================
+  // New Unified Mapping API (for FieldMapping)
+  // ==========================================================================
+
+  const setMappingField = useCallback((version: string, field: string, value: unknown) => {
+    dispatch({ type: 'SET_MAPPING_FIELD', payload: { version, field, value } });
+  }, []);
+
+  const clearMappingField = useCallback((version: string, field: string) => {
+    dispatch({ type: 'CLEAR_MAPPING_FIELD', payload: { version, field } });
+  }, []);
+
+  const setVersionMapping = useCallback((version: string, mapping: VersionMapping) => {
+    dispatch({ type: 'SET_VERSION_MAPPING', payload: { version, mapping } });
+  }, []);
+
+  const getMappingForVersion = useCallback((version: string): VersionMapping => {
+    return state.versionMappings[version] || initialState.currentMapping;
+  }, [state.versionMappings]);
+
   const getMappedVersions = useCallback((): string[] => {
     return Object.keys(state.versionMappings).filter(
       (v) => state.versionMappings[v].source
@@ -931,19 +1071,40 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
   );
 
   const isMappingComplete = useCallback((mapping?: VersionMapping): boolean => {
-    const m = mapping || state.currentMapping;
-    return !!(
-      m.source &&
-      m.metadata.product_category &&
-      m.translations.length > 0
-    );
-  }, [state.currentMapping]);
+    // versionMappings에서 현재 선택된 버전의 매핑을 가져옴
+    const selectedVersion = state.selectedVersion;
+    const versionMapping = selectedVersion ? state.versionMappings[selectedVersion] : null;
+    const m = mapping || versionMapping || state.currentMapping;
+    
+    const hasSource = !!m.source;
+    const hasProductCategory = !!m.metadata.product_category;
+    // 번역은 필수가 아님 - 원문과 제품분류만 필수
+    
+    console.log('[isMappingComplete] Checking:', {
+      selectedVersion,
+      hasSource,
+      hasProductCategory,
+      source: m.source,
+      metadata: m.metadata,
+      product_category: m.metadata.product_category,
+      versionMapping,
+      currentMapping: state.currentMapping,
+    });
+    
+    return hasSource && hasProductCategory;
+  }, [state.currentMapping, state.selectedVersion, state.versionMappings]);
 
   // ==========================================================================
   // Preview Data
   // ==========================================================================
 
   const loadPreview = useCallback(async () => {
+    // FIXED: Cancel previous API call if exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     if (!state.file) {
       dispatch({ type: 'LOAD_PREVIEW_ERROR', payload: '파일을 선택해주세요.' });
       return;
@@ -990,11 +1151,10 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       const allVersionEntries: VersionEntries = {};
       let totalSummary: MigrationSummary = {
         total: 0,
-        glossary_suggested: 0,
-        translation_suggested: 0,
-        exact_matches: 0,
-        similar_matches: 0,
-        new_entries: 0,
+        duplicate_glossary: 0,
+        new_glossary_selected: 0,
+        duplicate_translation: 0,
+        new_translation: 0,
       };
 
       // Load preview for each version
@@ -1027,14 +1187,13 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
             return null;
           }
 
+          console.log(`[loadPreview] ${versionName} - entries count:`, previewData.entries.length);
+          console.log(`[loadPreview] ${versionName} - first entry:`, previewData.entries[0]);
+          console.log(`[loadPreview] ${versionName} - first entry translations:`, previewData.entries[0]?.translations);
+
           const initEntries = previewData.entries.map((e) => ({
             ...e,
             version: versionName,
-            action: 'import' as EntryAction,
-            duplicate_action:
-              e.duplicate_status.status === 'exact'
-                ? ('skip' as const)
-                : undefined,
           }));
 
           return {
@@ -1050,15 +1209,25 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
       const results = await Promise.all(versionPromises);
 
+      // FIXED: Check if all API calls failed and show error
+      const successfulResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      if (successfulResults.length === 0) {
+        dispatch({ 
+          type: 'LOAD_PREVIEW_ERROR', 
+          payload: '모든 버전의 미리보기 데이터를 불러오는데 실패했습니다.' 
+        });
+        return;
+      }
+
       results.forEach((result) => {
         if (result) {
           allVersionEntries[result.versionName] = result.entries;
           totalSummary.total += result.summary.total;
-          totalSummary.glossary_suggested += result.summary.glossary_suggested;
-          totalSummary.translation_suggested += result.summary.translation_suggested;
-          totalSummary.exact_matches += result.summary.exact_matches;
-          totalSummary.similar_matches += result.summary.similar_matches;
-          totalSummary.new_entries += result.summary.new_entries;
+          // 새 필드가 있으면 사용, 없으면 기존 필드에서 변환
+          totalSummary.duplicate_glossary += result.summary.duplicate_glossary ?? 0;
+          totalSummary.new_glossary_selected += result.summary.new_glossary_selected ?? 0;
+          totalSummary.duplicate_translation += result.summary.duplicate_translation ?? 0;
+          totalSummary.new_translation += result.summary.new_translation ?? 0;
         }
       });
 
@@ -1090,6 +1259,14 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
   const updateEntriesBulk = useCallback((ids: string[], updates: Partial<PreviewEntry>) => {
     dispatch({ type: 'BULK_UPDATE_ENTRIES', payload: { ids, updates } });
+  }, []);
+
+  const deleteEntry = useCallback((id: string) => {
+    dispatch({ type: 'DELETE_ENTRY', payload: id });
+  }, []);
+
+  const deleteEntries = useCallback((ids: string[]) => {
+    dispatch({ type: 'BULK_DELETE_ENTRIES', payload: ids });
   }, []);
 
   // ==========================================================================
@@ -1127,7 +1304,6 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
             context: e.context,
             translations: e.translations,
             category: e.category || e.suggested_category,
-            action: e.action || 'import',
           })),
           product_code: state.productCode || undefined,
           version: state.version || null,
@@ -1185,15 +1361,35 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
   }, [state.file, state.productCode]);
 
   const canProceedToPreview = useCallback((): boolean => {
-    return (
-      !!state.file &&
-      !!state.productCode &&
-      isMappingComplete()
-    );
-  }, [state.file, state.productCode, isMappingComplete]);
+    const hasFile = !!state.file;
+    const hasProduct = !!state.productCode;
+    
+    // versionMappings에서 현재 선택된 버전의 매핑을 직접 확인
+    const selectedVersion = state.selectedVersion;
+    const versionMapping = selectedVersion ? state.versionMappings[selectedVersion] : null;
+    const m = versionMapping || state.currentMapping;
+    
+    const hasSource = !!m.source;
+    const hasProductCategory = !!m.metadata.product_category;
+    // 번역은 필수가 아님 - 원문과 제품분류만 필수
+    const mappingComplete = hasSource && hasProductCategory;
+    
+    // 디버깅: 어떤 필드가 누락되었는지 확인
+    if (!mappingComplete && hasFile && hasProduct) {
+      const missing = [];
+      if (!hasSource) missing.push('원문(source)');
+      if (!hasProductCategory) missing.push('제품분류(product_category)');
+      console.log('[canProceedToPreview] 매핑 누락:', missing.join(', '));
+      console.log('[canProceedToPreview] selectedVersion:', selectedVersion);
+      console.log('[canProceedToPreview] versionMapping:', versionMapping);
+      console.log('[canProceedToPreview] currentMapping:', state.currentMapping);
+    }
+    
+    return hasFile && hasProduct && mappingComplete;
+  }, [state.file, state.productCode, state.selectedVersion, state.versionMappings, state.currentMapping]);
 
   const canCommit = useCallback((): boolean => {
-    return state.entries.length > 0 && state.entries.some((e) => e.action !== 'skip');
+    return state.entries.length > 0;
   }, [state.entries]);
 
   // ==========================================================================
@@ -1234,6 +1430,12 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     saveCurrentMapping,
     updateCurrentMapping,
     updateAllMappings,
+    
+    // New unified mapping API
+    setMappingField,
+    clearMappingField,
+    setVersionMapping,
+    getMappingForVersion,
 
     // Mapping helpers
     getMappedVersions,
@@ -1244,6 +1446,8 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     loadPreview,
     updateEntry,
     updateEntriesBulk,
+    deleteEntry,
+    deleteEntries,
 
     // Selection
     toggleSelected,

@@ -13,8 +13,8 @@ interface StepIndicatorProps {
 
 const steps: Step[] = [
   { num: 1, label: '파일 업로드' },
-  { num: 2, label: '정보 입력' },
-  { num: 3, label: '텍스트 확인' },
+  { num: 2, label: '데이터 매핑' },
+  { num: 3, label: '업로드 하기' },
 ];
 
 export default function StepIndicator({ currentStep }: StepIndicatorProps) {
