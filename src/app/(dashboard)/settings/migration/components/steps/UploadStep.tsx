@@ -8,7 +8,7 @@ interface UploadStepProps {
   file: File | null;
   productCode: string | null;
   parsedData: { columns: string[]; rowCount: number } | null;
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File | null) => void;
   onProductSelect: (productCode: string) => void;
   onParse: (file: File) => Promise<void>;
   isLoading: boolean;
@@ -66,7 +66,7 @@ export default function UploadStep({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    onFileSelect(null as unknown as File);
+    onFileSelect(null);
     setError(null);
   };
 

@@ -27,6 +27,7 @@ export default function MigrationWizard() {
     updateEntry,
     updateEntriesBulk,
     resetState,
+    commitMigration,
   } = useMigration();
 
   const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary } = state;
@@ -206,7 +207,14 @@ export default function MigrationWizard() {
             <Button
               variant="primary"
               size="lg"
-              onClick={() => {}}
+              onClick={async () => {
+                try {
+                  await commitMigration();
+                  // 성공 시 처리 (예: 완료 메시지, 리다이렉트 등)
+                } catch (err) {
+                  // 에러는 Context에서 처리
+                }
+              }}
               disabled={!canGoNext() || loading}
               loading={loading}
             >

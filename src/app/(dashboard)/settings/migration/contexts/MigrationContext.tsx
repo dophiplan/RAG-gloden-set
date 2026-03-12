@@ -569,7 +569,7 @@ interface MigrationContextType {
   isStepCompleted: (step: MigrationStep) => boolean;
 
   // File handling
-  parseFile: (file: File) => Promise<void>;
+  parseFile: (file: File | null) => Promise<void>;
   clearFile: () => void;
   validateFile: (file: File) => { valid: boolean; error?: string };
 
@@ -701,7 +701,13 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     return { valid: true };
   }, []);
 
-  const parseFile = useCallback(async (file: File) => {
+  const parseFile = useCallback(async (file: File | null) => {
+    // null이면 파일 제거
+    if (!file) {
+      dispatch({ type: 'CLEAR_FILE' });
+      return;
+    }
+
     const validation = validateFile(file);
     if (!validation.valid) {
       dispatch({ type: 'PARSE_FILE_ERROR', payload: validation.error! });
