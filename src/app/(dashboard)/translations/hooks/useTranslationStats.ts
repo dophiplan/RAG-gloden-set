@@ -2,13 +2,14 @@ import { useState, useCallback, useEffect } from 'react';
 import { apiGet } from '@/lib/api-utils';
 import { ProductCode } from '@/types';
 
-interface TranslationStats {
+export interface TranslationStats {
   pending: number;
   in_progress: number;
   reviewed: number;
   re_request: number;
   deployed: number;
   not_used: number;
+  re_deploy_request: number;
   total: number;
 }
 
@@ -20,6 +21,7 @@ export function useTranslationStats(selectedProduct: ProductCode | null | undefi
     re_request: 0,
     deployed: 0,
     not_used: 0,
+    re_deploy_request: 0,
     total: 0,
   });
   const [loading, setLoading] = useState(false);

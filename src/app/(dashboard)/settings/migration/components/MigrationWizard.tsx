@@ -51,12 +51,14 @@ export default function MigrationWizard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto flex flex-col h-full">
       {/* Step Indicator at top */}
-      <StepIndicator currentStep={currentStepIndex + 1} />
+      <div className="mb-2">
+        <StepIndicator currentStep={currentStepIndex + 1} />
+      </div>
 
       {/* Step content area */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden flex-1 min-h-0">
         <div
           className="flex transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentStepIndex * 100}%)` }}
@@ -142,7 +144,7 @@ export default function MigrationWizard() {
       </div>
 
       {/* Bottom navigation - 번역 요청하기와 동일한 레이아웃 */}
-      <div className="flex items-center pt-6">
+      <div className="flex items-center pt-4">
         {/* Left: 이전 button */}
         <div className="flex-1">
           {!isFirstStep && (

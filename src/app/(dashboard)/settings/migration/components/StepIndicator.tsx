@@ -19,7 +19,7 @@ const steps: Step[] = [
 
 export default function StepIndicator({ currentStep }: StepIndicatorProps) {
   return (
-    <div className="flex items-center justify-center mb-8">
+    <div className="flex items-center justify-center mb-4">
       {steps.map((step, index) => (
         <React.Fragment key={step.num}>
           {/* Step Circle */}

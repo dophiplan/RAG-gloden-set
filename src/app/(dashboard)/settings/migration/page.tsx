@@ -28,9 +28,9 @@ function LoadingFallback() {
 export default function MigrationPage() {
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-5xl mx-auto h-[calc(100vh-140px)] flex flex-col">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-4 flex-shrink-0">
           <h1 className="text-2xl font-bold text-gray-900">데이터 마이그레이션</h1>
         </div>
 

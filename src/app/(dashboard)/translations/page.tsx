@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo, Suspense, useState, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { apiFetch } from '@/lib/api-utils';
+import { Suspense, useCallback, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProductTabs from '@/components/ProductTabs';
 import TranslationTableV2 from '@/components/translations/TranslationTableV2';
@@ -13,7 +12,6 @@ import { getAllDisplayableLanguages } from '@/lib/product-languages';
 
 import { useTranslationFilters } from './hooks/useTranslationFilters';
 import { useTranslationData } from './hooks/useTranslationData';
-import { useTranslationStats } from './hooks/useTranslationStats';
 import { useTranslationMutations } from './hooks/useTranslationMutations';
 import { useDuplicateCheck } from './hooks/useDuplicateCheck';
 import { useGlossaryModal } from './hooks/useGlossaryModal';
@@ -28,20 +26,22 @@ import CreateTranslationModal from './components/CreateTranslationModal';
 import GlossaryAddModal from './components/GlossaryAddModal';
 import TranslationBulkActionBar from '@/components/translations/TranslationBulkActionBar';
 import { UnifiedVersionHistoryPanel } from './components/VersionHistory';
+import { useMemo } from 'react';
 
 function TranslationsContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const productFromUrl = searchParams.get('product');
   
   // Filters
   const filters = useTranslationFilters();
   
-  // Sync product from URL query param
+  // If product is selected in URL, redirect to /translations/[product]
   useEffect(() => {
     if (productFromUrl) {
-      filters.setSelectedProduct(productFromUrl);
+      router.push(`/translations/${productFromUrl}`);
     }
-  }, [productFromUrl]);
+  }, [productFromUrl, router]);
 
   // Data
   const { translations, setTranslations, loading, fetchTranslations, updateLocalTranslation } = useTranslationData({
@@ -58,14 +58,10 @@ function TranslationsContent() {
     createdBefore: filters.createdBefore,
   });
 
-  // Stats (for tab counts)
-  const { stats, refreshStats } = useTranslationStats(filters.selectedProduct);
-
   // Combined refresh function
   const handleRefresh = useCallback(() => {
     fetchTranslations();
-    refreshStats();
-  }, [fetchTranslations, refreshStats]);
+  }, [fetchTranslations]);
 
   // Mutations - unified through useTranslationMutations hook
   const mutations = useTranslationMutations({
@@ -121,40 +117,12 @@ function TranslationsContent() {
     return getAllDisplayableLanguages();
   }, []);
 
-  // 개별 번역 항목 히스토리 모달 상태
-  const [individualHistoryModal, setIndividualHistoryModal] = useState<{
-    open: boolean;
-    translationId: string | null;
-    languageCode: string;
-    curre[기밀마스킹]ext: string;
-  }>({
-    open: false,
-    translationId: null,
-    languageCode: 'ko',
-    curre[기밀마스킹]ext: '',
-  });
-
-  // 번역 텍스트 가져오기 헬퍼
-  const getTranslationText = useCallback((translation: typeof translations[0], languageCode: string): string => {
-    const result = translation.translation_results?.find(
-      (r) => r.language_code === languageCode
-    );
-    return result?.translated_text || '';
-  }, []);
-
-  // 히스토리 버튼 클릭 핸들러
-  const handleHistoryClick = useCallback((translationId: string) => {
-    const translation = translations.find(t => t.id === translationId);
-    if (translation) {
-      const langCode = filters.selectedLanguageColumns?.[0] || 'ko';
-      setIndividualHistoryModal({
-        open: true,
-        translationId,
-        languageCode: langCode,
-        curre[기밀마스킹]ext: getTranslationText(translation, langCode),
-      });
+  // Handle product change - navigate to /translations/[product]
+  const handleProductChange = useCallback((product: string | null) => {
+    if (product) {
+      router.push(`/translations/${product}`);
     }
-  }, [translations, filters.selectedLanguageColumns, getTranslationText]);
+  }, [router]);
 
   return (
     <DashboardLayout
@@ -167,7 +135,7 @@ function TranslationsContent() {
           <div className="flex-1">
             <ProductTabs
               selectedProduct={filters.selectedProduct}
-              onProductChange={filters.setSelectedProduct}
+              onProductChange={handleProductChange}
             />
           </div>
           <button
@@ -199,6 +167,8 @@ function TranslationsContent() {
           createdBefore={filters.createdBefore}
           onCreatedBeforeChange={filters.setCreatedBefore}
           onQuickFilter={filters.setQuickFilter}
+          selectedProduct={filters.selectedProduct}
+          onProductChange={filters.setSelectedProduct}
         />
 
         <TranslationsHeader
@@ -228,7 +198,7 @@ function TranslationsContent() {
           onPlatformsUpdate={mutations.handlePlatformsUpdate}
           onDelete={mutations.handleDelete}
           onAddToGlossary={glossary.handleOpenModal}
-          onHistoryClick={handleHistoryClick}
+          onHistoryClick={() => {}}
           onRefresh={handleRefresh}
           onSelectionChange={modals.setSelectedIds}
           selectedIds={modals.selectedIds}
@@ -305,24 +275,6 @@ function TranslationsContent() {
                 modals.clearSelection();
               }}
             />
-          </div>
-        )}
-
-        {/* 개별 번역 히스토리 모달 */}
-        {individualHistoryModal.open && individualHistoryModal.translationId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
-              <UnifiedVersionHistoryPanel
-                mode="single"
-                translationId={individualHistoryModal.translationId}
-                languageCode={individualHistoryModal.languageCode}
-                curre[기밀마스킹]ext={individualHistoryModal.curre[기밀마스킹]ext}
-                onClose={() => setIndividualHistoryModal(prev => ({ ...prev, open: false }))}
-                onRevert={() => {
-                  handleRefresh();
-                }}
-              />
-            </div>
           </div>
         )}
 

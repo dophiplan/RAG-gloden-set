@@ -124,7 +124,7 @@ export default function UploadStep({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* White circle with "1" */}
-            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center">
               <span className="text-[#818CF8] font-bold text-sm">1</span>
             </div>
             {/* Title */}
@@ -174,7 +174,7 @@ export default function UploadStep({
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* File Upload Area */}
         <div>
           <input
@@ -193,7 +193,7 @@ export default function UploadStep({
             onDrop={handleDrop}
             className={`
               relative flex flex-col items-center justify-center 
-              py-12 px-6
+              py-8 px-6
               border-2 border-dashed rounded-2xl
               cursor-pointer transition-all duration-200
               ${isDragging 
@@ -204,7 +204,7 @@ export default function UploadStep({
           >
             {/* Upload Icon */}
             <div className={`
-              w-16 h-16 rounded-full flex items-center justify-center mb-4
+              w-12 h-12 rounded-full flex items-center justify-center mb-4
               ${isDragging ? 'bg-[#818CF8]/10' : 'bg-gray-100'}
               transition-colors duration-200
             `}>

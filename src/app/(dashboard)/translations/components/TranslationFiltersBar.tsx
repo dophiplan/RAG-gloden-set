@@ -2,8 +2,8 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { TranslationStatus, LanguageCode, ScopeType } from '@/types';
-import { useLanguages } from '@/hooks/useReferenceData';
+import { TranslationStatus, LanguageCode, ScopeType, ProductCode } from '@/types';
+import { useLanguages, useProducts } from '@/hooks/useReferenceData';
 
 interface TranslationFiltersBarProps {
   searchTerm: string;
@@ -26,6 +26,10 @@ interface TranslationFiltersBarProps {
   createdBefore: string;
   onCreatedBeforeChange: (value: string) => void;
   onQuickFilter: (filterType: 'today' | 'this_week' | 'this_month' | 'frequently_used') => void;
+  // Product filter (new)
+  selectedProduct: ProductCode | null;
+  onProductChange: (product: ProductCode | null) => void;
+  hideProductFilter?: boolean;
   // Optional filters for backward compatibility
   requestIdFilter?: string | null;
   onRequestIdFilterChange?: (value: string | null) => void;
@@ -57,6 +61,9 @@ export default function TranslationFiltersBar({
   createdBefore,
   onCreatedBeforeChange,
   onQuickFilter,
+  selectedProduct,
+  onProductChange,
+  hideProductFilter = false,
   requestIdFilter,
   onRequestIdFilterChange,
   onRequestIdChange,
@@ -65,6 +72,7 @@ export default function TranslationFiltersBar({
   onVersionChange,
 }: TranslationFiltersBarProps) {
   const { languages, languagesMap } = useLanguages();
+  const { products } = useProducts();
 
   // Normalize handlers (support both old and new naming)
   const handleScopeChange = onScopeFilterChange ?? onScopeChange ?? (() => {});
@@ -76,6 +84,12 @@ export default function TranslationFiltersBar({
   const languageSelectOptions = [
     { value: '', label: '모든 언어' },
     ...languages.map(l => ({ value: l.code, label: l.name }))
+  ];
+
+  // Generate product options
+  const productSelectOptions = [
+    { value: '', label: '모든 제품' },
+    ...products.map(p => ({ value: p.code, label: p.name }))
   ];
 
   const handleLanguageToggle = (lang: LanguageCode) => {
@@ -111,25 +125,22 @@ export default function TranslationFiltersBar({
       <div className="space-y-3">
         {/* Main Filters */}
         <div className="flex flex-wrap gap-2">
-          {/* 모든 언어 */}
+          {/* 제품 필터 - hideProductFilter가 false일 때만 표시 */}
+          {!hideProductFilter && (
+            <div className="w-40">
+              <Select
+                value={selectedProduct || ''}
+                onChange={(e) => onProductChange(e.target.value as ProductCode || null)}
+                options={productSelectOptions}
+              />
+            </div>
+          )}
+          {/* 모든 언어 -->
           <div className="w-40">
             <Select
               value={languageFilter}
               onChange={(e) => onLanguageFilterChange(e.target.value)}
               options={languageSelectOptions}
-            />
-          </div>
-          {/* 모든 상태 */}
-          <div className="w-40">
-            <Select
-              value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value as TranslationStatus | '')}
-              options={[
-                { value: '', label: '모든 상태' },
-                { value: 'pending', label: '번역 요청' },
-                { value: 'reviewed', label: '검수 완료' },
-                { value: 'deployed', label: '반영 완료' },
-              ]}
             />
           </div>
           {/* 제품 분류 */}
