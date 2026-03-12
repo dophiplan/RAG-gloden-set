@@ -80,24 +80,6 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
   // 다중 선택 상태
   const [selectedColumns, setSelectedColumns] = React.useState<string[]>([]);
 
-  // 컬럼 클릭 핸들러 (다중 선택)
-  const handleColumnClick = useCallback(
-    (e: React.MouseEvent, column: string) => {
-      if (isColumnMapped(column)) return;
-
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl/Cmd + 클릭: 토글 선택
-        setSelectedColumns((prev) =>
-          prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]
-        );
-      } else {
-        // 일반 클릭: 단일 선택
-        setSelectedColumns([column]);
-      }
-    },
-    [isColumnMapped] // FIXED: Added missing dependency
-  );
-
   // 버전 선택 핸들러
   const handleVersionSelect = useCallback(
     (version: string) => {
@@ -229,6 +211,24 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
       );
     },
     [currentMapping]
+  );
+
+  // 컬럼 클릭 핸들러 (다중 선택) - isColumnMapped 다음에 정의 (호이스팅 문제 해결)
+  const handleColumnClick = useCallback(
+    (e: React.MouseEvent, column: string) => {
+      if (isColumnMapped(column)) return;
+
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl/Cmd + 클릭: 토글 선택
+        setSelectedColumns((prev) =>
+          prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]
+        );
+      } else {
+        // 일반 클릭: 단일 선택
+        setSelectedColumns([column]);
+      }
+    },
+    [isColumnMapped] // FIXED: Added missing dependency
   );
 
   // 번역 컬럼 제거
