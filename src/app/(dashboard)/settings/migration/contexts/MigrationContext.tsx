@@ -6,6 +6,7 @@ import React, {
   useReducer,
   useCallback,
   useRef,
+  useEffect,
   ReactNode,
 } from 'react';
 import * as XLSX from 'xlsx';
@@ -144,6 +145,9 @@ interface MigrationState {
   versionEntries: VersionEntries;
   summary: MigrationSummary | null;
 
+  // Selection state
+  selectedIds: Set<string>;
+
   // UI state
   loading: boolean;
   error: string | null;
@@ -181,6 +185,8 @@ const initialState: MigrationState = {
   versionEntries: {},
   summary: null,
 
+  selectedIds: new Set(),
+
   loading: false,
   error: null,
   toast: null,
@@ -202,6 +208,13 @@ type MigrationAction =
   | { type: 'PREV_STEP' }
   | { type: 'GO_TO_STEP'; payload: MigrationStep }
   | { type: 'MARK_STEP_COMPLETED'; payload: MigrationStep }
+  // Selection
+  | { type: 'TOGGLE_SELECTED'; payload: string }
+  | { type: 'SELECT_ALL'; payload: string[] }
+  | { type: 'CLEAR_SELECTED' }
+  | { type: 'SET_SELECTED'; payload: Set<string> }
+  // Persistence
+  | { type: 'RESTORE_STATE'; payload: Partial<MigrationState> }
 
   // File handling
   | { type: 'SET_FILE'; payload: { file: File; sheetsData: SheetData[] } }
@@ -544,7 +557,46 @@ function migrationReducer(
       };
     }
 
+    case 'RESTORE_STATE': {
+      return {
+        ...state,
+        ...action.payload,
+        // Don't restore file (File object can't be serialized)
+        file: null,
+        // Reset loading and error states
+        loading: false,
+        error: null,
+      };
+    }
+
+    // Selection
+    case 'TOGGLE_SELECTED': {
+      const newSelected = new Set(state.selectedIds);
+      if (newSelected.has(action.payload)) {
+        newSelected.delete(action.payload);
+      } else {
+        newSelected.add(action.payload);
+      }
+      return { ...state, selectedIds: newSelected };
+    }
+
+    case 'SELECT_ALL': {
+      return { ...state, selectedIds: new Set(action.payload) };
+    }
+
+    case 'CLEAR_SELECTED': {
+      return { ...state, selectedIds: new Set() };
+    }
+
+    case 'SET_SELECTED': {
+      return { ...state, selectedIds: action.payload };
+    }
+
     case 'RESET_STATE': {
+      // Clear sessionStorage on reset
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('migration_state');
+      }
       return initialState;
     }
 
@@ -592,6 +644,11 @@ interface MigrationContextType {
   updateEntry: (id: string, updates: Partial<PreviewEntry>) => void;
   updateEntriesBulk: (ids: string[], updates: Partial<PreviewEntry>) => void;
 
+  // Selection
+  toggleSelected: (id: string) => void;
+  selectAll: () => void;
+  clearSelected: () => void;
+
   // Commit
   commitMigration: () => Promise<CommitResponse>;
 
@@ -627,9 +684,62 @@ interface MigrationProviderProps {
   children: ReactNode;
 }
 
+const STORAGE_KEY = 'migration_state';
+
 export function MigrationProvider({ children }: MigrationProviderProps) {
   const [state, dispatch] = useReducer(migrationReducer, initialState);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ==========================================================================
+  // Persistence - Restore from sessionStorage on mount
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        dispatch({ type: 'RESTORE_STATE', payload: parsed });
+      }
+    } catch (e) {
+      console.error('Failed to restore migration state:', e);
+    }
+  }, []);
+
+  // ==========================================================================
+  // Persistence - Save to sessionStorage on state change
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Don't save file (can't be serialized) and transient states
+      const { file, loading, error, toast, ...persistableState } = state;
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(persistableState));
+    } catch (e) {
+      console.error('Failed to save migration state:', e);
+    }
+  }, [state]);
+
+  // ==========================================================================
+  // Warn before leaving page with unsaved progress
+  // ==========================================================================
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Warn if user has made progress (completed upload step)
+      if (state.completedSteps.upload && !state.completedSteps.previewCommit) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [state.completedSteps]);
 
   // ==========================================================================
   // Navigation
@@ -983,6 +1093,23 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
   }, []);
 
   // ==========================================================================
+  // Selection
+  // ==========================================================================
+
+  const toggleSelected = useCallback((id: string) => {
+    dispatch({ type: 'TOGGLE_SELECTED', payload: id });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    const allIds = state.entries.map((e) => e.id);
+    dispatch({ type: 'SELECT_ALL', payload: allIds });
+  }, [state.entries]);
+
+  const clearSelected = useCallback(() => {
+    dispatch({ type: 'CLEAR_SELECTED' });
+  }, []);
+
+  // ==========================================================================
   // Commit
   // ==========================================================================
 
@@ -1117,6 +1244,11 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     loadPreview,
     updateEntry,
     updateEntriesBulk,
+
+    // Selection
+    toggleSelected,
+    selectAll,
+    clearSelected,
 
     // Commit
     commitMigration,

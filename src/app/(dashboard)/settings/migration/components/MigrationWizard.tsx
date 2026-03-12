@@ -26,11 +26,14 @@ export default function MigrationWizard() {
     loadPreview,
     updateEntry,
     updateEntriesBulk,
+    toggleSelected,
+    selectAll,
+    clearSelected,
     resetState,
     commitMigration,
   } = useMigration();
 
-  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary } = state;
+  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds } = state;
 
   const currentStepIndex = STEP_ORDER.indexOf(currentStep);
   const isFirstStep = currentStepIndex === 0;
@@ -119,19 +122,10 @@ export default function MigrationWizard() {
                 duplicate_status: e.duplicate_status,
                 action: (e.action || 'import') as 'import' | 'skip' | 'merge' | 'overwrite',
               }))}
-              selectedIds={new Set()}
-              onToggleSelected={(id) => {
-                // TODO: Implement selection toggle
-                console.log('Toggle selection for:', id);
-              }}
-              onSelectAll={() => {
-                // TODO: Implement select all
-                console.log('Select all - not implemented');
-              }}
-              onClearSelected={() => {
-                // TODO: Implement clear selection
-                console.log('Clear selected - not implemented');
-              }}
+              selectedIds={selectedIds}
+              onToggleSelected={toggleSelected}
+              onSelectAll={selectAll}
+              onClearSelected={clearSelected}
               onUpdateEntry={updateEntry}
               onBulkUpdate={(action) => {
                 const targetIds = entries.filter(e => e.action === action).map(e => e.id);

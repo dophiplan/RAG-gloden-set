@@ -18,11 +18,6 @@ interface StatusConfig {
 // 상태값 설정 - getCount 함수로 자동 계산
 const statusConfig: StatusConfig[] = [
   { 
-    key: '', 
-    label: '전체', 
-    getCount: (stats) => Object.values(stats).reduce((sum, count) => sum + (count || 0), 0) - (stats.total || 0)
-  },
-  { 
     key: 'pending', 
     label: '요청', 
     getCount: (stats) => stats.pending || 0
