@@ -404,33 +404,33 @@ export default function UploadPage() {
           >
             {/* Step 1: File Upload */}
             <div className="w-full flex-shrink-0 px-4">
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+              <Card className="overflow-hidden">
+                <div className="flex items-center justify-between bg-[#818CF8] -mx-5 -mt-5 px-5 py-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center font-semibold text-[#818CF8] text-sm">
                       1
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">파일 업로드</h3>
+                    <h3 className="text-lg font-semibold text-white">파일 업로드</h3>
                   </div>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch('/samples/test.pdf');
-                        const blob = await response.blob();
-                        const file = new File([blob], 'test.pdf', { type: 'application/pdf' });
-                        const uploadedFile = {
-                          file,
-                          id: `test-pdf-${Date.now()}`,
-                        };
-                        handleFilesChange([uploadedFile]);
-                      } catch (error) {
-                        console.error('Failed to load sample PDF:', error);
-                      }
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-hover bg-primary-light hover:bg-border rounded-lg transition-colors"
-                  >
-                    📄 test.pdf
-                  </button>
+                  {uploadedFiles.length > 0 && (
+                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm text-white font-medium truncate max-w-[150px]">
+                        {uploadedFiles[0].file.name}
+                      </span>
+                      <button
+                        onClick={() => handleFilesChange([])}
+                        className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+                        aria-label="파일 제거"
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
                   번역할 텍스트가 포함된 PDF 또는 이미지 파일을 업로드하세요
@@ -441,7 +441,13 @@ export default function UploadPage() {
 
             {/* Step 2: Information */}
             <div className="w-full flex-shrink-0 px-4">
-              <Card>
+              <Card className="overflow-hidden">
+                <div className="flex items-center gap-3 bg-[#818CF8] -mx-5 -mt-5 px-5 py-4 mb-6">
+                  <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center font-semibold text-[#818CF8] text-sm">
+                    2
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">정보 입력</h3>
+                </div>
                 <div className="space-y-6">
                   {/* Basic Information */}
                   <div>
@@ -566,22 +572,17 @@ export default function UploadPage() {
 
             {/* Step 3: Parse Results - moved inside slider */}
             {parseResult && parseResult.success ? (
-              <Card>
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
-                    3
+              <Card className="overflow-hidden">
+                <div className="flex items-center justify-between bg-[#818CF8] -mx-5 -mt-5 px-5 py-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center font-semibold text-[#818CF8] text-sm">
+                      3
+                    </div>
+                    <h3 className="text-lg font-semibold text-white">텍스트 확인</h3>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">추출된 텍스트 확인</h3>
-                    <p className="text-sm text-gray-600">
-                      {parseResult.summary?.totalTexts || 0}개의 텍스트가 추출되었습니다
-                    </p>
-                  </div>
+                  <Badge variant="success" className="bg-white/20 text-white border-0">완료</Badge>
                 </div>
-                <Badge variant="success">완료</Badge>
-                  </div>
+                <div className="space-y-6">
 
                   {/* Issues Created */}
                   {parseResult.issues_created && (parseResult.issues_created || []).length > 0 && (
