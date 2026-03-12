@@ -136,6 +136,13 @@ export async function POST(request: NextRequest) {
     let similarMatches = 0;
     let newEntries = 0;
 
+    // FIXED: N+1 쿼리 최적화 - 모든 중복 체크를 한 번에 수행
+    const sourceTexts = rows
+      .filter(row => row.source_text?.trim())
+      .map(row => row.source_text.trim());
+    
+    const duplicateMap = await checkDuplicatesBatch(supabase, sourceTexts);
+
     for (const row of rows) {
       if (!row.source_text?.trim()) {
         continue;
@@ -161,7 +168,8 @@ export async function POST(request: NextRequest) {
         translationSuggested++;
       }
 
-      const duplicateStatus = await checkDuplicates(supabase, sourceText, suggestedCategory, translations);
+      // FIXED: Map에서 중복 상태 조회 (N+1 방지)
+      const duplicateStatus = duplicateMap.get(sourceText) || { status: 'new' as const };
 
       if (duplicateStatus.status === 'exact') {
         exactMatches++;
@@ -234,109 +242,84 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// FIXED: N+1 쿼리 최적화 - 배치로 중복 체크
+async function checkDuplicatesBatch(
+  supabase: SupabaseClient,
+  sourceTexts: string[]
+): Promise<Map<string, { status: 'exact' | 'similar' | 'new'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>> {
+  const result = new Map<string, { status: 'exact' | 'similar' | 'new'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>();
+  
+  if (sourceTexts.length === 0) return result;
+
+  // Glossary 중복 체크 (한 번의 쿼리로 모든 term 조회)
+  const { data: glossaryMatches } = await supabase
+    .from('glossary')
+    .select('id, term, translation, language_code')
+    .in('term', sourceTexts);
+
+  const glossaryMap = new Map<string, { id: string; translations: Record<string, string> }>();
+  if (glossaryMatches) {
+    for (const g of glossaryMatches) {
+      if (!glossaryMap.has(g.term)) {
+        glossaryMap.set(g.term, { id: g.id, translations: {} });
+      }
+      glossaryMap.get(g.term)!.translations[g.language_code] = g.translation;
+    }
+  }
+
+  // Translation 중복 체크 (한 번의 쿼리로 모든 source_text 조회)
+  const { data: translationMatches } = await supabase
+    .from('translations')
+    .select('id, source_text, translation_results(language_code, translated_text)')
+    .in('source_text', sourceTexts);
+
+  const translationMap = new Map<string, { id: string; translations: Record<string, string> }>();
+  if (translationMatches) {
+    for (const t of translationMatches) {
+      const translations: Record<string, string> = {};
+      if (t.translation_results) {
+        for (const tr of t.translation_results as { language_code: string; translated_text: string }[]) {
+          translations[tr.language_code] = tr.translated_text;
+        }
+      }
+      translationMap.set(t.source_text, { id: t.id, translations });
+    }
+  }
+
+  // 결과 조합
+  for (const sourceText of sourceTexts) {
+    const glossaryMatch = glossaryMap.get(sourceText);
+    const translationMatch = translationMap.get(sourceText);
+
+    if (glossaryMatch) {
+      result.set(sourceText, {
+        status: 'exact',
+        existing_id: glossaryMatch.id,
+        existing_translations: glossaryMatch.translations,
+      });
+    } else if (translationMatch) {
+      result.set(sourceText, {
+        status: 'exact',
+        existing_id: translationMatch.id,
+        existing_translations: translationMatch.translations,
+      });
+    } else {
+      result.set(sourceText, { status: 'new' });
+    }
+  }
+
+  return result;
+}
+
+// 기존 단일 체크 함수는 유지 (하위 호환성)
 async function checkDuplicates(
   supabase: SupabaseClient,
   sourceText: string,
   category: 'glossary' | 'translation',
   translations: Record<string, string>
 ) {
-  if (category === 'glossary') {
-    const { data: existing } = await supabase
-      .from('glossary')
-      .select('id, term, translation, language_code')
-      .eq('term', sourceText)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
-      const existingTranslations: Record<string, string> = {};
-
-      const { data: allTranslations } = await supabase
-        .from('glossary')
-        .select('language_code, translation')
-        .eq('term', sourceText);
-
-      if (allTranslations) {
-        interface GlossaryTranslation {
-          language_code: string;
-          translation: string;
-        }
-        allTranslations.forEach((t: GlossaryTranslation) => {
-          existingTranslations[t.language_code] = t.translation;
-        });
-      }
-
-      return {
-        status: 'exact' as const,
-        existing_id: existing[0].id,
-        existing_translations: existingTranslations,
-      };
-    }
-
-    const { data: similarTerms } = await supabase
-      .from('glossary')
-      .select('id, term, translation, language_code')
-      .ilike('term', `%${sourceText}%`)
-      .neq('term', sourceText)
-      .limit(3);
-
-    if (similarTerms && similarTerms.length > 0) {
-      const similarity = calculateSimilarity(sourceText, similarTerms[0].term);
-      if (similarity > 0.7) {
-        return {
-          status: 'similar' as const,
-          similarity,
-          existing_id: similarTerms[0].id,
-        };
-      }
-    }
-  } else {
-    const { data: existing } = await supabase
-      .from('translations')
-      .select('id, source_text, translation_results(*)')
-      .eq('source_text', sourceText)
-      .single();
-
-    if (existing) {
-      const existingTranslations: Record<string, string> = {};
-      if (existing.translation_results) {
-        interface TranslationResultItem {
-          language_code: string;
-          translated_text: string;
-        }
-        existing.translation_results.forEach((tr: TranslationResultItem) => {
-          existingTranslations[tr.language_code] = tr.translated_text;
-        });
-      }
-
-      return {
-        status: 'exact' as const,
-        existing_id: existing.id,
-        existing_translations: existingTranslations,
-      };
-    }
-
-    const { data: similarTranslations } = await supabase
-      .from('translations')
-      .select('id, source_text')
-      .ilike('source_text', `%${sourceText.substring(0, 20)}%`)
-      .neq('source_text', sourceText)
-      .limit(3);
-
-    if (similarTranslations && similarTranslations.length > 0) {
-      const similarity = calculateSimilarity(sourceText, similarTranslations[0].source_text);
-      if (similarity > 0.7) {
-        return {
-          status: 'similar' as const,
-          similarity,
-          existing_id: similarTranslations[0].id,
-        };
-      }
-    }
-  }
-
-  return {
-    status: 'new' as const,
-  };
+  const batchResult = await checkDuplicatesBatch(supabase, [sourceText]);
+  return batchResult.get(sourceText) || { status: 'new' as const };
 }
 
 function calculateSimilarity(str1: string, str2: string): number {
