@@ -49,7 +49,8 @@ export default function PreviewCommitStep({
     } else {
       setActiveVersion('all');
     }
-  }, [versions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [versions, activeVersion]);
 
   const currentEntries = useMemo(() => {
     let entries: PreviewEntry[];

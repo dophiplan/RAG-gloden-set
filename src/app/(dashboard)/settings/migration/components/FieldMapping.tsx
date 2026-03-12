@@ -22,32 +22,9 @@ type DragItem =
   | { type: 'version'; version: string }
   | null;
 
-// 드래그 상태 관리 (모듈 레벨 싱글톤)
-class DragState {
-  private static instance: DragState;
-  private item: DragItem = null;
-
-  static getInstance(): DragState {
-    if (!DragState.instance) {
-      DragState.instance = new DragState();
-    }
-    return DragState.instance;
-  }
-
-  set(item: DragItem) {
-    this.item = item;
-  }
-
-  get(): DragItem {
-    return this.item;
-  }
-
-  clear() {
-    this.item = null;
-  }
-}
-
-const dragState = DragState.getInstance();
+// FIXED: React ref로 변경하여 Concurrent Mode 호환성 확보
+// 기존: 모듈 레벨 싱글톤 (React 외부 상태 - 위험)
+const dragStateRef = { current: null as DragItem };
 
 export default function FieldMapping({ sheetsData, platforms: propPlatforms }: FieldMappingProps) {
   const {
@@ -97,7 +74,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
           ? selectedColumns
           : [column];
 
-      dragState.set({ type: 'column', column: columnsToDrag.join(','), sourceVersion });
+      dragStateRef.current = { type: 'column', column: columnsToDrag.join(','), sourceVersion };
       e.dataTransfer.effectAllowed = 'copy';
       e.dataTransfer.setData('text/plain', columnsToDrag.join(','));
     },
@@ -106,7 +83,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
 
   // 드래그 종료 핸들러
   const handleDragEnd = useCallback(() => {
-    dragState.clear();
+    dragStateRef.current = null;
   }, []);
 
   // 드롭 핸들러 - 원문
@@ -119,7 +96,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
         return;
       }
 
-      const dragItem = dragState.get();
+      const dragItem = dragStateRef.current;
       console.log('[handleSourceDrop] dragItem:', dragItem);
       if (!dragItem || dragItem.type !== 'column') {
         console.log('[handleSourceDrop] ERROR: invalid dragItem');
@@ -134,7 +111,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
 
       console.log('[handleSourceDrop] Setting source =', dragItem.column);
       setMappingField(selectedVersion, 'source', dragItem.column);
-      dragState.clear();
+      dragStateRef.current = null;
     },
     [selectedVersion, setMappingField]
   );
@@ -145,7 +122,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
       e.preventDefault();
       if (!selectedVersion) return;
 
-      const dragItem = dragState.get();
+      const dragItem = dragStateRef.current;
       if (!dragItem || dragItem.type !== 'column') return;
 
       if (dragItem.sourceVersion !== selectedVersion) return;
@@ -162,7 +139,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
 
       setMappingField(selectedVersion, 'translations', newTranslations);
       setSelectedColumns([]); // 드래그 후 선택 해제
-      dragState.clear();
+      dragStateRef.current = null;
     },
     [selectedVersion, currentMapping?.translations, setMappingField, setSelectedColumns]
   );
@@ -177,7 +154,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
         return;
       }
 
-      const dragItem = dragState.get();
+      const dragItem = dragStateRef.current;
       console.log('[handleMetadataDrop] dragItem:', dragItem);
       if (!dragItem) return;
 
@@ -195,7 +172,7 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
         setMappingField(selectedVersion, `metadata.${field}`, dragItem.version);
       }
 
-      dragState.clear();
+      dragStateRef.current = null;
     },
     [selectedVersion, setMappingField]
   );
@@ -297,11 +274,11 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
                         onClick={() => handleVersionSelect(sheet.name)}
                         draggable
                         onDragStart={(e) => {
-                          dragState.set({ type: 'version', version: sheet.name });
+                          dragStateRef.current = { type: 'version', version: sheet.name };
                           e.dataTransfer.setData('text/plain', sheet.name);
                           e.dataTransfer.effectAllowed = 'copy';
                         }}
-                        onDragEnd={() => dragState.clear()}
+                        onDragEnd={() => { dragStateRef.current = null; }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
                           isSelected
                             ? 'bg-primary text-white shadow-sm'

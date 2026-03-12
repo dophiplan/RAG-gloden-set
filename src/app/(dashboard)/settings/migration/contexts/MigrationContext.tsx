@@ -1120,11 +1120,6 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       return;
     }
 
-    if (state.currentMapping.translations.length === 0) {
-      dispatch({ type: 'LOAD_PREVIEW_ERROR', payload: '최소 하나의 번역 언어를 선택해주세요' });
-      return;
-    }
-
     // Save current mapping
     const finalVersionMappings = { ...state.versionMappings };
     if (state.selectedVersion) {
