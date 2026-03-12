@@ -28,7 +28,7 @@ function LoadingFallback() {
 export default function MigrationPage() {
   return (
     <DashboardLayout title="데이터 마이그레이션">
-      <div className="max-w-5xl mx-auto h-[calc(100vh-140px)] flex flex-col">
+      <div className="max-w-5xl mx-auto">
         {/* Migration Wizard */}
         <MigrationProvider>
           <Suspense fallback={<LoadingFallback />}>

@@ -51,14 +51,14 @@ export default function MigrationWizard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col h-full">
+    <div className="max-w-5xl mx-auto">
       {/* Step Indicator at top */}
       <div className="mb-2">
         <StepIndicator currentStep={currentStepIndex + 1} />
       </div>
 
       {/* Step content area */}
-      <div className="relative overflow-hidden flex-1 min-h-0">
+      <div className="relative overflow-hidden">
         <div
           className="flex transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentStepIndex * 100}%)` }}
