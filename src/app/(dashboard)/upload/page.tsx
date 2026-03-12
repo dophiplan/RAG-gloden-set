@@ -47,7 +47,7 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
   ];
 
   return (
-    <div className="flex items-center justify-center mb-8">
+    <div className="flex items-center justify-center mb-4">
       {steps.map((step, index) => (
         <div key={step.num} className="flex items-center">
           <div className="flex flex-col items-center">
@@ -726,54 +726,58 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-8">
-          {currentStep > 1 ? (
-            <Button
-              variant="secondary"
-              onClick={goToPrevStep}
-              className="flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              이전
-            </Button>
-          ) : (
-            <div className="w-20" />
-          )}
-
-          <div className="flex gap-2">
-            {[1, 2, 3].map((step) => (
-              <button
-                key={step}
-                onClick={() => {
-                  if (step === 1 || (step === 2 && (uploadedFiles || []).length > 0) || (step === 3 && parseResult)) {
-                    setCurrentStep(step);
-                  }
-                }}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  currentStep === step ? 'bg-primary w-8' : 'bg-gray-300'
-                }`}
-                aria-label={`Step ${step}`}
-              />
-            ))}
+        {/* Navigation Buttons - migration 스타일로 통일 */}
+        <div className="flex items-center pt-4">
+          {/* Left: 이전 버튼 */}
+          <div className="flex-1">
+            {currentStep > 1 && (
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={goToPrevStep}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  이전
+                </span>
+              </Button>
+            )}
           </div>
 
-          {currentStep < 3 ? (
-            <Button
-              onClick={goToNextStep}
-              disabled={!canGoNext()}
-              className="flex items-center gap-2"
-            >
-              다음
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Button>
-          ) : (
-            <div className="w-20" />
-          )}
+          {/* Center: 페이지 인디케이터 */}
+          <div className="flex-1 flex justify-center">
+            <div className="flex items-center gap-2">
+              {[1, 2, 3].map((step) => (
+                <div
+                  key={step}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    currentStep === step ? 'bg-primary' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Right: 다음 버튼 */}
+          <div className="flex-1 flex justify-end">
+            {currentStep < 3 && (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={goToNextStep}
+                disabled={!canGoNext()}
+              >
+                <span className="flex items-center gap-2">
+                  다음
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
       </div>
