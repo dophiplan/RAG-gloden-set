@@ -392,7 +392,7 @@ export default function UploadPage() {
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Step Indicator */}
         <StepIndicator currentStep={currentStep} />
 
