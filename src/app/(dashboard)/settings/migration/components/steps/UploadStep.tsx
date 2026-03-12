@@ -31,10 +31,10 @@ export default function UploadStep({
   // Validate file type and size
   const validateFile = (selectedFile: File): string | null => {
     const ext = selectedFile.name.split('.').pop()?.toLowerCase();
-    const allowedExtensions = ['csv', 'xlsx', 'xls'];
+    const allowedExtensions = ['xlsx', 'xls'];
     
     if (!ext || !allowedExtensions.includes(ext)) {
-      return 'CSV, XLSX, XLS 파일만 업로드 가능합니다.';
+      return 'XLSX, XLS 파일만 업로드 가능합니다.';
     }
     
     // 10MB limit
@@ -180,7 +180,7 @@ export default function UploadStep({
           <input
             type="file"
             ref={fileInputRef}
-            accept=".csv,.xlsx,.xls"
+            accept=".xlsx,.xls"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -231,7 +231,7 @@ export default function UploadStep({
               type="button"
               className="mb-2 px-6 py-2.5 bg-[#818CF8] text-white font-medium rounded-lg hover:bg-[#6366F1] transition-colors shadow-sm"
             >
-              CSV/Excel 파일 업로드
+              Excel 파일 업로드
             </button>
             
             {/* Drag & Drop Text */}
@@ -241,7 +241,7 @@ export default function UploadStep({
             
             {/* File Limit Info */}
             <p className="text-xs text-gray-400">
-              CSV, XLSX, XLS 파일 · 파일당 최대 10MB
+              XLSX, XLS 파일 · 파일당 최대 10MB
             </p>
 
             {/* Drag Overlay */}

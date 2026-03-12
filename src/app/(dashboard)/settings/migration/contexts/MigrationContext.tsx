@@ -125,7 +125,7 @@ interface MigrationState {
   file: File | null;
   fileName: string;
   fileSize: number;
-  fileType: 'csv' | 'excel' | null;
+  fileType: 'excel' | null;
 
   // Product selection
   productCode: ProductCode | '';
@@ -207,7 +207,7 @@ type MigrationAction =
   | { type: 'SET_FILE'; payload: { file: File; sheetsData: SheetData[] } }
   | { type: 'CLEAR_FILE' }
   | { type: 'PARSE_FILE_START' }
-  | { type: 'PARSE_FILE_SUCCESS'; payload: { sheetsData: SheetData[]; fileType: 'csv' | 'excel' } }
+  | { type: 'PARSE_FILE_SUCCESS'; payload: { sheetsData: SheetData[]; fileType: 'excel' } }
   | { type: 'PARSE_FILE_ERROR'; payload: string }
 
   // Product selection
@@ -300,7 +300,7 @@ function migrationReducer(
     // File handling
     case 'SET_FILE': {
       const { file, sheetsData } = action.payload;
-      const fileType = file.name.toLowerCase().endsWith('.csv') ? 'csv' : 'excel';
+      const fileType = 'excel';
       const selectedVersion = sheetsData.length > 0 ? sheetsData[0].name : '';
 
       return {
@@ -681,12 +681,12 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
   const validateFile = useCallback((file: File): { valid: boolean; error?: string } => {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    const validExtensions = ['csv', 'xlsx', 'xls'];
+    const validExtensions = ['xlsx', 'xls'];
 
     if (!ext || !validExtensions.includes(ext)) {
       return {
         valid: false,
-        error: '지원하지 않는 파일 형식입니다. CSV, XLSX, XLS 파일을 업로드해주세요.',
+        error: '지원하지 않는 파일 형식입니다. XLSX, XLS 파일을 업로드해주세요.',
       };
     }
 
@@ -711,58 +711,30 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     dispatch({ type: 'PARSE_FILE_START' });
 
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase();
-      let sheetsData: SheetData[] = [];
+      // Excel 파일만 지원
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
 
-      if (ext === 'csv') {
-        // CSV: treat as single sheet
-        const text = await file.text();
-        const lines = text.split('\n');
-        const firstLine = lines[0];
-        const columns = firstLine
-          .split(',')
-          .map((c) => c.trim().replace(/^["']|["']$/g, ''))
-          .filter(Boolean);
+      const sheetsData: SheetData[] = wb.SheetNames.map((sheetName) => {
+        const ws = wb.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
+        const columns =
+          data.length > 0
+            ? data[0]
+                .map((h) => String(h || '').trim())
+                .filter(Boolean)
+            : [];
+        return {
+          name: sheetName,
+          columns,
+          rowCount: data.length > 0 ? data.length - 1 : 0,
+        };
+      });
 
-        const versionName = file.name.replace(/\.csv$/i, '');
-        sheetsData = [
-          {
-            name: versionName,
-            columns,
-            rowCount: lines.length - 1,
-          },
-        ];
-
-        dispatch({
-          type: 'PARSE_FILE_SUCCESS',
-          payload: { sheetsData, fileType: 'csv' },
-        });
-      } else {
-        // Excel: read all sheets
-        const buffer = await file.arrayBuffer();
-        const wb = XLSX.read(buffer, { type: 'array' });
-
-        sheetsData = wb.SheetNames.map((sheetName) => {
-          const ws = wb.Sheets[sheetName];
-          const data = XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
-          const columns =
-            data.length > 0
-              ? data[0]
-                  .map((h) => String(h || '').trim())
-                  .filter(Boolean)
-              : [];
-          return {
-            name: sheetName,
-            columns,
-            rowCount: data.length > 0 ? data.length - 1 : 0,
-          };
-        });
-
-        dispatch({
-          type: 'PARSE_FILE_SUCCESS',
-          payload: { sheetsData, fileType: 'excel' },
-        });
-      }
+      dispatch({
+        type: 'PARSE_FILE_SUCCESS',
+        payload: { sheetsData, fileType: 'excel' },
+      });
 
       dispatch({ type: 'SET_FILE', payload: { file, sheetsData } });
       dispatch({ type: 'MARK_STEP_COMPLETED', payload: 'upload' });
@@ -1217,7 +1189,7 @@ export function useMigrationFile(): {
   file: File | null;
   fileName: string;
   fileSize: number;
-  fileType: 'csv' | 'excel' | null;
+  fileType: 'excel' | null;
 } {
   const { state } = useMigration();
   return {
