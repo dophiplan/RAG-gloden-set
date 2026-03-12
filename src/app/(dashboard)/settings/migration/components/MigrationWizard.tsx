@@ -5,7 +5,7 @@ import StepIndicator from './StepIndicator';
 import Button from '@/components/ui/Button';
 import { useMigration, VersionMapping, EntryAction } from '../contexts/MigrationContext';
 import UploadStep from './steps/UploadStep';
-import MappingStep from './steps/MappingStep';
+import FieldMapping from './FieldMapping';
 import PreviewCommitStep from './steps/PreviewCommitStep';
 
 const STEP_ORDER = ['upload', 'mapping', 'previewCommit'] as const;
@@ -22,6 +22,7 @@ export default function MigrationWizard() {
     setProductCode,
     setSelectedVersion,
     updateCurrentMapping,
+    updateAllMappings,
     saveCurrentMapping,
     loadPreview,
     updateEntry,
@@ -89,24 +90,13 @@ export default function MigrationWizard() {
 
           {/* Step 2: Field Mapping */}
           <div className="w-full flex-shrink-0 px-4">
-            <MappingStep
+            <FieldMapping
               sheetsData={sheetsData}
-              selectedSheet={selectedVersion}
-              fieldMapping={currentMapping}
-              onSheetSelect={setSelectedVersion}
-              onUpdateMapping={(mapping) => updateCurrentMapping({ ...currentMapping, ...mapping } as VersionMapping)}
-              onAddTranslationColumn={() => {
-                // TODO: Implement translation column addition
-                console.log('Add translation column - not implemented');
-              }}
-              onRemoveTranslationColumn={(index) => {
-                // TODO: Implement translation column removal
-                console.log('Remove translation column at index:', index);
-              }}
-              onClearMapping={() => {
-                // TODO: Implement mapping clear
-                console.log('Clear mapping - not implemented');
-              }}
+              selectedVersion={selectedVersion}
+              onVersionChange={setSelectedVersion}
+              onMappingChange={updateCurrentMapping}
+              onAllMappingsChange={updateAllMappings}
+              initialMappings={currentMapping}
             />
           </div>
 
