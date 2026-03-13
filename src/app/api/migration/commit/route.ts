@@ -428,7 +428,8 @@ export async function POST(request: NextRequest) {
             version_updated_at: version ? new Date().toISOString() : null,
             product_code: product_code, // 제품 코드 설정
             user_id: userId,
-            is_migrated: true, // 마이그레이션 데이터 표시
+            // Note: is_migrated column does not exist in DB yet
+            // is_migrated: true,
           })
           .select()
           .single();
