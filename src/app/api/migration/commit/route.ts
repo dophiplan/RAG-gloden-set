@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user has admin or manager role (roles is an array)
     const userRoles = userProfile?.roles || [];
-    if (!userRoles.includes('admin') && !userRoles.includes('manager') && !userRoles.includes('1st_master')) {
+    if (!userRoles.includes('admin') && !userRoles.includes('manager') && !userRoles.includes('1st_master') && !userRoles.includes('master')) {
       return NextResponse.json({ error: '권한이 부족합니다.' }, { status: 403 });
     }
     // FIXED: End of permission validation

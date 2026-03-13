@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     const userRoles = userProfile?.roles || [];
     debug('[Preview] User roles check:', { userId: user.id, userRoles, userProfile });
     
-    if (!userRoles.includes('admin') && !userRoles.includes('manager') && !userRoles.includes('1st_master')) {
+    if (!userRoles.includes('admin') && !userRoles.includes('manager') && !userRoles.includes('1st_master') && !userRoles.includes('master')) {
       debugError('[Preview] Permission denied. User roles:', userRoles);
       return NextResponse.json({ error: '권한이 부족합니다.', details: { roles: userRoles } }, { status: 403 });
     }
