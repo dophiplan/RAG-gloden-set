@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
   };
   
   let batchId: string | null = null;
+  
+  // Track start time for timeout detection
+  const startTime = Date.now();
+  const TIMEOUT_WARNING_MS = 25000; // Warn at 25 seconds (before typical 30s timeout)
 
   try {
     const supabase = await createClient();
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
           .from('users')
           .select('id, email')
           .eq('email', process.env.DEV_BYPASS_EMAIL || 'admin@example.com')
-          .single();
+          .maybeSingle();
         
         if (existingUser) {
           console.warn('[SECURITY] Auth bypass used in development mode', {
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('roles, name, email')
       .eq('id', user!.id)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('[Migration] Failed to fetch user profile:', profileError);
@@ -159,6 +163,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate product_code exists in products table
+    const { data: productExists, error: productCheckError } = await adminClient
+      .from('products')
+      .select('code')
+      .eq('code', product_code)
+      .maybeSingle();
+    
+    if (productCheckError) {
+      console.error('[Migration] Failed to check product_code:', productCheckError);
+      return NextResponse.json({ 
+        error: '제품 코드 확인 중 오류가 발생했습니다.' 
+      }, { status: 500 });
+    }
+    
+    if (!productExists) {
+      console.error(`[Migration] Product code "${product_code}" does not exist in products table`);
+      return NextResponse.json({ 
+        error: '제품 코드가 존재하지 않습니다.',
+        details: `입력하신 제품 코드 "${product_code}"는 시스템에 등록되지 않은 코드입니다. 먼저 제품 관리에서 해당 제품을 추가해주세요.`
+      }, { status: 400 });
+    }
+
+    // Log start of processing
+    const glossaryEntries = entries.filter((e) => e.category === 'glossary');
+    const translationEntries = entries.filter((e) => e.category === 'translation');
+    console.log(`[Migration] Starting processing: ${entries.length} entries`);
+    console.log(`[Migration] Glossary: ${glossaryEntries.length}, Translations: ${translationEntries.length}`);
+
     const results = {
       glossary: {
         created: 0,
@@ -194,10 +226,6 @@ export async function POST(request: NextRequest) {
     
     batchId = batch?.id || null;
 
-    // Separate entries by category
-    const glossaryEntries = entries.filter((e) => e.category === 'glossary');
-    const translationEntries = entries.filter((e) => e.category === 'translation');
-
     // Process glossary entries
     for (let i = 0; i < glossaryEntries.length; i++) {
       const entry = glossaryEntries[i];
@@ -208,17 +236,31 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        // Progress logging every 10 entries
+        if (i % 10 === 0) {
+          console.log(`[Migration] Processing glossary entry ${i + 1}/${glossaryEntries.length}`);
+        }
+
+        // Check for timeout warning
+        if (Date.now() - startTime > TIMEOUT_WARNING_MS) {
+          console.warn(`[Migration] Approaching timeout! Processed ${i}/${glossaryEntries.length} glossary entries`);
+        }
+
         // For each language, create or update glossary entry
         for (const [langCode, translation] of Object.entries(entry.translations)) {
           if (!translation?.trim()) continue;
 
-          // Check if entry already exists
-          const { data: existing } = await adminClient
+          // Check if entry already exists - use maybeSingle() to handle no results gracefully
+          const { data: existing, error: existingError } = await adminClient
             .from('glossary')
             .select('id, translation')
             .eq('term', entry.source_text)
             .eq('language_code', langCode)
-            .single();
+            .maybeSingle();
+          
+          if (existingError) {
+            console.error(`[Migration] Error checking existing glossary for "${entry.source_text}":`, existingError);
+          }
 
           if (existing) {
             if (entry.action === 'overwrite') {
@@ -308,16 +350,30 @@ export async function POST(request: NextRequest) {
         results.glossary.created++;
       } catch (error) {
         console.error('Error importing glossary entry:', error);
+        const errorMessage = error instanceof Error ? error.message : '가져오기 실패';
+        
+        // Check for FK constraint violation
+        if (errorMessage.includes('violates foreign key constraint') || 
+            errorMessage.includes('translation_products_product_code_fkey') ||
+            errorMessage.includes('glossary_products_product_code_fkey')) {
+          await rollbackOperations(adminClient, createdIds, batchId);
+          return NextResponse.json({
+            error: '제품 코드가 존재하지 않습니다.',
+            details: `입력하신 제품 코드 "${product_code}"는 시스템에 등록되지 않은 코드입니다.`,
+            results,
+          }, { status: 400 });
+        }
+        
         results.glossary.errors.push({
           row: i + 1,
-          message: error instanceof Error ? error.message : '가져오기 실패',
+          message: errorMessage,
         });
         
         // FIXED: Rollback on error (Issue #6)
         await rollbackOperations(adminClient, createdIds, batchId);
         return NextResponse.json({
           error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
-          details: error instanceof Error ? error.message : 'Unknown error',
+          details: errorMessage,
           results,
         }, { status: 500 });
       }
@@ -333,12 +389,26 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Check if translation already exists
-        const { data: existing } = await adminClient
+        // Progress logging every 10 entries
+        if (i % 10 === 0) {
+          console.log(`[Migration] Processing translation entry ${i + 1}/${translationEntries.length}`);
+        }
+
+        // Check for timeout warning
+        if (Date.now() - startTime > TIMEOUT_WARNING_MS) {
+          console.warn(`[Migration] Approaching timeout! Processed ${i}/${translationEntries.length} translation entries`);
+        }
+
+        // Check if translation already exists - use maybeSingle() to handle no results gracefully
+        const { data: existing, error: existingError } = await adminClient
           .from('translations')
           .select('id, translation_results(*)')
           .eq('source_text', entry.source_text)
-          .single();
+          .maybeSingle();
+        
+        if (existingError) {
+          console.error(`[Migration] Error checking existing translation for "${entry.source_text}":`, existingError);
+        }
 
         if (existing) {
           if (entry.action === 'merge' || entry.action === 'overwrite') {
@@ -500,16 +570,30 @@ export async function POST(request: NextRequest) {
         results.translations.created++;
       } catch (error) {
         console.error('Error importing translation entry:', error);
+        const errorMessage = error instanceof Error ? error.message : '가져오기 실패';
+        
+        // Check for FK constraint violation
+        if (errorMessage.includes('violates foreign key constraint') || 
+            errorMessage.includes('translation_products_product_code_fkey') ||
+            errorMessage.includes('glossary_products_product_code_fkey')) {
+          await rollbackOperations(adminClient, createdIds, batchId);
+          return NextResponse.json({
+            error: '제품 코드가 존재하지 않습니다.',
+            details: `입력하신 제품 코드 "${product_code}"는 시스템에 등록되지 않은 코드입니다.`,
+            results,
+          }, { status: 400 });
+        }
+        
         results.translations.errors.push({
           row: i + 1,
-          message: error instanceof Error ? error.message : '가져오기 실패',
+          message: errorMessage,
         });
         
         // FIXED: Rollback on error (Issue #6)
         await rollbackOperations(adminClient, createdIds, batchId);
         return NextResponse.json({
           error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
-          details: error instanceof Error ? error.message : 'Unknown error',
+          details: errorMessage,
           results,
         }, { status: 500 });
       }
@@ -523,9 +607,15 @@ export async function POST(request: NextRequest) {
       }).eq('id', batchId);
     }
 
+    const processingTime = Date.now() - startTime;
+    console.log(`[Migration] Completed processing ${entries.length} entries in ${processingTime}ms`);
+    console.log(`[Migration] Results: Glossary created=${results.glossary.created}, skipped=${results.glossary.skipped}, errors=${results.glossary.errors.length}`);
+    console.log(`[Migration] Results: Translations created=${results.translations.created}, updated=${results.translations.updated}, skipped=${results.translations.skipped}, errors=${results.translations.errors.length}`);
+
     return NextResponse.json({
       success: true,
       batchId,
+      processingTimeMs: processingTime,
       ...results,
     });
   } catch (error) {

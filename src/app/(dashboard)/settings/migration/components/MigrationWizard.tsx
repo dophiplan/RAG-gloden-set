@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import StepIndicator from './StepIndicator';
 import Button from '@/components/ui/Button';
 import { useMigration } from '../contexts/MigrationContext';
 import UploadStep from './steps/UploadStep';
 import FieldMapping from './FieldMapping';
 import PreviewCommitStep from './steps/PreviewCommitStep';
+import Toast from './Toast';
 
 const STEP_ORDER = ['upload', 'mapping', 'previewCommit'] as const;
 
@@ -35,9 +36,19 @@ export default function MigrationWizard() {
     clearSelected,
     resetState,
     commitMigration,
+    showToast,
+    hideToast,
   } = useMigration();
 
-  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds, versionEntries } = state;
+  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds, versionEntries, error, toast } = state;
+  
+  // Show error toast when error state changes
+  useEffect(() => {
+    if (error) {
+      console.error('[MigrationWizard] Error:', error);
+      showToast(error, 'error');
+    }
+  }, [error, showToast]);
 
   const currentStepIndex = STEP_ORDER.indexOf(currentStep);
   const isFirstStep = currentStepIndex === 0;
@@ -71,6 +82,15 @@ export default function MigrationWizard() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      {/* Toast notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+          duration={5000}
+        />
+      )}
       {/* Step Indicator at top - Clickable for navigation */}
       <div className="mb-2">
         <StepIndicator 
@@ -190,9 +210,14 @@ export default function MigrationWizard() {
               onClick={async () => {
                 try {
                   await commitMigration();
-                  // 성공 시 처리 (예: 완료 메시지, 리다이렉트 등)
-                } catch (err) {
-                  // 에러는 Context에서 처리
+                  // 성공 시 처리
+                  showToast('마이그레이션이 성공적으로 완료되었습니다.', 'success');
+                } catch (err: any) {
+                  // 에러는 Context에서 처리되지만, 추가 디버깅을 위해 로그
+                  console.error('[MigrationWizard] Commit failed:', err);
+                  if (err?.message) {
+                    showToast(err.message, 'error');
+                  }
                 }
               }}
               disabled={!canGoNext() || loading}
