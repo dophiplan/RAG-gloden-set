@@ -1288,27 +1288,45 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
   const commitMigration = useCallback(async (): Promise<CommitResponse> => {
     dispatch({ type: 'COMMIT_START' });
 
+    // DEBUG: Log what's being sent
+    const requestBody = {
+      entries: state.entries.map((e) => {
+        // Determine action based on duplicate status
+        let action: 'import' | 'skip' | 'merge' | 'overwrite' = 'import';
+        if (e.duplicate_status?.status === 'exact') {
+          action = 'skip'; // Skip exact duplicates by default
+        }
+        
+        return {
+          id: e.id,
+          source_text: e.source_text,
+          context: e.context,
+          product_category: e.product || e.product_category,
+          translations: e.translations,
+          category: e.category || e.suggested_category,
+          action: action,
+        };
+      }),
+      product_code: state.productCode || undefined,
+      version: state.version || null,
+    };
+    console.log('[commitMigration] Sending request:', {
+      product_code: requestBody.product_code,
+      entries_count: requestBody.entries.length,
+      version: requestBody.version,
+    });
+
     try {
       const data = await apiFetch<CommitResponse>('/api/migration/commit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entries: state.entries.map((e) => ({
-            id: e.id,
-            source_text: e.source_text,
-            context: e.context,
-            translations: e.translations,
-            category: e.category || e.suggested_category,
-            action: 'import',
-          })),
-          product_code: state.productCode || undefined,
-          version: state.version || null,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       dispatch({ type: 'COMMIT_SUCCESS' });
       return data;
     } catch (err: any) {
+      console.error('[commitMigration] Error:', err);
       dispatch({ type: 'COMMIT_ERROR', payload: err.message });
       throw err;
     }

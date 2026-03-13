@@ -97,56 +97,10 @@ export async function POST(request: NextRequest) {
     let version: string | undefined;
 
     if (isSimpleMode) {
-      // Simple mode: Parse file and auto-process
-      const formData = await request.formData();
-      const file = formData.get('file') as File;
-      product_code = formData.get('product_code') as ProductCode;
-
-      if (!file) {
-        return NextResponse.json({ error: '파일을 선택해주세요.' }, { status: 400 });
-      }
-
-      if (!product_code) {
-        return NextResponse.json({ error: '제품을 선택해주세요.' }, { status: 400 });
-      }
-
-      // Parse the file and create entries (reuse preview logic)
-      const previewFormData = new FormData();
-      previewFormData.append('file', file);
-      previewFormData.append('product_code', product_code);
-
-      // Call preview internally
-      const baseUrl = request.nextUrl.origin;
-      const previewResponse = await fetch(`${baseUrl}/api/migration/preview`, {
-        method: 'POST',
-        body: previewFormData,
-        headers: {
-          // Forward auth headers
-          cookie: request.headers.get('cookie') || '',
-        },
-      });
-
-      if (!previewResponse.ok) {
-        const error = await previewResponse.json();
-        console.error('❌ [간단 모드 API] Preview 실패:', error);
-        return NextResponse.json({ error: error.error || '파일 처리 중 오류가 발생했습니다.' }, { status: 400 });
-      }
-
-      const previewData = await previewResponse.json();
-
-      // Auto-process: import new items, skip exact duplicates
-      interface PreviewEntry {
-        suggested_category: 'glossary' | 'translation';
-        duplicate_status: { status: string };
-        product?: string;
-        [key: string]: unknown;
-      }
-      entries = previewData.entries.map((entry: PreviewEntry) => ({
-        ...entry,
-        category: entry.suggested_category,
-        action: entry.duplicate_status.status === 'exact' ? 'skip' : 'import',
-        product_category: entry.product,
-      }));
+      // Simple mode temporarily disabled to prevent HTTP deadlock
+      return NextResponse.json({ 
+        error: '간단 모드는 현재 사용할 수 없습니다. 고급 모드를 사용해주세요.'
+      }, { status: 503 });
     } else {
       // Advanced mode: Use provided entries
       const body = await request.json();
@@ -164,10 +118,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate product_code exists in products table
+    console.log('[Migration] Validating product_code:', product_code, 'type:', typeof product_code);
+    
+    // FIXED: Ensure product_code is a string and trim whitespace
+    const normalizedProductCode = typeof product_code === 'string' ? product_code.trim() : String(product_code);
+    
+    if (!normalizedProductCode) {
+      return NextResponse.json({ 
+        error: '제품 코드가 유효하지 않습니다.',
+        details: '제품 코드가 비어있거나 유효하지 않은 형식입니다.'
+      }, { status: 400 });
+    }
+    
     const { data: productExists, error: productCheckError } = await adminClient
       .from('products')
       .select('code')
-      .eq('code', product_code)
+      .eq('code', normalizedProductCode)
       .maybeSingle();
     
     if (productCheckError) {
@@ -178,12 +144,24 @@ export async function POST(request: NextRequest) {
     }
     
     if (!productExists) {
-      console.error(`[Migration] Product code "${product_code}" does not exist in products table`);
+      console.error(`[Migration] Product code "${normalizedProductCode}" does not exist in products table`);
+      
+      // DEBUG: List available products
+      const { data: availableProducts } = await adminClient
+        .from('products')
+        .select('code, name')
+        .limit(10);
+      console.error('[Migration] Available products:', availableProducts);
+      
       return NextResponse.json({ 
         error: '제품 코드가 존재하지 않습니다.',
-        details: `입력하신 제품 코드 "${product_code}"는 시스템에 등록되지 않은 코드입니다. 먼저 제품 관리에서 해당 제품을 추가해주세요.`
+        details: `입력하신 제품 코드 "${normalizedProductCode}"는 시스템에 등록되지 않은 코드입니다. 먼저 제품 관리에서 해당 제품을 추가해주세요.`,
+        availableProducts: availableProducts?.map(p => p.code) || []
       }, { status: 400 });
     }
+    
+    // Use normalized product_code for all subsequent operations
+    product_code = normalizedProductCode as ProductCode;
 
     // Log start of processing
     const glossaryEntries = entries.filter((e) => e.category === 'glossary');
@@ -533,6 +511,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Link to product
+        console.log('[Migration] Linking translation to product:', { translation_id: translation.id, product_code });
+        
         const { data: tpData, error: tpError } = await adminClient
           .from('translation_products')
           .insert({
@@ -546,7 +526,14 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
           
-        if (tpError) throw new Error(tpError.message || 'Database error');
+        if (tpError) {
+          console.error('[Migration] Failed to link translation to product:', {
+            error: tpError,
+            translation_id: translation.id,
+            product_code,
+          });
+          throw new Error(tpError.message || 'Database error');
+        }
         
         // FIXED: Track created translation_product ID for rollback
         createdIds.translationProducts.push(tpData.id);
