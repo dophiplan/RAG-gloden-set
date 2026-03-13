@@ -277,7 +277,8 @@ export async function POST(request: NextRequest) {
               glossary_id: glossaryData.id,
               product_code: product_code,
               version: version || null,
-              product_category: entry.product_category || null,
+              // Note: product_category column needs to be added to DB schema
+              // product_category: entry.product_category || null,
             })
             .select()
             .single();
@@ -470,7 +471,8 @@ export async function POST(request: NextRequest) {
             product_code: product_code,
             version: version || null,
             version_updated_at: version ? new Date().toISOString() : null,
-            product_category: entry.product_category || null,
+            // Note: product_category column needs to be added to DB schema
+            // product_category: entry.product_category || null,
           })
           .select()
           .single();
