@@ -28,6 +28,7 @@ interface PreviewEntry {
   word_count: number;
   duplicate_status: {
     status: 'exact' | 'similar' | 'new';
+    where?: 'glossary' | 'translation' | 'both';
     similarity?: number;
     existing_id?: string;
     existing_translations?: Record<string, string>;
@@ -42,6 +43,145 @@ interface ImportRow {
   context?: string;
   product_category?: string;
   [key: string]: string | undefined;
+}
+
+// Android 리소스 폼 → 시스템 언어 코드 매핑
+const ANDROID_RESOURCE_MAP: Record<string, string> = {
+  // 기본값
+  'values': 'en',           // 기본값은 영어
+  
+  // 아시아 언어
+  'values-ko': 'ko',        // 한국어
+  'values-ja': 'ja',        // 일본어
+  'values-zh': 'zh-CN',     // 중국어 (기본)
+  'values-zh-rCN': 'zh-CN', // 중국어 간체
+  'values-zh-rHK': 'zh-HK', // 중국어 홍콩
+  'values-zh-rTW': 'zh-TW', // 중국어 대만
+  'values-th': 'th',        // 태국어
+  'values-vi': 'vi',        // 베트남어
+  'values-in': 'id',        // 인도네시아어
+  'values-id': 'id',        // 인도네시아어
+  'values-ms': 'ms',        // 말레이어
+  'values-hi': 'hi',        // 힌디어
+  
+  // 유럽 언어
+  'values-en': 'en',        // 영어
+  'values-en-rUS': 'en',    // 영어 (미국)
+  'values-en-rGB': 'en',    // 영어 (영국)
+  'values-de': 'de',        // 독일어
+  'values-fr': 'fr',        // 프랑스어
+  'values-es': 'es',        // 스페인어
+  'values-it': 'it',        // 이탈리아어
+  'values-pt': 'pt',        // 포르투갈어
+  'values-pt-rBR': 'pt',    // 포르투갈어 (브라질)
+  'values-ru': 'ru',        // 러시아어
+  'values-pl': 'pl',        // 폴란드어
+  'values-tr': 'tr',        // 터키어
+  'values-nl': 'nl',        // 네덜란드어
+  'values-sv': 'sv',        // 스웨덴어
+  'values-da': 'da',        // 덴ish어
+  'values-fi': 'fi',        // 핀란드어
+  'values-no': 'no',        // 노르웨이어
+  'values-cs': 'cs',        // 체코어
+  'values-el': 'el',        // 그리스어
+  'values-hu': 'hu',        // 헝가리어
+  'values-ro': 'ro',        // 루마니아어
+  
+  // 중동 언어
+  'values-ar': 'ar',        // 아랍어
+  'values-fa': 'fa',        // 페르시아어
+  'values-he': 'he',        // 히브리어
+  'values-iw': 'he',        // 히브리어 (구형 코드)
+  
+  // 기타
+  'values-uk': 'uk',        // 우크라이나어
+};
+
+// 컬럼명을 시스템 언어 코드로 변환
+function mapColumnToLangCode(column: string): string | null {
+  // 1. Android 리소스 형식 직접 매핑 (values-ja, values-en 등)
+  if (ANDROID_RESOURCE_MAP[column]) {
+    return ANDROID_RESOURCE_MAP[column];
+  }
+  
+  // 2. 순수 언어 코드 직접 매핑 (ja, en, ko 등)
+  const directLangCodes: Record<string, string> = {
+    'ko': 'ko', 'en': 'en', 'ja': 'ja', 'es': 'es', 'fr': 'fr', 
+    'de': 'de', 'pt': 'pt', 'it': 'it', 'ru': 'ru', 'zh': 'zh-CN',
+    'th': 'th', 'vi': 'vi', 'id': 'id', 'ms': 'ms', 'hi': 'hi',
+    'pl': 'pl', 'tr': 'tr', 'nl': 'nl', 'sv': 'sv', 'da': 'da',
+    'fi': 'fi', 'no': 'no', 'cs': 'cs', 'el': 'el', 'hu': 'hu',
+    'ro': 'ro', 'ar': 'ar', 'fa': 'fa', 'he': 'he', 'uk': 'uk',
+    'zh-cn': 'zh-CN', 'zh-tw': 'zh-TW', 'zh-hk': 'zh-HK',
+    'zh-CN': 'zh-CN', 'zh-TW': 'zh-TW', 'zh-HK': 'zh-HK',
+    'pt-BR': 'pt', 'en-US': 'en', 'en-GB': 'en',
+  };
+  
+  const normalized = column.toLowerCase().trim();
+  if (directLangCodes[normalized]) {
+    return directLangCodes[normalized];
+  }
+  if (directLangCodes[column]) {
+    return directLangCodes[column];
+  }
+  
+  // 3. SUPPORTED_LANGUAGES에 있는지 확인
+  if (Object.keys(SUPPORTED_LANGUAGES).includes(column)) {
+    return column;
+  }
+  
+  return null;
+}
+
+// 셀 내용으로 언어 자동 감지
+function detectLanguageByContent(text: string): string | null {
+  if (!text || text.trim().length === 0) return null;
+  
+  const sample = text.trim();
+  
+  // 한국어 (한글) - 유니코드 범위: U+AC00-U+D7A3, U+1100-U+11FF, U+3130-U+318F
+  if (/[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/.test(sample)) {
+    return 'ko';
+  }
+  
+  // 일본어 (히라가나/가타칸나) - 유니코드 범위: U+3040-U+309F, U+30A0-U+30FF
+  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(sample)) {
+    return 'ja';
+  }
+  
+  // 중국어 (간체/번체 한자) - CJK Unified Ideographs: U+4E00-U+9FFF
+  // 참고: 한국어와 일본어도 한자를 쓰지만 위에서 먼저 체크함
+  if (/[\u4E00-\u9FFF]/.test(sample)) {
+    // 중국어 특유의 문자가 있으면 zh-CN, 없으면 일단 zh-CN으로 기본값
+    return 'zh-CN';
+  }
+  
+  // 스페인어 특수문자
+  if (/[áéíóúñ¿¡]/i.test(sample)) {
+    return 'es';
+  }
+  
+  // 프랑스어 특수문자
+  if (/[àâäæçéèêëïîôœùûüÿ]/i.test(sample)) {
+    return 'fr';
+  }
+  
+  // 독일어 특수문자
+  if (/[äöüßÄÖÜ]/.test(sample)) {
+    return 'de';
+  }
+  
+  // 포르투갈어
+  if (/[ãõçáéíóúâêîôûà]/i.test(sample)) {
+    return 'pt';
+  }
+  
+  // 영어 (기본값) - 알파벳만 있는 경우
+  if (/^[a-zA-Z0-9\s\p{P}]+$/u.test(sample)) {
+    return 'en';
+  }
+  
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -138,7 +278,12 @@ export async function POST(request: NextRequest) {
     if (fieldMappingsRaw) {
       try {
         fieldMappings = JSON.parse(fieldMappingsRaw);
-        console.log('[Preview API] Field mappings parsed:', fieldMappings);
+        console.log('[Preview API] =======================================');
+        console.log('[Preview API] Field mappings parsed:', JSON.stringify(fieldMappings, null, 2));
+        console.log('[Preview API] Source:', fieldMappings?.source);
+        console.log('[Preview API] Translations:', fieldMappings?.translations);
+        console.log('[Preview API] Metadata:', fieldMappings?.metadata);
+        console.log('[Preview API] =======================================');
       } catch (e) {
         console.error('[Preview API] Failed to parse field mappings:', e);
         return NextResponse.json(
@@ -199,11 +344,12 @@ export async function POST(request: NextRequest) {
     let newEntries = 0;
 
     // FIXED: N+1 쿼리 최적화 - 모든 중복 체크를 한 번에 수행
+    // productCode 전달로 Preview/Commit 일치성 확보
     const sourceTexts = rows
       .filter(row => row.source_text?.trim())
       .map(row => row.source_text.trim());
     
-    const duplicateMap = await checkDuplicatesBatch(supabase, sourceTexts);
+    const duplicateMap = await checkDuplicatesBatch(supabase, sourceTexts, productCode);
 
     for (const row of rows) {
       if (!row.source_text?.trim()) {
@@ -214,12 +360,46 @@ export async function POST(request: NextRequest) {
       const context = row.context?.trim() || undefined;
       const productCategory = row.product_category?.trim() || undefined;
 
+      // FIXED: 간단하고 확실한 언어 매핑
       const translations: Record<string, string> = {};
-      for (const langCode of validLanguages) {
-        if (row[langCode]?.trim()) {
-          translations[langCode] = row[langCode]!.trim();
+      
+      // Row 객체에서 바로 읽기 (parseExcel에서 저장한 형태 그대로)
+      // parseExcel은 row['ja'], row['en'], row['zh-CN'] 형태로 저장함
+      const langKeys = Object.keys(row).filter(k => 
+        k !== 'source_text' && 
+        k !== 'context' && 
+        k !== 'product_category' &&
+        k !== 'product' &&
+        k !== 'platform' &&
+        k !== 'version' &&
+        k !== 'key' &&
+        k !== 'note' &&
+        k !== 'id' &&
+        k !== 'key_id'
+      );
+      
+      console.log('[Preview API] Row source:', row.source_text?.substring(0, 30));
+      console.log('[Preview API] Lang keys found:', langKeys);
+      
+      for (const key of langKeys) {
+        const value = row[key]?.trim();
+        if (value) {
+          // 키가 이미 유효한 언어 코드(ja, en, zh-CN 등)라면 바로 사용
+          // 아니라면 mapColumnToLangCode로 변환 시도
+          let langCode = key;
+          if (!validLanguages.includes(key)) {
+            const mapped = mapColumnToLangCode(key);
+            if (mapped) langCode = mapped;
+          }
+          translations[langCode] = value;
+          console.log(`[Preview API] Added: translations[${langCode}] = ${value.substring(0, 20)}`);
         }
       }
+      
+      console.log('[Preview API] Final translations:', translations);
+      console.log('[Preview API] translations type:', typeof translations);
+      console.log('[Preview API] translations keys:', Object.keys(translations));
+      console.log('[Preview API] translations is empty?', Object.keys(translations).length === 0);
 
       const wordCount = sourceText.split(/\s+/).length;
       const suggestedCategory: 'glossary' | 'translation' = wordCount <= 3 ? 'glossary' : 'translation';
@@ -241,8 +421,9 @@ export async function POST(request: NextRequest) {
         newEntries++;
       }
 
+      // product_category 매핑: 직접 값이거나 컬럼명일 수 있음
       const mappedProduct = fieldMappings?.metadata?.product_category 
-        ? row[fieldMappings.metadata.product_category] 
+        ? (row[fieldMappings.metadata.product_category] || fieldMappings.metadata.product_category)
         : (row.product || row.product_category || undefined);
       
       const mappedPlatform = fieldMappings?.metadata?.platform || (row.platform || undefined);
@@ -251,8 +432,8 @@ export async function POST(request: NextRequest) {
         ? row[fieldMappings.metadata.version]
         : (row.version || undefined);
 
-      const existingInGlossary = duplicateStatus.status === 'exact' && suggestedCategory === 'glossary';
-      const existingInTranslation = duplicateStatus.status === 'exact' && suggestedCategory === 'translation';
+      const existingInGlossary = duplicateStatus.where === 'glossary' || duplicateStatus.where === 'both';
+      const existingInTranslation = duplicateStatus.where === 'translation' || duplicateStatus.where === 'both';
 
       entries.push({
         id: uuidv4(),
@@ -261,7 +442,7 @@ export async function POST(request: NextRequest) {
         product: mappedProduct,
         platform: mappedPlatform,
         version: mappedVersion,
-        product_category: productCategory,
+        product_category: mappedProduct || productCategory,
         key: row.key || row.id || row.key_id || undefined,
         note: row.note || row.description || undefined,
         translations,
@@ -278,6 +459,20 @@ export async function POST(request: NextRequest) {
     const duplicateTranslation = entries.filter(e => e.existing_in_translation).length;
     const newGlossarySelected = entries.filter(e => e.suggested_category === 'glossary' && !e.existing_in_glossary).length;
     const newTranslation = entries.filter(e => !e.existing_in_glossary && !e.existing_in_translation && e.suggested_category === 'translation').length;
+
+    // DEBUG: API 응답 직전 - entries와 translations 상세 확인
+    console.log('[Preview API] === FINAL RESPONSE DEBUG ===');
+    console.log('[Preview API] Total entries:', entries.length);
+    if (entries.length > 0) {
+      entries.forEach((entry, i) => {
+        const transKeys = entry.translations ? Object.keys(entry.translations) : [];
+        console.log(`[Preview API] Entry ${i} (${entry.source_text?.substring(0, 20)}...): translations keys = [${transKeys.join(', ')}]`);
+        if (transKeys.length === 0) {
+          console.log(`[Preview API] Entry ${i} translations object:`, entry.translations);
+        }
+      });
+    }
+    console.log('[Preview API] === END DEBUG ===');
 
     return NextResponse.json({
       entries,
@@ -305,15 +500,18 @@ export async function POST(request: NextRequest) {
 }
 
 // FIXED: N+1 쿼리 최적화 - 배치로 중복 체크
+// productCode가 제공되면 해당 제품 내에서만 중복 체크 (Preview/Commit 일치성)
 async function checkDuplicatesBatch(
   supabase: SupabaseClient,
-  sourceTexts: string[]
-): Promise<Map<string, { status: 'exact' | 'similar' | 'new'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>> {
-  const result = new Map<string, { status: 'exact' | 'similar' | 'new'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>();
+  sourceTexts: string[],
+  productCode?: ProductCode | null
+): Promise<Map<string, { status: 'exact' | 'similar' | 'new'; where?: 'glossary' | 'translation' | 'both'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>> {
+  const result = new Map<string, { status: 'exact' | 'similar' | 'new'; where?: 'glossary' | 'translation' | 'both'; existing_id?: string; existing_translations?: Record<string, string>; similarity?: number }>();
   
   if (sourceTexts.length === 0) return result;
 
   // Glossary 중복 체크 (한 번의 쿼리로 모든 term 조회)
+  // Note: glossary는 제품별 구분이 없으므로 전체 기준으로 체크
   const { data: glossaryMatches } = await supabase
     .from('glossary')
     .select('id, term, translation, language_code')
@@ -329,7 +527,24 @@ async function checkDuplicatesBatch(
     }
   }
 
-  // Translation 중복 체크 (한 번의 쿼리로 모든 source_text 조회)
+  // Translation 중복 체크
+  // productCode가 제공되면 해당 제품에 속한 translation만 필터링
+  let translationIdsInProduct: Set<string> | null = null;
+  
+  if (productCode) {
+    const { data: productTranslations } = await supabase
+      .from('translation_products')
+      .select('translation_id')
+      .eq('product_code', productCode);
+    
+    if (productTranslations && productTranslations.length > 0) {
+      translationIdsInProduct = new Set(productTranslations.map(pt => pt.translation_id));
+    } else {
+      // 해당 제품에 번역이 없으면 빈 결과
+      translationIdsInProduct = new Set();
+    }
+  }
+
   const { data: translationMatches } = await supabase
     .from('translations')
     .select('id, source_text, translation_results(language_code, translated_text)')
@@ -338,6 +553,11 @@ async function checkDuplicatesBatch(
   const translationMap = new Map<string, { id: string; translations: Record<string, string> }>();
   if (translationMatches) {
     for (const t of translationMatches) {
+      // 제품 코드 필터 적용: 해당 제품에 속한 translation만 포함
+      if (translationIdsInProduct !== null && !translationIdsInProduct.has(t.id)) {
+        continue;
+      }
+      
       const translations: Record<string, string> = {};
       if (t.translation_results) {
         for (const tr of t.translation_results as { language_code: string; translated_text: string }[]) {
@@ -353,15 +573,27 @@ async function checkDuplicatesBatch(
     const glossaryMatch = glossaryMap.get(sourceText);
     const translationMatch = translationMap.get(sourceText);
 
-    if (glossaryMatch) {
+    if (glossaryMatch && translationMatch) {
+      // 둘 다 있는 경우: where: 'both'
       result.set(sourceText, {
         status: 'exact',
+        where: 'both',
+        existing_id: glossaryMatch.id,
+        existing_translations: glossaryMatch.translations,
+      });
+    } else if (glossaryMatch) {
+      // glossary에만 있으면: where: 'glossary'
+      result.set(sourceText, {
+        status: 'exact',
+        where: 'glossary',
         existing_id: glossaryMatch.id,
         existing_translations: glossaryMatch.translations,
       });
     } else if (translationMatch) {
+      // translation에만 있으면: where: 'translation'
       result.set(sourceText, {
         status: 'exact',
+        where: 'translation',
         existing_id: translationMatch.id,
         existing_translations: translationMatch.translations,
       });
@@ -444,14 +676,27 @@ function parseCSV(
     }
 
     console.log('[parseCSV] Mapping translations:', fieldMappings.translations);
+    // 🔒 null/undefined 안전 처리
+    if (!fieldMappings.translations || fieldMappings.translations.length === 0) {
+      console.log('[parseCSV] No translations to map');
+    } else {
     fieldMappings.translations.forEach((transField) => {
-      const idx = header.findIndex((h) => h.trim() === transField);
+      // 🔒 null/undefined 체크
+      if (!transField || typeof transField !== 'string') {
+        console.log('[parseCSV] Invalid translation field (null/undefined):', transField);
+        return;
+      }
+      const idx = header.findIndex((h) => h && h.trim() === transField);
       console.log(`[parseCSV] Looking for translation field "${transField}" at index:`, idx);
       if (idx !== -1) {
-        const langMatch = transField.match(/^(ko|en|ja|zh-CN|zh-TW|es|de|pt|fr)/i);
+        // 🔧 정규식 수정: zh-CN, zh-TW 하이픈 이스케이프
+        const langMatch = transField.match(/^(ko|en|ja|zh\-CN|zh\-TW|es|de|pt|fr)/i);
         if (langMatch) {
-          columnMapping[idx] = langMatch[0].toLowerCase();
-          console.log(`[parseCSV] Mapped column ${idx} to language:`, langMatch[0].toLowerCase());
+          // zh-CN, zh-TW는 원래 대소문자 유지, 나머지는 소문자
+          const matched = langMatch[0];
+          const langCode = matched.startsWith('zh-') ? matched : matched.toLowerCase();
+          columnMapping[idx] = langCode;
+          console.log(`[parseCSV] Mapped column ${idx} to language:`, langCode);
         } else {
           console.log(`[parseCSV] Could not extract language code from:`, transField);
         }
@@ -459,6 +704,7 @@ function parseCSV(
         console.log(`[parseCSV] Translation field "${transField}" not found in header`);
       }
     });
+    }
     console.log('[parseCSV] Final column mapping:', columnMapping);
 
     Object.entries(fieldMappings.metadata).forEach(([key, fieldName]) => {
@@ -611,53 +857,175 @@ async function parseExcel(
   
   const columnMapping: Record<string, number> = {};
   
+  // === 원문 매핑 ===
   if (fieldMappings && fieldMappings.source) {
+    // FieldMapping에 원문 지정됨
     const sourceIndex = headers.findIndex(h => 
       h?.toString().trim() === fieldMappings.source || 
       h?.toString().trim().toLowerCase() === fieldMappings.source?.toLowerCase()
     );
-    
-    if (sourceIndex === -1) {
-      throw new Error(`원문 필드 "${fieldMappings.source}"를 찾을 수 없습니다. 사용 가능한 필드: ${headers.join(', ')}`);
-    }
-    columnMapping['source'] = sourceIndex;
-    
-    console.log('[parseExcel] Headers for mapping:', headers);
-    fieldMappings.translations.forEach((field) => {
-      if (field) {
-        const fieldIndex = headers.findIndex(h => 
-          h?.toString().trim() === field || 
-          h?.toString().trim().toLowerCase() === field.toLowerCase()
-        );
-        console.log(`[parseExcel] Looking for field "${field}" -> found at index ${fieldIndex}`);
-        if (fieldIndex !== -1) {
-          let langCode = extractLanguageCodeFromColumnName(field);
+    if (sourceIndex !== -1) {
+      columnMapping['source'] = sourceIndex;
+      console.log(`[parseExcel] Source from FieldMapping: ${fieldMappings.source} -> index ${sourceIndex}`);
+      
+      // 번역 매핑이 비어있으면 샘플링으로 감지
+      if (!fieldMappings.translations || fieldMappings.translations.length === 0) {
+        console.log('[parseExcel] No translations in fieldMappings, using sampling...');
+        detectLanguagesBySampling(jsonData, headers, columnMapping, sourceIndex);
+      } else {
+        // === 번역 매핑 (fieldMappings.translations가 있을 때) - 콘텐츠 기반 샘플링 ===
+        console.log('[parseExcel] Processing fieldMappings.translations with content sampling:', fieldMappings.translations);
+        // 🔒 중복 언어 코드 추적
+        const mappedLangs = new Set<string>();
+        
+        fieldMappings.translations?.forEach((transField) => {
+          // 🔒 null/undefined 체크
+          if (!transField || typeof transField !== 'string') {
+            console.log('[parseExcel] Invalid translation field (null/undefined):', transField);
+            return;
+          }
           
-          if (langCode === 'unknown') {
-            const samples: string[] = [];
-            for (let i = 1; i < jsonData.length && samples.length < 3; i++) {
-              const rowData = jsonData[i] as (string | number | null | undefined)[];
-              const value = rowData[fieldIndex]?.toString();
-              if (value && value.trim()) {
-                samples.push(value.trim());
+          const idx = headers.findIndex(h => {
+            const headerStr = h?.toString().trim();
+            if (!headerStr) return false;
+            return headerStr === transField || 
+                   headerStr.toLowerCase() === transField.toLowerCase();
+          });
+          console.log(`[parseExcel] Looking for translation field "${transField}" at index:`, idx);
+          
+          if (idx !== -1 && idx !== sourceIndex) {
+            // 🔧 콘텐츠 기반 언어 감지: 2~5번째 행 샘플링
+            const sampleRows = jsonData.slice(1, Math.min(5, jsonData.length)) as (string | number | null | undefined)[][];
+            const texts: string[] = [];
+            
+            for (const row of sampleRows) {
+              const val = row[idx]?.toString().trim();
+              if (val && val.length > 0) {
+                texts.push(val);
               }
             }
-            langCode = detectLanguageFromSamples(samples);
-            console.log(`[parseExcel] Field "${field}" - detected from data: ${langCode}`);
+            
+            console.log(`[parseExcel] Column "${transField}" (idx=${idx}) sample texts:`, texts.slice(0, 3));
+            
+            // 콘텐츠로 언어 감지
+            let langCode: string | null = null;
+            if (texts.length > 0) {
+              // 첫 번째 유효한 텍스트로 언어 감지
+              for (const text of texts) {
+                langCode = detectLanguageByContent(text);
+                if (langCode && langCode !== 'unknown') {
+                  console.log(`[parseExcel] Detected language "${langCode}" from text: "${text.substring(0, 30)}"`);
+                  break;
+                }
+              }
+            }
+            
+            // 콘텐츠 감지 실패 시에만 헤더 이름으로 시도
+            if (!langCode || langCode === 'unknown') {
+              const directMatch = transField.match(/^(ko|en|ja|zh\-CN|zh\-TW|es|de|pt|fr)$/i);
+              if (directMatch) {
+                const matched = directMatch[0];
+                langCode = matched.startsWith('zh-') ? matched : matched.toLowerCase();
+              } else {
+                langCode = extractLanguageCodeFromColumnName(transField);
+              }
+              console.log(`[parseExcel] Fallback to header name detection: "${transField}" -> "${langCode}"`);
+            }
+            
+            if (langCode && langCode !== 'unknown') {
+              // 🔒 중복 언어 코드 체크
+              if (mappedLangs.has(langCode)) {
+                console.warn(`[parseExcel] Duplicate language code "${langCode}" detected for field "${transField}". Skipping.`);
+                return;
+              }
+              mappedLangs.add(langCode);
+              
+              columnMapping[`translation_${langCode}`] = idx;
+              console.log(`[parseExcel] Mapped translation_${langCode} -> column ${idx} (from content sampling)`);
+            } else {
+              console.log(`[parseExcel] Could not detect language for field:`, transField);
+            }
+          } else if (idx === sourceIndex) {
+            console.log(`[parseExcel] Skipping field "${transField}" - same as source column`);
           } else {
-            console.log(`[parseExcel] Field "${field}" - extracted from column name: ${langCode}`);
+            console.log(`[parseExcel] Translation field "${transField}" not found in headers`);
           }
-          
-          const mappingKey = `translation_${langCode}`;
-          if (columnMapping[mappingKey] !== undefined) {
-            console.log(`[parseExcel] WARNING: Duplicate langCode "${langCode}" for field "${field}". Previous field index: ${columnMapping[mappingKey]}, New: ${fieldIndex}`);
+        });
+      }
+    } else {
+      throw new Error(`원문 필드 "${fieldMappings.source}"를 찾을 수 없습니다.`);
+    }
+  } else {
+    // FieldMapping 없음 → 샘플링으로 언어 감지
+    console.log('[parseExcel] No fieldMappings, using sampling...');
+    detectLanguagesBySampling(jsonData, headers, columnMapping, -1);
+  }
+  
+  // 샘플링 로직을 별도 함수로 분리
+  function detectLanguagesBySampling(
+    jsonData: unknown[], 
+    headers: string[], 
+    columnMapping: Record<string, number>, 
+    sourceIndex: number
+  ) {
+    const sampleRows = jsonData.slice(1, Math.min(5, jsonData.length)) as (string | number | null | undefined)[][];
+    const colCount = headers.length;
+    const colLanguages: (string | null)[] = new Array(colCount).fill(null);
+    
+    // 각 컬럼의 언어 감지
+    for (let colIdx = 0; colIdx < colCount; colIdx++) {
+      if (colIdx === sourceIndex) {
+        colLanguages[colIdx] = 'source';
+        continue;
+      }
+      
+      for (const row of sampleRows) {
+        const val = row[colIdx]?.toString().trim();
+        if (val && val.length > 0) {
+          const detectedLang = detectLanguageByContent(val);
+          if (detectedLang) {
+            colLanguages[colIdx] = detectedLang;
+            console.log(`[parseExcel] Column ${colIdx}: detected lang=${detectedLang}, sample="${val.substring(0, 30)}"`);
           }
-          columnMapping[mappingKey] = fieldIndex;
-          console.log(`[parseExcel] Mapped translation field "${field}" -> key: "${mappingKey}", index: ${fieldIndex}`);
+          break;
         }
       }
-    });
+    }
     
+    // 원문(source) 설정: 첫 번째로 감지된 언어
+    let firstLangIdx = -1;
+    for (let i = 0; i < colCount; i++) {
+      if (colLanguages[i] && colLanguages[i] !== 'unknown' && colLanguages[i] !== 'source') {
+        firstLangIdx = i;
+        columnMapping['source'] = i;
+        console.log(`[parseExcel] Source (first lang): column ${i} -> ${colLanguages[i]}`);
+        break;
+      }
+    }
+    
+    // 번역 컬럼 매핑
+    const usedLangs = new Set<string>();
+    if (columnMapping['source'] !== undefined) {
+      const sourceLang = colLanguages[columnMapping['source']];
+      if (sourceLang && sourceLang !== 'unknown') {
+        usedLangs.add(sourceLang);
+      }
+    }
+    
+    for (let colIdx = 0; colIdx < colCount; colIdx++) {
+      if (colIdx === columnMapping['source']) continue;
+      
+      const lang = colLanguages[colIdx];
+      if (lang && lang !== 'unknown' && !usedLangs.has(lang)) {
+        columnMapping[`translation_${lang}`] = colIdx;
+        usedLangs.add(lang);
+        console.log(`[parseExcel] Translation: column ${colIdx} -> ${lang}`);
+      }
+    }
+  }
+  
+  // === 메타데이터 매핑 ===
+  if (fieldMappings && fieldMappings.metadata) {
     Object.entries(fieldMappings.metadata).forEach(([key, field]) => {
       if (field) {
         const fieldIndex = headers.findIndex(h => 
@@ -669,41 +1037,81 @@ async function parseExcel(
         }
       }
     });
-  } else {
+  }
+  
+  if (!columnMapping['source']) {
+    // 자동 매핑: Android 리소스 형식(values-xxx) 및 일반 컬럼명 지원
     headers.forEach((header, idx) => {
       if (!header) return;
       const normalized = header.toString().trim().toLowerCase();
       
-      if (normalized === 'values' || normalized === 'source' || normalized === 'en' || 
-          normalized === 'english' || normalized === 'source_text' || 
-          normalized === '원문' || normalized === 'key' || 
-          normalized === 'en-us' || normalized === 'en_us') {
+      // Android 리소스 형식에서 언어 코드 추출 헬퍼
+      const getAndroidLang = (prefix: string) => {
+        if (normalized === `values-${prefix}`) return true;
+        if (normalized.startsWith(`${prefix}-`)) return true;
+        return false;
+      };
+      
+      // 원문 필드 (한국어 또는 Android 기본값)
+      if (normalized === 'values-ko' || normalized === 'ko' || 
+          normalized === 'source' || normalized === 'source_text' || 
+          normalized === '원문' || normalized === 'key' ||
+          normalized.includes('korean') || normalized.includes('한국어') || normalized.includes('kor')) {
         columnMapping['source'] = idx;
-      } else if (normalized.startsWith('ko') || normalized.includes('korean') || 
-                 normalized.includes('한국어') || normalized.includes('kor')) {
-        columnMapping['translation_0'] = idx;
-      } else if (normalized.startsWith('ja') || normalized.includes('japanese') || 
-                 normalized.includes('日本語') || normalized.includes('jpn')) {
-        columnMapping['translation_1'] = idx;
-      } else if (normalized.includes('zh') || normalized.includes('chinese') || 
-                 normalized.includes('中文')) {
-        if (normalized.includes('tw') || normalized.includes('hk') || 
+      } 
+      // 영어 (기본값)
+      else if (normalized === 'values' || normalized === 'values-en' || normalized === 'en' || 
+               normalized === 'english' || normalized === 'en-us' || normalized === 'en_us' ||
+               normalized.includes('english') || normalized.includes('영어')) {
+        columnMapping['translation_en'] = idx;
+      } 
+      // 일본어
+      else if (getAndroidLang('ja') || normalized === 'ja' || 
+               normalized.includes('japanese') || normalized.includes('日本語') || normalized.includes('jpn')) {
+        columnMapping['translation_ja'] = idx;
+      } 
+      // 중국어
+      else if (normalized.includes('zh') || normalized.includes('chinese') || normalized.includes('中文')) {
+        if (normalized.includes('tw') || normalized.includes('hk') || normalized.includes('rTW') ||
             normalized.includes('traditional') || normalized.includes('繁體')) {
-          columnMapping['translation_3'] = idx;
+          columnMapping['translation_zh-TW'] = idx;
         } else {
-          columnMapping['translation_2'] = idx;
+          columnMapping['translation_zh-CN'] = idx;
         }
-      } else if (normalized.startsWith('es') || normalized.includes('spanish') || 
-                 normalized.includes('español') || normalized.includes('spa')) {
-        columnMapping['translation_4'] = idx;
-      } else if (normalized.startsWith('fr') || normalized.includes('french') || 
-                 normalized.includes('français') || normalized.includes('fra')) {
-        columnMapping['translation_5'] = idx;
-      } else if (normalized.startsWith('de') || normalized.includes('german') || 
-                 normalized.includes('deutsch') || normalized.includes('deu')) {
-        columnMapping['translation_6'] = idx;
-      } else if (normalized === 'context' || normalized.includes('desc') || 
-                 normalized.includes('description') || normalized.includes('설명')) {
+      } 
+      // 스페인어
+      else if (getAndroidLang('es') || normalized === 'es' || 
+               normalized.includes('spanish') || normalized.includes('español') || normalized.includes('spa')) {
+        columnMapping['translation_es'] = idx;
+      } 
+      // 프랑스어
+      else if (getAndroidLang('fr') || normalized === 'fr' || 
+               normalized.includes('french') || normalized.includes('français') || normalized.includes('fra')) {
+        columnMapping['translation_fr'] = idx;
+      } 
+      // 독일어
+      else if (getAndroidLang('de') || normalized === 'de' || 
+               normalized.includes('german') || normalized.includes('deutsch') || normalized.includes('deu')) {
+        columnMapping['translation_de'] = idx;
+      }
+      // 이탈리아어
+      else if (getAndroidLang('it') || normalized === 'it' || 
+               normalized.includes('italian') || normalized.includes('italiano')) {
+        columnMapping['translation_it'] = idx;
+      }
+      // 러시아어
+      else if (getAndroidLang('ru') || normalized === 'ru' || 
+               normalized.includes('russian') || normalized.includes('русский')) {
+        columnMapping['translation_ru'] = idx;
+      }
+      // 포르투갈어
+      else if (getAndroidLang('pt') || normalized === 'pt' || 
+               normalized.includes('portuguese') || normalized.includes('português')) {
+        columnMapping['translation_pt'] = idx;
+      }
+      // 기타 메타데이터
+      else if (normalized === 'context' || normalized.includes('desc') || 
+               normalized.includes('description') || normalized.includes('설명')) {
         columnMapping['context'] = idx;
       } else if (normalized === 'platform' || normalized.includes('platform')) {
         columnMapping['platform'] = idx;
@@ -717,7 +1125,10 @@ async function parseExcel(
     });
   }
   
-  console.log('[parseExcel] Column mapping:', columnMapping);
+  console.log('[parseExcel] === FINAL Column mapping ===:', columnMapping);
+  console.log('[parseExcel] Column mapping keys:', Object.keys(columnMapping));
+  console.log('[parseExcel] Has source?', columnMapping['source'] !== undefined);
+  console.log('[parseExcel] Translation keys:', Object.keys(columnMapping).filter(k => k.startsWith('translation_')));
   
   if (columnMapping['source'] === undefined) {
     throw new Error(`원문 필드를 찾을 수 없습니다. 사용 가능한 필드: ${headers.filter(h => h).join(', ')}`);
@@ -739,8 +1150,9 @@ async function parseExcel(
     Object.entries(columnMapping).forEach(([key, idx]) => {
       if (key.startsWith('translation_')) {
         const value = rowData[idx]?.toString();
+        const langCode = key.replace('translation_', '');
+        console.log(`[parseExcel] Mapping key: ${key}, langCode: ${langCode}, idx: ${idx}, value: ${value?.substring(0, 20)}`);
         if (value) {
-          const langCode = key.replace('translation_', '');
           row[langCode] = value;
         }
       } else if (key !== 'source') {
@@ -751,12 +1163,14 @@ async function parseExcel(
       }
     });
     
+    console.log('[parseExcel] Row created:', row);
     rows.push(row);
   }
   
   console.log('[parseExcel] Total parsed rows:', rows.length);
   if (rows.length > 0) {
     console.log('[parseExcel] Sample row:', rows[0]);
+    console.log('[parseExcel] Sample row keys:', Object.keys(rows[0]));
   }
   
   return rows;
@@ -764,6 +1178,20 @@ async function parseExcel(
 
 function extractLanguageCodeFromColumnName(columnName: string): string {
   const normalized = columnName.toLowerCase().trim();
+  
+  // 🔧 Android resource 패턴 처리: values-ko, values-en, values-ja, ...
+  const valuesMatch = normalized.match(/^values-([a-z]{2})(?:-([a-zA-Z]+))?$/);
+  if (valuesMatch) {
+    const lang = valuesMatch[1];
+    const region = valuesMatch[2];
+    if (lang === 'zh' && region) {
+      // values-zh-rCN → zh-CN, values-zh-rTW → zh-TW
+      return region.toLowerCase() === 'rcn' ? 'zh-CN' : 
+             region.toLowerCase() === 'rtw' ? 'zh-TW' : 
+             `zh-${region.toUpperCase()}`;
+    }
+    return lang; // values-ko → ko, values-en → en
+  }
   
   if (normalized === 'ko' || normalized === 'kor') return 'ko';
   if (normalized.includes('korean') || normalized.includes('한국어') || normalized.includes('한글')) return 'ko';
@@ -795,6 +1223,31 @@ function extractLanguageCodeFromColumnName(columnName: string): string {
   
   if (normalized === 'pt' || normalized === 'por') return 'pt';
   if (normalized.includes('portuguese') || normalized.includes('português') || normalized.includes('포르투갈어')) return 'pt';
+  
+  // 🔧 일반적인 로케일 패턴 처리: ko-KR, en-US, ja-JP, ...
+  const localeMatch = normalized.match(/^([a-z]{2})[-_][a-z]{2}$/i);
+  if (localeMatch) {
+    const lang = localeMatch[1].toLowerCase();
+    // zh-CN, zh-TW는 이미 위에서 처리됨
+    if (lang === 'zh') return 'zh-CN'; // 기본값으로 간체
+    return lang;
+  }
+  
+  // 🔧 언더스코어 접두사 패턴: _ko, _en, _ja, ...
+  const underscoreMatch = normalized.match(/^_(\w+)$/);
+  if (underscoreMatch) {
+    const code = underscoreMatch[1].toLowerCase();
+    if (code.startsWith('zh')) return code.includes('tw') || code.includes('hk') || code.includes('hant') ? 'zh-TW' : 'zh-CN';
+    return code.substring(0, 2); // _korean → ko
+  }
+  
+  // 🔧 점 접두사 패턴: .ko, .en, .ja, ... (iOS-style)
+  const dotMatch = normalized.match(/^\.(\w+)$/);
+  if (dotMatch) {
+    const code = dotMatch[1].toLowerCase();
+    if (code.startsWith('zh')) return code.includes('tw') || code.includes('hk') || code.includes('hant') ? 'zh-TW' : 'zh-CN';
+    return code.substring(0, 2);
+  }
   
   return 'unknown';
 }
