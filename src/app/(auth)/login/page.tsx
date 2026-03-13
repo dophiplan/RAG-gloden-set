@@ -29,11 +29,29 @@ export default function LoginPage() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Step 1: Supabase Auth 로그인
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) throw error;
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('사용자 정보를 확인할 수 없습니다.');
+
+      // Step 2: Check if user exists in public.users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (userError || !userData) {
+        // User not registered in the system - sign out immediately
+        await supabase.auth.signOut();
+        throw new Error('등록되지 않은 계정입니다. 관리자에게 문의하세요.');
+      }
+
+      // Step 3: Successful login - redirect to dashboard
       router.push('/');
       router.refresh();
     } catch (err) {

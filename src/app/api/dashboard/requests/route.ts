@@ -66,7 +66,8 @@ export async function GET() {
 
     if (groupedError) {
       console.error('Dashboard requests API grouped fetch error:', groupedError);
-      return apiInternalError('그룹화된 요청 조회 중 오류가 발생했습니다.');
+      console.error('Error details:', JSON.stringify(groupedError, null, 2));
+      return apiInternalError(`그룹화된 요청 조회 중 오류가 발생했습니다: ${groupedError.message || groupedError.code || 'Unknown error'}`);
     }
 
     // Step 2: Group translations by request_id

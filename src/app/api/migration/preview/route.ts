@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { SUPPORTED_LANGUAGES, ProductCode } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -39,26 +39,75 @@ interface ImportRow {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    // Development mode: fetch a real user from DB for bypass
+    if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+      console.log('[Preview] DEV MODE: Attempting auth bypass');
+      
+      try {
+        const adminClient = createAdminClient();
+        const { data: existingUser } = await adminClient
+          .from('users')
+          .select('id, email')
+          .limit(1)
+          .single();
+        
+        if (existingUser) {
+          console.log('[Preview] DEV MODE: Using existing user from DB:', existingUser.email);
+          user = { id: existingUser.id, email: existingUser.email } as typeof user;
+          authError = null;
+        }
+      } catch (bypassError) {
+        console.error('[Preview] DEV MODE: Bypass failed:', bypassError);
+      }
+    }
 
     if (authError || !user) {
       return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
     }
 
     // FIXED: User permission validation (Issue #7)
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Use admin client to bypass RLS for user role lookup
+    console.log('[Preview] Auth check - User ID:', user.id, 'Email:', user.email);
+    
+    let userProfile;
+    let profileError;
+    
+    try {
+      const adminClient = createAdminClient();
+      console.log('[Preview] Admin client created successfully');
+      
+      const result = await adminClient
+        .from('users')
+        .select('roles')
+        .eq('id', user.id)
+        .single();
+      
+      userProfile = result.data;
+      profileError = result.error;
+      
+      console.log('[Preview] User profile query result:', { userProfile, profileError });
+    } catch (err) {
+      console.error('[Preview] Exception during user profile fetch:', err);
+      return NextResponse.json({ 
+        error: '사용자 정보를 가져올 수 없습니다.', 
+        details: err instanceof Error ? err.message : 'Unknown error' 
+      }, { status: 500 });
+    }
 
     if (profileError) {
       console.error('[Preview] Failed to fetch user profile:', profileError);
-      return NextResponse.json({ error: '사용자 정보를 가져올 수 없습니다.' }, { status: 500 });
+      return NextResponse.json({ error: '사용자 정보를 가져올 수 없습니다.', details: profileError }, { status: 500 });
     }
 
-    if (!['admin', 'manager'].includes(userProfile?.role)) {
-      return NextResponse.json({ error: '권한이 부족합니다.' }, { status: 403 });
+    // Check if user has admin or manager role (roles is an array)
+    const userRoles = userProfile?.roles || [];
+    console.log('[Preview] User roles check:', { userId: user.id, userRoles, userProfile });
+    
+    if (!userRoles.includes('admin') && !userRoles.includes('manager') && !userRoles.includes('1st_master')) {
+      console.error('[Preview] Permission denied. User roles:', userRoles);
+      return NextResponse.json({ error: '권한이 부족합니다.', details: { roles: userRoles } }, { status: 403 });
     }
     // FIXED: End of permission validation
 

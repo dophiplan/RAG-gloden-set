@@ -193,7 +193,7 @@ export default function PreviewCommitStep({
             </span>
           </div>
           
-          {/* 뷰 토글 */}
+          {/* 뷰 토글 - 번역 언어가 없으면 번역 정보 버튼 비활성화 */}
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setActiveView('basic')}
@@ -207,13 +207,17 @@ export default function PreviewCommitStep({
             </button>
             <button
               onClick={() => setActiveView('translations')}
+              disabled={languages.length === 0}
+              title={languages.length === 0 ? '매핑된 번역 언어가 없습니다' : ''}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 activeView === 'translations' 
                   ? 'bg-white text-[#818CF8] shadow-sm' 
+                  : languages.length === 0
+                  ? 'text-gray-400 cursor-not-allowed'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              ● 번역 정보
+              ● 번역 정보 {languages.length > 0 && `(${languages.length})`}
             </button>
           </div>
         </div>

@@ -59,9 +59,25 @@ export default function MigrationWizard() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Step Indicator at top */}
+      {/* Step Indicator at top - Clickable for navigation */}
       <div className="mb-2">
-        <StepIndicator currentStep={currentStepIndex + 1} />
+        <StepIndicator 
+          currentStep={currentStepIndex + 1} 
+          onStepClick={(stepNum) => {
+            // Navigate to the clicked step (0-indexed)
+            const targetIndex = stepNum - 1;
+            const currentIndex = currentStepIndex;
+            
+            // Only allow going back to previous steps
+            if (targetIndex < currentIndex) {
+              // Go back multiple steps if needed
+              const stepsToGoBack = currentIndex - targetIndex;
+              for (let i = 0; i < stepsToGoBack; i++) {
+                prevStep();
+              }
+            }
+          }}
+        />
       </div>
 
       {/* Step content area */}
@@ -141,19 +157,8 @@ export default function MigrationWizard() {
           )}
         </div>
 
-        {/* Center: PageIndicator (● ○ ○) */}
-        <div className="flex-1 flex justify-center">
-          <div className="flex items-center gap-2">
-            {STEP_ORDER.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentStepIndex ? 'bg-primary' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Center: Empty (removed dot navigation) */}
+        <div className="flex-1" />
 
         {/* Right: 다음/완료 button */}
         <div className="flex-1 flex justify-end items-center gap-4">
