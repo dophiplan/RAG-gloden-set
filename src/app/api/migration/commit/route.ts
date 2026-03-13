@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     };
     
     // Create operation batch for rollback support
-    const { data: batch, error: batchError } = await supabase
+    const { data: batch, error: batchError } = await adminClient
       .from('operation_batches')
       .insert({
         operation_type: 'migration',
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
           if (!translation?.trim()) continue;
 
           // Check if entry already exists
-          const { data: existing } = await supabase
+          const { data: existing } = await adminClient
             .from('glossary')
             .select('id, translation')
             .eq('term', entry.source_text)
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
           if (existing) {
             if (entry.action === 'overwrite') {
               // Update existing entry
-              await supabase
+              await adminClient
                 .from('glossary')
                 .update({
                   translation: translation.trim(),
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
                 .eq('id', existing.id);
               
               // Create audit log for glossary update (non-blocking)
-              void supabase.from('glossary_audit_logs').insert({
+              void adminClient.from('glossary_audit_logs').insert({
                 glossary_term_id: existing.id,
                 user_id: userId,
                 user_name: userProfile?.name,
@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Create new glossary entry
-          const { data: glossaryData, error: glossaryError } = await supabase
+          const { data: glossaryData, error: glossaryError } = await adminClient
             .from('glossary')
             .insert({
               term: entry.source_text,
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
           createdIds.glossary.push(glossaryData.id);
 
           // Link to product
-          const { data: glossaryProductData, error: glossaryProductError } = await supabase
+          const { data: glossaryProductData, error: glossaryProductError } = await adminClient
             .from('glossary_products')
             .insert({
               glossary_id: glossaryData.id,
@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
           createdIds.glossaryProducts.push(glossaryProductData.id);
           
           // Create audit log for glossary creation (non-blocking)
-          void supabase.from('glossary_audit_logs').insert({
+          void adminClient.from('glossary_audit_logs').insert({
             glossary_term_id: glossaryData.id,
             user_id: userId,
             user_name: userProfile?.name,
@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
         });
         
         // FIXED: Rollback on error (Issue #6)
-        await rollbackOperations(supabase, createdIds, batchId);
+        await rollbackOperations(adminClient, createdIds, batchId);
         return NextResponse.json({
           error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
           details: error instanceof Error ? error.message : 'Unknown error',
@@ -333,7 +333,7 @@ export async function POST(request: NextRequest) {
 
       try {
         // Check if translation already exists
-        const { data: existing } = await supabase
+        const { data: existing } = await adminClient
           .from('translations')
           .select('id, translation_results(*)')
           .eq('source_text', entry.source_text)
@@ -362,7 +362,7 @@ export async function POST(request: NextRequest) {
                   const existingResult = existing.translation_results.find(
                     (tr: TranslationResultWithId) => tr.language_code === langCode
                   );
-                  await supabase
+                  await adminClient
                     .from('translation_results')
                     .update({
                       translated_text: translatedText.trim(),
@@ -374,7 +374,7 @@ export async function POST(request: NextRequest) {
                 // For 'merge', keep existing translation
               } else {
                 // Add new language translation
-                const { data: trData, error: trError } = await supabase
+                const { data: trData, error: trError } = await adminClient
                   .from('translation_results')
                   .insert({
                     translation_id: existing.id,
@@ -394,7 +394,7 @@ export async function POST(request: NextRequest) {
             }
 
             // Create audit log for merge/overwrite (non-blocking)
-            void supabase.from('translation_audit_logs').insert({
+            void adminClient.from('translation_audit_logs').insert({
               translation_id: existing.id,
               user_id: userId,
               user_name: userProfile?.name,
@@ -417,7 +417,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create new translation
-        const { data: translation, error: translationError } = await supabase
+        const { data: translation, error: translationError } = await adminClient
           .from('translations')
           .insert({
             source_text: entry.source_text,
@@ -451,7 +451,7 @@ export async function POST(request: NextRequest) {
           }));
 
         if (translationResults.length > 0) {
-          const { data: trResults, error: trError } = await supabase
+          const { data: trResults, error: trError } = await adminClient
             .from('translation_results')
             .insert(translationResults)
             .select();
@@ -463,7 +463,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Link to product
-        const { data: tpData, error: tpError } = await supabase
+        const { data: tpData, error: tpError } = await adminClient
           .from('translation_products')
           .insert({
             translation_id: translation.id,
@@ -481,7 +481,7 @@ export async function POST(request: NextRequest) {
         createdIds.translationProducts.push(tpData.id);
 
         // Create audit log (non-blocking)
-        void supabase.from('translation_audit_logs').insert({
+        void adminClient.from('translation_audit_logs').insert({
           translation_id: translation.id,
           user_id: userId,
           user_name: userProfile?.name,
@@ -505,7 +505,7 @@ export async function POST(request: NextRequest) {
         });
         
         // FIXED: Rollback on error (Issue #6)
-        await rollbackOperations(supabase, createdIds, batchId);
+        await rollbackOperations(adminClient, createdIds, batchId);
         return NextResponse.json({
           error: '마이그레이션 중 오류가 발생했습니다. 변경사항이 롤백되었습니다.',
           details: error instanceof Error ? error.message : 'Unknown error',
@@ -516,7 +516,7 @@ export async function POST(request: NextRequest) {
 
     // Update batch status to completed
     if (batchId) {
-      void supabase.from('operation_batches').update({
+      void adminClient.from('operation_batches').update({
         status: 'completed',
         completed_at: new Date().toISOString(),
       }).eq('id', batchId);
@@ -533,8 +533,8 @@ export async function POST(request: NextRequest) {
     // FIXED: Attempt rollback on unexpected error (Issue #6)
     if (batchId || createdIds.glossary.length > 0 || createdIds.translations.length > 0) {
       try {
-        const supabase = await createClient();
-        await rollbackOperations(supabase, createdIds, batchId);
+        const adminClient = createAdminClient();
+        await rollbackOperations(adminClient, createdIds, batchId);
       } catch (rollbackError) {
         console.error('[Migration] Rollback failed:', rollbackError);
       }
@@ -549,7 +549,7 @@ export async function POST(request: NextRequest) {
 
 // FIXED: Rollback function for transaction support (Issue #6)
 async function rollbackOperations(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  adminClient: ReturnType<typeof createAdminClient>,
   createdIds: {
     glossary: string[];
     glossaryProducts: string[];
@@ -566,32 +566,32 @@ async function rollbackOperations(
     
     // Delete translation_results
     if (createdIds.translationResults.length > 0) {
-      await supabase.from('translation_results').delete().in('id', createdIds.translationResults);
+      await adminClient.from('translation_results').delete().in('id', createdIds.translationResults);
     }
     
     // Delete translation_products
     if (createdIds.translationProducts.length > 0) {
-      await supabase.from('translation_products').delete().in('id', createdIds.translationProducts);
+      await adminClient.from('translation_products').delete().in('id', createdIds.translationProducts);
     }
     
     // Delete translations
     if (createdIds.translations.length > 0) {
-      await supabase.from('translations').delete().in('id', createdIds.translations);
+      await adminClient.from('translations').delete().in('id', createdIds.translations);
     }
     
     // Delete glossary_products
     if (createdIds.glossaryProducts.length > 0) {
-      await supabase.from('glossary_products').delete().in('id', createdIds.glossaryProducts);
+      await adminClient.from('glossary_products').delete().in('id', createdIds.glossaryProducts);
     }
     
     // Delete glossary
     if (createdIds.glossary.length > 0) {
-      await supabase.from('glossary').delete().in('id', createdIds.glossary);
+      await adminClient.from('glossary').delete().in('id', createdIds.glossary);
     }
     
     // Update batch status to failed
     if (batchId) {
-      await supabase.from('operation_batches').update({
+      await adminClient.from('operation_batches').update({
         status: 'failed',
         completed_at: new Date().toISOString(),
       }).eq('id', batchId);
