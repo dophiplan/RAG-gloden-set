@@ -428,8 +428,7 @@ export async function POST(request: NextRequest) {
             version_updated_at: version ? new Date().toISOString() : null,
             product_code: product_code, // 제품 코드 설정
             user_id: userId,
-            // Note: is_migrated column needs to be added to DB schema
-            // is_migrated: true,
+            is_migrated: true, // 마이그레이션 데이터 표시
           })
           .select()
           .single();
@@ -448,7 +447,6 @@ export async function POST(request: NextRequest) {
             translated_text: text.trim(),
             reviewer_id: userId,
             reviewed_at: new Date().toISOString(),
-            status: 'reviewed', // 번역 완료 상태
           }));
 
         if (translationResults.length > 0) {
