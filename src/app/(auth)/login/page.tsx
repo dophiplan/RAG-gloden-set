@@ -24,6 +24,10 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Double-submit protection
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
     setMessage(null);
@@ -35,8 +39,19 @@ export default function LoginPage() {
         password,
       });
       
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('사용자 정보를 확인할 수 없습니다.');
+      // Check for rate limiting
+      if (authError && (authError as { status?: number }).status === 429) {
+        throw new Error('너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.');
+      }
+      
+      // Generic error for any auth failure (prevents user enumeration)
+      if (authError) {
+        throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
+      }
+      
+      if (!authData.user) {
+        throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
+      }
 
       // Step 2: Check if user exists in public.users table
       const { data: userData, error: userError } = await supabase
@@ -47,8 +62,13 @@ export default function LoginPage() {
 
       if (userError || !userData) {
         // User not registered in the system - sign out immediately
-        await supabase.auth.signOut();
-        throw new Error('등록되지 않은 계정입니다. 관리자에게 문의하세요.');
+        // Wrap in try/catch to handle race condition
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ensure we still throw auth error even if signOut fails
+        }
+        throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
       }
 
       // Step 3: Successful login - redirect to dashboard
@@ -56,6 +76,8 @@ export default function LoginPage() {
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      // Clear password on error for security
+      setPassword('');
     } finally {
       setLoading(false);
     }

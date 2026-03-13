@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import StepIndicator from './StepIndicator';
 import Button from '@/components/ui/Button';
-import { useMigration, VersionMapping, EntryAction } from '../contexts/MigrationContext';
+import { useMigration } from '../contexts/MigrationContext';
 import UploadStep from './steps/UploadStep';
 import FieldMapping from './FieldMapping';
 import PreviewCommitStep from './steps/PreviewCommitStep';
@@ -15,6 +15,7 @@ export default function MigrationWizard() {
     state,
     nextStep,
     prevStep,
+    goToStep,
     canProceedToMapping,
     canProceedToPreview,
     canCommit,
@@ -42,12 +43,12 @@ export default function MigrationWizard() {
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === STEP_ORDER.length - 1;
 
-  const canGoNext = () => {
+  const canGoNext = useCallback(() => {
     if (currentStep === 'upload') return canProceedToMapping();
     if (currentStep === 'mapping') return canProceedToPreview();
     if (currentStep === 'previewCommit') return canCommit();
     return false;
-  };
+  }, [currentStep, canProceedToMapping, canProceedToPreview, canCommit]);
 
   const handleNext = () => {
     if (currentStep === 'mapping') {
@@ -57,26 +58,24 @@ export default function MigrationWizard() {
     }
   };
 
+  const handleStepClick = useCallback((stepNum: number) => {
+    // Navigate to the clicked step (0-indexed)
+    const targetIndex = stepNum - 1;
+    const currentIndex = currentStepIndex;
+    
+    // Only allow going back to previous steps
+    if (targetIndex < currentIndex) {
+      goToStep(STEP_ORDER[targetIndex]);
+    }
+  }, [currentStepIndex, goToStep]);
+
   return (
     <div className="max-w-5xl mx-auto">
       {/* Step Indicator at top - Clickable for navigation */}
       <div className="mb-2">
         <StepIndicator 
           currentStep={currentStepIndex + 1} 
-          onStepClick={(stepNum) => {
-            // Navigate to the clicked step (0-indexed)
-            const targetIndex = stepNum - 1;
-            const currentIndex = currentStepIndex;
-            
-            // Only allow going back to previous steps
-            if (targetIndex < currentIndex) {
-              // Go back multiple steps if needed
-              const stepsToGoBack = currentIndex - targetIndex;
-              for (let i = 0; i < stepsToGoBack; i++) {
-                prevStep();
-              }
-            }
-          }}
+          onStepClick={handleStepClick}
         />
       </div>
 

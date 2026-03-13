@@ -1299,6 +1299,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
             context: e.context,
             translations: e.translations,
             category: e.category || e.suggested_category,
+            action: 'import',
           })),
           product_code: state.productCode || undefined,
           version: state.version || null,

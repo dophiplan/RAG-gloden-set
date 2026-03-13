@@ -38,10 +38,15 @@ export async function POST(request: NextRequest) {
         const { data: existingUser } = await adminClient
           .from('users')
           .select('id, email')
-          .limit(1)
+          .eq('email', process.env.DEV_BYPASS_EMAIL || 'admin@example.com')
           .single();
         
         if (existingUser) {
+          console.warn('[SECURITY] Auth bypass used in development mode', {
+            endpoint: 'commit',
+            userEmail: existingUser.email,
+            timestamp: new Date().toISOString()
+          });
           console.log('[Migration] DEV MODE: Using existing user from DB:', existingUser.email);
           user = { id: existingUser.id, email: existingUser.email } as typeof user;
           authError = null;
@@ -260,7 +265,7 @@ export async function POST(request: NextRequest) {
             .select()
             .single();
 
-          if (glossaryError) throw glossaryError;
+          if (glossaryError) throw new Error(glossaryError.message || 'Database error');
           
           // FIXED: Track created ID for rollback (Issue #6)
           createdIds.glossary.push(glossaryData.id);
@@ -277,7 +282,7 @@ export async function POST(request: NextRequest) {
             .select()
             .single();
             
-          if (glossaryProductError) throw glossaryProductError;
+          if (glossaryProductError) throw new Error(glossaryProductError.message || 'Database error');
           
           // FIXED: Track created glossary_product ID for rollback
           createdIds.glossaryProducts.push(glossaryProductData.id);
@@ -381,7 +386,7 @@ export async function POST(request: NextRequest) {
                   .select()
                   .single();
                   
-                if (trError) throw trError;
+                if (trError) throw new Error(trError.message || 'Database error');
                 
                 // FIXED: Track created translation_result ID for rollback
                 createdIds.translationResults.push(trData.id);
@@ -427,7 +432,7 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
 
-        if (translationError) throw translationError;
+        if (translationError) throw new Error(translationError.message || 'Database error');
         
         // FIXED: Track created translation ID for rollback
         createdIds.translations.push(translation.id);
@@ -469,7 +474,7 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
           
-        if (tpError) throw tpError;
+        if (tpError) throw new Error(tpError.message || 'Database error');
         
         // FIXED: Track created translation_product ID for rollback
         createdIds.translationProducts.push(tpData.id);
