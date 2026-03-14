@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { TranslationStatus, LanguageCode, ScopeType, ProductCode } from '@/types';
-import { useLanguages, useProducts } from '@/hooks/useReferenceData';
+import { useLanguages, useProducts, useScopes } from '@/hooks/useReferenceData';
 
 interface TranslationFiltersBarProps {
   searchTerm: string;
@@ -73,6 +74,30 @@ export default function TranslationFiltersBar({
 }: TranslationFiltersBarProps) {
   const { languages, languagesMap } = useLanguages();
   const { products } = useProducts();
+  const { scopes, isLoading: scopesLoading } = useScopes();
+
+  // 제품 분류 (scopes) - DB에서 조회, 없으면 하드코딩된 값 사용
+  const productCategoryOptions = useMemo(() => {
+    const defaultOptions = [
+      { value: '', label: '모든 분류' },
+      { value: 'SaaS', label: 'SaaS' },
+      { value: 'Solution', label: 'Solution' },
+    ];
+
+    // scopes가 로딩 중이거나 없으면 기본값 사용
+    if (scopesLoading || !scopes || scopes.length === 0) {
+      return defaultOptions;
+    }
+
+    // DB에서 조회한 scopes 사용
+    return [
+      { value: '', label: '모든 분류' },
+      ...scopes.map((scope) => ({
+        value: scope.name,
+        label: scope.name,
+      })),
+    ];
+  }, [scopes, scopesLoading]);
 
   // Normalize handlers (support both old and new naming)
   const handleScopeChange = onScopeFilterChange ?? onScopeChange ?? (() => {});
@@ -121,8 +146,8 @@ export default function TranslationFiltersBar({
   };
 
   return (
-    <Card>
-      <div className="space-y-3">
+    <Card className="p-3">
+      <div className="space-y-2">
         {/* Main Filters */}
         <div className="flex flex-wrap gap-2">
           {/* 제품 필터 - hideProductFilter가 false일 때만 표시 */}
@@ -145,15 +170,20 @@ export default function TranslationFiltersBar({
           </div>
           {/* 제품 분류 */}
           <div className="w-40">
-            <Select
-              value={scopeFilter}
-              onChange={(e) => handleScopeChange(e.target.value as ScopeType)}
-              options={[
-                { value: '', label: '모든 분류' },
-                { value: 'SaaS', label: 'SaaS' },
-                { value: 'Solution', label: 'Solution' },
-              ]}
-            />
+            {scopesLoading ? (
+              <Select
+                value={scopeFilter}
+                onChange={(e) => handleScopeChange(e.target.value as ScopeType)}
+                options={[{ value: '', label: '로딩 중...' }]}
+                disabled
+              />
+            ) : (
+              <Select
+                value={scopeFilter}
+                onChange={(e) => handleScopeChange(e.target.value as ScopeType)}
+                options={productCategoryOptions}
+              />
+            )}
           </div>
           {/* 버전 */}
           <div className="w-40">
@@ -184,7 +214,7 @@ export default function TranslationFiltersBar({
 
         {/* Advanced Filters */}
         {showAdvancedFilters && (
-          <div className="pt-3 border-t border-gray-200">
+          <div className="pt-2 border-t border-gray-200">
             <div className="flex flex-wrap items-end gap-2">
               {/* Date Filters */}
               <div className="w-52">
@@ -235,7 +265,7 @@ export default function TranslationFiltersBar({
         )}
 
         {/* Language column selector */}
-        <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-xl p-3 mt-3">
+        <div className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-lg p-2 mt-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-semibold text-gray-600 mr-1">🌐 언어:</span>
             <button

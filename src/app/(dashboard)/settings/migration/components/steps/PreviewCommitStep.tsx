@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useLanguages } from '@/hooks/useReferenceData';
 // TranslationTablePagination import 제거 - 커스텀 페이지네이션 사용
 import type { PreviewEntry, VersionEntries } from '../../contexts/MigrationContext';
 
@@ -61,8 +62,8 @@ export default function PreviewCommitStep({
     } else {
       entries = previewData || [];
     }
-    // 최근 데이터가 1페이지 첫번째에 오도록 역순 정렬
-    return [...entries].reverse();
+    // Excel 순서 그대로 (첫 행이 첫 페이지)
+    return entries;
   }, [hasVersionData, versionEntries, activeVersion, previewData]);
 
   const totalPages = Math.ceil(currentEntries.length / ITEMS_PER_PAGE);
@@ -92,15 +93,14 @@ export default function PreviewCommitStep({
     onClearSelected();
   };
 
+  // DB에서 언어 목록 가져오기 (한국어 제외)
+  const { languages: dbLanguages } = useLanguages();
   const languages = useMemo(() => {
-    const langSet = new Set<string>();
-    currentEntries.forEach((entry) => {
-      if (entry.translations && typeof entry.translations === 'object') {
-        Object.keys(entry.translations).forEach((lang) => langSet.add(lang));
-      }
-    });
-    return Array.from(langSet);
-  }, [currentEntries]);
+    return dbLanguages
+      .filter(l => l.code !== 'ko')
+      .sort((a, b) => a.display_order - b.display_order)
+      .map(l => l.code);
+  }, [dbLanguages]);
 
   const stats = useMemo(() => {
     const data = currentEntries;
@@ -139,7 +139,7 @@ export default function PreviewCommitStep({
   return (
     <div className="space-y-4">
       {/* Version Tabs */}
-      {versions.length > 1 && (
+      {versions.length > 1 ? (
         <div className="flex items-center gap-2 border-b border-gray-200 pb-0">
           <button
             onClick={() => handleVersionChange('all')}
@@ -147,7 +147,7 @@ export default function PreviewCommitStep({
               activeVersion === 'all' ? 'border-[#818CF8] text-[#818CF8]' : 'border-transparent text-gray-500'
             }`}
           >
-            전체
+            전체 {stats.total}
           </button>
           {versions.map((version) => (
             <button
@@ -162,32 +162,35 @@ export default function PreviewCommitStep({
             </button>
           ))}
         </div>
+      ) : (
+        // 버전이 1개일 때: 탭 없이 텍스트만 표시
+        <div className="text-xs font-medium text-gray-900 py-1">
+          전체 {stats.total}
+        </div>
       )}
 
       {/* 상단 영역: 통계 + 뷰 토글 */}
       <div className="flex items-center justify-between">
-        {/* 좌측: 전체 개수 */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-gray-900">전체 {stats.total}</span>
-        </div>
+        {/* 좌측: 비어있음 (전체 개수는 탭에 표시) */}
+        <div></div>
         
         {/* 우측: 통계 + 뷰 토글 */}
         <div className="flex items-center gap-4">
-          {/* 통계 정보 */}
+          {/* 통계 정보 - 검은색 텍스트 */}
           <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1 text-red-600">
+            <span className="flex items-center gap-1 text-gray-900">
               <span className="w-2 h-2 rounded-full bg-red-500"></span>
               중복 용어 {stats.duplicateGlossary}
             </span>
-            <span className="flex items-center gap-1 text-emerald-600">
+            <span className="flex items-center gap-1 text-gray-900">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               신규 용어집 {stats.newGlossary}
             </span>
-            <span className="flex items-center gap-1 text-blue-600">
+            <span className="flex items-center gap-1 text-gray-900">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
               신규 데이터 {stats.newTranslation}
             </span>
-            <span className="flex items-center gap-1 text-orange-600">
+            <span className="flex items-center gap-1 text-gray-900">
               <span className="w-2 h-2 rounded-full bg-orange-500"></span>
               중복 데이터 {stats.duplicateTranslation}
             </span>
@@ -225,38 +228,25 @@ export default function PreviewCommitStep({
 
       {/* Table - 번역관리 스타일 */}
       <Card padding="none" className="overflow-hidden">
-        <div className="border border-gray-200 rounded-lg">
-          <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+        <div className="border border-gray-200 rounded-lg overflow-x-auto">
+          <table className="w-full text-xs whitespace-nowrap">
             <thead className="bg-gray-50 border-b">
               {activeView === 'basic' ? (
                 <tr>
-                  <th className="w-[40px] px-2 py-2">
-                    <input
-                      type="checkbox"
-                      checked={isAllSelected}
-                      onChange={isAllSelected ? onClearSelected : onSelectAll}
-                      className="rounded border-gray-300"
-                    />
-                  </th>
+                  <th className="w-[80px] px-2 py-2 text-left font-medium text-gray-700 truncate">버전</th>
+                  <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">제품코드</th>
                   <th className="w-[200px] px-2 py-2 text-left font-medium text-gray-700 truncate">원문</th>
                   <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">문맥</th>
-                  <th className="w-[80px] px-2 py-2 text-left font-medium text-gray-700 truncate">버전</th>
+                  <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">설명</th>
+                  <th className="w-[80px] px-2 py-2 text-left font-medium text-gray-700 truncate">플랫폼</th>
                   <th className="w-[60px] px-2 py-2 text-center font-medium text-gray-700 truncate">상태</th>
                   <th className="w-[70px] px-2 py-2 text-center font-medium text-gray-700 truncate">작업</th>
                 </tr>
               ) : (
                 <tr>
-                  <th className="w-[40px] px-2 py-2">
-                    <input
-                      type="checkbox"
-                      checked={isAllSelected}
-                      onChange={isAllSelected ? onClearSelected : onSelectAll}
-                      className="rounded border-gray-300"
-                    />
-                  </th>
-                  <th className="w-[200px] px-2 py-2 text-left font-medium text-gray-700 truncate">원문</th>
+                  <th className="min-w-[200px] px-2 py-2 text-left font-medium text-gray-700 truncate">원문</th>
                   {languages.map((lang) => (
-                    <th key={lang} className="w-[120px] px-2 py-2 text-left font-medium text-gray-700 truncate">
+                    <th key={lang} className="min-w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">
                       {lang.toUpperCase()}
                     </th>
                   ))}
@@ -268,36 +258,32 @@ export default function PreviewCommitStep({
             <tbody className="divide-y divide-gray-100">
               {paginatedEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={activeView === 'basic' ? 6 : 3 + languages.length} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={activeView === 'basic' ? 8 : 2 + languages.length} className="px-4 py-8 text-center text-gray-500">
                     미리보기 데이터가 없습니다
                   </td>
                 </tr>
               ) : (
                 paginatedEntries.map((entry) => {
-                  const isSelected = selectedIds.includes(entry.id);
                   const isGlossarySelected = entry.category === 'glossary';
                   const canAddToGlossary = !entry.existing_in_glossary;
 
                   return (
                     <tr key={entry.id} className="hover:bg-gray-50/50">
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => onToggleSelected(entry.id)}
-                          className="rounded border-gray-300"
-                        />
-                      </td>
 
                       {activeView === 'basic' ? (
                         <>
+                          <td className="px-2 py-1.5 text-gray-600 truncate">{entry.version || '-'}</td>
+                          <td className="px-2 py-1.5 text-gray-600 truncate">{entry.product_code || '-'}</td>
                           <td className="px-2 py-1.5 truncate" title={entry.source_text}>
-                            <div className="text-sm font-medium truncate">{entry.source_text}</div>
+                            <div className="text-xs font-medium truncate">{entry.source_text}</div>
                           </td>
                           <td className="px-2 py-1.5 text-gray-600 truncate" title={entry.context || '-'}>
                             {entry.context || '-'}
                           </td>
-                          <td className="px-2 py-1.5 text-gray-600 truncate">{entry.version || '-'}</td>
+                          <td className="px-2 py-1.5 text-gray-600 truncate" title={entry.note || '-'}>
+                            {entry.note || '-'}
+                          </td>
+                          <td className="px-2 py-1.5 text-gray-600 truncate">{entry.platform || '-'}</td>
                           <td className="px-2 py-1.5 text-center">
                             <div className="flex items-center justify-center gap-1">
                               {(() => {
@@ -322,7 +308,7 @@ export default function PreviewCommitStep({
                               })()}
                             </div>
                           </td>
-                          <td className="px-2 py-1.5">
+                          <td className="px-2 py-1.5 text-center">
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => canAddToGlossary && onUpdateEntry(entry.id, { category: isGlossarySelected ? 'translation' : 'glossary' })}
@@ -351,7 +337,7 @@ export default function PreviewCommitStep({
                       ) : (
                         <>
                           <td className="px-2 py-1.5 truncate" title={entry.source_text}>
-                            <div className="text-sm truncate">{entry.source_text}</div>
+                            <div className="text-xs truncate">{entry.source_text}</div>
                           </td>
                           {languages.map((lang) => (
                             <td key={lang} className="px-2 py-1.5 text-gray-600 truncate" title={entry.translations?.[lang] || '-'}>
@@ -382,7 +368,7 @@ export default function PreviewCommitStep({
                               })()}
                             </div>
                           </td>
-                          <td className="px-2 py-1.5">
+                          <td className="px-2 py-1.5 text-center">
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 onClick={() => canAddToGlossary && onUpdateEntry(entry.id, { category: isGlossarySelected ? 'translation' : 'glossary' })}

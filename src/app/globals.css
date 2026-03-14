@@ -101,7 +101,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6;
+  line-height: 1.5;
   letter-spacing: -0.01em;
 }
 
@@ -160,6 +160,7 @@ table {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
+  table-layout: fixed;  /* 고정 레이아웃으로 크기 조정 */
 }
 
 table thead {
@@ -168,14 +169,16 @@ table thead {
 }
 
 table thead th {
-  padding: 12px 16px;
+  padding: 8px 10px;    /* 더 작은 패딩 */
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;      /* 더 작은 폰트 */
   font-weight: 500;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 table tbody tr {
@@ -189,10 +192,12 @@ table tbody tr:hover {
 }
 
 table tbody td {
-  padding: 14px 16px;
-  font-size: 14px;
+  padding: 6px 10px;    /* 더 작은 패딩 */
+  font-size: 12px;      /* 더 작은 폰트 */
   color: var(--text-main);
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ===== BLUE THEME SPECIFIC ===== */

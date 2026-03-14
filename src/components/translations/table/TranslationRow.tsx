@@ -19,7 +19,7 @@ interface TranslationWithResults extends Translation {
 }
 
 interface TranslationRowProps {
-  page?: 'info' | 'translations';
+  page?: 'info' | 'translations' | 'unified';
   translation: TranslationWithResults;
   isSelected: boolean;
 
@@ -33,6 +33,7 @@ interface TranslationRowProps {
   onScopeUpdate?: (translationId: string, scope: Scope | null) => Promise<void>;
   onVersionUpdate?: (translationId: string, version: string) => Promise<void>;
   onPriorityUpdate?: (translationId: string, priority: PriorityLevel) => Promise<void>;
+  onNotesUpdate?: (translationId: string, notes: string) => Promise<void>;
   onDevCodeUpdate?: (translationId: string, devCode: string) => Promise<void>;
   onPlatformsUpdate?: (translationId: string, platformCodes: string[]) => Promise<void>;
   onDelete?: (id: string) => void;
@@ -99,8 +100,8 @@ const TranslationRow = memo(function TranslationRow({
     return width ? { width: `${width}px`, minWidth: `${width}px` } : {};
   };
 
-  // Page 2: Translations Row
-  if (page === 'translations') {
+  // Unified: Info + All Languages
+  if (page === 'unified') {
     return (
       <tr
         className={`transition-colors duration-150 hover:bg-gray-50 ${
@@ -108,7 +109,168 @@ const TranslationRow = memo(function TranslationRow({
         } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
       >
         {/* Checkbox */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('checkbox')}>
+        <td className="px-1 py-0.5 align-middle" style={getCellStyle('checkbox')}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelect(translation.id)}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+          />
+        </td>
+
+        {/* Priority */}
+        <td className="px-1.5 py-0.5 align-middle text-center" style={getCellStyle('priority')}>
+          <PriorityBadge
+            level={translation.priority || 'medium'}
+            onChange={async (p) => {
+              if (onPriorityUpdate) {
+                await onPriorityUpdate(translation.id, p);
+              }
+              await onRefresh?.();
+            }}
+          />
+        </td>
+
+        {/* Scope */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('scope')}>
+          <select
+            value={translation.scope || ''}
+            onChange={async (e) => {
+              await onScopeUpdate?.(translation.id, e.target.value === '' ? null : e.target.value as Scope);
+              await onRefresh?.();
+            }}
+            className="text-xs border-0 bg-transparent p-0 cursor-pointer text-gray-700 hover:text-blue-600"
+          >
+            <option value="">-</option>
+            <option value="SaaS">SaaS</option>
+            <option value="Solution">솔루션</option>
+            <option value="정부과제">정부</option>
+            <option value="기타">기타</option>
+          </select>
+        </td>
+
+        {/* Platform */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('platform')}>
+          <EditablePlatformCell
+            selectedCodes={selectedPlatformCodes}
+            platformsMap={platformsMap}
+            onSave={(codes) => onPlatformsUpdate?.(translation.id, codes)}
+          />
+        </td>
+
+        {/* Version */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('version')}>
+          <EditableTextCell
+            value={translation.version || ''}
+            onSave={async (v) => {
+              await onVersionUpdate?.(translation.id, v);
+              await onRefresh?.();
+            }}
+            maxLength={8}
+          />
+        </td>
+
+        {/* Dev Code / ID */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('devCode')}>
+          <EditableTextCell
+            value={translation.dev_code || ''}
+            onSave={async (v) => {
+              await onDevCodeUpdate?.(translation.id, v);
+              await onRefresh?.();
+            }}
+          />
+        </td>
+
+        {/* Source Text */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('sourceText')}>
+          <EditableSourceCell
+            value={translation.source_text}
+            onSave={async (v) => {
+              await onSourceTextUpdate?.(translation.id, v);
+              await onRefresh?.();
+            }}
+          />
+        </td>
+
+        {/* Context */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('context')}>
+          <EditableTextCell
+            value={translation.context || ''}
+            onSave={async (v) => {
+              await onContextUpdate?.(translation.id, v);
+              await onRefresh?.();
+            }}
+            middleTruncate
+            maxLength={10}
+          />
+        </td>
+
+        {/* Status */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('status')}>
+          <select
+            value={translation.status}
+            onChange={async (e) => {
+              await onStatusChange?.(translation.id, e.target.value as TranslationStatus);
+              await onRefresh?.();
+            }}
+            className={`text-xs border rounded px-1.5 py-0.5 w-full ${statusInfo.bg} ${statusInfo.text}`}
+          >
+            <option value="pending">요청</option>
+            <option value="in_progress">진행</option>
+            <option value="reviewed">검토</option>
+            <option value="deployed">완료</option>
+            <option value="re_request">재요청</option>
+            <option value="not_used">미사용</option>
+          </select>
+        </td>
+
+        {/* Language Translations */}
+        {displayLanguages.map((lang) => {
+          const transValue = getTranslationForLanguage(lang);
+          console.log(`[TranslationRow] Lang=${lang}, Value=${transValue?.substring(0, 20)}`);
+          return (
+            <td key={lang} className="px-1.5 py-0.5 align-middle" style={getCellStyle(`lang_${lang}`)}>
+              <EditableTranslationCell
+                language={lang}
+                value={transValue}
+                onSave={async (v) => {
+                  await onTranslationUpdate?.(translation.id, lang, v);
+                  await onRefresh?.();
+                }}
+              />
+            </td>
+          );
+        })}
+
+        {/* Actions */}
+        <td className="px-1 py-0.5 align-middle" style={getCellStyle('actions')}>
+          <div className="flex items-center justify-end gap-0.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete?.(translation.id); }}
+              className="p-0.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              title="삭제"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  // Page 2: Translations Row
+  if (page === 'translations') {
+    console.log('[TranslationRow] Rendering translations page:', translation.id, 'languages:', displayLanguages);
+    return (
+      <tr
+        className={`transition-colors duration-150 hover:bg-gray-50 ${
+          isSelected ? 'bg-blue-50' : ''
+        } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
+      >
+        {/* Checkbox */}
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('checkbox')}>
           <input
             type="checkbox"
             checked={isSelected}
@@ -118,7 +280,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Source Text */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('sourceText')}>
           <EditableSourceCell
             value={translation.source_text}
             onSave={async (v) => {
@@ -130,7 +292,7 @@ const TranslationRow = memo(function TranslationRow({
 
         {/* Language Translations */}
         {displayLanguages.map((lang) => (
-          <td key={lang} className="px-2 py-2 align-middle" style={getCellStyle(`lang_${lang}`)}>
+          <td key={lang} className="px-1.5 py-0.5 align-middle" style={getCellStyle(`lang_${lang}`)}>
             <EditableTranslationCell
               language={lang}
               value={getTranslationForLanguage(lang)}
@@ -143,14 +305,14 @@ const TranslationRow = memo(function TranslationRow({
         ))}
 
         {/* Actions */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('actions')}>
-          <div className="flex items-center justify-end gap-1">
+        <td className="px-1 py-0.5 align-middle" style={getCellStyle('actions')}>
+          <div className="flex items-center justify-end gap-0.5">
             <button
               onClick={(e) => { e.stopPropagation(); onDelete?.(translation.id); }}
-              className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-0.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="삭제"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -169,7 +331,7 @@ const TranslationRow = memo(function TranslationRow({
         } ${isNotUsed ? 'opacity-50 line-through' : ''}`}
       >
         {/* Checkbox */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('checkbox')}>
+        <td className="px-1 py-0.5 align-middle" style={getCellStyle('checkbox')}>
           <input
             type="checkbox"
             checked={isSelected}
@@ -179,7 +341,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Priority */}
-        <td className="px-2 py-2 align-middle text-center" style={getCellStyle('priority')}>
+        <td className="px-1.5 py-0.5 align-middle text-center" style={getCellStyle('priority')}>
           {(() => { console.log('[TranslationRow] onPriorityUpdate:', typeof onPriorityUpdate); return null; })()}
           <PriorityBadge
             level={translation.priority || 'medium'}
@@ -199,7 +361,7 @@ const TranslationRow = memo(function TranslationRow({
 
 
         {/* Scope */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('scope')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('scope')}>
           <select
             value={translation.scope || ''}
             onChange={async (e) => {
@@ -217,7 +379,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Platform */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('platform')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('platform')}>
           <EditablePlatformCell
             selectedCodes={selectedPlatformCodes}
             platformsMap={platformsMap}
@@ -226,7 +388,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Version */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('version')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('version')}>
           <EditableTextCell
             value={translation.version || ''}
             onSave={async (v) => {
@@ -238,7 +400,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* KEY/ID */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('devCode')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('devCode')}>
           <EditableTextCell
             value={translation.dev_code || ''}
             onSave={async (v) => {
@@ -250,7 +412,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Source Text */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('sourceText')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('sourceText')}>
           <EditableTextCell
             value={translation.source_text}
             onSave={async (v) => {
@@ -262,7 +424,7 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Context / Description */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('context')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('context')}>
           <EditableTextCell
             value={translation.context || ''}
             onSave={async (v) => {
@@ -270,12 +432,13 @@ const TranslationRow = memo(function TranslationRow({
               await onRefresh?.();
             }}
             placeholder="-"
-            maxLength={30}
+            middleTruncate
+            maxLength={10}
           />
         </td>
 
         {/* Status */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('status')}>
+        <td className="px-1.5 py-0.5 align-middle" style={getCellStyle('status')}>
           <select
             value={translation.status}
             onChange={async (e) => {
@@ -294,15 +457,15 @@ const TranslationRow = memo(function TranslationRow({
         </td>
 
         {/* Actions */}
-        <td className="px-2 py-2 align-middle" style={getCellStyle('actions')}>
-          <div className="flex items-center justify-end gap-1">
+        <td className="px-1 py-0.5 align-middle" style={getCellStyle('actions')}>
+          <div className="flex items-center justify-end gap-0.5">
             {onAddToGlossary && (
               <button
                 onClick={(e) => { e.stopPropagation(); onAddToGlossary(translation); }}
-                className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                className="p-0.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
                 title="용어집에 추가"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               </button>
@@ -310,10 +473,10 @@ const TranslationRow = memo(function TranslationRow({
             {onHistoryClick && (
               <button
                 onClick={(e) => { e.stopPropagation(); onHistoryClick(translation.id); }}
-                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                className="p-0.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                 title="히스토리"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </button>
@@ -327,10 +490,10 @@ const TranslationRow = memo(function TranslationRow({
                 finally { setIsDeleting(false); }
               }}
               disabled={isDeleting}
-              className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+              className="p-0.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
               title="삭제"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
@@ -381,7 +544,7 @@ const TruncatedText = ({ text, maxLength = 30, cellKey }: { text: string; maxLen
   );
 };
 
-const EditableTextCell = ({ value, onSave, placeholder = '-', maxLength = 30 }: { value: string; onSave: (val: string) => void; placeholder?: string; maxLength?: number }) => {
+const EditableTextCell = ({ value, onSave, placeholder = '-', maxLength = 12, middleTruncate = false }: { value: string; onSave: (val: string) => void; placeholder?: string; maxLength?: number; middleTruncate?: boolean }) => {
   const [isEditing, setIsEditing] = useState(false);
   if (isEditing) {
     return (
@@ -392,14 +555,19 @@ const EditableTextCell = ({ value, onSave, placeholder = '-', maxLength = 30 }: 
       />
     );
   }
+  // 중간 ... 처리
+  const text = value || placeholder;
+  const displayText = middleTruncate && text.length > maxLength 
+    ? text.slice(0, Math.ceil(maxLength / 2)) + '...' + text.slice(-Math.floor(maxLength / 2))
+    : text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
   return (
-    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-      <TruncatedText text={value || placeholder} maxLength={maxLength} cellKey={value} />
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text" title={value}>
+      <span className="text-xs text-gray-800 truncate block">{displayText}</span>
     </div>
   );
 };
 
-const EditableSourceCell = ({ value, onSave }: { value: string; onSave: (val: string) => void }) => {
+const EditableSourceCell = ({ value, onSave, maxLength = 15 }: { value: string; onSave: (val: string) => void; maxLength?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   if (isEditing) {
     return (
@@ -410,14 +578,18 @@ const EditableSourceCell = ({ value, onSave }: { value: string; onSave: (val: st
       />
     );
   }
+  // 중간 ... 처리
+  const displayText = value.length > maxLength 
+    ? value.slice(0, Math.ceil(maxLength / 2)) + '...' + value.slice(-Math.floor(maxLength / 2))
+    : value;
   return (
-    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-      <span className="text-xs text-gray-800">{value || '-'}</span>
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text" title={value}>
+      <span className="text-xs text-gray-800 truncate block">{displayText || '-'}</span>
     </div>
   );
 };
 
-const EditableTranslationCell = ({ language, value, onSave }: { language: string; value: string; onSave: (val: string) => void }) => {
+const EditableTranslationCell = ({ language, value, onSave, maxLength = 12 }: { language: string; value: string; onSave: (val: string) => void; maxLength?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   if (isEditing) {
     return (
@@ -428,9 +600,13 @@ const EditableTranslationCell = ({ language, value, onSave }: { language: string
       />
     );
   }
+  // 중간 ... 처리
+  const displayText = value.length > maxLength 
+    ? value.slice(0, Math.ceil(maxLength / 2)) + '...' + value.slice(-Math.floor(maxLength / 2))
+    : value;
   return (
-    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text">
-      <span className="text-xs text-gray-800">{value || '-'}</span>
+    <div onDoubleClick={() => setIsEditing(true)} className="cursor-text" title={value}>
+      <span className="text-xs text-gray-800 truncate block">{displayText || '-'}</span>
     </div>
   );
 };

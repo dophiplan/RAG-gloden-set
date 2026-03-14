@@ -663,30 +663,17 @@ export default function UploadPage() {
                               onChange={toggleAll}
                               className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
                             />
-                            <span className="text-sm font-medium text-gray-700">전체 선택</span>
+                            <span className="text-sm font-medium text-gray-700">총 {allTexts.length}개 텍스트</span>
                           </label>
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {(allTexts || []).map((text, index) => (
-                            <label
+                            <div
                               key={index}
-                              className={`
-                                flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                ${
-                                  selectedTexts.has(index)
-                                    ? 'border-primary bg-green-50'
-                                    : 'border-gray-200 bg-white hover:border-gray-300'
-                                }
-                              `}
+                              className="p-4 rounded-lg border border-gray-200 bg-white"
                             >
-                              <input
-                                type="checkbox"
-                                checked={selectedTexts.has(index)}
-                                onChange={() => toggleText(index)}
-                                className="mt-0.5 w-4 h-4 text-[#818CF8] rounded border-gray-300 focus:ring-[#818CF8]"
-                              />
-                              <p className="text-sm text-gray-900 flex-1">{text}</p>
-                            </label>
+                              <p className="text-sm text-gray-900">{text}</p>
+                            </div>
                           ))}
                         </div>
                       </div>

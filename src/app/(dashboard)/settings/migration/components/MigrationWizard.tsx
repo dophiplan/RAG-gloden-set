@@ -8,7 +8,7 @@ import UploadStep from './steps/UploadStep';
 import FieldMapping from './FieldMapping';
 import PreviewCommitStep from './steps/PreviewCommitStep';
 import MigrationResult from './MigrationResult';
-import PrecommitConfirmModal from './PrecommitConfirmModal';
+
 import Toast from './Toast';
 
 const STEP_ORDER = ['upload', 'mapping', 'previewCommit'] as const;
@@ -38,25 +38,15 @@ export default function MigrationWizard() {
     clearSelected,
     resetState,
     commitMigration,
-    commitSelectedMigration,
     showToast,
     hideToast,
-    clearCommitResults,
   } = useMigration();
 
-  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds, versionEntries, error, toast, commitResults } = state;
+  const { currentStep, loading, file, productCode, sheetsData, selectedVersion, currentMapping, entries, summary, selectedIds, versionEntries, error, toast } = state;
   
   // Pre-commit 모달 상태
-  const [isPrecommitModalOpen, setIsPrecommitModalOpen] = useState(false);
-  
-  // 마이그레이션 실행 핸들러 - 모달 열기
-  const handleOpenPrecommitModal = useCallback(() => {
-    setIsPrecommitModalOpen(true);
-  }, []);
-  
-  // 마이그레이션 실행 핸들러 - 모달에서 확인 후 실제 실행
-  const handleConfirmMigration = useCallback(async () => {
-    setIsPrecommitModalOpen(false);
+  // 마이그레이션 실행 핸들러 - 바로 실행
+  const handleExecuteMigration = useCallback(async () => {
     try {
       const result = await commitMigration();
       console.log('[MigrationWizard] Commit result:', result);
@@ -68,33 +58,7 @@ export default function MigrationWizard() {
     }
   }, [commitMigration, showToast]);
   
-  // Pre-commit 통계 계산
-  const precommitStats = useMemo(() => {
-    let total = entries.length;
-    let importCount = 0;
-    let mergeCount = 0;
-    let skipCount = 0;
-    
-    for (const entry of entries) {
-      const category = entry.category || 'translation';
-      
-      if (category === 'glossary') {
-        if (entry.existing_in_glossary) {
-          skipCount++;
-        } else {
-          importCount++;
-        }
-      } else {
-        if (entry.existing_in_translation) {
-          mergeCount++;
-        } else {
-          importCount++;
-        }
-      }
-    }
-    
-    return { total, import: importCount, merge: mergeCount, skip: skipCount };
-  }, [entries]);
+
   
   // Show error toast when error state changes
   useEffect(() => {
@@ -136,30 +100,13 @@ export default function MigrationWizard() {
 
   // 결과 화면에서 미리보기로 돌아가기
   const handleCloseResults = useCallback(() => {
-    clearCommitResults();
-  }, [clearCommitResults]);
+    window.location.reload();
+  }, []);
 
   // 결과 화면에서 새로운 마이그레이션 시작
   const handleResetFromResults = useCallback(() => {
-    clearCommitResults();
     resetState();
-  }, [clearCommitResults, resetState]);
-
-  // 선택 항목만 마이그레이션 핸들러
-  const handleBulkMigrate = useCallback(async (ids: string[]) => {
-    if (!confirm(`선택한 ${ids.length}개 항목만 마이그레이션하시겠습니까?`)) {
-      return;
-    }
-    try {
-      const result = await commitSelectedMigration(ids);
-      console.log('[MigrationWizard] Selected commit result:', result);
-    } catch (err: any) {
-      console.error('[MigrationWizard] Selected commit failed:', err);
-      if (err?.message) {
-        showToast(err.message, 'error');
-      }
-    }
-  }, [commitSelectedMigration, showToast]);
+  }, [resetState]);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -173,23 +120,9 @@ export default function MigrationWizard() {
         />
       )}
       
-      {/* Pre-commit 확인 모달 */}
-      <PrecommitConfirmModal
-        isOpen={isPrecommitModalOpen}
-        onClose={() => setIsPrecommitModalOpen(false)}
-        onConfirm={handleConfirmMigration}
-        stats={precommitStats}
-        entries={entries}
-      />
-      
-      {/* 결과 화면 (마이그레이션 완료 후) */}
-      {commitResults ? (
-        <MigrationResult 
-          results={commitResults} 
-          onReset={handleResetFromResults}
-          onClose={handleCloseResults}
-        />
-      ) : (<>
+
+      {/* 마이그레이션 왨료 후 결과 처리는 토스트로 표시 */}
+      <>
           {/* Step Indicator at top - Clickable for navigation */}
           <div className="mb-2">
             <StepIndicator 
@@ -250,7 +183,7 @@ export default function MigrationWizard() {
                       deleteEntries(ids);
                     }
                   }}
-                  onBulkMigrate={handleBulkMigrate}
+
                 />
               </div>
             </div>
@@ -308,7 +241,7 @@ export default function MigrationWizard() {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={handleOpenPrecommitModal}
+                  onClick={handleExecuteMigration}
                   disabled={!canGoNext() || loading}
                   loading={loading}
                 >
@@ -323,7 +256,6 @@ export default function MigrationWizard() {
             </div>
           </div>
         </>
-      )}
     </div>
   );
 }

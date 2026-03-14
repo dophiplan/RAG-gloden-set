@@ -50,6 +50,8 @@ export interface PreviewEntry {
   // Additional metadata fields
   key?: string;
   product?: string;
+  product_code?: string;
+  product_category?: string;
   version?: string;
   platform?: string;
   note?: string;
@@ -107,16 +109,19 @@ interface PreviewResponse {
 }
 
 /** API response for commit */
-interface CommitResponse {
+export interface CommitResponse {
   glossary: {
     created: number;
     skipped: number;
+    errors?: string[];
   };
   translations: {
     created: number;
     updated: number;
     skipped: number;
+    errors?: string[];
   };
+  processingTimeMs?: number;
 }
 
 // =============================================================================

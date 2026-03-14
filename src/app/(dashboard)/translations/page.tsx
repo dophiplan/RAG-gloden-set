@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProductTabs from '@/components/ProductTabs';
@@ -33,6 +33,23 @@ function TranslationsContent() {
   const router = useRouter();
   const productFromUrl = searchParams.get('product');
   
+  // User roles for 1st_manager delete all permission
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const canDeleteAll = userRoles.includes('1st_master') || userRoles.includes('master') || userRoles.includes('admin');
+  
+  // Fetch user roles
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(result => {
+        const userData = result.data?.user || result.data || result.user;
+        if (userData?.roles) {
+          setUserRoles(userData.roles);
+        }
+      })
+      .catch(console.error);
+  }, []);
+  
   // Filters
   const filters = useTranslationFilters();
   
@@ -62,6 +79,28 @@ function TranslationsContent() {
   const handleRefresh = useCallback(() => {
     fetchTranslations();
   }, [fetchTranslations]);
+
+  // Handle delete all (all products)
+  const handleDeleteAll = useCallback(async () => {
+    if (!confirm('정말 모든 번역 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/translations/bulk-delete-all', {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert(result.data?.message || '삭제가 완료되었습니다.');
+        handleRefresh();
+      } else {
+        alert(result.error?.message || '삭제 중 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      console.error('Delete all error:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  }, [handleRefresh]);
 
   // Mutations - unified through useTranslationMutations hook
   const mutations = useTranslationMutations({
@@ -138,12 +177,23 @@ function TranslationsContent() {
               onProductChange={handleProductChange}
             />
           </div>
-          <button
-            onClick={modals.openCreateModal}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors ml-4"
-          >
-            새 번역 추가
-          </button>
+          <div className="flex items-center gap-2 ml-4">
+            {canDeleteAll && (
+              <button
+                onClick={handleDeleteAll}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap"
+                title="1st_manager 이상만 사용 가능"
+              >
+                전체 삭제
+              </button>
+            )}
+            <button
+              onClick={modals.openCreateModal}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              새 번역 추가
+            </button>
+          </div>
         </div>
 
         <TranslationFiltersBar

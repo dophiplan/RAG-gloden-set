@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import TranslationRow from '@/components/translations/table/TranslationRow';
 import ResizableTableHeader from '@/components/translations/table/ResizableTableHeader';
 import TranslationTablePagination from '@/components/translations/table/TranslationTablePagination';
-import TableSlideIndicator from '@/components/translations/table/TableSlideIndicator';
 import { useResizableColumns } from '@/hooks/useResizableColumns';
-import { useTableSlide } from '@/components/translations/hooks/useTableSlide';
 import {
   Translation,
   TranslationResult,
@@ -93,9 +91,10 @@ export default memo(function TranslationTableV2({
   onPageChange,
 }: TranslationTableV2Props) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
+  const [currentSlide, setCurrentSlide] = useState<'info' | 'translations'>('info');
   // Product column removed - determined by page context
 
-  // Get display languages first (max 8 for translations page)
+  // Get display languages - 모든 선택된 언어 표시 (제한 없음)
   const displayLanguages = useMemo(() => {
     const allLanguages = getAllDisplayableLanguages();
     let langs: LanguageCode[] = [];
@@ -104,74 +103,84 @@ export default memo(function TranslationTableV2({
     } else {
       langs = allLanguages;
     }
-    // Limit to max 8 languages
-    return langs.slice(0, 8);
+    // 제한 제거 - 모든 선택된 언어 표시
+    return langs;
   }, [selectedLanguageColumns]);
 
-  // Slide view hook
-  const { currentPage: slidePage, goToPage, goToNext, goToPrev, transformStyle } = useTableSlide();
+  // 슬라이드 뷰: 모두 균등분할 (가로 스크롤 없음)
+  const infoPageWidths = useMemo(() => ({
+    // 기본정보 뷰 - 고정 컬럼들
+    checkbox: 28,
+    priority: 30,
+    scope: 40,
+    platform: 46,
+    version: 36,
+    devCode: 55,
+    sourceText: 100,
+    context: 60,
+    status: 52,
+    actions: 65,
+  }), []);
 
-  // Page 1: Basic Info columns (product removed)
-  // Very narrow metadata columns (2/3 of current), wider source text
-  const infoPageWidths = {
-    checkbox: 36,
-    priority: 40,
-    scope: 50,
-    platform: 60,
-    version: 50,
-    devCode: 80,
-    sourceText: 350, // 원문 넓게
-    context: 120,   // 설명
-    status: 45,     // 좁게
-    actions: 90,
-  };
-
-  // Page 2: Translations columns (source + selected languages)
-  const translationPageWidths = useMemo(() => {
+  const translationsPageWidths = useMemo(() => {
+    // 번역 뷰 - 원문 + 모든 언어 균등분할
+    const availableWidth = 1200; // 1512 - 사이드바(256) - 패딩(32) - 여유(24)
+    const fixedWidth = 28 + 65; // checkbox + actions
+    const variableCount = 1 + displayLanguages.length; // sourceText + languages
+    const colWidth = Math.floor((availableWidth - fixedWidth) / variableCount);
+    
     const widths: { [key: string]: number } = {
-      checkbox: 40,
-      sourceText: 280,
-      actions: 100,
+      checkbox: 28,
+      sourceText: colWidth,
     };
-    // Distribute remaining width evenly based on actual selected language count
-    // Container width ~1200px
-    const fixedWidth = 40 + 280 + 100; // checkbox + sourceText + actions
-    const containerWidth = 1200;
-    const availableWidth = containerWidth - fixedWidth;
-    const langCount = Math.max(displayLanguages.length, 1);
-    const langWidth = Math.max(Math.floor(availableWidth / langCount), 100); // min 100px
     
     displayLanguages.forEach((lang) => {
-      widths[`lang_${lang}`] = langWidth;
+      widths[`lang_${lang}`] = colWidth;
     });
+    
+    widths['actions'] = 65;
     return widths;
   }, [displayLanguages]);
 
-  const { columnWidths, startResize, resize, stopResize, resetWidths } = useResizableColumns({
-    defaultWidths: slidePage === 'info' ? infoPageWidths : translationPageWidths,
+  const { columnWidths: infoColumnWidths, startResize: startResizeInfo, resize: resizeInfo, stopResize: stopResizeInfo } = useResizableColumns({
+    defaultWidths: infoPageWidths,
     minWidths: {
-      checkbox: 36,
-      priority: 40,
-      product: 60,
-      scope: 50,
-      platform: 60,
-      version: 50,
-      devCode: 80,
-      sourceText: 150,
-      context: 80,
-      status: 70,
-      actions: 80,
+      checkbox: 28,
+      priority: 30,
+      product: 50,
+      scope: 40,
+      platform: 46,
+      version: 36,
+      devCode: 55,
+      sourceText: 60,
+      context: 50,
+      status: 52,
+      actions: 65,
     },
-    // Include language count in storage key to invalidate when languages change
-    storageKey: `translation-table-column-widths-v2-lang${displayLanguages.length}`,
+    storageKey: 'translation-table-info-widths-v1',
   });
 
-  // Reset column widths when language selection changes on translations page
+  const { columnWidths: transColumnWidths, startResize: startResizeTrans, resize: resizeTrans, stopResize: stopResizeTrans } = useResizableColumns({
+    defaultWidths: translationsPageWidths,
+    minWidths: {
+      checkbox: 28,
+      sourceText: 60,
+      actions: 65,
+    },
+    storageKey: `translation-table-trans-widths-v1-lang${displayLanguages.length}`,
+  });
+
+  const columnWidths = currentSlide === 'info' ? infoColumnWidths : transColumnWidths;
+  const startResize = currentSlide === 'info' ? startResizeInfo : startResizeTrans;
+  const resize = currentSlide === 'info' ? resizeInfo : resizeTrans;
+  const stopResize = currentSlide === 'info' ? stopResizeInfo : stopResizeTrans;
+
+  // Reset column widths when slide changes
   useEffect(() => {
-    if (slidePage === 'translations') {
-      resetWidths();
-    }
-  }, [displayLanguages.length, slidePage, resetWidths]);
+    console.log('[TranslationTableV2] currentSlide changed:', currentSlide);
+    console.log('[TranslationTableV2] displayLanguages:', displayLanguages);
+    console.log('[TranslationTableV2] columnWidths:', currentSlide === 'info' ? infoColumnWidths : transColumnWidths);
+  }, [currentSlide, displayLanguages, infoColumnWidths, transColumnWidths]);
 
   // Global mouse handlers for column resizing
   useEffect(() => {
@@ -223,119 +232,88 @@ export default memo(function TranslationTableV2({
     [selectedIds, onSelectionChange]
   );
 
+  // 슬라이드 뷰: 기본정보 | 번역정보
   return (
-    <div className="space-y-4">
-      {/* Slide Indicator */}
-      <TableSlideIndicator
-        currentPage={slidePage}
-        onPageChange={goToPage}
-      />
-
-      {/* Slide Container */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-hidden">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={transformStyle}
+    <div className="space-y-3">
+      {/* 슬라이드 토글 */}
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setCurrentSlide('info')}
+            className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              currentSlide === 'info'
+                ? 'bg-white text-[#818CF8] shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
-            {/* Page 1: Basic Info Table */}
-            <div className="w-full flex-shrink-0">
-              <table className="w-full border-collapse text-xs table-fixed">
-                <ResizableTableHeader
-                  page="info"
-
-                  allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
-                  onToggleSelectAll={toggleSelectAll}
-                  columnWidths={columnWidths}
-                  onResizeStart={startResize}
-                />
-                <tbody className="divide-y divide-gray-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
-                        로딩 중...
-                      </td>
-                    </tr>
-                  ) : (translations || []).length === 0 ? (
-                    <tr>
-                      <td colSpan={10} className="px-4 py-12 text-center text-sm text-gray-500">
-                        번역 항목이 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    (translations || []).map((translation) => (
-                      <TranslationRow
-                        key={translation.id}
-                        page="info"
-                        translation={translation}
-                        isSelected={selectedIds.includes(translation.id)}
-                        columnWidths={columnWidths}
-                        onToggleSelect={toggleSelect}
-                        onStatusChange={onStatusChange}
-                        onSourceTextUpdate={onSourceTextUpdate}
-                        onContextUpdate={onContextUpdate}
-                        onScopeUpdate={onScopeUpdate}
-                        onVersionUpdate={onVersionUpdate}
-                        onPriorityUpdate={onPriorityUpdate}
-                        onDevCodeUpdate={onDevCodeUpdate}
-                        onPlatformsUpdate={onPlatformsUpdate}
-                        onDelete={onDelete}
-                        onAddToGlossary={onAddToGlossary}
-                        onHistoryClick={onHistoryClick}
-                        onRefresh={onRefresh}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Page 2: Translations Table */}
-            <div className="w-full flex-shrink-0">
-              <table className="w-full border-collapse text-xs table-fixed">
-                <ResizableTableHeader
-                  page="translations"
-                  displayLanguages={displayLanguages}
-                  allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
-                  onToggleSelectAll={toggleSelectAll}
-                  columnWidths={columnWidths}
-                  onResizeStart={startResize}
-                />
-                <tbody className="divide-y divide-gray-200">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
-                        로딩 중...
-                      </td>
-                    </tr>
-                  ) : (translations || []).length === 0 ? (
-                    <tr>
-                      <td colSpan={3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
-                        번역 항목이 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    (translations || []).map((translation) => (
-                      <TranslationRow
-                        key={translation.id}
-                        page="translations"
-                        translation={translation}
-                        isSelected={selectedIds.includes(translation.id)}
-                        displayLanguages={displayLanguages}
-                        columnWidths={columnWidths}
-                        onToggleSelect={toggleSelect}
-                        onTranslationUpdate={onTranslationUpdate}
-                        onSourceTextUpdate={onSourceTextUpdate}
-                        onDelete={onDelete}
-                        onRefresh={onRefresh}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+            ● 기본 정보
+          </button>
+          <button
+            onClick={() => setCurrentSlide('translations')}
+            className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              currentSlide === 'translations'
+                ? 'bg-white text-[#818CF8] shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            ● 번역 정보{displayLanguages.length > 0 && ` (${displayLanguages.length})`}
+          </button>
         </div>
+      </div>
+
+      {/* 슬라이드 테이블 */}
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+        <table className="w-full border-collapse text-xs table-fixed">
+          <ResizableTableHeader
+            page={currentSlide}
+            displayLanguages={displayLanguages}
+            allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
+            onToggleSelectAll={toggleSelectAll}
+            columnWidths={columnWidths}
+            onResizeStart={startResize}
+          />
+          <tbody className="divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={currentSlide === 'info' ? 9 : 3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
+                  로딩 중...
+                </td>
+              </tr>
+            ) : (translations || []).length === 0 ? (
+              <tr>
+                <td colSpan={currentSlide === 'info' ? 9 : 3 + displayLanguages.length} className="px-4 py-12 text-center text-sm text-gray-500">
+                  번역 항목이 없습니다.
+                </td>
+              </tr>
+            ) : (
+              (translations || []).map((translation) => (
+                <TranslationRow
+                  key={translation.id}
+                  page={currentSlide}
+                  translation={translation}
+                  isSelected={selectedIds.includes(translation.id)}
+                  displayLanguages={displayLanguages}
+                  columnWidths={columnWidths}
+                  onToggleSelect={toggleSelect}
+                  onStatusChange={onStatusChange}
+                  onTranslationUpdate={onTranslationUpdate}
+                  onSourceTextUpdate={onSourceTextUpdate}
+                  onContextUpdate={onContextUpdate}
+                  onScopeUpdate={onScopeUpdate}
+                  onVersionUpdate={onVersionUpdate}
+                  onPriorityUpdate={onPriorityUpdate}
+                  onNotesUpdate={onNotesUpdate}
+                  onDevCodeUpdate={onDevCodeUpdate}
+                  onPlatformsUpdate={onPlatformsUpdate}
+                  onDelete={onDelete}
+                  onAddToGlossary={onAddToGlossary}
+                  onHistoryClick={onHistoryClick}
+                  onRefresh={onRefresh}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination */}

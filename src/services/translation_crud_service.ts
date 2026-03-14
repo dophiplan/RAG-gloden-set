@@ -684,10 +684,11 @@ export class TranslationCrudService {
     re_request: number;
     deployed: number;
     not_used: number;
+    re_deploy_request: number;
     total: number;
   }> {
     // Build base query
-    let query = this.supabase.from('translations').select('status', { count: 'exact' });
+    let query = this.supabase.from('translations').select('status');
 
     // Apply product filter
     if (productCode) {
@@ -707,6 +708,7 @@ export class TranslationCrudService {
           re_request: 0,
           deployed: 0,
           not_used: 0,
+          re_deploy_request: 0,
           total: 0,
         };
       }
@@ -727,6 +729,7 @@ export class TranslationCrudService {
       re_request: 0,
       deployed: 0,
       not_used: 0,
+      re_deploy_request: 0,
     };
 
     translations?.forEach((t) => {

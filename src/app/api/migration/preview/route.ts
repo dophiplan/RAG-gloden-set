@@ -868,9 +868,40 @@ async function parseExcel(
       columnMapping['source'] = sourceIndex;
       console.log(`[parseExcel] Source from FieldMapping: ${fieldMappings.source} -> index ${sourceIndex}`);
       
-      // 번역 매핑이 비어있으면 샘플링으로 감지
-      if (!fieldMappings.translations || fieldMappings.translations.length === 0) {
-        console.log('[parseExcel] No translations in fieldMappings, using sampling...');
+      // NEW: Process metadata.lang_XX (individual language mapping)
+      if (fieldMappings.metadata) {
+        Object.entries(fieldMappings.metadata).forEach(([key, columnName]) => {
+          if (!key.startsWith('lang_') || !columnName || typeof columnName !== 'string') {
+            return;
+          }
+          
+          const langCode = key.replace('lang_', '');
+          const idx = headers.findIndex(h => 
+            h?.toString().trim() === columnName
+          );
+          
+          if (idx !== -1 && idx !== sourceIndex) {
+            columnMapping[`translation_${langCode}`] = idx;
+            console.log(`[parseExcel] ✓ Mapped ${langCode} -> "${columnName}" at index ${idx}`);
+          }
+        });
+      }
+      
+      // NEW: Process metadata.version
+      if (fieldMappings.metadata?.version) {
+        const versionIdx = headers.findIndex(h => 
+          h?.toString().trim() === fieldMappings.metadata!.version
+        );
+        if (versionIdx !== -1) {
+          columnMapping['version'] = versionIdx;
+          console.log(`[parseExcel] ✓ Mapped version -> "${fieldMappings.metadata.version}" at index ${versionIdx}`);
+        }
+      }
+      
+      // 번역 매핑이 비어있으면 샘플링으로 감지 (fallback)
+      const hasTranslationMapping = Object.keys(columnMapping).some(k => k.startsWith('translation_'));
+      if (!hasTranslationMapping) {
+        console.log('[parseExcel] No translations mapped, using sampling...');
         detectLanguagesBySampling(jsonData, headers, columnMapping, sourceIndex);
       } else {
         // === 번역 매핑 (fieldMappings.translations가 있을 때) - 콘텐츠 기반 샘플링 ===

@@ -12,6 +12,42 @@ interface CommitEntry {
   action: 'import' | 'skip' | 'merge' | 'overwrite';
 }
 
+// 제품 분류 자동 추가 함수
+async function ensureProductCategory(
+  adminClient: ReturnType<typeof createAdminClient>,
+  category: string | undefined
+): Promise<void> {
+  if (!category?.trim()) return;
+  
+  const normalizedCode = category.trim().toLowerCase().replace(/\s+/g, '_');
+  const normalizedName = category.trim();
+  
+  try {
+    // scopes 테이블에 없으면 자동 추가
+    const { error } = await adminClient
+      .from('scopes')
+      .upsert({
+        code: normalizedCode,
+        name: normalizedName,
+        sort_order: 999,
+        is_auto_generated: true,
+        source: 'migration',
+        type: 'product_category'
+      }, { 
+        onConflict: 'code',
+        ignoreDuplicates: false // 업데이트 허용
+      });
+    
+    if (error) {
+      console.error('[Migration] Failed to ensure product category:', error);
+    } else {
+      console.log('[Migration] Product category ensured:', normalizedName);
+    }
+  } catch (err) {
+    console.error('[Migration] Error ensuring product category:', err);
+  }
+}
+
 // POST - Commit migration data
 export async function POST(request: NextRequest) {
   // FIXED: Track created IDs for rollback
@@ -107,6 +143,13 @@ export async function POST(request: NextRequest) {
       entries = body.entries;
       product_code = body.product_code;
       version = body.version;
+      
+      // NEW: 선택 항목만 마이그레이션 (entry_ids가 제공되면 해당 항목만 필터링)
+      const selectedIds: string[] | undefined = body.entry_ids;
+      if (selectedIds && selectedIds.length > 0) {
+        entries = entries.filter((e: CommitEntry) => selectedIds.includes(e.id));
+        console.log(`[Migration] Filtered to ${entries.length} selected entries from ${body.entries.length} total`);
+      }
 
       if (!entries || entries.length === 0) {
         return NextResponse.json({ error: '처리할 항목이 없습니다.' }, { status: 400 });
@@ -366,6 +409,11 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      // 각 translation entry 처리 전에 제품 분류 확인
+      if (entry.product_category) {
+        await ensureProductCategory(adminClient, entry.product_category);
+      }
+
       try {
         // Progress logging every 10 entries
         if (i % 10 === 0) {
@@ -520,8 +568,7 @@ export async function POST(request: NextRequest) {
             product_code: product_code,
             version: version || null,
             version_updated_at: version ? new Date().toISOString() : null,
-            // Note: product_category column needs to be added to DB schema
-            // product_category: entry.product_category || null,
+            product_category: entry.product_category || null,
           })
           .select()
           .single();

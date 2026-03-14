@@ -27,8 +27,8 @@ export default function DashboardLayout({
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="flex-1 overflow-auto lg:ml-0">
         {/* Header with Title and Actions */}
-        <div className="sticky top-0 z-40 bg-background h-16 border-b border-border-light">
-          <div className="h-full px-4 lg:px-8 flex items-center justify-between gap-4 lg:gap-8">
+        <div className="sticky top-0 z-40 bg-background h-14 border-b border-border-light">
+          <div className="h-full px-4 flex items-center justify-between gap-4">
             {/* Hamburger Menu Button (Mobile) */}
             <button
               onClick={() => setSidebarOpen(true)}
@@ -81,8 +81,8 @@ export default function DashboardLayout({
           </div>
         )}
 
-        {/* Main Content */}
-        <div className="px-8 pt-4 pb-8">
+        {/* Main Content - 1512x982 최적화 */}
+        <div className="px-4 pt-3 pb-4">
           {children}
         </div>
       </main>

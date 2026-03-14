@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { LanguageCode } from '@/types';
 
 export interface ResizableTableHeaderProps {
-  page?: 'info' | 'translations';
+  page?: 'info' | 'translations' | 'unified';
   // showProductColumn removed - product is determined by page context
   displayLanguages?: LanguageCode[];
   allSelected: boolean;
@@ -34,33 +34,58 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
   onResizeStart,
 }: ResizableTableHeaderProps) {
   // Define columns based on page
-  const columns: ColumnDef[] =
-    page === 'info'
-      ? [
-          // Page 1: Basic Info
-          { key: 'checkbox', label: '', resizable: false },
-          { key: 'priority', label: '중요', resizable: true },
-
-          { key: 'scope', label: '분류', resizable: true },
-          { key: 'platform', label: '플랫폼', resizable: true },
-          { key: 'version', label: '버전', resizable: true },
-          { key: 'devCode', label: 'KEY/ID', resizable: true },
-          { key: 'sourceText', label: '원문', resizable: true },
-          { key: 'context', label: '설명', resizable: true },
-          { key: 'status', label: '상태', resizable: true },
-          { key: 'actions', label: '', resizable: false },
-        ]
-      : [
-          // Page 2: Translations
-          { key: 'checkbox', label: '', resizable: false },
-          { key: 'sourceText', label: '원문', resizable: true },
-          ...displayLanguages.map((lang) => ({
-            key: `lang_${lang}`,
-            label: lang.toUpperCase(),
-            resizable: true as const,
-          })),
-          { key: 'actions', label: '', resizable: false },
-        ];
+  const getColumns = (): ColumnDef[] => {
+    console.log('[ResizableTableHeader] page:', page, 'displayLanguages:', displayLanguages);
+    if (page === 'info') {
+      // Page 1: Basic Info
+      return [
+        { key: 'checkbox', label: '', resizable: false },
+        { key: 'priority', label: '중요', resizable: true },
+        { key: 'scope', label: '분류', resizable: true },
+        { key: 'platform', label: '플랫폼', resizable: true },
+        { key: 'version', label: '버전', resizable: true },
+        { key: 'devCode', label: 'KEY/ID', resizable: true },
+        { key: 'sourceText', label: '원문', resizable: true },
+        { key: 'context', label: '설명', resizable: true },
+        { key: 'status', label: '상태', resizable: true },
+        { key: 'actions', label: '', resizable: false },
+      ];
+    } else if (page === 'unified') {
+      // Unified: Basic Info + All Languages
+      return [
+        { key: 'checkbox', label: '', resizable: false },
+        { key: 'priority', label: '중요', resizable: true },
+        { key: 'scope', label: '분류', resizable: true },
+        { key: 'platform', label: '플랫폼', resizable: true },
+        { key: 'version', label: '버전', resizable: true },
+        { key: 'devCode', label: 'KEY/ID', resizable: true },
+        { key: 'sourceText', label: '원문', resizable: true },
+        { key: 'context', label: '설명', resizable: true },
+        { key: 'status', label: '상태', resizable: true },
+        // 모든 언어 컬럼
+        ...displayLanguages.map((lang) => ({
+          key: `lang_${lang}`,
+          label: lang.toUpperCase(),
+          resizable: true as const,
+        })),
+        { key: 'actions', label: '', resizable: false },
+      ];
+    } else {
+      // Page 2: Translations
+      return [
+        { key: 'checkbox', label: '', resizable: false },
+        { key: 'sourceText', label: '원문', resizable: true },
+        ...displayLanguages.map((lang) => ({
+          key: `lang_${lang}`,
+          label: lang.toUpperCase(),
+          resizable: true as const,
+        })),
+        { key: 'actions', label: '', resizable: false },
+      ];
+    }
+  };
+  
+  const columns = getColumns();
 
   const languageLabels: Record<string, string> = {
     en: '영어',
@@ -86,8 +111,8 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
               <th
                 key={column.key}
                 scope="col"
-                className="px-2 py-3 text-left"
-                style={{ width: '36px', minWidth: '36px' }}
+                className="px-1 py-2 text-left"
+                style={{ width: '28px', minWidth: '28px' }}
               >
                 <input
                   type="checkbox"
@@ -106,8 +131,8 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
               <th
                 key={column.key}
                 scope="col"
-                className="px-2 py-3 text-right"
-                style={{ width: '90px', minWidth: '90px' }}
+                className="px-1 py-2 text-right"
+                style={{ width: '65px', minWidth: '65px' }}
               />
             );
           }
@@ -119,7 +144,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
               <th
                 key={column.key}
                 scope="col"
-                className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider relative group"
+                className="px-1.5 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider relative group"
                 style={style}
                 title={languageLabels[lang] || lang}
               >
@@ -142,7 +167,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
             <th
               key={column.key}
               scope="col"
-              className="px-2 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider relative group"
+              className="px-1.5 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider relative group"
               style={style}
             >
               <span className="truncate block">{column.label}</span>

@@ -2,15 +2,247 @@
 > translation-manager@0.1.0 dev
 > next dev
 
-⚠ Port 3000 is in use by process 38734, using available port 3002 instead.
 ▲ Next.js 16.1.6 (Turbopack)
-- Local:         http://localhost:3002
-- Network:       http://10.2.106.95:3002
+- Local:         http://localhost:3000
+- Network:       http://192.168.123.16:3000
 - Environments: .env.local
 - Experiments (use with caution):
   · optimizePackageImports
 
 ✓ Starting...
-⨯ Unable to acquire lock at /Users/nanheekim/translation-manager/.next/dev/lock, is another instance of next dev running?
-  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+✓ Ready in 644ms
+⚠️  AUTH BYPASS ENABLED - Development mode only
+○ Compiling /settings/migration ...
+ GET /settings/migration 200 in 5.2s (compile: 5.0s, proxy.ts: 39ms, render: 191ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+ GET /api/platforms 200 in 489ms (compile: 113ms, render: 375ms)
+ GET /api/products?v=2 200 in 860ms (compile: 346ms, render: 513ms)
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 935ms (compile: 304ms, render: 631ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+ GET /api/languages 200 in 204ms (compile: 137ms, render: 67ms)
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 223ms (compile: 1872µs, render: 221ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 124ms (compile: 3ms, render: 122ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 118ms (compile: 3ms, render: 115ms)
+⚠️  AUTH BYPASS ENABLED - Development mode only
+ GET /settings/migration 200 in 87ms (compile: 9ms, proxy.ts: 13ms, render: 64ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 243ms (compile: 3ms, render: 240ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 139ms (compile: 6ms, render: 134ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 146ms (compile: 4ms, render: 142ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 115ms (compile: 6ms, render: 109ms)
+✓ Compiled in 89ms
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+✓ Compiled in 99ms
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 873ms (compile: 1674µs, render: 871ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 186ms (compile: 3ms, render: 183ms)
+⚠️  AUTH BYPASS ENABLED - Development mode only
+ GET /settings/migration 200 in 78ms (compile: 10ms, proxy.ts: 7ms, render: 62ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+ GET /api/products?v=2 200 in 18ms (compile: 2ms, render: 16ms)
+ GET /api/platforms 200 in 18ms (compile: 12ms, render: 5ms)
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 259ms (compile: 3ms, render: 256ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 142ms (compile: 6ms, render: 135ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 124ms (compile: 5ms, render: 119ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 100ms (compile: 4ms, render: 96ms)
+✓ Compiled in 80ms
+⚠️  AUTH BYPASS ENABLED - Development mode only
+ GET /settings/migration 200 in 82ms (compile: 8ms, proxy.ts: 6ms, render: 68ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+ GET /api/platforms 200 in 115ms (compile: 9ms, render: 106ms)
+ GET /api/languages 200 in 138ms (compile: 13ms, render: 124ms)
+ GET /api/products?v=2 200 in 145ms (compile: 3ms, render: 142ms)
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 203ms (compile: 17ms, render: 186ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 164ms (compile: 3ms, render: 160ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 120ms (compile: 5ms, render: 115ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 119ms (compile: 6ms, render: 112ms)
+✓ Compiled in 93ms
+⚠️  AUTH BYPASS ENABLED - Development mode only
+✓ Compiled in 81ms
+✓ Compiled in 83ms
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 689ms (compile: 3ms, render: 686ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 140ms (compile: 4ms, render: 137ms)
+✓ Compiled in 79ms
+✓ Compiled in 77ms
+✓ Compiled in 88ms
+✓ Compiled in 98ms
+✓ Compiled in 76ms
+⚠️  AUTH BYPASS ENABLED - Development mode only
+ GET /settings/migration 200 in 79ms (compile: 11ms, proxy.ts: 8ms, render: 60ms)
+⚠️  AUTH BYPASS ENABLED - Development mode only
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+ GET /api/platforms 200 in 371ms (compile: 2ms, render: 369ms)
+ GET /api/languages 200 in 369ms (compile: 2ms, render: 367ms)
+ GET /api/products?v=2 200 in 437ms (compile: 3ms, render: 434ms)
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 533ms (compile: 8ms, render: 525ms)
+⚠️  API AUTH BYPASS ENABLED - Development mode only
+Error fetching user profile: {
+  code: 'PGRST116',
+  details: 'The result contains 0 rows',
+  hint: null,
+  message: 'Cannot coerce the result to a single JSON object'
+}
+⚠️  DEV MODE: Returning admin@example.com as fallback
+ GET /api/auth/me 200 in 150ms (compile: 3ms, render: 147ms)
 [?25h

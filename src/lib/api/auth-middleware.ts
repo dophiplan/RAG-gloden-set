@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { apiUnauthorized, apiInternalError, apiForbidden } from './response';
 
@@ -9,13 +9,46 @@ export interface AuthContext {
   isAdmin: boolean;
 }
 
+// 개발 모드 인증 바이패스 헬퍼
+async function getDevBypassUser(): Promise<User | null> {
+  if (process.env.NODE_ENV !== 'development' || process.env.ALLOW_AUTH_BYPASS !== 'true') {
+    return null;
+  }
+
+  try {
+    const adminClient = createAdminClient();
+    const { data: existingUser } = await adminClient
+      .from('users')
+      .select('id, email')
+      .eq('email', process.env.DEV_BYPASS_EMAIL || 'admin@example.com')
+      .single();
+
+    if (existingUser) {
+      console.warn('[AUTH BYPASS] Development mode bypass used');
+      return { id: existingUser.id, email: existingUser.email } as User;
+    }
+  } catch (err) {
+    console.error('[AUTH BYPASS] Failed:', err);
+  }
+  return null;
+}
+
 /**
  * Authenticate the request and return user info
  * Returns null if authentication fails
  */
 export async function authenticateRequest(): Promise<{ context: AuthContext } | { error: NextResponse }> {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  let { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  // 개발 모드: 인증 바이패스
+  if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
+    const bypassUser = await getDevBypassUser();
+    if (bypassUser) {
+      user = bypassUser;
+      authError = null;
+    }
+  }
 
   if (authError || !user) {
     return {

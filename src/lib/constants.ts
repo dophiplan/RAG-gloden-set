@@ -25,7 +25,10 @@ export const LANGUAGE_SELECT_OPTIONS = [
   })),
 ];
 
+// DEPRECATED: use useScopes() hook instead for product categories
+// 제품 분류는 이제 scopes 테이블에서 관리됩니다 (type='product_category')
 // Scope select dropdown options (제품 분류)
+// @deprecated - Use useScopes() hook instead for product categories
 export const SCOPE_OPTIONS = [
   { value: '', label: '제품 분류 선택 *' },
   { value: 'SaaS', label: 'SaaS' },
