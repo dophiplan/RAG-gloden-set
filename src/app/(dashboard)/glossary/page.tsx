@@ -189,7 +189,7 @@ export default function GlossaryPage() {
   };
 
   // Define fixed language order
-  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'];
+  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de', 'it'];
   
   // Filter out Korean from display (terms are already in Korean)
   // Default: English only if nothing selected

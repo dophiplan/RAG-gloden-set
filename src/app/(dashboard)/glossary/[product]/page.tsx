@@ -205,7 +205,7 @@ function GlossaryProductContent() {
   };
 
   // Define fixed language order
-  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'];
+  const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de', 'it'];
   
   // Default: English only if nothing selected
   // Maintain fixed order for selected languages

@@ -12,6 +12,7 @@ export interface ResizableTableHeaderProps {
   displayLanguages?: LanguageCode[];
   allSelected: boolean;
   onToggleSelectAll: () => void;
+  languagesMap?: Record<string, { name: string }>;
 }
 
 /**
@@ -23,13 +24,19 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
   displayLanguages = [],
   allSelected,
   onToggleSelectAll,
+  languagesMap = {},
 }: ResizableTableHeaderProps) {
   debug('[ResizableTableHeader] page:', page, 'displayLanguages:', displayLanguages);
+
+  // 언어 표시 이름 가져오기 (용어집과 동일)
+  const getLanguageLabel = (langCode: LanguageCode): string => {
+    return languagesMap[langCode]?.name || langCode.toUpperCase();
+  };
 
   return (
     <thead className="bg-gray-50 border-b border-gray-200">
       {page === 'info' ? (
-        // 기본 정보 뷰 - 원문 50% 차지, 폰트 작게
+        // 기본 정보 뷰 - 원문 25% 차지, 폰트 작게
         <tr>
           <th className="w-[28px] px-1 py-2 text-left">
             <input
@@ -51,7 +58,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
           <th className="w-[25px] px-1 py-2 text-right"></th>
         </tr>
       ) : (
-        // 번역 정보 뷰 - 마이그레이션 스타일 (원문 + 모든 언어 + 상태 + 작업)
+        // 번역 정보 뷰 - 마이그레이션 스타일 (원문 + 선택된 언어 + 상태 + 작업)
         <tr>
           <th className="w-[28px] px-1 py-2 text-left">
             <input
@@ -65,7 +72,7 @@ const ResizableTableHeader = memo(function ResizableTableHeader({
           <th className="w-[20%] px-2 py-2 text-left text-[10px] font-medium text-gray-700 truncate">원문</th>
           {displayLanguages.map((lang) => (
             <th key={lang} className="px-1 py-2 text-left text-[10px] font-medium text-gray-700 truncate">
-              {lang.toUpperCase()}
+              {getLanguageLabel(lang)}
             </th>
           ))}
           <th className="w-[50px] px-1 py-2 text-center text-[10px] font-medium text-gray-700 truncate">상태</th>

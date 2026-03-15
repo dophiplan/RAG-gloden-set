@@ -14,6 +14,7 @@ import {
   Scope,
 } from '@/types';
 import { getAllDisplayableLanguages } from '@/lib/product-languages';
+import { useLanguages } from '@/hooks/useReferenceData';
 
 interface TranslationWithResults extends Translation {
   translation_results: TranslationResult[];
@@ -90,6 +91,7 @@ export default memo(function TranslationTableV2({
 }: TranslationTableV2Props) {
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<'basic' | 'translations'>('basic');
+  const { languagesMap } = useLanguages();
 
   // 언어 필터와 연동 - 선택된 언어만 표시 (없으면 모든 언어)
   const displayLanguages = useMemo(() => {
@@ -178,6 +180,7 @@ export default memo(function TranslationTableV2({
             displayLanguages={displayLanguages}
             allSelected={selectedIds.length === (translations || []).length && translations.length > 0}
             onToggleSelectAll={toggleSelectAll}
+            languagesMap={languagesMap}
           />
           <tbody className="divide-y divide-gray-200">
             {loading ? (
