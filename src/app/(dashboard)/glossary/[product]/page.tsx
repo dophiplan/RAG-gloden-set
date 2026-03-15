@@ -408,21 +408,24 @@ function GlossaryProductContent() {
                   전체
                 </button>
                 <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                {languages.filter(l => l.code !== 'ko').map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => handleLanguageToggle(lang.code as LanguageCode)}
-                    className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 ${
-                      isLanguageSelected(lang.code as LanguageCode)
-                        ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md'
-                        : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
-                    }`}
-                    title={lang.name}
-                    aria-label={`${lang.name} 표시`}
-                  >
-                    {lang.code.toUpperCase()}
-                  </button>
-                ))}
+                {LANGUAGE_ORDER.filter(code => code !== 'ko').map((code) => {
+                  const lang = languages.find(l => l.code === code);
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => handleLanguageToggle(code)}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 ${
+                        isLanguageSelected(code)
+                          ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow-md'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
+                      }`}
+                      title={lang?.name || code}
+                      aria-label={`${lang?.name || code} 표시`}
+                    >
+                      {code.toUpperCase()}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

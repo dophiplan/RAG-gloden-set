@@ -6,6 +6,9 @@ import Select from '@/components/ui/Select';
 import { TranslationStatus, LanguageCode, ScopeType, ProductCode } from '@/types';
 import { useLanguages, useProducts, useScopes } from '@/hooks/useReferenceData';
 
+// 고정 언어 순서 (용어집과 동일)
+const LANGUAGE_ORDER: LanguageCode[] = ['en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de', 'it'];
+
 interface TranslationFiltersBarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
@@ -275,7 +278,7 @@ export default function TranslationFiltersBar({
               전체
             </button>
             <div className="w-px h-4 bg-gray-300 mx-1"></div>
-            {availableLanguages.map((lang) => (
+            {LANGUAGE_ORDER.filter(lang => availableLanguages.includes(lang)).map((lang) => (
               <button
                 key={lang}
                 onClick={() => handleLanguageToggle(lang)}
