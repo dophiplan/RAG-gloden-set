@@ -13,6 +13,11 @@ import * as XLSX from 'xlsx';
 import { ProductCode } from '@/types';
 import { apiFetch } from '@/lib/api-utils';
 
+// Debug logging helper - only in development
+const isDev = process.env.NODE_ENV === 'development';
+const debug = isDev ? console.log.bind(console) : () => {};
+const debugError = isDev ? console.error.bind(console) : () => {};
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -834,7 +839,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
         dispatch({ type: 'RESTORE_STATE', payload: parsed });
       }
     } catch (e) {
-      console.error('Failed to restore migration state:', e);
+      debugError('Failed to restore migration state:', e);
     }
   }, []);
 
@@ -849,7 +854,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       const { file, loading, error, toast, ...persistableState } = state;
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(persistableState));
     } catch (e) {
-      console.error('Failed to save migration state:', e);
+      debugError('Failed to save migration state:', e);
     }
   }, [state]);
 
@@ -1091,7 +1096,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     const hasProductCategory = !!m.metadata.product_category;
     // 번역은 필수가 아님 - 원문과 제품분류만 필수
     
-    console.log('[isMappingComplete] Checking:', {
+    debug('[isMappingComplete] Checking:', {
       selectedVersion,
       hasSource,
       hasProductCategory,
@@ -1168,7 +1173,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
         const mappings = finalVersionMappings[versionName];
         if (!mappings || !mappings.source || !state.file) return null;
 
-        console.log(`[loadPreview] ${versionName} - Sending mappings:`, JSON.stringify(mappings, null, 2));
+        debug(`[loadPreview] ${versionName} - Sending mappings:`, JSON.stringify(mappings, null, 2));
         
         const fd = new FormData();
         fd.append('file', state.file);
@@ -1186,18 +1191,18 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
           );
 
           if (previewData.error) {
-            console.error(`[Preview API] Error for ${versionName}:`, previewData.error);
+            debugError(`[Preview API] Error for ${versionName}:`, previewData.error);
             return null;
           }
 
           if (!previewData.entries || !Array.isArray(previewData.entries)) {
-            console.error(`[Preview API] Invalid response for ${versionName}:`, previewData);
+            debugError(`[Preview API] Invalid response for ${versionName}:`, previewData);
             return null;
           }
 
-          console.log(`[loadPreview] ${versionName} - entries count:`, previewData.entries.length);
-          console.log(`[loadPreview] ${versionName} - first entry:`, previewData.entries[0]);
-          console.log(`[loadPreview] ${versionName} - first entry translations:`, previewData.entries[0]?.translations);
+          debug(`[loadPreview] ${versionName} - entries count:`, previewData.entries.length);
+          debug(`[loadPreview] ${versionName} - first entry:`, previewData.entries[0]);
+          debug(`[loadPreview] ${versionName} - first entry translations:`, previewData.entries[0]?.translations);
 
           const initEntries = previewData.entries.map((e) => ({
             ...e,
@@ -1212,18 +1217,18 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
             summary: previewData.summary,
           };
         } catch (error) {
-          console.error(`[Preview API] Failed for ${versionName}:`, error);
+          debugError(`[Preview API] Failed for ${versionName}:`, error);
           return null;
         }
       });
 
       const results = await Promise.all(versionPromises);
       
-      console.log('[loadPreview] All results:', results.map(r => r ? { versionName: r.versionName, entryCount: r.entries.length } : null));
+      debug('[loadPreview] All results:', results.map(r => r ? { versionName: r.versionName, entryCount: r.entries.length } : null));
 
       // DEBUG: Log first entry of first result
       if (results[0]?.entries[0]) {
-        console.log('[loadPreview] DEBUG First entry:', {
+        debug('[loadPreview] DEBUG First entry:', {
           id: results[0].entries[0].id,
           version: results[0].entries[0].version,
           product: results[0].entries[0].product,
@@ -1235,7 +1240,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
       // FIXED: Check if all API calls failed and show error
       const successfulResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
-      console.log('[loadPreview] Successful results:', successfulResults.length);
+      debug('[loadPreview] Successful results:', successfulResults.length);
       
       if (successfulResults.length === 0) {
         dispatch({ 
@@ -1351,7 +1356,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       product_code: state.productCode || undefined,
       version: state.version || null,
     };
-    console.log('[commitMigration] Sending request:', {
+    debug('[commitMigration] Sending request:', {
       product_code: requestBody.product_code,
       entries_count: requestBody.entries.length,
       version: requestBody.version,
@@ -1367,7 +1372,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       dispatch({ type: 'COMMIT_SUCCESS' });
       return data;
     } catch (err: any) {
-      console.error('[commitMigration] Error:', err);
+      debugError('[commitMigration] Error:', err);
       dispatch({ type: 'COMMIT_ERROR', payload: err.message });
       throw err;
     }
@@ -1434,10 +1439,10 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       const missing = [];
       if (!hasSource) missing.push('원문(source)');
       if (!hasProductCategory) missing.push('제품분류(product_category)');
-      console.log('[canProceedToPreview] 매핑 누락:', missing.join(', '));
-      console.log('[canProceedToPreview] selectedVersion:', selectedVersion);
-      console.log('[canProceedToPreview] versionMapping:', versionMapping);
-      console.log('[canProceedToPreview] currentMapping:', state.currentMapping);
+      debug('[canProceedToPreview] 매핑 누락:', missing.join(', '));
+      debug('[canProceedToPreview] selectedVersion:', selectedVersion);
+      debug('[canProceedToPreview] versionMapping:', versionMapping);
+      debug('[canProceedToPreview] currentMapping:', state.currentMapping);
     }
     
     return hasFile && hasProduct && mappingComplete;

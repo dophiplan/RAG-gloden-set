@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { ProductCode } from '@/types';
 
+// Debug logging helper - only in development
+const isDev = process.env.NODE_ENV === 'development';
+const debug = isDev ? console.log.bind(console) : () => {};
+const debugError = isDev ? console.error.bind(console) : () => {};
+
 interface CommitEntry {
   id: string;
   source_text: string;
@@ -39,12 +44,12 @@ async function ensureProductCategory(
       });
     
     if (error) {
-      console.error('[Migration] Failed to ensure product category:', error);
+      debugError('[Migration] Failed to ensure product category:', error);
     } else {
-      console.log('[Migration] Product category ensured:', normalizedName);
+      debug('[Migration] Product category ensured:', normalizedName);
     }
   } catch (err) {
-    console.error('[Migration] Error ensuring product category:', err);
+    debugError('[Migration] Error ensuring product category:', err);
   }
 }
 
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     // Development mode: fetch a real user from DB for bypass
     if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
-      console.log('[Migration] DEV MODE: Attempting auth bypass');
+      debug('[Migration] DEV MODE: Attempting auth bypass');
       
       try {
         const adminClient = createAdminClient();
@@ -87,12 +92,12 @@ export async function POST(request: NextRequest) {
             userEmail: existingUser.email,
             timestamp: new Date().toISOString()
           });
-          console.log('[Migration] DEV MODE: Using existing user from DB:', existingUser.email);
+          debug('[Migration] DEV MODE: Using existing user from DB:', existingUser.email);
           user = { id: existingUser.id, email: existingUser.email } as typeof user;
           authError = null;
         }
       } catch (bypassError) {
-        console.error('[Migration] DEV MODE: Bypass failed:', bypassError);
+        debugError('[Migration] DEV MODE: Bypass failed:', bypassError);
       }
     }
 
@@ -110,7 +115,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (profileError) {
-      console.error('[Migration] Failed to fetch user profile:', profileError);
+      debugError('[Migration] Failed to fetch user profile:', profileError);
       return NextResponse.json({ error: '사용자 정보를 가져올 수 없습니다.' }, { status: 500 });
     }
 
@@ -148,7 +153,7 @@ export async function POST(request: NextRequest) {
       const selectedIds: string[] | undefined = body.entry_ids;
       if (selectedIds && selectedIds.length > 0) {
         entries = entries.filter((e: CommitEntry) => selectedIds.includes(e.id));
-        console.log(`[Migration] Filtered to ${entries.length} selected entries from ${body.entries.length} total`);
+        debug(`[Migration] Filtered to ${entries.length} selected entries from ${body.entries.length} total`);
       }
 
       if (!entries || entries.length === 0) {
@@ -161,7 +166,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate product_code exists in products table
-    console.log('[Migration] Validating product_code:', product_code, 'type:', typeof product_code);
+    debug('[Migration] Validating product_code:', product_code, 'type:', typeof product_code);
     
     // FIXED: Ensure product_code is a string and trim whitespace
     const normalizedProductCode = typeof product_code === 'string' ? product_code.trim() : String(product_code);
@@ -180,21 +185,21 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
     
     if (productCheckError) {
-      console.error('[Migration] Failed to check product_code:', productCheckError);
+      debugError('[Migration] Failed to check product_code:', productCheckError);
       return NextResponse.json({ 
         error: '제품 코드 확인 중 오류가 발생했습니다.' 
       }, { status: 500 });
     }
     
     if (!productExists) {
-      console.error(`[Migration] Product code "${normalizedProductCode}" does not exist in products table`);
+      debugError(`[Migration] Product code "${normalizedProductCode}" does not exist in products table`);
       
       // DEBUG: List available products
       const { data: availableProducts } = await adminClient
         .from('products')
         .select('code, name')
         .limit(10);
-      console.error('[Migration] Available products:', availableProducts);
+      debugError('[Migration] Available products:', availableProducts);
       
       return NextResponse.json({ 
         error: '제품 코드가 존재하지 않습니다.',
@@ -209,8 +214,8 @@ export async function POST(request: NextRequest) {
     // Log start of processing
     const glossaryEntries = entries.filter((e) => e.category === 'glossary');
     const translationEntries = entries.filter((e) => e.category === 'translation');
-    console.log(`[Migration] Starting processing: ${entries.length} entries`);
-    console.log(`[Migration] Glossary: ${glossaryEntries.length}, Translations: ${translationEntries.length}`);
+    debug(`[Migration] Starting processing: ${entries.length} entries`);
+    debug(`[Migration] Glossary: ${glossaryEntries.length}, Translations: ${translationEntries.length}`);
 
     const results = {
       glossary: {
@@ -241,7 +246,7 @@ export async function POST(request: NextRequest) {
       .single();
     
     if (batchError) {
-      console.error('[Migration] Failed to create batch:', batchError);
+      debugError('[Migration] Failed to create batch:', batchError);
       // Continue without batch - rollback won't be available
     }
     
@@ -259,7 +264,7 @@ export async function POST(request: NextRequest) {
       try {
         // Progress logging every 10 entries
         if (i % 10 === 0) {
-          console.log(`[Migration] Processing glossary entry ${i + 1}/${glossaryEntries.length}`);
+          debug(`[Migration] Processing glossary entry ${i + 1}/${glossaryEntries.length}`);
         }
 
         // Check for timeout warning
@@ -280,7 +285,7 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
           
           if (existingError) {
-            console.error(`[Migration] Error checking existing glossary for "${entry.source_text}":`, existingError);
+            debugError(`[Migration] Error checking existing glossary for "${entry.source_text}":`, existingError);
           }
 
           if (existing) {
@@ -307,7 +312,7 @@ export async function POST(request: NextRequest) {
                 batch_operation_id: batchId,
               }).then(({ error }) => {
                 if (error) {
-                  console.error('[Audit Log] Failed to log glossary update:', error);
+                  debugError('[Audit Log] Failed to log glossary update:', error);
                 }
               });
             }
@@ -363,14 +368,14 @@ export async function POST(request: NextRequest) {
             batch_operation_id: batchId,
           }).then(({ error }) => {
             if (error) {
-              console.error('[Audit Log] Failed to log glossary creation:', error);
+              debugError('[Audit Log] Failed to log glossary creation:', error);
             }
           });
         }
 
         results.glossary.created++;
       } catch (error) {
-        console.error('Error importing glossary entry:', error);
+        debugError('Error importing glossary entry:', error);
         const errorMessage = error instanceof Error ? error.message : '가져오기 실패';
         
         // Check for FK constraint violation
@@ -417,7 +422,7 @@ export async function POST(request: NextRequest) {
       try {
         // Progress logging every 10 entries
         if (i % 10 === 0) {
-          console.log(`[Migration] Processing translation entry ${i + 1}/${translationEntries.length}`);
+          debug(`[Migration] Processing translation entry ${i + 1}/${translationEntries.length}`);
         }
 
         // Check for timeout warning
@@ -433,7 +438,7 @@ export async function POST(request: NextRequest) {
           .maybeSingle();
         
         if (existingError) {
-          console.error(`[Migration] Error checking existing translation for "${entry.source_text}":`, existingError);
+          debugError(`[Migration] Error checking existing translation for "${entry.source_text}":`, existingError);
         }
 
         if (existing) {
@@ -502,7 +507,7 @@ export async function POST(request: NextRequest) {
               batch_operation_id: batchId,
             }).then(({ error }) => {
               if (error) {
-                console.error('[Audit Log] Failed to log migration update:', error);
+                debugError('[Audit Log] Failed to log migration update:', error);
               }
             });
 
@@ -559,7 +564,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Link to product
-        console.log('[Migration] Linking translation to product:', { translation_id: translation.id, product_code });
+        debug('[Migration] Linking translation to product:', { translation_id: translation.id, product_code });
         
         const { data: tpData, error: tpError } = await adminClient
           .from('translation_products')
@@ -574,7 +579,7 @@ export async function POST(request: NextRequest) {
           .single();
           
         if (tpError) {
-          console.error('[Migration] Failed to link translation to product:', {
+          debugError('[Migration] Failed to link translation to product:', {
             error: tpError,
             translation_id: translation.id,
             product_code,
@@ -597,13 +602,13 @@ export async function POST(request: NextRequest) {
           batch_operation_id: batchId,
         }).then(({ error }) => {
           if (error) {
-            console.error('[Audit Log] Failed to log migration creation:', error);
+            debugError('[Audit Log] Failed to log migration creation:', error);
           }
         });
 
         results.translations.created++;
       } catch (error) {
-        console.error('Error importing translation entry:', error);
+        debugError('Error importing translation entry:', error);
         const errorMessage = error instanceof Error ? error.message : '가져오기 실패';
         
         // Check for FK constraint violation
@@ -642,18 +647,21 @@ export async function POST(request: NextRequest) {
     }
 
     const processingTime = Date.now() - startTime;
-    console.log(`[Migration] Completed processing ${entries.length} entries in ${processingTime}ms`);
-    console.log(`[Migration] Results: Glossary created=${results.glossary.created}, skipped=${results.glossary.skipped}, errors=${results.glossary.errors.length}`);
-    console.log(`[Migration] Results: Translations created=${results.translations.created}, updated=${results.translations.updated}, skipped=${results.translations.skipped}, errors=${results.translations.errors.length}`);
+    debug(`[Migration] Completed processing ${entries.length} entries in ${processingTime}ms`);
+    debug(`[Migration] Results: Glossary created=${results.glossary.created}, skipped=${results.glossary.skipped}, errors=${results.glossary.errors.length}`);
+    debug(`[Migration] Results: Translations created=${results.translations.created}, updated=${results.translations.updated}, skipped=${results.translations.skipped}, errors=${results.translations.errors.length}`);
 
     return NextResponse.json({
       success: true,
       batchId,
       processingTimeMs: processingTime,
+      product_code: product_code,
+      version: version || null,
+      imported: results.glossary.created + results.translations.created + results.translations.updated,
       ...results,
     });
   } catch (error) {
-    console.error('Error committing migration:', error);
+    debugError('Error committing migration:', error);
     
     // FIXED: Attempt rollback on unexpected error (Issue #6)
     if (batchId || createdIds.glossary.length > 0 || createdIds.translations.length > 0) {
@@ -661,7 +669,7 @@ export async function POST(request: NextRequest) {
         const adminClient = createAdminClient();
         await rollbackOperations(adminClient, createdIds, batchId);
       } catch (rollbackError) {
-        console.error('[Migration] Rollback failed:', rollbackError);
+        debugError('[Migration] Rollback failed:', rollbackError);
       }
     }
     
@@ -684,7 +692,7 @@ async function rollbackOperations(
   },
   batchId: string | null
 ) {
-  console.log('[Migration] Starting rollback...');
+  debug('[Migration] Starting rollback...');
   
   try {
     // Delete in reverse order of creation to respect foreign keys

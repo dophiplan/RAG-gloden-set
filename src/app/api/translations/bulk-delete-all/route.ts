@@ -6,7 +6,7 @@ import { ProductCode } from '@/types';
 
 /**
  * DELETE /api/translations/bulk-delete-all
- * Delete all translations (1st_manager+ only)
+ * Delete all translations (1st_master+ only)
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -26,12 +26,20 @@ export async function DELETE(request: NextRequest) {
       .single();
 
     const userRoles = userProfile?.roles || [];
+    
+    // DEBUG: Log user roles for debugging (development only)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Bulk Delete All] User roles:', JSON.stringify(userRoles));
+      console.log('[Bulk Delete All] includes 1st_master:', userRoles.includes('1st_master'));
+    }
+    
     const canDeleteAll = 
       userRoles.includes('1st_master') || 
       userRoles.includes('master') || 
       userRoles.includes('admin');
 
     if (!canDeleteAll) {
+      console.log('[Bulk Delete All] Permission denied. Roles:', userRoles);
       return apiError('FORBIDDEN', '1st_master 이상만 전체 삭제가 가능합니다.', 403);
     }
 

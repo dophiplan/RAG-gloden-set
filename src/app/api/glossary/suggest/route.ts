@@ -4,6 +4,7 @@ import { suggestGlossaryTerms } from '@/lib/glossary/term-detector';
 import { LanguageCode, ProductCode } from '@/types';
 import { PAGINATION } from '@/lib/constants';
 import { apiSuccess, apiUnauthorized, apiInternalError } from '@/lib/api/response';
+import { getAuthUser } from '@/lib/api-auth';
 
 /**
  * GET - 제안된 용어 목록 가져오기
@@ -15,7 +16,7 @@ import { apiSuccess, apiUnauthorized, apiInternalError } from '@/lib/api/respons
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
       return apiUnauthorized();

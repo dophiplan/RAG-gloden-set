@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import StepIndicator from './StepIndicator';
 import Button from '@/components/ui/Button';
 import { useMigration } from '../contexts/MigrationContext';
@@ -14,6 +15,7 @@ import Toast from './Toast';
 const STEP_ORDER = ['upload', 'mapping', 'previewCommit'] as const;
 
 export default function MigrationWizard() {
+  const router = useRouter();
   const {
     state,
     nextStep,
@@ -52,11 +54,17 @@ export default function MigrationWizard() {
       console.log('[MigrationWizard] Commit result:', result);
       
       // 성공 알림 표시 및 번역 관리 페이지로 이동
-      showToast(`마이그레이션이 성공적으로 완료되었습니다. (처리: ${result.imported || 0}개)`, 'success');
+      const imported = result?.imported ?? (result?.glossary?.created ?? 0) + (result?.translations?.created ?? 0) + (result?.translations?.updated ?? 0);
+      showToast(`마이그레이션이 성공적으로 완료되었습니다. (처리: ${imported}개)`, 'success');
       
-      // 잠시 후 번역 관리 페이지로 이동
+      // FIX: 마이그레이션한 제품 코드의 번역 관리 페이지로 이동
+      const targetProductCode = productCode || result.product_code;
       setTimeout(() => {
-        window.location.href = '/translations';
+        if (targetProductCode) {
+          router.push(`/translations/${targetProductCode}`);
+        } else {
+          router.push('/translations');
+        }
       }, 1500);
     } catch (err: any) {
       console.error('[MigrationWizard] Commit failed:', err);
@@ -64,7 +72,7 @@ export default function MigrationWizard() {
         showToast(err.message, 'error');
       }
     }
-  }, [commitMigration, showToast]);
+  }, [commitMigration, showToast, productCode]);
   
 
   

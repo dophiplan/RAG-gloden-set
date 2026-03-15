@@ -3,9 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { useLanguages } from '@/hooks/useReferenceData';
+import { getAllDisplayableLanguages } from '@/lib/product-languages';
 // TranslationTablePagination import 제거 - 커스텀 페이지네이션 사용
 import type { PreviewEntry, VersionEntries } from '../../contexts/MigrationContext';
+
+// Debug logging helper - only in development
+const isDev = process.env.NODE_ENV === 'development';
+const debug = isDev ? console.log.bind(console) : () => {};
 
 interface PreviewCommitStepProps {
   previewData?: PreviewEntry[];
@@ -62,9 +66,9 @@ export default function PreviewCommitStep({
     } else {
       entries = previewData || [];
     }
-    // DEBUG: Log first entry
+    // DEBUG: Log first entry (development only)
     if (entries.length > 0) {
-      console.log('[PreviewCommitStep] First entry:', {
+      debug('[PreviewCommitStep] First entry:', {
         version: entries[0].version,
         product: entries[0].product,
         product_category: entries[0].product_category,
@@ -103,14 +107,10 @@ export default function PreviewCommitStep({
     onClearSelected();
   };
 
-  // DB에서 언어 목록 가져오기 (한국어 제외)
-  const { languages: dbLanguages } = useLanguages();
+  // 모든 표시 가능한 언어 가져오기 (번역관리 테이블과 동일)
   const languages = useMemo(() => {
-    return dbLanguages
-      .filter(l => l.code !== 'ko')
-      .sort((a, b) => a.display_order - b.display_order)
-      .map(l => l.code);
-  }, [dbLanguages]);
+    return getAllDisplayableLanguages();
+  }, []);
 
   const stats = useMemo(() => {
     const data = currentEntries;

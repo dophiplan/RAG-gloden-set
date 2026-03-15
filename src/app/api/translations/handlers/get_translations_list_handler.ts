@@ -6,6 +6,11 @@ import { apiSuccess, apiInternalError } from '@/lib/api/response';
 import { PAGINATION } from '@/lib/constants';
 import { TranslationStatus, ProductCode, ScopeType } from '@/types';
 
+// Debug logging helper - only in development
+const isDev = process.env.NODE_ENV === 'development';
+const debug = isDev ? console.log.bind(console) : () => {};
+const debugError = isDev ? console.error.bind(console) : () => {};
+
 /**
  * Handler for GET /api/translations
  * Lists translations with filtering and pagination
@@ -61,9 +66,20 @@ export async function handleGetTranslationsList(request: NextRequest) {
       createdBefore: createdBefore || undefined,
     };
 
+    // DEBUG: Log filters for troubleshooting
+    debug('[Translations List] Filters:', JSON.stringify(filters));
+    debug('[Translations List] Pagination:', { page, limit });
+
     // Call service with admin client to bypass RLS
     const service = new TranslationCrudService(dataClient);
     const result = await service.getTranslationsList(filters, { page, limit });
+
+    // DEBUG: Log results
+    debug('[Translations List] Results:', { 
+      total: result.total, 
+      page: result.page, 
+      translationsCount: result.translations.length 
+    });
 
     return apiSuccess({
       translations: result.translations,
@@ -73,7 +89,7 @@ export async function handleGetTranslationsList(request: NextRequest) {
       totalPages: result.totalPages,
     });
   } catch (error) {
-    console.error('Error fetching translations:', error);
+    debugError('Error fetching translations:', error);
     return apiInternalError('번역 목록을 불러오는데 실패했습니다.');
   }
 }

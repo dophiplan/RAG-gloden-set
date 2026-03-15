@@ -103,7 +103,7 @@ export default function EditableCell({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           disabled={isSaving}
-          className="w-full min-h-[60px] p-2 text-sm border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full min-h-[40px] p-1.5 text-[10px] border border-blue-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           placeholder={placeholder}
         />
         <div className="flex gap-1 mt-1 text-xs text-gray-500">
@@ -146,15 +146,15 @@ export default function EditableCell({
   return (
     <div
       onDoubleClick={handleDoubleClick}
-      className={`cursor-pointer min-h-[40px] p-2 rounded hover:bg-gray-50 transition-colors ${className}`}
+      className={`cursor-pointer min-h-[24px] p-1 rounded hover:bg-gray-50 transition-colors truncate ${className}`}
       title={disabled ? '' : '더블클릭하여 편집'}
     >
       {value ? (
-        <span className="text-sm text-gray-900 whitespace-pre-wrap break-words">
+        <span className="text-[10px] text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis block">
           {renderTextWithLinks(value)}
         </span>
       ) : (
-        <span className="text-sm text-gray-400 italic">{placeholder}</span>
+        <span className="text-[10px] text-gray-400 italic">{placeholder}</span>
       )}
     </div>
   );

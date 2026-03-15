@@ -20,11 +20,11 @@ export const PRODUCT_DEFAULT_LANGUAGES: Record<ProductCode, LanguageCode[]> = {
 };
 
 /**
- * All languages available for selection (8 languages total)
+ * All languages available for selection (10 languages total)
  * Note: Korean (ko) is excluded as it's the source language
  */
 export const ALL_LANGUAGES: LanguageCode[] = [
-  'en', 'ja', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de'
+  'en', 'ja', 'zh', 'zh-CN', 'zh-TW', 'fr', 'es', 'pt', 'de', 'it'
 ];
 
 /**

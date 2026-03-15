@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { SUPPORTED_LANGUAGES, ProductCode } from '@/types';
+import type { PreviewEntry as BasePreviewEntry } from '@/types/migration';
+import { v4 as uuidv4 } from 'uuid';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import * as XLSX from 'xlsx';
 
 // Debug logging helper - only in development
 const debug = process.env.NODE_ENV === 'development' 
@@ -9,31 +13,11 @@ const debug = process.env.NODE_ENV === 'development'
 const debugError = process.env.NODE_ENV === 'development'
   ? (...args: unknown[]) => console.error(...args) 
   : () => {};
-import { v4 as uuidv4 } from 'uuid';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import * as XLSX from 'xlsx';
 
-interface PreviewEntry {
-  id: string;
-  source_text: string;
-  context?: string;
-  product?: string;
-  platform?: string;
-  version?: string;
-  key?: string;
-  note?: string;
-  product_category?: string;
-  translations: Record<string, string>;
-  suggested_category: 'glossary' | 'translation';
+// API-specific PreviewEntry extending base type
+interface PreviewEntry extends BasePreviewEntry {
   word_count: number;
-  duplicate_status: {
-    status: 'exact' | 'similar' | 'new';
-    where?: 'glossary' | 'translation' | 'both';
-    similarity?: number;
-    existing_id?: string;
-    existing_translations?: Record<string, string>;
-  };
-  category?: 'glossary' | 'translation';
+  note?: string;
   existing_in_glossary: boolean;
   existing_in_translation: boolean;
 }
@@ -278,30 +262,30 @@ export async function POST(request: NextRequest) {
     if (fieldMappingsRaw) {
       try {
         fieldMappings = JSON.parse(fieldMappingsRaw);
-        console.log('[Preview API] =======================================');
-        console.log('[Preview API] Field mappings parsed:', JSON.stringify(fieldMappings, null, 2));
-        console.log('[Preview API] Source:', fieldMappings?.source);
-        console.log('[Preview API] Translations:', fieldMappings?.translations);
-        console.log('[Preview API] Metadata:', fieldMappings?.metadata);
-        console.log('[Preview API] Metadata.version:', fieldMappings?.metadata?.version);
-        console.log('[Preview API] Metadata.product_category:', fieldMappings?.metadata?.product_category);
-        console.log('[Preview API] =======================================');
+        debug('[Preview API] =======================================');
+        debug('[Preview API] Field mappings parsed:', JSON.stringify(fieldMappings, null, 2));
+        debug('[Preview API] Source:', fieldMappings?.source);
+        debug('[Preview API] Translations:', fieldMappings?.translations);
+        debug('[Preview API] Metadata:', fieldMappings?.metadata);
+        debug('[Preview API] Metadata.version:', fieldMappings?.metadata?.version);
+        debug('[Preview API] Metadata.product_category:', fieldMappings?.metadata?.product_category);
+        debug('[Preview API] =======================================');
       } catch (e) {
-        console.error('[Preview API] Failed to parse field mappings:', e);
+        debugError('[Preview API] Failed to parse field mappings:', e);
         return NextResponse.json(
           { error: '필드 매핑 정보를 파싱할 수 없습니다.', details: String(e) },
           { status: 400 }
         );
       }
     } else {
-      console.log('[Preview API] No field mappings provided');
+      debug('[Preview API] No field mappings provided');
     }
 
-    console.log('[Preview API] File name:', file.name);
-    console.log('[Preview API] File size:', file.size);
+    debug('[Preview API] File name:', file.name);
+    debug('[Preview API] File size:', file.size);
     
     const selectedVersion = formData.get('version') as string | null;
-    console.log('[Preview API] Selected version (sheet):', selectedVersion);
+    debug('[Preview API] Selected version (sheet):', selectedVersion);
     
     let rows: ImportRow[];
     const fileName = file.name.toLowerCase();
@@ -309,10 +293,10 @@ export async function POST(request: NextRequest) {
     try {
       if (fileName.endsWith('.csv')) {
         const text = await file.text();
-        console.log('[Preview API] Parsing as CSV');
+        debug('[Preview API] Parsing as CSV');
         rows = parseCSV(text, fieldMappings);
       } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-        console.log('[Preview API] Parsing as Excel');
+        debug('[Preview API] Parsing as Excel');
         rows = await parseExcel(file, selectedVersion, fieldMappings);
       } else {
         return NextResponse.json(
@@ -321,12 +305,12 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      console.log('[Preview API] Parsed rows count:', rows.length);
+      debug('[Preview API] Parsed rows count:', rows.length);
       if (rows.length > 0) {
-        console.log('[Preview API] First row:', rows[0]);
+        debug('[Preview API] First row:', rows[0]);
       }
     } catch (parseError) {
-      console.error('[Preview API] Parse error:', parseError);
+      debugError('[Preview API] Parse error:', parseError);
       return NextResponse.json(
         { error: '파일 파싱 중 오류가 발생했습니다.', details: parseError instanceof Error ? parseError.message : String(parseError) },
         { status: 400 }
@@ -380,8 +364,8 @@ export async function POST(request: NextRequest) {
         k !== 'key_id'
       );
       
-      console.log('[Preview API] Row source:', row.source_text?.substring(0, 30));
-      console.log('[Preview API] Lang keys found:', langKeys);
+      debug('[Preview API] Row source:', row.source_text?.substring(0, 30));
+      debug('[Preview API] Lang keys found:', langKeys);
       
       for (const key of langKeys) {
         const value = row[key]?.trim();
@@ -394,14 +378,14 @@ export async function POST(request: NextRequest) {
             if (mapped) langCode = mapped;
           }
           translations[langCode] = value;
-          console.log(`[Preview API] Added: translations[${langCode}] = ${value.substring(0, 20)}`);
+          debug(`[Preview API] Added: translations[${langCode}] = ${value.substring(0, 20)}`);
         }
       }
       
-      console.log('[Preview API] Final translations:', translations);
-      console.log('[Preview API] translations type:', typeof translations);
-      console.log('[Preview API] translations keys:', Object.keys(translations));
-      console.log('[Preview API] translations is empty?', Object.keys(translations).length === 0);
+      debug('[Preview API] Final translations:', translations);
+      debug('[Preview API] translations type:', typeof translations);
+      debug('[Preview API] translations keys:', Object.keys(translations));
+      debug('[Preview API] translations is empty?', Object.keys(translations).length === 0);
 
       const wordCount = sourceText.split(/\s+/).length;
       const suggestedCategory: 'glossary' | 'translation' = wordCount <= 3 ? 'glossary' : 'translation';
@@ -438,7 +422,7 @@ export async function POST(request: NextRequest) {
       
       // DEBUG: Log for first few rows
       if (entries.length < 3) {
-        console.log(`[Preview API DEBUG] Entry ${entries.length}:`, {
+        debug(`[Preview API DEBUG] Entry ${entries.length}:`, {
           'metadata.version': fieldMappings?.metadata?.version,
           'metadata.product_category': fieldMappings?.metadata?.product_category,
           'row[fieldMappings.metadata.version]': fieldMappings?.metadata?.version ? row[fieldMappings.metadata.version] : undefined,
@@ -477,18 +461,18 @@ export async function POST(request: NextRequest) {
     const newTranslation = entries.filter(e => !e.existing_in_glossary && !e.existing_in_translation && e.suggested_category === 'translation').length;
 
     // DEBUG: API 응답 직전 - entries와 translations 상세 확인
-    console.log('[Preview API] === FINAL RESPONSE DEBUG ===');
-    console.log('[Preview API] Total entries:', entries.length);
+    debug('[Preview API] === FINAL RESPONSE DEBUG ===');
+    debug('[Preview API] Total entries:', entries.length);
     if (entries.length > 0) {
       entries.forEach((entry, i) => {
         const transKeys = entry.translations ? Object.keys(entry.translations) : [];
-        console.log(`[Preview API] Entry ${i} (${entry.source_text?.substring(0, 20)}...): translations keys = [${transKeys.join(', ')}]`);
+        debug(`[Preview API] Entry ${i} (${entry.source_text?.substring(0, 20)}...): translations keys = [${transKeys.join(', ')}]`);
         if (transKeys.length === 0) {
-          console.log(`[Preview API] Entry ${i} translations object:`, entry.translations);
+          debug(`[Preview API] Entry ${i} translations object:`, entry.translations);
         }
       });
     }
-    console.log('[Preview API] === END DEBUG ===');
+    debug('[Preview API] === END DEBUG ===');
 
     return NextResponse.json({
       entries,
@@ -506,7 +490,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error previewing migration:', error);
+    debugError('Error previewing migration:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: '미리보기 중 오류가 발생했습니다.', details: errorMessage },
@@ -669,41 +653,41 @@ function parseCSV(
   fieldMappings: { source: string | null; translations: string[]; metadata: Record<string, string> } | null
 ): ImportRow[] {
   const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
-  console.log('[parseCSV] Total lines:', lines.length);
+  debug('[parseCSV] Total lines:', lines.length);
   
   if (lines.length < 2) {
-    console.log('[parseCSV] Not enough lines (need at least header + 1 data row)');
+    debug('[parseCSV] Not enough lines (need at least header + 1 data row)');
     return [];
   }
 
   const header = parseCSVLine(lines[0]);
-  console.log('[parseCSV] Header:', header);
+  debug('[parseCSV] Header:', header);
 
   let sourceIndex: number;
   const columnMapping: Record<string, string> = {};
 
   if (fieldMappings && fieldMappings.source) {
-    console.log('[parseCSV] Looking for source field:', fieldMappings.source);
+    debug('[parseCSV] Looking for source field:', fieldMappings.source);
     sourceIndex = header.findIndex((h) => h.trim() === fieldMappings.source);
-    console.log('[parseCSV] Source index found:', sourceIndex);
+    debug('[parseCSV] Source index found:', sourceIndex);
     
     if (sourceIndex === -1) {
       throw new Error(`원문 필드 "${fieldMappings.source}"를 찾을 수 없습니다. 사용 가능한 필드: ${header.join(', ')}`);
     }
 
-    console.log('[parseCSV] Mapping translations:', fieldMappings.translations);
+    debug('[parseCSV] Mapping translations:', fieldMappings.translations);
     // 🔒 null/undefined 안전 처리
     if (!fieldMappings.translations || fieldMappings.translations.length === 0) {
-      console.log('[parseCSV] No translations to map');
+      debug('[parseCSV] No translations to map');
     } else {
     fieldMappings.translations.forEach((transField) => {
       // 🔒 null/undefined 체크
       if (!transField || typeof transField !== 'string') {
-        console.log('[parseCSV] Invalid translation field (null/undefined):', transField);
+        debug('[parseCSV] Invalid translation field (null/undefined):', transField);
         return;
       }
       const idx = header.findIndex((h) => h && h.trim() === transField);
-      console.log(`[parseCSV] Looking for translation field "${transField}" at index:`, idx);
+      debug(`[parseCSV] Looking for translation field "${transField}" at index:`, idx);
       if (idx !== -1) {
         // 🔧 정규식 수정: zh-CN, zh-TW 하이픈 이스케이프
         const langMatch = transField.match(/^(ko|en|ja|zh\-CN|zh\-TW|es|de|pt|fr)/i);
@@ -712,16 +696,16 @@ function parseCSV(
           const matched = langMatch[0];
           const langCode = matched.startsWith('zh-') ? matched : matched.toLowerCase();
           columnMapping[idx] = langCode;
-          console.log(`[parseCSV] Mapped column ${idx} to language:`, langCode);
+          debug(`[parseCSV] Mapped column ${idx} to language:`, langCode);
         } else {
-          console.log(`[parseCSV] Could not extract language code from:`, transField);
+          debug(`[parseCSV] Could not extract language code from:`, transField);
         }
       } else {
-        console.log(`[parseCSV] Translation field "${transField}" not found in header`);
+        debug(`[parseCSV] Translation field "${transField}" not found in header`);
       }
     });
     }
-    console.log('[parseCSV] Final column mapping:', columnMapping);
+    debug('[parseCSV] Final column mapping:', columnMapping);
 
     Object.entries(fieldMappings.metadata).forEach(([key, fieldName]) => {
       const idx = header.findIndex((h) => h.trim() === fieldName);
@@ -793,9 +777,9 @@ function parseCSV(
     rows.push(row);
   }
 
-  console.log('[parseCSV] Total parsed rows:', rows.length);
+  debug('[parseCSV] Total parsed rows:', rows.length);
   if (rows.length > 0) {
-    console.log('[parseCSV] Sample row:', rows[0]);
+    debug('[parseCSV] Sample row:', rows[0]);
   }
 
   return rows;
@@ -836,8 +820,8 @@ async function parseExcel(
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: 'array' });
   
-  console.log('[parseExcel] Available sheets:', workbook.SheetNames);
-  console.log('[parseExcel] Selected version:', selectedVersion);
+  debug('[parseExcel] Available sheets:', workbook.SheetNames);
+  debug('[parseExcel] Selected version:', selectedVersion);
   
   let sheetName: string;
   
@@ -847,7 +831,7 @@ async function parseExcel(
     sheetName = workbook.SheetNames[0];
   } else if (workbook.SheetNames.length > 1) {
     sheetName = workbook.SheetNames[0];
-    console.log('[parseExcel] Warning: Multiple sheets found, using first sheet:', sheetName);
+    debug('[parseExcel] Warning: Multiple sheets found, using first sheet:', sheetName);
   } else {
     throw new Error('Excel 파일에 시트가 없습니다.');
   }
@@ -868,8 +852,8 @@ async function parseExcel(
   }
   
   const headers = jsonData[0] as string[];
-  console.log('[parseExcel] Headers:', headers);
-  console.log('[parseExcel] Total rows:', jsonData.length - 1);
+  debug('[parseExcel] Headers:', headers);
+  debug('[parseExcel] Total rows:', jsonData.length - 1);
   
   const columnMapping: Record<string, number> = {};
   
@@ -882,7 +866,7 @@ async function parseExcel(
     );
     if (sourceIndex !== -1) {
       columnMapping['source'] = sourceIndex;
-      console.log(`[parseExcel] Source from FieldMapping: ${fieldMappings.source} -> index ${sourceIndex}`);
+      debug(`[parseExcel] Source from FieldMapping: ${fieldMappings.source} -> index ${sourceIndex}`);
       
       // NEW: Process metadata.lang_XX (individual language mapping)
       if (fieldMappings.metadata) {
@@ -898,7 +882,7 @@ async function parseExcel(
           
           if (idx !== -1 && idx !== sourceIndex) {
             columnMapping[`translation_${langCode}`] = idx;
-            console.log(`[parseExcel] ✓ Mapped ${langCode} -> "${columnName}" at index ${idx}`);
+            debug(`[parseExcel] ✓ Mapped ${langCode} -> "${columnName}" at index ${idx}`);
           }
         });
       }
@@ -910,7 +894,7 @@ async function parseExcel(
         );
         if (versionIdx !== -1) {
           columnMapping['version'] = versionIdx;
-          console.log(`[parseExcel] ✓ Mapped version -> "${fieldMappings.metadata.version}" at index ${versionIdx}`);
+          debug(`[parseExcel] ✓ Mapped version -> "${fieldMappings.metadata.version}" at index ${versionIdx}`);
         }
       }
       
@@ -919,14 +903,14 @@ async function parseExcel(
       const hasTranslationMapping = Object.keys(columnMapping).some(k => k.startsWith('translation_'));
       if (hasTranslationMapping && fieldMappings.translations?.length) {
         // 번역이 명시적으로 매핑된 경우에만 처리
-        console.log('[parseExcel] Processing fieldMappings.translations:', fieldMappings.translations);
+        debug('[parseExcel] Processing fieldMappings.translations:', fieldMappings.translations);
         // 🔒 중복 언어 코드 추적
         const mappedLangs = new Set<string>();
         
         fieldMappings.translations?.forEach((transField) => {
           // 🔒 null/undefined 체크
           if (!transField || typeof transField !== 'string') {
-            console.log('[parseExcel] Invalid translation field (null/undefined):', transField);
+            debug('[parseExcel] Invalid translation field (null/undefined):', transField);
             return;
           }
           
@@ -936,7 +920,7 @@ async function parseExcel(
             return headerStr === transField || 
                    headerStr.toLowerCase() === transField.toLowerCase();
           });
-          console.log(`[parseExcel] Looking for translation field "${transField}" at index:`, idx);
+          debug(`[parseExcel] Looking for translation field "${transField}" at index:`, idx);
           
           if (idx !== -1 && idx !== sourceIndex) {
             // 🔧 콘텐츠 기반 언어 감지: 2~5번째 행 샘플링
@@ -950,7 +934,7 @@ async function parseExcel(
               }
             }
             
-            console.log(`[parseExcel] Column "${transField}" (idx=${idx}) sample texts:`, texts.slice(0, 3));
+            debug(`[parseExcel] Column "${transField}" (idx=${idx}) sample texts:`, texts.slice(0, 3));
             
             // 콘텐츠로 언어 감지
             let langCode: string | null = null;
@@ -959,7 +943,7 @@ async function parseExcel(
               for (const text of texts) {
                 langCode = detectLanguageByContent(text);
                 if (langCode && langCode !== 'unknown') {
-                  console.log(`[parseExcel] Detected language "${langCode}" from text: "${text.substring(0, 30)}"`);
+                  debug(`[parseExcel] Detected language "${langCode}" from text: "${text.substring(0, 30)}"`);
                   break;
                 }
               }
@@ -974,7 +958,7 @@ async function parseExcel(
               } else {
                 langCode = extractLanguageCodeFromColumnName(transField);
               }
-              console.log(`[parseExcel] Fallback to header name detection: "${transField}" -> "${langCode}"`);
+              debug(`[parseExcel] Fallback to header name detection: "${transField}" -> "${langCode}"`);
             }
             
             if (langCode && langCode !== 'unknown') {
@@ -986,14 +970,14 @@ async function parseExcel(
               mappedLangs.add(langCode);
               
               columnMapping[`translation_${langCode}`] = idx;
-              console.log(`[parseExcel] Mapped translation_${langCode} -> column ${idx} (from content sampling)`);
+              debug(`[parseExcel] Mapped translation_${langCode} -> column ${idx} (from content sampling)`);
             } else {
-              console.log(`[parseExcel] Could not detect language for field:`, transField);
+              debug(`[parseExcel] Could not detect language for field:`, transField);
             }
           } else if (idx === sourceIndex) {
-            console.log(`[parseExcel] Skipping field "${transField}" - same as source column`);
+            debug(`[parseExcel] Skipping field "${transField}" - same as source column`);
           } else {
-            console.log(`[parseExcel] Translation field "${transField}" not found in headers`);
+            debug(`[parseExcel] Translation field "${transField}" not found in headers`);
           }
         });
       }
@@ -1002,7 +986,7 @@ async function parseExcel(
     }
   } else {
     // FieldMapping 없음 → 샘플링으로 언어 감지
-    console.log('[parseExcel] No fieldMappings, using sampling...');
+    debug('[parseExcel] No fieldMappings, using sampling...');
     detectLanguagesBySampling(jsonData, headers, columnMapping, -1);
   }
   
@@ -1030,7 +1014,7 @@ async function parseExcel(
           const detectedLang = detectLanguageByContent(val);
           if (detectedLang) {
             colLanguages[colIdx] = detectedLang;
-            console.log(`[parseExcel] Column ${colIdx}: detected lang=${detectedLang}, sample="${val.substring(0, 30)}"`);
+            debug(`[parseExcel] Column ${colIdx}: detected lang=${detectedLang}, sample="${val.substring(0, 30)}"`);
           }
           break;
         }
@@ -1043,7 +1027,7 @@ async function parseExcel(
       if (colLanguages[i] && colLanguages[i] !== 'unknown' && colLanguages[i] !== 'source') {
         firstLangIdx = i;
         columnMapping['source'] = i;
-        console.log(`[parseExcel] Source (first lang): column ${i} -> ${colLanguages[i]}`);
+        debug(`[parseExcel] Source (first lang): column ${i} -> ${colLanguages[i]}`);
         break;
       }
     }
@@ -1064,7 +1048,7 @@ async function parseExcel(
       if (lang && lang !== 'unknown' && !usedLangs.has(lang)) {
         columnMapping[`translation_${lang}`] = colIdx;
         usedLangs.add(lang);
-        console.log(`[parseExcel] Translation: column ${colIdx} -> ${lang}`);
+        debug(`[parseExcel] Translation: column ${colIdx} -> ${lang}`);
       }
     }
   }
@@ -1170,10 +1154,10 @@ async function parseExcel(
     });
   }
   
-  console.log('[parseExcel] === FINAL Column mapping ===:', columnMapping);
-  console.log('[parseExcel] Column mapping keys:', Object.keys(columnMapping));
-  console.log('[parseExcel] Has source?', columnMapping['source'] !== undefined);
-  console.log('[parseExcel] Translation keys:', Object.keys(columnMapping).filter(k => k.startsWith('translation_')));
+  debug('[parseExcel] === FINAL Column mapping ===:', columnMapping);
+  debug('[parseExcel] Column mapping keys:', Object.keys(columnMapping));
+  debug('[parseExcel] Has source?', columnMapping['source'] !== undefined);
+  debug('[parseExcel] Translation keys:', Object.keys(columnMapping).filter(k => k.startsWith('translation_')));
   
   if (columnMapping['source'] === undefined) {
     throw new Error(`원문 필드를 찾을 수 없습니다. 사용 가능한 필드: ${headers.filter(h => h).join(', ')}`);
@@ -1196,7 +1180,7 @@ async function parseExcel(
       if (key.startsWith('translation_')) {
         const value = rowData[idx]?.toString();
         const langCode = key.replace('translation_', '');
-        console.log(`[parseExcel] Mapping key: ${key}, langCode: ${langCode}, idx: ${idx}, value: ${value?.substring(0, 20)}`);
+        debug(`[parseExcel] Mapping key: ${key}, langCode: ${langCode}, idx: ${idx}, value: ${value?.substring(0, 20)}`);
         if (value) {
           row[langCode] = value;
         }
@@ -1208,14 +1192,14 @@ async function parseExcel(
       }
     });
     
-    console.log('[parseExcel] Row created:', row);
+    debug('[parseExcel] Row created:', row);
     rows.push(row);
   }
   
-  console.log('[parseExcel] Total parsed rows:', rows.length);
+  debug('[parseExcel] Total parsed rows:', rows.length);
   if (rows.length > 0) {
-    console.log('[parseExcel] Sample row:', rows[0]);
-    console.log('[parseExcel] Sample row keys:', Object.keys(rows[0]));
+    debug('[parseExcel] Sample row:', rows[0]);
+    debug('[parseExcel] Sample row keys:', Object.keys(rows[0]));
   }
   
   return rows;

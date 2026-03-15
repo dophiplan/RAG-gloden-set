@@ -3,6 +3,11 @@ import { Translation, TranslationStatus, ProductCode, PriorityLevel, Scope } fro
 import { OptimisticLockService } from '@/services/optimistic_lock_service';
 import { LockCheckResult, LockCheckOptions } from '@/types/optimistic_lock';
 
+// Debug logging helper - only in development
+const isDev = process.env.NODE_ENV === 'development';
+const debug = isDev ? console.log.bind(console) : () => {};
+const debugError = isDev ? console.error.bind(console) : () => {};
+
 export interface TranslationFilters {
   status?: TranslationStatus;
   language?: string;
@@ -169,8 +174,17 @@ export class TranslationRepository {
     const { data, error, count } = await query;
 
     if (error) {
+      debugError('[TranslationRepository] Query error:', error);
       throw new Error(`Failed to find translations: ${error.message}`);
     }
+
+    // DEBUG: Log query results
+    debug('[TranslationRepository] Query results:', { 
+      count, 
+      dataLength: data?.length || 0,
+      hasProductFilter: !!filters.productCode,
+      productCode: filters.productCode 
+    });
 
     return { data: data || [], count };
   }
