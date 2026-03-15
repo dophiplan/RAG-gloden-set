@@ -102,13 +102,30 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE - Bulk delete glossary terms
+// DELETE - Bulk delete glossary terms (1st_master+ only)
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      return apiUnauthorized();
+    }
+
+    // Check if user has 1st_master, master, or admin role
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('roles')
+      .eq('id', user.id)
+      .single();
+
+    const userRoles = userProfile?.roles || [];
+    const canDelete = 
+      userRoles.includes('1st_master') || 
+      userRoles.includes('master') || 
+      userRoles.includes('admin');
+
+    if (!canDelete) {
       return apiUnauthorized();
     }
 

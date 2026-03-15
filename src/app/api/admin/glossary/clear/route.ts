@@ -12,14 +12,20 @@ export async function DELETE(request: NextRequest) {
       return apiUnauthorized();
     }
 
-    // Check if user is admin
+    // Check if user is admin, 1st_master, or master (roles array)
     const { data: userData } = await supabase
       .from('users')
-      .select('role')
+      .select('roles')
       .eq('id', user.id)
       .single();
 
-    if (userData?.role !== 'admin') {
+    const userRoles = userData?.roles || [];
+    const canClear = 
+      userRoles.includes('admin') ||
+      userRoles.includes('1st_master') || 
+      userRoles.includes('master');
+
+    if (!canClear) {
       return apiForbidden('관리자만 접근 가능합니다.');
     }
 

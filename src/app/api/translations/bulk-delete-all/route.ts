@@ -32,7 +32,7 @@ export async function DELETE(request: NextRequest) {
       userRoles.includes('admin');
 
     if (!canDeleteAll) {
-      return apiError('FORBIDDEN', '1st_manager 이상만 전체 삭제가 가능합니다.', 403);
+      return apiError('FORBIDDEN', '1st_master 이상만 전체 삭제가 가능합니다.', 403);
     }
 
     const { searchParams } = new URL(request.url);

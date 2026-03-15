@@ -44,6 +44,8 @@ export interface PreviewEntry {
     existing_translations?: Record<string, string>;
   };
   category?: EntryCategory;
+  // User-selected action for this entry
+  action?: 'import' | 'skip' | 'merge' | 'overwrite';
   // 중복 상태 필드
   existing_in_glossary: boolean;
   existing_in_translation: boolean;
@@ -1320,10 +1322,19 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
     // DEBUG: Log what's being sent
     const requestBody = {
       entries: state.entries.map((e) => {
-        // Determine action based on duplicate status
-        let action: 'import' | 'skip' | 'merge' | 'overwrite' = 'import';
-        if (e.duplicate_status?.status === 'exact') {
-          action = 'skip'; // Skip exact duplicates by default
+        // FIX: Use user-selected action if available, otherwise determine based on duplicate status
+        // e.action is set when user explicitly chooses import/skip/merge/overwrite in UI
+        let action: 'import' | 'skip' | 'merge' | 'overwrite';
+        
+        if (e.action && ['import', 'skip', 'merge', 'overwrite'].includes(e.action)) {
+          // User explicitly selected an action in the UI
+          action = e.action;
+        } else {
+          // Default: determine based on duplicate status
+          action = 'import';
+          if (e.duplicate_status?.status === 'exact') {
+            action = 'skip'; // Skip exact duplicates by default
+          }
         }
         
         return {
