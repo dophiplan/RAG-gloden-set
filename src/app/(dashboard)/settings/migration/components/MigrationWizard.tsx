@@ -50,6 +50,14 @@ export default function MigrationWizard() {
     try {
       const result = await commitMigration();
       console.log('[MigrationWizard] Commit result:', result);
+      
+      // 성공 알림 표시 및 번역 관리 페이지로 이동
+      showToast(`마이그레이션이 성공적으로 완료되었습니다. (처리: ${result.imported || 0}개)`, 'success');
+      
+      // 잠시 후 번역 관리 페이지로 이동
+      setTimeout(() => {
+        window.location.href = '/translations';
+      }, 1500);
     } catch (err: any) {
       console.error('[MigrationWizard] Commit failed:', err);
       if (err?.message) {

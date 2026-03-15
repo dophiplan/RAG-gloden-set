@@ -416,9 +416,9 @@ export default function FieldMapping({ sheetsData, platforms: propPlatforms }: F
               />
             </div>
 
-            {/* 2행: 번역 언어들 - 2열 전체 차지 (grid-cols-4) */}
-            <div className="grid grid-cols-4 gap-2">
-              {translationLanguages.slice(0, 8).map((lang) => (
+            {/* 2행: 번역 언어들 - 2열 전체 차지 (grid-cols-5) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {translationLanguages.map((lang) => (
                 <DropZone
                   key={lang.code}
                   label={lang.name}

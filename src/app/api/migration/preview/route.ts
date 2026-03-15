@@ -283,6 +283,8 @@ export async function POST(request: NextRequest) {
         console.log('[Preview API] Source:', fieldMappings?.source);
         console.log('[Preview API] Translations:', fieldMappings?.translations);
         console.log('[Preview API] Metadata:', fieldMappings?.metadata);
+        console.log('[Preview API] Metadata.version:', fieldMappings?.metadata?.version);
+        console.log('[Preview API] Metadata.product_category:', fieldMappings?.metadata?.product_category);
         console.log('[Preview API] =======================================');
       } catch (e) {
         console.error('[Preview API] Failed to parse field mappings:', e);
@@ -428,9 +430,23 @@ export async function POST(request: NextRequest) {
       
       const mappedPlatform = fieldMappings?.metadata?.platform || (row.platform || undefined);
       
+      // FIX: version은 metadata.version이 명시적으로 매핑된 경우에만 사용
+      // 그렇지 않으면 undefined (자동으로 version이 들어가지 않도록)
       const mappedVersion = fieldMappings?.metadata?.version
         ? row[fieldMappings.metadata.version]
-        : (row.version || undefined);
+        : undefined;
+      
+      // DEBUG: Log for first few rows
+      if (entries.length < 3) {
+        console.log(`[Preview API DEBUG] Entry ${entries.length}:`, {
+          'metadata.version': fieldMappings?.metadata?.version,
+          'metadata.product_category': fieldMappings?.metadata?.product_category,
+          'row[fieldMappings.metadata.version]': fieldMappings?.metadata?.version ? row[fieldMappings.metadata.version] : undefined,
+          mappedVersion,
+          mappedProduct,
+          source_text: sourceText?.substring(0, 30)
+        });
+      }
 
       const existingInGlossary = duplicateStatus.where === 'glossary' || duplicateStatus.where === 'both';
       const existingInTranslation = duplicateStatus.where === 'translation' || duplicateStatus.where === 'both';
@@ -898,14 +914,12 @@ async function parseExcel(
         }
       }
       
-      // 번역 매핑이 비어있으면 샘플링으로 감지 (fallback)
+      // FIX: 번역은 fieldMappings.translations가 명시적으로 있을 때만 처리
+      // 자동 언어 감지(sampling)는 사용자 의도와 다를 수 있으므로 제거
       const hasTranslationMapping = Object.keys(columnMapping).some(k => k.startsWith('translation_'));
-      if (!hasTranslationMapping) {
-        console.log('[parseExcel] No translations mapped, using sampling...');
-        detectLanguagesBySampling(jsonData, headers, columnMapping, sourceIndex);
-      } else {
-        // === 번역 매핑 (fieldMappings.translations가 있을 때) - 콘텐츠 기반 샘플링 ===
-        console.log('[parseExcel] Processing fieldMappings.translations with content sampling:', fieldMappings.translations);
+      if (hasTranslationMapping && fieldMappings.translations?.length) {
+        // 번역이 명시적으로 매핑된 경우에만 처리
+        console.log('[parseExcel] Processing fieldMappings.translations:', fieldMappings.translations);
         // 🔒 중복 언어 코드 추적
         const mappedLangs = new Set<string>();
         

@@ -62,6 +62,16 @@ export default function PreviewCommitStep({
     } else {
       entries = previewData || [];
     }
+    // DEBUG: Log first entry
+    if (entries.length > 0) {
+      console.log('[PreviewCommitStep] First entry:', {
+        version: entries[0].version,
+        product: entries[0].product,
+        product_category: entries[0].product_category,
+        key: entries[0].key,
+        source_text: entries[0].source_text?.substring(0, 30)
+      });
+    }
     // Excel 순서 그대로 (첫 행이 첫 페이지)
     return entries;
   }, [hasVersionData, versionEntries, activeVersion, previewData]);
@@ -234,7 +244,7 @@ export default function PreviewCommitStep({
               {activeView === 'basic' ? (
                 <tr>
                   <th className="w-[80px] px-2 py-2 text-left font-medium text-gray-700 truncate">버전</th>
-                  <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">제품코드</th>
+                  <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">KEY/ID</th>
                   <th className="w-[200px] px-2 py-2 text-left font-medium text-gray-700 truncate">원문</th>
                   <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">문맥</th>
                   <th className="w-[100px] px-2 py-2 text-left font-medium text-gray-700 truncate">설명</th>
@@ -273,7 +283,7 @@ export default function PreviewCommitStep({
                       {activeView === 'basic' ? (
                         <>
                           <td className="px-2 py-1.5 text-gray-600 truncate">{entry.version || '-'}</td>
-                          <td className="px-2 py-1.5 text-gray-600 truncate">{entry.product_code || '-'}</td>
+                          <td className="px-2 py-1.5 text-gray-600 truncate" title={entry.key || '-'}>{entry.key || '-'}</td>
                           <td className="px-2 py-1.5 truncate" title={entry.source_text}>
                             <div className="text-xs font-medium truncate">{entry.source_text}</div>
                           </td>

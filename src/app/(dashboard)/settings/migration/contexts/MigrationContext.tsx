@@ -682,6 +682,10 @@ function migrationReducer(
         // Reset loading and error states
         loading: false,
         error: null,
+        // Reset version and all mappings to prevent stale data from previous migration
+        version: '',
+        versionMappings: {},  // Clear all version mappings
+        currentMapping: initialState.currentMapping,  // Reset to initial state
       };
     }
 
@@ -1162,6 +1166,8 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
         const mappings = finalVersionMappings[versionName];
         if (!mappings || !mappings.source || !state.file) return null;
 
+        console.log(`[loadPreview] ${versionName} - Sending mappings:`, JSON.stringify(mappings, null, 2));
+        
         const fd = new FormData();
         fd.append('file', state.file);
         fd.append('product_code', state.productCode);
@@ -1193,7 +1199,9 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
 
           const initEntries = previewData.entries.map((e) => ({
             ...e,
-            version: versionName,
+            // API에서 받은 version 값만 사용 (명시적 매핑 없으면 undefined 유지)
+            // versionName은 Excel 시트명이며, 실제 데이터가 아니므로 사용하지 않음
+            version: e.version,
           }));
 
           return {
@@ -1208,9 +1216,25 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
       });
 
       const results = await Promise.all(versionPromises);
+      
+      console.log('[loadPreview] All results:', results.map(r => r ? { versionName: r.versionName, entryCount: r.entries.length } : null));
+
+      // DEBUG: Log first entry of first result
+      if (results[0]?.entries[0]) {
+        console.log('[loadPreview] DEBUG First entry:', {
+          id: results[0].entries[0].id,
+          version: results[0].entries[0].version,
+          product: results[0].entries[0].product,
+          product_category: results[0].entries[0].product_category,
+          key: results[0].entries[0].key,
+          source_text: results[0].entries[0].source_text?.substring(0, 30)
+        });
+      }
 
       // FIXED: Check if all API calls failed and show error
       const successfulResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      console.log('[loadPreview] Successful results:', successfulResults.length);
+      
       if (successfulResults.length === 0) {
         dispatch({ 
           type: 'LOAD_PREVIEW_ERROR', 
@@ -1310,6 +1334,7 @@ export function MigrationProvider({ children }: MigrationProviderProps) {
           translations: e.translations,
           category: e.category || e.suggested_category,
           action: action,
+          version: e.version || state.version || null,
         };
       }),
       product_code: state.productCode || undefined,

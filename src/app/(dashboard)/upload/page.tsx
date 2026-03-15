@@ -216,6 +216,18 @@ export default function UploadPage() {
         showSuccess(`${totalTexts}개의 텍스트가 추출되었습니다.`);
         // Automatically go to step 3 after successful parsing
         setCurrentStep(3);
+      } else {
+        // 실패 또는 텍스트 없음 처리
+        const failedFiles = data.results?.filter(r => !r.success) || [];
+        if (failedFiles.length > 0) {
+          const errorMsg = failedFiles[0].error || '파일 파싱 중 오류가 발생했습니다.';
+          setError(errorMsg);
+          showError(errorMsg);
+        } else if (totalTexts === 0) {
+          const noTextError = '파일에서 추출할 수 있는 텍스트가 없습니다. 인용문("...") 또는 태그([TR]...[/TR])가 포함된 파일을 업로드해주세요.';
+          setError(noTextError);
+          showError(noTextError);
+        }
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '오류가 발생했습니다.';
@@ -504,12 +516,7 @@ export default function UploadPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <Button
-                        onClick={async () => {
-                          await handleParse();
-                          if (parseResult) {
-                            setCurrentStep(3);
-                          }
-                        }}
+                        onClick={handleParse}
                         loading={isUploading}
                         disabled={isUploading || !priority || !scope || (selectedLanguages || []).length === 0}
                       >
