@@ -1,0 +1,22 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Type check
+echo "📦 TypeScript type checking..."
+npx tsc --noEmit
+if [ $? -ne 0 ]; then
+  echo "❌ Type check failed. Please fix errors before committing."
+  exit 1
+fi
+
+# Lint
+echo "🧹 Linting..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "❌ Lint failed. Please fix errors before committing."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"

@@ -17,7 +17,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:integration:watch": "vitest --config vitest.integration.config.ts",
     "test:integration:coverage": "vitest run --config vitest.integration.config.ts --coverage",
-    "migrate:sqlite": "node sqlite/scripts/apply-sqlite-migrations.js"
+    "migrate:sqlite": "node sqlite/scripts/apply-sqlite-migrations.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
@@ -61,7 +62,9 @@
     "@vitest/ui": "^4.0.18",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
+    "lint-staged": "^16.4.0",
     "msw": "^2.12.10",
     "sqlite3": "^6.0.1",
     "tailwindcss": "^4",
