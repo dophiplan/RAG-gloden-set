@@ -1,0 +1,247 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 변경된 파일 감지
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.changes.outputs.src }}
+      tests: ${{ steps.changes.outputs.tests }}
+      sqlite: ${{ steps.changes.outputs.sqlite }}
+      dependencies: ${{ steps.changes.outputs.dependencies }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect Changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - '!src/**/*.test.{ts,tsx}'
+            tests:
+              - 'tests/**'
+            sqlite:
+              - 'sqlite/**'
+            dependencies:
+              - 'package*.json'
+
+  # 빠른 PR 체크 (변경된 파일 기반 선택적 실행)
+  quick-check:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.src == 'true' || needs.detect-changes.outputs.tests == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Type Check
+        run: npm run type-check
+
+      # 변경된 파일과 관련된 테스트만 실행
+      - name: Run Affected Tests
+        run: |
+          # 변경된 파일에 따라 관련 테스트만 실행
+          git fetch origin ${{ github.base_ref }} --depth=1
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} | grep -E '\.(ts|tsx)$' || true)
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Changed files: $CHANGED_FILES"
+            # 변경된 파일과 관련된 테스트 패턴 생성
+            TEST_PATTERNS=$(echo "$CHANGED_FILES" | sed 's|src/|tests/|' | sed 's|\.ts$|.test.ts|' | sed 's|\.tsx$|.test.tsx|' | tr '\n' ' ')
+            echo "Running tests for: $TEST_PATTERNS"
+            npm run test -- --run --reporter=verbose $TEST_PATTERNS 2>/dev/null || npm run test:unit
+          else
+            npm run test:unit
+          fi
+
+  # 커버리지 리포트 생성 및 PR 코멘트
+  coverage-report:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.src == 'true' || needs.detect-changes.outputs.tests == 'true' }}
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run Coverage
+        run: npm run test:coverage
+
+      - name: Generate Coverage Report
+        id: coverage
+        run: |
+          # 커버리지 요약 생성
+          COVERAGE_SUMMARY=$(node -e "
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+            const total = coverage.total;
+            console.log('| Category | Covered | Total | Percentage |');
+            console.log('|----------|---------|-------|------------|');
+            console.log(\`| Statements | \${total.statements.covered} | \${total.statements.total} | \${total.statements.pct}% |\`);
+            console.log(\`| Branches | \${total.branches.covered} | \${total.branches.total} | \${total.branches.pct}% |\`);
+            console.log(\`| Functions | \${total.functions.covered} | \${total.functions.total} | \${total.functions.pct}% |\`);
+            console.log(\`| Lines | \${total.lines.covered} | \${total.lines.total} | \${total.lines.pct}% |\`);
+          ")
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with Coverage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const coverage = `${{ steps.coverage.outputs.report }}`;
+            const body = `## 📊 Code Coverage Report
+            
+            ${coverage}
+            
+            > **Note**: 목표 커버리지는 80% 이상입니다.
+            `;
+            
+            // 기존 코멘트 찾기
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Code Coverage Report')
+            );
+            
+            if (botComment) {
+              // 기존 코멘트 업데이트
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              // 새 코멘트 작성
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+  # 통합 테스트 (SQLite 변경 시만 실행)
+  integration-check:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.sqlite == 'true' || needs.detect-changes.outputs.src == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Cache SQLite
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/sqlite
+            *.db
+          key: ${{ runner.os }}-sqlite-${{ hashFiles('sqlite/migrations/**/*.sql') }}
+          restore-keys: |
+            ${{ runner.os }}-sqlite-
+
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Setup SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Run SQLite Migrations
+        run: npm run migrate:sqlite -- --test-db
+
+      - name: Run Integration Tests
+        run: npm run test:integration
+
+  # 종합 상태 리포트
+  pr-status:
+    runs-on: ubuntu-latest
+    needs: [quick-check, coverage-report, integration-check]
+    if: always()
+    steps:
+      - name: Check All Jobs Status
+        run: |
+          if [ "${{ needs.quick-check.result }}" == "failure" ] || \
+             [ "${{ needs.coverage-report.result }}" == "failure" ] || \
+             [ "${{ needs.integration-check.result }}" == "failure" ]; then
+            echo "❌ Some checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed"
