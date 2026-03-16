@@ -241,7 +241,7 @@ export class GlossaryRepository {
     }
 
     // Create audit log (non-blocking)
-    this.createAuditLog({
+    this.createGlossaryAuditLog({
       glossary_term_id: term.id,
       user_id: userInfo.id,
       user_name: userInfo.name,
@@ -303,7 +303,7 @@ export class GlossaryRepository {
       const oldValue = String(current[field as keyof GlossaryTerm] || '');
       const newValue = String(updates[field as keyof GlossaryUpdateData] || '');
 
-      this.createAuditLog({
+      this.createGlossaryAuditLog({
         glossary_term_id: id,
         user_id: userInfo.id,
         user_name: userInfo.name,
@@ -344,7 +344,7 @@ export class GlossaryRepository {
     }
 
     // Create audit log (non-blocking)
-    this.createAuditLog({
+    this.createGlossaryAuditLog({
       glossary_term_id: id,
       user_id: userInfo.id,
       user_name: userInfo.name,
@@ -389,7 +389,7 @@ export class GlossaryRepository {
     }
 
     // Create audit log (non-blocking)
-    this.createAuditLog({
+    this.createGlossaryAuditLog({
       glossary_term_id: id,
       user_id: userInfo.id,
       user_name: userInfo.name,
@@ -434,7 +434,7 @@ export class GlossaryRepository {
     }
 
     // Create audit log (non-blocking)
-    this.createAuditLog({
+    this.createGlossaryAuditLog({
       glossary_term_id: id,
       user_id: userInfo.id,
       user_name: userInfo.name,
@@ -468,7 +468,7 @@ export class GlossaryRepository {
 
     // Create audit logs for approved terms (non-blocking)
     for (const id of ids) {
-      this.createAuditLog({
+      this.createGlossaryAuditLog({
         glossary_term_id: id,
         user_id: userInfo.id,
         user_name: userInfo.name,
@@ -534,7 +534,7 @@ export class GlossaryRepository {
    * Create audit log entry
    * Public access for bulk operations from API handlers
    */
-  async createAuditLog(data: {
+  async createGlossaryAuditLog(data: {
     glossary_term_id: string;
     user_id: string;
     user_name?: string | null;
@@ -561,6 +561,38 @@ export class GlossaryRepository {
 
     if (error) {
       throw new Error(`Failed to create audit log: ${error.message}`);
+    }
+  }
+
+  /**
+   * Audit 로그 생성 (IAuditableRepository 인터페이스 구현)
+   * 
+   * @param action - 수행된 작업
+   * @param details - 작업 상세 정보
+   * @param performedBy - 작업 수행자 ID
+   */
+  async createAuditLog(
+    action: string,
+    details: Record<string, unknown>,
+    performedBy: string | null
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from('glossary_audit_logs')
+      .insert({
+        glossary_term_id: (details?.glossary_term_id as string) ?? null,
+        user_id: (details?.user_id as string) ?? performedBy ?? null,
+        user_name: (details?.user_name as string) ?? null,
+        user_email: (details?.user_email as string) ?? 'system@localhost',
+        action,
+        field_name: (details?.field_name as string) ?? null,
+        old_value: (details?.old_value as string) ?? null,
+        new_value: (details?.new_value as string) ?? null,
+        metadata: details?.metadata || null,
+      });
+
+    if (error) {
+      console.error('[GlossaryRepository] Failed to create audit log:', error);
+      // Non-blocking: don't throw for audit log failures
     }
   }
 }

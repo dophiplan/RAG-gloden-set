@@ -183,7 +183,7 @@ export interface IExtendedTranslationAuditRepository extends ITranslationAuditRe
    * @param data - Audit 로그 생성 데이터
    * @returns 생성된 Audit 로그
    */
-  create(data: TranslationAuditLogCreateData): Promise<TranslationAuditLog>;
+  createAndReturn(data: TranslationAuditLogCreateData): Promise<TranslationAuditLog>;
 
   /**
    * 번역 ID로 Audit 이력 조회 (limit 지원)

@@ -288,7 +288,7 @@ export interface IGlossaryRepository
    * 
    * @param data - Audit 로그 데이터
    */
-  createAuditLog(data: {
+  createGlossaryAuditLog(data: {
     glossary_term_id: string;
     user_id: string;
     user_name?: string | null;

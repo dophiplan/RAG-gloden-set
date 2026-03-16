@@ -46,7 +46,24 @@ export class SqliteTranslationAuditRepository implements IExtendedTranslationAud
   constructor(private db: SqliteDatabase) {}
 
   /**
-   * Audit 로그 생성 (non-blocking)
+   * Audit 로그 생성 (non-blocking) - ITranslationAuditRepository 인터페이스 구현
+   * 
+   * 에러는 로깅되지만 throw되지 않습니다.
+   * 메인 로직을 방해하지 않도록 낶部적으로 처리됩니다.
+   * 
+   * @param data - Audit 로그 생성 데이터
+   */
+  async create(data: TranslationAuditLogCreateData): Promise<void> {
+    try {
+      await this.createAndReturn(data);
+    } catch (error) {
+      // Non-blocking: don't throw for audit log failures
+      console.error('[SqliteTranslationAuditRepository] Failed to create audit log:', error);
+    }
+  }
+
+  /**
+   * Audit 로그 생성 후 반환 (non-blocking)
    * 
    * 에러는 RepositoryError로 변환되지만 throw되지 않습니다.
    * 메인 로직을 방해하지 않도록 낶部적으로 처리됩니다.
@@ -54,7 +71,7 @@ export class SqliteTranslationAuditRepository implements IExtendedTranslationAud
    * @param data - Audit 로그 생성 데이터
    * @returns 생성된 Audit 로그
    */
-  async create(data: TranslationAuditLogCreateData): Promise<TranslationAuditLog> {
+  async createAndReturn(data: TranslationAuditLogCreateData): Promise<TranslationAuditLog> {
     try {
       // 데이터 검증
       if (!data.translation_id) {

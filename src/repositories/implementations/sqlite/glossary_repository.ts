@@ -789,7 +789,7 @@ export class SqliteGlossaryRepository implements IGlossaryRepository {
    * @param data - Audit 로그 데이터
    * @throws RepositoryError - 데이터베이스 오류 발생 시
    */
-  async createAuditLog(data: {
+  async createGlossaryAuditLog(data: {
     glossary_term_id: string;
     user_id: string;
     user_name?: string | null;
@@ -826,20 +826,63 @@ export class SqliteGlossaryRepository implements IGlossaryRepository {
         ]
       );
 
-      debug('[SqliteGlossaryRepository.createAuditLog] Created:', {
+      debug('[SqliteGlossaryRepository.createGlossaryAuditLog] Created:', {
         id,
         glossary_term_id: data.glossary_term_id,
         action: data.action,
       });
     } catch (error) {
-      debugError('[SqliteGlossaryRepository.createAuditLog] Error:', error);
+      debugError('[SqliteGlossaryRepository.createGlossaryAuditLog] Error:', error);
       // Audit 로그 실패는 치명적이지 않음 (로그만 남기고 예외 throw)
       // 필요한 경우 호출자가 처리할 수 있도록 에러 전파
       throw new RepositoryError(
         'Audit 로그 생성 중 오류가 발생했습니다.',
-        'createAuditLog',
+        'createGlossaryAuditLog',
         { data, originalError: error }
       );
+    }
+  }
+
+  /**
+   * Audit 로그 생성 (IAuditableRepository 인터페이스 구현)
+   * 
+   * @param action - 수행된 작업
+   * @param details - 작업 상세 정보
+   * @param performedBy - 작업 수행자 ID
+   */
+  async createAuditLog(
+    action: string,
+    details: Record<string, unknown>,
+    performedBy: string | null
+  ): Promise<void> {
+    try {
+      const id = generateUUID();
+      const now = new Date().toISOString();
+
+      this.db.run(
+        `
+        INSERT INTO glossary_audit_logs (
+          id, glossary_term_id, user_id, user_name, user_email,
+          action, field_name, old_value, new_value, metadata, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          id,
+          (details?.glossary_term_id as string) ?? null,
+          (details?.user_id as string) ?? performedBy ?? null,
+          (details?.user_name as string) ?? null,
+          (details?.user_email as string) ?? 'system@localhost',
+          action,
+          (details?.field_name as string) ?? null,
+          (details?.old_value as string) ?? null,
+          (details?.new_value as string) ?? null,
+          details?.metadata ? JSON.stringify(details.metadata) : null,
+          now,
+        ]
+      );
+    } catch (error) {
+      debugError('[SqliteGlossaryRepository.createAuditLog] Error:', error);
+      // Non-blocking: don't throw for audit log failures
     }
   }
 
