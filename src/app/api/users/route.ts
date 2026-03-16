@@ -1,20 +1,70 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isMaster } from '@/lib/permissions';
-import { ProductCode, UserRole } from '@/types';
 import { requireMasterRole } from '@/lib/api-auth';
 import { apiSuccess, apiInternalError } from '@/lib/api/response';
+import { isEnabled } from '@/lib/config/feature_flags';
+import { darkLaunchRead } from '@/lib/pilot/dark-launch';
+import { createDatabaseProviderFromEnv } from '@/lib/database/provider';
+import { logger } from '@/lib/observability/logger';
 
-// GET - List users with filters and search
+// ============================================================================
+// GET - List users with Full Cutover support
+// ============================================================================
+
 export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const auth = await requireMasterRole(supabase);
+  // 1. 인증/권한 체크 (공통)
+  const supabase = await createClient();
+  const auth = await requireMasterRole(supabase);
 
-    if (auth.error) {
-      return auth.error;
+  if (auth.error) {
+    return auth.error;
+  }
+
+  // 2. Full Cutover 우선 체크
+  const useFullCutover = isEnabled('FF_USERS_FULL_CUTOVER');
+
+  if (useFullCutover) {
+    try {
+      const result = await getUsersWithProvider(request, auth.user, auth.adminClient);
+      return result;
+    } catch (error) {
+      // Fallback to Legacy
+      logger.warn('[FullCutover] GET /api/users Fallback to Legacy', { error });
+      return getUsersLegacy(request, auth.user, auth.adminClient);
     }
+  }
 
+  // 3. Dark Launch 적용 (기존 로직)
+  const useDarkLaunch = isEnabled('FF_USERS_DARK_LAUNCH');
+
+  if (useDarkLaunch) {
+    return darkLaunchRead(
+      // Legacy 읽기
+      () => getUsersLegacy(request, auth.user, auth.adminClient),
+      // Provider 읽기
+      () => getUsersWithProvider(request, auth.user, auth.adminClient),
+      // 옵션
+      {
+        operation: 'getUsers',
+        endpoint: '/api/users',
+      }
+    );
+  }
+
+  // 4. 기존 코드 (Dark Launch 비활성화 시)
+  return getUsersLegacy(request, auth.user, auth.adminClient);
+}
+
+// ============================================================================
+// Legacy Implementation (기존 코드 100% 유지)
+// ============================================================================
+
+async function getUsersLegacy(
+  request: NextRequest,
+  user: { id: string; email?: string },
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<NextResponse> {
+  try {
     const { searchParams } = new URL(request.url);
 
     // Parse filters
@@ -92,6 +142,51 @@ export async function GET(request: NextRequest) {
 
   } catch (error: unknown) {
     console.error('Error fetching users:', error);
+    return apiInternalError(
+      error instanceof Error ? error.message : '알 수 없는 오류'
+    );
+  }
+}
+
+// ============================================================================
+// Provider-based Implementation (Full Cutover / Dark Launch용)
+// ============================================================================
+
+async function getUsersWithProvider(
+  request: NextRequest,
+  user: { id: string; email?: string },
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<NextResponse> {
+  try {
+    // 1. Provider 초기화
+    const provider = createDatabaseProviderFromEnv(supabase);
+
+    // 2. 쿼리 파라미터 파싱
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const search = searchParams.get('search') || undefined;
+
+    // 3. Provider로 조회
+    const result = await provider.users.findMany(
+      {
+        search,
+      },
+      { page, limit }
+    );
+
+    // 4. 결과 반환 (Legacy와 동일한 형식)
+    return apiSuccess({
+      users: result.data,
+      pagination: {
+        page,
+        limit,
+        total: result.count || 0,
+        totalPages: Math.ceil((result.count || 0) / limit),
+      },
+    });
+  } catch (error: unknown) {
+    console.error('Error fetching users with provider:', error);
     return apiInternalError(
       error instanceof Error ? error.message : '알 수 없는 오류'
     );

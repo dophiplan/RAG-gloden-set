@@ -1,13 +1,109 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { platformCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
 import { apiCachedSuccess, apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
+import { isEnabled } from '@/lib/config/feature_flags';
+import { getDatabaseProvider, createDatabaseProviderFromEnv, resetDatabaseProvider } from '@/lib/database/provider';
+import { logger } from '@/lib/observability/logger';
+
+// ============================================================================
+// Provider-based Implementation (GET only - Phase 3.1)
+// ============================================================================
 
 /**
- * GET - List all platforms
+ * Provider 초기화 (필요한 경우)
  */
-export async function GET() {
+async function initializeProviderIfNeeded() {
+  try {
+    // 이미 초기화된 경우
+    if (getDatabaseProvider) {
+      try {
+        return getDatabaseProvider();
+      } catch {
+        // 초기화되지 않은 경우 계속 진행
+      }
+    }
+
+    // Supabase 클라이언트로 초기화
+    const supabase = await createClient();
+    return createDatabaseProviderFromEnv(supabase);
+  } catch (error) {
+    logger.error('Failed to initialize database provider', error instanceof Error ? error : new Error(String(error)));
+    return null;
+  }
+}
+
+/**
+ * Provider 기반 플랫폼 목록 조회
+ */
+async function getPlatformsWithProvider(): Promise<NextResponse> {
+  try {
+    const provider = await initializeProviderIfNeeded();
+    
+    if (!provider) {
+      logger.warn('Provider initialization failed, falling back to legacy');
+      return getPlatformsLegacy();
+    }
+
+    // Provider의 Supabase 클라이언트를 통해 직접 쿼리
+    // (Provider는 Repository 패턴을 제공하지만, platforms는 아직 Repository가 없음)
+    const supabase = provider.getSupabaseClient?.();
+    
+    if (!supabase) {
+      logger.warn('Provider does not have Supabase client, falling back to legacy');
+      return getPlatformsLegacy();
+    }
+
+    const start = Date.now();
+    const { data: platforms, error } = await supabase
+      .from('platforms')
+      .select('*')
+      .order('code', { ascending: true });
+
+    const responseTime = Date.now() - start;
+
+    if (error) {
+      logger.error('Provider query failed, falling back to legacy', error, { responseTime });
+      return getPlatformsLegacy();
+    }
+
+    logger.info('Platforms fetched via provider', {
+      provider: provider.type,
+      count: platforms?.length || 0,
+      responseTime,
+    });
+
+    return NextResponse.json(
+      { 
+        platforms,
+        _meta: { provider: provider.type }
+      },
+      {
+        headers: { 
+          'x-provider-type': provider.type,
+          'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=86400',
+        }
+      }
+    );
+  } catch (error) {
+    // 🚨 Provider 실패 시 자동 Fallback
+    logger.error(
+      'Provider platforms fetch failed, falling back to legacy',
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return getPlatformsLegacy();
+  }
+}
+
+// ============================================================================
+// Legacy Implementation (기존 코드 100% 유지)
+// ============================================================================
+
+/**
+ * Legacy: 플랫폼 목록 조회
+ */
+async function getPlatformsLegacy(): Promise<NextResponse> {
   try {
     // Use admin client to bypass RLS for reference data
     const adminClient = createAdminClient();
@@ -27,9 +123,9 @@ export async function GET() {
 }
 
 /**
- * POST - Create a new platform (admin only)
+ * Legacy: 플랫폼 생성
  */
-export async function POST(request: NextRequest) {
+async function createPlatformLegacy(request: NextRequest): Promise<NextResponse> {
   try {
     // Require admin permission
     const auth = await requireAdmin();
@@ -78,4 +174,46 @@ export async function POST(request: NextRequest) {
     console.error('Error creating platform:', error);
     return apiInternalError('플랫폼 추가에 실패했습니다.');
   }
+}
+
+// ============================================================================
+// API Routes
+// ============================================================================
+
+/**
+ * GET - List all platforms
+ * 
+ * Feature Flag에 따라 Provider 패턴 또는 Legacy 방식으로 조회
+ */
+export async function GET() {
+  const useNewProvider = isEnabled('FF_PILOT_PLATFORMS_API');
+  
+  // 로깅: 플래그 상태
+  logger.info('Platforms API requested', {
+    useNewProvider,
+    flagValue: process.env.FF_PILOT_PLATFORMS_API,
+  });
+  
+  if (useNewProvider) {
+    return getPlatformsWithProvider();
+  }
+  
+  // 기존 코드 그대로 유지 (Fallback)
+  return getPlatformsLegacy();
+}
+
+/**
+ * POST - Create a new platform (admin only)
+ * 
+ * TODO: Phase 3.2에서 Provider 패턴으로 전환 예정
+ * 현재는 Legacy 방식 유지 (쓰기 작업은 검증 후 전환)
+ */
+export async function POST(request: NextRequest) {
+  // TODO: Phase 3.2에서 Provider 패턴으로 전환
+  // const useNewProvider = isEnabled('FF_PILOT_PLATFORMS_API');
+  // if (useNewProvider) {
+  //   return createPlatformWithProvider(request);
+  // }
+  
+  return createPlatformLegacy(request);
 }
