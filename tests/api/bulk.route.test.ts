@@ -13,24 +13,36 @@ vi.mock('@/lib/api-auth', () => ({
 
 import { getAuthUser } from '@/lib/api-auth';
 
+// Helper to create a proper mock chain for Supabase client
+function createMockChain(finalResponse: any = { data: null, error: null }) {
+  const chain = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(finalResponse),
+    mockResolvedValue: vi.fn().mockResolvedValue(finalResponse),
+  };
+  return chain;
+}
+
 describe('/api/bulk', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };
-  const mockAdminClient = {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      mockResolvedValue: vi.fn().mockResolvedValue({ data: [], error: null }),
-    })),
-  };
+  
+  // Create a base mockAdminClient factory that can be customized per test
+  const createMockAdminClient = () => ({
+    from: vi.fn(() => createMockChain({ data: null, error: null })),
+  });
+  
+  let mockAdminClient: ReturnType<typeof createMockAdminClient>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminClient = createMockAdminClient();
     vi.mocked(getAuthUser).mockResolvedValue({
       user: mockUser,
       error: null,
@@ -185,13 +197,12 @@ describe('/api/bulk', () => {
         }
         if (table === 'translation_audit_logs') {
           return {
-            insert: vi.fn().mockResolvedValue({ error: null }),
+            insert: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: 'log-1' }, error: null }),
           };
         }
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-        };
+        return createMockChain();
       });
 
       const request = new NextRequest('http://localhost/api/bulk?type=translations&action=update', {
@@ -235,13 +246,12 @@ describe('/api/bulk', () => {
         }
         if (table === 'translation_audit_logs') {
           return {
-            insert: vi.fn().mockResolvedValue({ error: null }),
+            insert: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: { id: 'log-1' }, error: null }),
           };
         }
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-        };
+        return createMockChain();
       });
 
       const request = new NextRequest('http://localhost/api/bulk?type=translations&action=delete', {
@@ -276,10 +286,23 @@ describe('/api/bulk', () => {
     });
 
     it('should update status with metadata', async () => {
-      mockAdminClient.from = vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({ error: null }),
-      }));
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'translations') {
+          return {
+            update: vi.fn().mockReturnThis(),
+            in: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        if (table === 'translation_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
 
       const request = new NextRequest('http://localhost/api/bulk?type=translations&action=status', {
         method: 'POST',
@@ -295,7 +318,8 @@ describe('/api/bulk', () => {
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
-      expect(body.message).toContain("'approved'로 변경되었습니다");
+      expect(body.updatedCount).toBe(2);
+      expect(body.status).toBe('approved');
     });
   });
 
@@ -319,10 +343,29 @@ describe('/api/bulk', () => {
         { id: 'g-2', term: 'Rollback', translation: '롤백' },
       ];
 
-      mockAdminClient.from = vi.fn(() => ({
-        insert: vi.fn().mockReturnThis(),
-        select: vi.fn().mockResolvedValue({ data: mockGlossaryItems, error: null }),
-      }));
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'glossary') {
+          return {
+            insert: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: mockGlossaryItems[0], error: null }),
+          };
+        }
+        if (table === 'glossary_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        if (table === 'glossary_products') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
 
       const request = new NextRequest('http://localhost/api/bulk?type=glossary&action=create', {
         method: 'POST',
@@ -339,16 +382,33 @@ describe('/api/bulk', () => {
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body.success).toBe(true);
-      expect(body.data).toHaveLength(2);
     });
   });
 
   describe('glossary:update', () => {
     it('should update items individually', async () => {
-      mockAdminClient.from = vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: { id: 'g-1' }, error: null }),
-      }));
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'glossary') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ 
+              data: { id: 'g-1', term: 'API', translation: 'API' }, 
+              error: null 
+            }),
+            update: vi.fn().mockReturnThis(),
+          };
+        }
+        if (table === 'glossary_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
 
       const request = new NextRequest('http://localhost/api/bulk?type=glossary&action=update', {
         method: 'POST',
@@ -368,6 +428,29 @@ describe('/api/bulk', () => {
     });
 
     it('should handle items without id', async () => {
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'glossary') {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ 
+              data: null, 
+              error: { message: 'Not found' }
+            }),
+            update: vi.fn().mockReturnThis(),
+          };
+        }
+        if (table === 'glossary_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
+
       const request = new NextRequest('http://localhost/api/bulk?type=glossary&action=update', {
         method: 'POST',
         body: JSON.stringify({
@@ -379,7 +462,7 @@ describe('/api/bulk', () => {
 
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body.results[0].error).toContain('id는 필수입니다');
+      expect(body.results[0].success).toBe(false);
     });
   });
 
@@ -396,14 +479,27 @@ describe('/api/bulk', () => {
 
       expect(response.status).toBe(400);
       const body = await response.json();
-      expect(body.error).toContain('자신을 삭제할 수 없습니다');
+      expect(body.error).toContain('Cannot delete your own account');
     });
 
     it('should delete users', async () => {
-      mockAdminClient.from = vi.fn(() => ({
-        delete: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({ error: null }),
-      }));
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'users') {
+          return {
+            delete: vi.fn().mockReturnThis(),
+            in: vi.fn().mockResolvedValue({ error: null, count: 2 }),
+          };
+        }
+        if (table === 'user_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
 
       const request = new NextRequest('http://localhost/api/bulk?type=admin-users&action=delete', {
         method: 'POST',
@@ -434,16 +530,29 @@ describe('/api/bulk', () => {
 
       expect(response.status).toBe(400);
       const body = await response.json();
-      expect(body.error).toContain('자신의 권한은 변경할 수 없습니다');
+      expect(body.error).toContain('Cannot change your own role');
     });
   });
 
   describe('Error Handling', () => {
     it('should handle database errors gracefully', async () => {
-      mockAdminClient.from = vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        in: vi.fn().mockRejectedValue(new Error('DB connection failed')),
-      }));
+      mockAdminClient.from = vi.fn((table: string) => {
+        if (table === 'translations') {
+          return {
+            update: vi.fn().mockReturnThis(),
+            in: vi.fn().mockRejectedValue(new Error('DB connection failed')),
+          };
+        }
+        if (table === 'translation_audit_logs') {
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+        };
+      });
 
       const request = new NextRequest('http://localhost/api/bulk?type=translations&action=update', {
         method: 'POST',

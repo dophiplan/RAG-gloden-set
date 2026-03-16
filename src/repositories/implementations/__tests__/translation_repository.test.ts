@@ -85,6 +85,20 @@ describe('TranslationRepository', () => {
           platform_code TEXT NOT NULL,
           created_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS translation_audit_logs (
+          id TEXT PRIMARY KEY,
+          translation_id TEXT NOT NULL,
+          user_id TEXT,
+          user_name TEXT,
+          user_email TEXT,
+          action TEXT NOT NULL,
+          field_name TEXT,
+          old_value TEXT,
+          new_value TEXT,
+          metadata TEXT DEFAULT '{}',
+          created_at TEXT DEFAULT (datetime('now'))
+        );
       `);
     });
 

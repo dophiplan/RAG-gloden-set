@@ -780,9 +780,9 @@ export class QueryBuilder<T = any> {
   getCount(): number {
     this.queryType = 'select';
     this.selectColumns = [];
-    this.aggregateClauses = [{ function: 'count', column: '*' }];
-    const result = this.first() as { 'count(*)': number } | undefined;
-    return result?.['count(*)'] || 0;
+    this.aggregateClauses = [{ function: 'count', column: '*', alias: 'count' }];
+    const result = this.first() as { count: number } | undefined;
+    return result?.count || 0;
   }
 
   /**

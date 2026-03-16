@@ -113,7 +113,7 @@ describe('SqliteTranslationAuditRepository', () => {
         user_email: testUserEmail,
       } as TranslationAuditLogCreateData;
 
-      await expect(repository.create(data)).rejects.toThrow(RepositoryError);
+      await expect(repository.createAndReturn(data)).rejects.toThrow(RepositoryError);
     });
   });
 

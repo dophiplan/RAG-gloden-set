@@ -14,29 +14,41 @@ vi.mock('@/lib/api-auth', () => ({
 
 vi.mock('@/services', () => ({
   TranslationCrudService: class MockTranslationCrudService {
-    revertTranslationResult = vi.fn();
+    revertTranslationResult = vi.fn().mockResolvedValue({ success: true });
   },
 }));
 
 import { createClient } from '@/lib/supabase/server';
 import { getAuthUser } from '@/lib/api-auth';
 
+// Helper to create a proper mock chain for Supabase client
+function createMockChain(finalResponse: any = { data: null, error: null }) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue(finalResponse),
+  };
+}
+
 describe('/api/rollback', () => {
   const mockUser = { id: 'user-123', email: 'test@example.com' };
-  const mockAdminClient = {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      range: vi.fn().mockResolvedValue({ data: [], error: null }),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })),
-  };
+  
+  const createMockAdminClient = () => ({
+    from: vi.fn(() => createMockChain({ data: null, error: null })),
+  });
+  
+  let mockAdminClient: ReturnType<typeof createMockAdminClient>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminClient = createMockAdminClient();
   });
 
   describe('GET - List rollback operations', () => {
@@ -72,6 +84,7 @@ describe('/api/rollback', () => {
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         range: vi.fn().mockResolvedValue({ data: mockOperations, error: null }),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
       }));
 
       const request = new NextRequest('http://localhost/api/rollback?limit=10&offset=0');
@@ -143,16 +156,34 @@ describe('/api/rollback', () => {
       });
 
       it('should execute translation rollback with logId', async () => {
-        mockAdminClient.from = vi.fn(() => ({
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'log-123', old_value: 'original text' },
-            error: null,
-          }),
-          update: vi.fn().mockResolvedValue({ error: null }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        }));
+        mockAdminClient.from = vi.fn((table: string) => {
+          if (table === 'translation_audit_logs') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'log-123', old_value: 'original text' },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'rollback_operations') {
+            return {
+              insert: vi.fn().mockReturnThis(),
+              select: vi.fn().mockReturnThis(),
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'op-123' },
+                error: null,
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            update: vi.fn().mockResolvedValue({ error: null }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        });
 
         const request = new NextRequest('http://localhost/api/rollback', {
           method: 'POST',
@@ -189,16 +220,39 @@ describe('/api/rollback', () => {
       });
 
       it('should execute glossary rollback', async () => {
-        mockAdminClient.from = vi.fn(() => ({
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'audit-123', glossary_id: 'gloss-123', old_value: 'original' },
-            error: null,
-          }),
-          update: vi.fn().mockResolvedValue({ error: null }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        }));
+        mockAdminClient.from = vi.fn((table: string) => {
+          if (table === 'glossary_audit_logs') {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'audit-123', glossary_id: 'gloss-123', old_value: 'original' },
+                error: null,
+              }),
+            };
+          }
+          if (table === 'glossary') {
+            return {
+              update: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          if (table === 'rollback_operations') {
+            return {
+              insert: vi.fn().mockReturnThis(),
+              select: vi.fn().mockReturnThis(),
+              single: vi.fn().mockResolvedValue({
+                data: { id: 'op-123' },
+                error: null,
+              }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        });
 
         const request = new NextRequest('http://localhost/api/rollback', {
           method: 'POST',
@@ -310,20 +364,38 @@ describe('/api/rollback', () => {
       });
 
       it('should execute date-based rollback', async () => {
-        mockAdminClient.from = vi.fn((table: string) => ({
-          select: vi.fn(() => ({
+        mockAdminClient.from = vi.fn((table: string) => {
+          if (table === 'translation_audit_logs') {
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn().mockReturnThis(),
+                gt: vi.fn().mockReturnThis(),
+                order: vi.fn().mockResolvedValue({
+                  data: [
+                    { id: 'log-1', translation_id: 'trans-1', old_value: 'original', created_at: '2026-03-11T10:00:00Z' },
+                  ],
+                  error: null,
+                }),
+              })),
+            };
+          }
+          if (table === 'translations') {
+            return {
+              update: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          if (table === 'rollback_operations') {
+            return {
+              insert: vi.fn().mockResolvedValue({ error: null }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
-            gt: vi.fn().mockReturnThis(),
-            order: vi.fn().mockResolvedValue({
-              data: [
-                { id: 'log-1', translation_id: 'trans-1', old_value: 'original', created_at: '2026-03-11T10:00:00Z' },
-              ],
-              error: null,
-            }),
-          })),
-          update: vi.fn().mockResolvedValue({ error: null }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        }));
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        });
 
         const request = new NextRequest('http://localhost/api/rollback', {
           method: 'POST',

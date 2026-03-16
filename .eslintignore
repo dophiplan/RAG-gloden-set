@@ -1,0 +1,9 @@
+# Test files - allow any type for mocking
+tests/**/*.test.ts
+tests/**/*.test.tsx
+**/*.test.ts
+**/*.test.tsx
+
+# Backup files
+*.bak
+*.bak.skip
