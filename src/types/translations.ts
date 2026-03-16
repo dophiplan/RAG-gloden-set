@@ -46,6 +46,7 @@ export interface Translation {
   updated_at: string;
   user_id: string;
   team_id: string | null;
+  translation_results?: TranslationResult[];
   translation_products?: TranslationProduct[];
   translation_platforms?: TranslationPlatform[];
   // New fields from Phase 1
@@ -131,6 +132,39 @@ export interface AuditLogCreateData {
   field_name?: string | null;
   old_value?: string | null;
   new_value?: string | null;
+}
+
+/**
+ * Data required to create a translation audit log entry (extended)
+ * Includes metadata for additional context
+ */
+export interface TranslationAuditLogCreateData {
+  translation_id: string;
+  user_id?: string | null;
+  user_name?: string | null;
+  user_email?: string | null;
+  action: AuditAction;
+  field_name?: string | null;
+  old_value?: string | null;
+  new_value?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Statistics for translation audit logs
+ */
+export interface TranslationAuditStats {
+  total: number;
+  byAction: Record<AuditAction, number>;
+  byUser: Array<{
+    user_id: string | null;
+    user_name: string | null;
+    count: number;
+  }>;
+  dateRange: {
+    earliest: string | null;
+    latest: string | null;
+  };
 }
 
 // Form types
