@@ -109,15 +109,20 @@ export function sortByCreatedAtDesc(
 }
 
 /**
+ * Validation result type
+ */
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+/**
  * Validate audit log data before insertion
  * 
  * @param log - Partial audit log data
  * @returns Validation result
  */
-export function validateAuditLog(log: Partial<TranslationAuditLog>): {
-  valid: boolean;
-  errors: string[];
-} {
+export function validateAuditLog(log: Partial<TranslationAuditLog>): ValidationResult {
   const errors: string[] = [];
 
   if (!log.action) {

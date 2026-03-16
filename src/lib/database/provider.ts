@@ -135,7 +135,7 @@ class SupabaseDatabaseProvider implements DatabaseProvider {
     this.users = new SupabaseUserRepository(supabase);
     this.translations = new TranslationRepository(supabase);
     this.glossary = new GlossaryRepository(supabase);
-    this.auditLogs = new AuditLogRepository(supabase);
+    this.auditLogs = new AuditLogRepository(supabase) as unknown as IAuditLogRepository;
     this.translationAudits = new TranslationAuditRepository(supabase);
     this.translationResults = new TranslationResultRepository(supabase);
     this.translationProducts = new TranslationProductRepository(supabase);
