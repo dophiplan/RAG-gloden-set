@@ -10,6 +10,22 @@ const nextConfig: NextConfig = {
   // Turbopack configuration (empty = use defaults)
   turbopack: {},
 
+  // Webpack configuration for optional dependencies
+  webpack: (config, { isServer }) => {
+    // Handle optional native dependencies
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'better-sqlite3': false,
+      };
+    }
+    
+    // Mark better-sqlite3 as external (it's optional)
+    config.externals.push('better-sqlite3');
+    
+    return config;
+  },
+
   // Experimental optimizations
   experimental: {
     // Optimize package imports for commonly used libraries
