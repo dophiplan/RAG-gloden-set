@@ -538,7 +538,7 @@ describe('SqliteGlossaryRepository Integration Tests', () => {
 
       const created = await repository.create(data, testUser);
 
-      await repository.createAuditLog({
+      await repository.createGlossaryAuditLog({
         glossary_term_id: created.id,
         user_id: testUser.id,
         user_email: testUser.email,

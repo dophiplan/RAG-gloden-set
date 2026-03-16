@@ -9,7 +9,7 @@
  * ```
  */
 
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
 import { SupabaseTranslationRepository } from '../supabase/translation_repository';
 import { SqliteTranslationRepository } from '../sqlite/translation_repository';
 import type { ITranslationRepository } from '@/repositories/interfaces/translation_repository';
@@ -21,7 +21,7 @@ import type { SqliteDatabase } from '@/lib/database/sqlite';
 
 // Supabase 클라이언트 모킹 (실제 테스트에서는 실제 클라이언트 사용)
 const mockSupabaseClient = {
-  from: jest.fn(),
+  from: vi.fn(),
 } as any;
 
 describe('TranslationRepository', () => {
@@ -279,7 +279,7 @@ describe('TranslationRepository', () => {
 
     beforeEach(() => {
       repository = new SupabaseTranslationRepository(mockSupabaseClient);
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
     it('should be defined', () => {

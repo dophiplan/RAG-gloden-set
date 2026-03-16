@@ -69,7 +69,7 @@ describe('SqliteTranslationAuditRepository', () => {
         new_value: 'pending',
       };
 
-      const result = await repository.create(data);
+      const result = await repository.createAndReturn(data);
 
       expect(result).toBeDefined();
       expect(result.translation_id).toBe(testTranslationId);
@@ -92,7 +92,7 @@ describe('SqliteTranslationAuditRepository', () => {
         },
       };
 
-      const result = await repository.create(data);
+      const result = await repository.createAndReturn(data);
 
       expect(result).toBeDefined();
       expect(result.translation_id).toBe(testTranslationId);
@@ -104,7 +104,7 @@ describe('SqliteTranslationAuditRepository', () => {
         user_email: testUserEmail,
       } as TranslationAuditLogCreateData;
 
-      await expect(repository.create(data)).rejects.toThrow(RepositoryError);
+      await expect(repository.createAndReturn(data)).rejects.toThrow(RepositoryError);
     });
 
     it('should throw RepositoryError when action is missing', async () => {
