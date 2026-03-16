@@ -117,6 +117,8 @@ interface PreviewResponse {
 
 /** API response for commit */
 export interface CommitResponse {
+  success?: boolean;
+  batchId?: string;
   glossary: {
     created: number;
     skipped: number;
@@ -129,6 +131,9 @@ export interface CommitResponse {
     errors?: string[];
   };
   processingTimeMs?: number;
+  product_code?: string;
+  version?: string | null;
+  imported?: number;
 }
 
 // =============================================================================
