@@ -311,13 +311,15 @@ function PriorityBadge({
   priority: PriorityLevel;
   onChange: (p: PriorityLevel) => void;
 }) {
-  const colors = {
+  const colors: Record<PriorityLevel, string> = {
+    urgent: 'bg-purple-100 text-purple-700',
     high: 'bg-red-100 text-red-700',
     medium: 'bg-yellow-100 text-yellow-700',
     low: 'bg-blue-100 text-blue-700',
   };
 
-  const labels = {
+  const labels: Record<PriorityLevel, string> = {
+    urgent: '긴급',
     high: '높',
     medium: '중',
     low: '낮',
@@ -329,6 +331,7 @@ function PriorityBadge({
       onChange={(e) => onChange(e.target.value as PriorityLevel)}
       className={`text-[10px] border rounded px-1 py-0.5 ${colors[priority]}`}
     >
+      <option value="urgent">{labels.urgent}</option>
       <option value="high">{labels.high}</option>
       <option value="medium">{labels.medium}</option>
       <option value="low">{labels.low}</option>

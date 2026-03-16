@@ -8,6 +8,8 @@ interface EditableCellProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  middleTruncate?: boolean;
+  maxLength?: number;
 }
 
 export default function EditableCell({
@@ -16,6 +18,8 @@ export default function EditableCell({
   placeholder = '더블클릭하여 편집',
   disabled = false,
   className = '',
+  middleTruncate = false,
+  maxLength,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
@@ -143,6 +147,17 @@ export default function EditableCell({
     });
   };
 
+  // Function to truncate text in the middle
+  const truncateMiddle = (text: string, maxLen: number): string => {
+    if (text.length <= maxLen) return text;
+    const sideLength = Math.floor((maxLen - 3) / 2);
+    return text.slice(0, sideLength) + '...' + text.slice(-sideLength);
+  };
+
+  const displayValue = middleTruncate && maxLength && value.length > maxLength
+    ? truncateMiddle(value, maxLength)
+    : value;
+
   return (
     <div
       onDoubleClick={handleDoubleClick}
@@ -151,7 +166,7 @@ export default function EditableCell({
     >
       {value ? (
         <span className="text-[10px] text-gray-900 whitespace-nowrap overflow-hidden text-ellipsis block">
-          {renderTextWithLinks(value)}
+          {renderTextWithLinks(displayValue)}
         </span>
       ) : (
         <span className="text-[10px] text-gray-400 italic">{placeholder}</span>
