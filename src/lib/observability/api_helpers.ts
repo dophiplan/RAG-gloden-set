@@ -35,7 +35,7 @@ export interface ApiInstrumentationOptions {
 }
 
 export interface ApiHandler {
-  (request: NextRequest, context?: { params?: Record<string, string> }): Promise<Response>;
+  (request: NextRequest, context?: { params?: Promise<Record<string, string>> }): Promise<Response>;
 }
 
 // ============================================================================
@@ -56,7 +56,7 @@ export function withApiInstrumentation(
 ): ApiHandler {
   const { component = 'ApiRoute', recordMetrics, onError } = options;
 
-  return async function (request: NextRequest, context?: { params?: Record<string, string> }): Promise<Response> {
+  return async function (request: NextRequest, context?: { params?: Promise<Record<string, string>> }): Promise<Response> {
     const start = Date.now();
     const path = request.nextUrl.pathname;
     const method = request.method;

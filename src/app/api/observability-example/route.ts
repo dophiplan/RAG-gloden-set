@@ -13,10 +13,11 @@ import {
   logger,
   metrics,
   getContextLogger,
+  type ApiHandler,
 } from '@/lib/observability';
 
 // GET 핸들러 - 기본 예시
-async function handleGet(request: NextRequest) {
+const handleGet: ApiHandler = async (request, context) => {
   const requestLogger = getContextLogger('ExampleEndpoint');
   
   // 로깅 예시
@@ -35,7 +36,7 @@ async function handleGet(request: NextRequest) {
 }
 
 // POST 핸들러 - 에러 처리 예시
-async function handlePost(request: NextRequest) {
+const handlePost: ApiHandler = async (request, context) => {
   const requestLogger = getContextLogger('ExampleEndpoint');
   
   try {
