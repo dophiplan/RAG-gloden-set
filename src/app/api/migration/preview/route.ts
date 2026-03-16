@@ -18,6 +18,7 @@ const debugError = process.env.NODE_ENV === 'development'
 interface PreviewEntry extends BasePreviewEntry {
   word_count: number;
   note?: string;
+  key?: string;
   existing_in_glossary: boolean;
   existing_in_translation: boolean;
 }

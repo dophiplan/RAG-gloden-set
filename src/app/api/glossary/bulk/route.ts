@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest) {
     const repository = new GlossaryRepository(supabase);
     
     // Get user profile for audit log
-    const { data: userProfile } = await supabase
+    const { data: userProfileForAudit } = await supabase
       .from('users')
       .select('name')
       .eq('id', user.id)
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
 
     const userInfo = {
       id: user.id,
-      name: userProfile?.name,
+      name: userProfileForAudit?.name,
       email: user.email || '',
     };
 
@@ -80,7 +80,7 @@ export async function PATCH(request: NextRequest) {
     const auditAction = body.action === 'approve' ? 'bulk_approve' : 'bulk_reject';
     
     for (const id of body.ids) {
-      repository['createAuditLog']({
+      repository['createGlossaryAuditLog']({
         glossary_term_id: id,
         user_id: user.id,
         user_name: userInfo.name,
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
     const repository = new GlossaryRepository(supabase);
     
     // Get user profile for audit log
-    const { data: userProfile } = await supabase
+    const { data: userProfileForAudit } = await supabase
       .from('users')
       .select('name')
       .eq('id', user.id)
@@ -156,7 +156,7 @@ export async function DELETE(request: NextRequest) {
 
     const userInfo = {
       id: user.id,
-      name: userProfile?.name,
+      name: userProfileForAudit?.name,
       email: user.email || '',
     };
 
@@ -186,7 +186,7 @@ export async function DELETE(request: NextRequest) {
         }
 
         // Create audit log (non-blocking)
-        repository['createAuditLog']({
+        repository['createGlossaryAuditLog']({
           glossary_term_id: id,
           user_id: user.id,
           user_name: userInfo.name,

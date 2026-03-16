@@ -20,10 +20,13 @@ export type MigrationCategory = 'glossary' | 'translation';
  * 중복 상태 타입
  */
 export interface DuplicateStatus {
-  status: 'exact' | 'fuzzy';
+  status: 'exact' | 'fuzzy' | 'similar' | 'new';
   existingId?: string;
+  existing_id?: string;
   sourceText?: string;
+  existing_translations?: Record<string, string>;
   similarity?: number;
+  where?: 'glossary' | 'translation' | 'both';
 }
 
 /**
