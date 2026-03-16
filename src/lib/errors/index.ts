@@ -128,6 +128,18 @@ export class ExternalServiceError extends ApiError {
 }
 
 /**
+ * Repository Error (500)
+ * Thrown when repository operations fail
+ */
+export class RepositoryError extends ApiError {
+  constructor(message: string = 'Repository operation failed.', details?: unknown) {
+    super(message, 500, 'REPOSITORY_ERROR', details);
+    this.name = 'RepositoryError';
+    Object.setPrototypeOf(this, RepositoryError.prototype);
+  }
+}
+
+/**
  * Check if error is an instance of ApiError
  */
 export function isApiError(error: unknown): error is ApiError {
