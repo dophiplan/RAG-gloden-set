@@ -7,10 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "type-check": "tsc --noEmit",
     "verify": "node scripts/verify-setup.js",
-    "test": "vitest",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest --reporter=verbose",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest run --coverage --reporter=json --reporter=verbose",
+    "test:unit": "vitest run --exclude 'tests/integration/**' --reporter=verbose",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration:watch": "vitest --config vitest.integration.config.ts",
+    "test:integration:coverage": "vitest run --config vitest.integration.config.ts --coverage",
+    "migrate:sqlite": "node sqlite/scripts/apply-sqlite-migrations.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
@@ -56,6 +63,7 @@
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.0.0",
     "msw": "^2.12.10",
+    "sqlite3": "^6.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"
