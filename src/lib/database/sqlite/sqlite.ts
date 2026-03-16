@@ -301,7 +301,7 @@ class NodeSqliteDatabase implements SqliteDatabase {
   }
 
   query<T = any>(tableName: string): QueryBuilder<T> {
-    const { createQueryBuilder } = require('./sqlite/query_builder') as { createQueryBuilder: <T>(db: SqliteDatabase, tableName: string) => QueryBuilder<T> };
+    const { createQueryBuilder } = require('./query_builder') as { createQueryBuilder: <T>(db: SqliteDatabase, tableName: string) => QueryBuilder<T> };
     return createQueryBuilder<T>(this, tableName);
   }
 
@@ -501,7 +501,7 @@ class BetterSqliteDatabase implements SqliteDatabase {
   }
 
   query<T = any>(tableName: string): QueryBuilder<T> {
-    const { createQueryBuilder } = require('./sqlite/query_builder') as { createQueryBuilder: <T>(db: SqliteDatabase, tableName: string) => QueryBuilder<T> };
+    const { createQueryBuilder } = require('./query_builder') as { createQueryBuilder: <T>(db: SqliteDatabase, tableName: string) => QueryBuilder<T> };
     return createQueryBuilder<T>(this, tableName);
   }
 
@@ -715,5 +715,5 @@ export function createInMemorySqliteClient(): SqliteDatabase {
 // Re-exports
 // ============================================================================
 
-export { ConnectionMode } from './connection';
+export type { ConnectionMode } from './connection';
 export type { QueryBuilder, WhereClause, OrderByClause } from './query_builder';
