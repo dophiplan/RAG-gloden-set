@@ -246,15 +246,11 @@ export default function SettingsPage() {
         });
       }
 
-      // Refresh products list
-      const productsData = await apiGet<{ products: Product[] }>('/api/products');
-      setProducts(productsData.products || []);
-
-      // Invalidate SWR cache for products (real-time sync)
-      mutate('/api/products');
-
       showSuccess(editingProduct ? '제품이 수정되었습니다.' : '제품이 추가되었습니다.');
       closeProductModal();
+      
+      // 페이지 새로고침으로 목록 갱신
+      window.location.reload();
     } catch (error) {
       showError(error instanceof Error ? error.message : '제품 저장에 실패했습니다.');
     } finally {

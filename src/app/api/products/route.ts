@@ -3,24 +3,29 @@ import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { requireAdmin, isErrorResponse } from '@/lib/api/auth-middleware';
 import { productCreateSchema, validateAndSanitize } from '@/lib/validation/schemas';
 import { apiCachedSuccess, apiSuccess, apiUnauthorized, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
+import { isSQLiteMode, getSQLiteConnection } from '@/lib/api/sqlite-helper';
 
 /**
  * GET - List all products
  */
 export async function GET(request: NextRequest) {
   try {
-    // Use admin client to bypass RLS for reference data
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      const products = db.all('SELECT * FROM products ORDER BY name ASC');
+      return apiSuccess({ products: products || [] });
+    }
+    
+    // Supabase mode (기존 코드)
     const adminClient = createAdminClient();
-
     const { data: products, error } = await adminClient
       .from('products')
       .select('*')
       .order('name', { ascending: true });
 
     if (error) throw error;
-
-    // Cache for 5 minutes (static reference data)
-    return apiCachedSuccess({ products }, undefined, 300);
+    return apiSuccess({ products });
   } catch (error) {
     console.error('Error fetching products:', error);
     return apiInternalError('제품 목록을 불러오는데 실패했습니다.');
@@ -32,48 +37,58 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Require admin permission
-    const auth = await requireAdmin();
-    if (isErrorResponse(auth)) return auth.error;
-
-    const { user, supabase } = auth.context;
-
-    // Parse and validate
+    // Parse and validate (공통)
     const rawBody = await request.json();
     const validation = validateAndSanitize(productCreateSchema, rawBody);
-
     if (!validation.success) {
       return apiBadRequest(validation.error, 'VALIDATION_ERROR');
     }
-
     const body = validation.data;
     const { code, name, description, display_order } = body;
 
-    // Check if code already exists (using regular client with RLS)
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      
+      // Check duplicate
+      const existing = db.get('SELECT id FROM products WHERE code = ?', [code]);
+      if (existing) {
+        return apiConflict('이미 존재하는 제품 코드입니다.');
+      }
+      
+      // Insert (DEFAULT 값 있는 컬럼은 제외)
+      const id = crypto.randomUUID();
+      db.run(
+        'INSERT INTO products (id, code, name, description, display_order) VALUES (?, ?, ?, ?, ?)',
+        [id, code, name, description || null, display_order || 0]
+      );
+      
+      const product = db.get('SELECT * FROM products WHERE id = ?', [id]);
+      return apiSuccess({ product });
+    }
+    
+    // Supabase mode (기존 코드)
+    const auth = await requireAdmin();
+    if (isErrorResponse(auth)) return auth.error;
+    const { user, supabase } = auth.context;
+    
+    // Check duplicate
     const { data: existing } = await supabase
       .from('products')
       .select('id')
       .eq('code', code)
       .single();
-
     if (existing) {
       return apiConflict('이미 존재하는 제품 코드입니다.');
     }
-
-    // Insert new product (RLS will allow if user is admin)
+    
+    // Insert
     const { data: product, error } = await supabase
       .from('products')
-      .insert({
-        code,
-        name,
-        description: description || null,
-        display_order: display_order || 0,
-      })
+      .insert({ code, name, description: description || null, display_order: display_order || 0 })
       .select()
       .single();
-
     if (error) throw error;
-
     return apiSuccess({ product });
   } catch (error) {
     console.error('Error creating product:', error);

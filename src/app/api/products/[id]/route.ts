@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { apiSuccess, apiUnauthorized, apiForbidden, apiNotFound, apiBadRequest, apiInternalError } from '@/lib/api/response';
+import { isSQLiteMode, getSQLiteConnection } from '@/lib/api/sqlite-helper';
 
 /**
  * PATCH - Update a product (master only)
@@ -10,6 +11,56 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const body = await request.json();
+    const { code, name, description, display_order } = body;
+
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      
+      // Get current product
+      const currentProduct = db.get<{ code: string }>('SELECT code FROM products WHERE id = ?', [id]);
+      if (!currentProduct) {
+        return apiNotFound('제품');
+      }
+      
+      // Check if code is being changed
+      const isCodeChanging = code !== undefined && code !== currentProduct.code;
+      
+      if (isCodeChanging) {
+        // Check duplicate code
+        const existing = db.get('SELECT id FROM products WHERE code = ? AND id != ?', [code, id]);
+        if (existing) {
+          return apiBadRequest('이미 사용 중인 제품 코드입니다.');
+        }
+      }
+      
+      // Build update SQL
+      const updates: string[] = [];
+      const values: any[] = [];
+      
+      if (code !== undefined) { updates.push('code = ?'); values.push(code); }
+      if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+      if (description !== undefined) { updates.push('description = ?'); values.push(description); }
+      if (display_order !== undefined) { updates.push('display_order = ?'); values.push(display_order); }
+      
+      if (updates.length > 0) {
+        values.push(id);
+        // FK 제약 일시 비활성화 (코드 변경 시 연계 테이블 FK 위한 방지)
+        db.run('PRAGMA foreign_keys = OFF');
+        try {
+          db.run(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`, values);
+        } finally {
+          db.run('PRAGMA foreign_keys = ON');
+        }
+      }
+      
+      const product = db.get('SELECT * FROM products WHERE id = ?', [id]);
+      return apiSuccess({ product });
+    }
+    
+    // Supabase mode (기존 코드 그대로 유지)
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -30,10 +81,6 @@ export async function PATCH(
     if (!isMaster) {
       return apiForbidden('권한이 없습니다.');
     }
-
-    const { id } = await params;
-    const body = await request.json();
-    const { code, name, description, display_order } = body;
 
     // Get current product to check if code is changing
     const { data: currentProduct } = await adminClient
@@ -133,6 +180,36 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      
+      // Get product info
+      const product = db.get<{ code: string }>('SELECT code FROM products WHERE id = ?', [id]);
+      if (!product) {
+        return apiNotFound('제품');
+      }
+      
+      // Check related data
+      const translationProducts = db.get<{ count: number }>('SELECT COUNT(*) as count FROM translation_products WHERE product_code = ?', [product.code]);
+      const hasRelatedData = (translationProducts?.count ?? 0) > 0;
+      
+      if (hasRelatedData) {
+        return apiBadRequest('사용 중인 제품은 삭제할 수 없습니다. 관련 데이터를 먼저 삭제하세요.');
+      }
+      
+      // Delete product
+      db.run('DELETE FROM products WHERE id = ?', [id]);
+      
+      return apiSuccess({ 
+        success: true,
+        deleted: { product: product.code }
+      });
+    }
+    
+    // Supabase mode (기존 코드 그대로 유지)
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -154,8 +231,6 @@ export async function DELETE(
     if (!isMaster) {
       return apiForbidden('권한이 없습니다.');
     }
-
-    const { id } = await params;
 
     // Get product info
     const { data: product } = await adminClient
