@@ -639,6 +639,7 @@ export default function UploadPage() {
                       showDateWarning={!!dateWarning}
                       dateWarning={dateWarning}
                       isInvalidDate={isInvalidDate}
+                      selectedProduct={selectedProduct}
                     />
                   </div>
 

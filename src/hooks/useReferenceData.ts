@@ -1,22 +1,26 @@
-import useSWR from 'swr';
-import { Product as ProductType } from '@/types/products';
+import useSWR from "swr";
+
+interface FetcherError extends Error {
+  status?: number;
+  info?: Record<string, unknown>;
+}
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    const errorMessage = errorData.error || 'API 요청 실패';
-    const error = new Error(
+    const errorMessage = errorData.error || "API 요청 실패";
+    const error: FetcherError = new Error(
       res.status === 401
-        ? '인증이 필요합니다. 다시 로그인해주세요.'
-        : `${errorMessage} (${res.status})`
+        ? "인증이 필요합니다. 다시 로그인해주세요."
+        : `${errorMessage} (${res.status})`,
     );
-    (error as any).status = res.status;
-    (error as any).info = errorData;
+    error.status = res.status;
+    error.info = errorData;
     console.error(`[fetcher] Failed to fetch ${url}:`, {
       status: res.status,
       error: errorMessage,
-      data: errorData
+      data: errorData,
     });
     throw error;
   }
@@ -30,6 +34,7 @@ export interface Product {
   description: string | null;
   display_order: number;
   default_languages: string[] | null;
+  available_scopes: string[] | null;
 }
 
 export interface Language {
@@ -79,8 +84,8 @@ export interface Scope {
  * Hook to fetch and cache all products
  */
 export function useProducts() {
-  const { data, error, isLoading, isValidating } = useSWR<{ data: { products: Product[] } }>(
-    '/api/products?v=2',
+  const { data, error, isLoading } = useSWR<{ data: { products: Product[] } }>(
+    "/api/products?v=2",
     fetcher,
     {
       revalidateOnFocus: false, // 포커스 시 재검증 비활성화
@@ -90,7 +95,7 @@ export function useProducts() {
       shouldRetryOnError: true,
       errorRetryCount: 3,
       keepPreviousData: true, // 새 데이터 로딩 중 이전 데이터 유지
-    }
+    },
   );
 
   // API returns { data: { products: [...] } }
@@ -99,10 +104,13 @@ export function useProducts() {
 
   return {
     products,
-    productsMap: products.reduce((acc, p) => {
-      acc[p.code] = p;
-      return acc;
-    }, {} as Record<string, Product>),
+    productsMap: products.reduce(
+      (acc, p) => {
+        acc[p.code] = p;
+        return acc;
+      },
+      {} as Record<string, Product>,
+    ),
     isLoading,
     error,
     isEmpty,
@@ -113,30 +121,31 @@ export function useProducts() {
  * Hook to fetch and cache all languages
  */
 export function useLanguages() {
-  const { data, error, isLoading } = useSWR<{ data: { languages: Language[] } }>(
-    '/api/languages',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000, // 5분
-      shouldRetryOnError: false,
-      keepPreviousData: true,
-      onError: (err) => {
-        console.error('[useLanguages] Failed to fetch languages:', err);
-      },
-    }
-  );
+  const { data, error, isLoading } = useSWR<{
+    data: { languages: Language[] };
+  }>("/api/languages", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // 5분
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      console.error("[useLanguages] Failed to fetch languages:", err);
+    },
+  });
 
   const languages = data?.data?.languages || [];
   const isEmpty = !isLoading && !error && languages.length === 0;
 
   return {
     languages,
-    languagesMap: languages.reduce((acc, l) => {
-      acc[l.code] = l;
-      return acc;
-    }, {} as Record<string, Language>),
+    languagesMap: languages.reduce(
+      (acc, l) => {
+        acc[l.code] = l;
+        return acc;
+      },
+      {} as Record<string, Language>,
+    ),
     isLoading,
     error,
     isEmpty,
@@ -147,30 +156,31 @@ export function useLanguages() {
  * Hook to fetch and cache all platforms
  */
 export function usePlatforms() {
-  const { data, error, isLoading } = useSWR<{ data: { platforms: Platform[] } }>(
-    '/api/platforms',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000, // 5분
-      shouldRetryOnError: false,
-      keepPreviousData: true,
-      onError: (err) => {
-        console.error('[usePlatforms] Failed to fetch platforms:', err);
-      },
-    }
-  );
+  const { data, error, isLoading } = useSWR<{
+    data: { platforms: Platform[] };
+  }>("/api/platforms", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // 5분
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      console.error("[usePlatforms] Failed to fetch platforms:", err);
+    },
+  });
 
   const platforms = data?.data?.platforms || [];
   const isEmpty = !isLoading && !error && platforms.length === 0;
 
   return {
     platforms,
-    platformsMap: platforms.reduce((acc, p) => {
-      acc[p.code] = p;
-      return acc;
-    }, {} as Record<string, Platform>),
+    platformsMap: platforms.reduce(
+      (acc, p) => {
+        acc[p.code] = p;
+        return acc;
+      },
+      {} as Record<string, Platform>,
+    ),
     isLoading,
     error,
     isEmpty,
@@ -181,30 +191,31 @@ export function usePlatforms() {
  * Hook to fetch and cache all translation statuses
  */
 export function useStatuses() {
-  const { data, error, isLoading } = useSWR<{ data: { statuses: TranslationStatus[] } }>(
-    '/api/statuses',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000, // 5분
-      shouldRetryOnError: false,
-      keepPreviousData: true,
-      onError: (err) => {
-        console.error('[useStatuses] Failed to fetch statuses:', err);
-      },
-    }
-  );
+  const { data, error, isLoading } = useSWR<{
+    data: { statuses: TranslationStatus[] };
+  }>("/api/statuses", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // 5분
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      console.error("[useStatuses] Failed to fetch statuses:", err);
+    },
+  });
 
   const statuses = data?.data?.statuses || [];
   const isEmpty = !isLoading && !error && statuses.length === 0;
 
   return {
     statuses,
-    statusesMap: statuses.reduce((acc, s) => {
-      acc[s.code] = s;
-      return acc;
-    }, {} as Record<string, TranslationStatus>),
+    statusesMap: statuses.reduce(
+      (acc, s) => {
+        acc[s.code] = s;
+        return acc;
+      },
+      {} as Record<string, TranslationStatus>,
+    ),
     isLoading,
     error,
     isEmpty,
@@ -215,30 +226,31 @@ export function useStatuses() {
  * Hook to fetch and cache all priority levels
  */
 export function usePriorities() {
-  const { data, error, isLoading } = useSWR<{ data: { priorities: PriorityLevel[] } }>(
-    '/api/priorities',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000, // 5분
-      shouldRetryOnError: false,
-      keepPreviousData: true,
-      onError: (err) => {
-        console.error('[usePriorities] Failed to fetch priorities:', err);
-      },
-    }
-  );
+  const { data, error, isLoading } = useSWR<{
+    data: { priorities: PriorityLevel[] };
+  }>("/api/priorities", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 300000, // 5분
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      console.error("[usePriorities] Failed to fetch priorities:", err);
+    },
+  });
 
   const priorities = data?.data?.priorities || [];
   const isEmpty = !isLoading && !error && priorities.length === 0;
 
   return {
     priorities,
-    prioritiesMap: priorities.reduce((acc, p) => {
-      acc[p.code] = p;
-      return acc;
-    }, {} as Record<string, PriorityLevel>),
+    prioritiesMap: priorities.reduce(
+      (acc, p) => {
+        acc[p.code] = p;
+        return acc;
+      },
+      {} as Record<string, PriorityLevel>,
+    ),
     isLoading,
     error,
     isEmpty,
@@ -246,11 +258,16 @@ export function usePriorities() {
 }
 
 /**
- * Hook to fetch and cache all scopes
+ * Hook to fetch and cache scopes
+ * @param productCode - 특정 제품의 분류만 조회할 경우 제품 코드 전달
  */
-export function useScopes() {
+export function useScopes(productCode?: string) {
+  const url = productCode
+    ? `/api/scopes?productCode=${productCode}`
+    : "/api/scopes";
+
   const { data, error, isLoading } = useSWR<{ data: { scopes: Scope[] } }>(
-    '/api/scopes',
+    url,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -259,9 +276,9 @@ export function useScopes() {
       shouldRetryOnError: false,
       keepPreviousData: true,
       onError: (err) => {
-        console.error('[useScopes] Failed to fetch scopes:', err);
+        console.error("[useScopes] Failed to fetch scopes:", err);
       },
-    }
+    },
   );
 
   const scopes = data?.data?.scopes || [];
@@ -269,10 +286,13 @@ export function useScopes() {
 
   return {
     scopes,
-    scopesMap: scopes.reduce((acc, s) => {
-      acc[s.code] = s;
-      return acc;
-    }, {} as Record<string, Scope>),
+    scopesMap: scopes.reduce(
+      (acc, s) => {
+        acc[s.code] = s;
+        return acc;
+      },
+      {} as Record<string, Scope>,
+    ),
     isLoading,
     error,
     isEmpty,

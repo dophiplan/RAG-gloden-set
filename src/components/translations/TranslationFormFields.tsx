@@ -1,12 +1,17 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
-import MultiSelectDropdown from '@/components/ui/MultiSelectDropdown';
-import { PriorityLevel, LanguageCode, ScopeType } from '@/types';
-import { getAllSelectableLanguages } from '@/lib/product-languages';
-import { useScopes, usePriorities, useLanguages, usePlatforms } from '@/hooks/useReferenceData';
+import { useMemo } from "react";
+import Select from "@/components/ui/Select";
+import Input from "@/components/ui/Input";
+import MultiSelectDropdown from "@/components/ui/MultiSelectDropdown";
+import { PriorityLevel, LanguageCode, ScopeType } from "@/types";
+import { getAllSelectableLanguages } from "@/lib/product-languages";
+import {
+  useScopes,
+  usePriorities,
+  useLanguages,
+  usePlatforms,
+} from "@/hooks/useReferenceData";
 
 export interface TranslationFormFieldsProps {
   // Field values
@@ -29,6 +34,9 @@ export interface TranslationFormFieldsProps {
   showDateWarning?: boolean;
   dateWarning?: string;
   isInvalidDate?: boolean;
+
+  // 제품 선택 (해당 제품의 분류만 표시)
+  selectedProduct?: string;
 }
 
 /**
@@ -55,34 +63,41 @@ export default function TranslationFormFields({
   onPlatformsChange,
   onVersionChange,
   showDateWarning = false,
-  dateWarning = '',
+  dateWarning = "",
   isInvalidDate = false,
+  selectedProduct,
 }: TranslationFormFieldsProps) {
   // Fetch reference data from DB
-  const { scopes } = useScopes();
+  // 선택된 제품이 있으면 해당 제품의 분류만, 없으면 기본 분류(4개) 조회
+  const { scopes } = useScopes(selectedProduct);
   const { priorities } = usePriorities();
   const { languagesMap } = useLanguages();
   const { platforms } = usePlatforms();
 
   // Generate select options dynamically
-  const scopeOptions = useMemo(() => [
-    { value: '', label: '제품 분류 선택' },
-    ...scopes.map(s => ({ value: s.code, label: s.name }))
-  ], [scopes]);
+  const scopeOptions = useMemo(
+    () => [
+      { value: "", label: "제품 분류 선택" },
+      ...scopes.map((s) => ({ value: s.code, label: s.name })),
+    ],
+    [scopes],
+  );
 
-  const priorityOptions = useMemo(() =>
-    priorities.map(p => ({
-      value: p.code,
-      label: p.label
-    }))
-  , [priorities]);
+  const priorityOptions = useMemo(
+    () =>
+      priorities.map((p) => ({
+        value: p.code,
+        label: p.label,
+      })),
+    [priorities],
+  );
 
   // Language options for multi-select
   const languageOptions = useMemo(() => {
     const availableLanguages = getAllSelectableLanguages();
-    return availableLanguages.map(lang => ({
+    return availableLanguages.map((lang) => ({
       value: lang,
-      label: languagesMap[lang]?.name || lang.toUpperCase()
+      label: languagesMap[lang]?.name || lang.toUpperCase(),
     }));
   }, [languagesMap]);
 
@@ -90,9 +105,9 @@ export default function TranslationFormFields({
   const platformOptions = useMemo(() => {
     return platforms
       .sort((a, b) => a.display_order - b.display_order)
-      .map(p => ({
+      .map((p) => ({
         value: p.code,
-        label: p.name
+        label: p.name,
       }));
   }, [platforms]);
 
@@ -135,7 +150,7 @@ export default function TranslationFormFields({
             type="date"
             value={completionDate}
             onChange={(e) => onCompletionDateChange(e.target.value)}
-            className={isInvalidDate ? 'border-red-500' : ''}
+            className={isInvalidDate ? "border-red-500" : ""}
           />
           {showDateWarning && dateWarning && (
             <p className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
