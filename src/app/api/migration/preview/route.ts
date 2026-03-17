@@ -5,6 +5,7 @@ import type { PreviewEntry as BasePreviewEntry } from '@/types/migration';
 import { v4 as uuidv4 } from 'uuid';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
+import { isSQLiteMode, getSQLiteConnection } from '@/lib/api/sqlite-helper';
 
 // Debug logging helper - only in development
 const debug = process.env.NODE_ENV === 'development' 
@@ -511,8 +512,139 @@ async function checkDuplicatesBatch(
   
   if (sourceTexts.length === 0) return result;
 
+  // SQLite mode
+  if (isSQLiteMode()) {
+    const db = await getSQLiteConnection();
+    
+    // Glossary 중복 체크 - SQLite는 IN clause에 제한이 있을 수 있어서 chunk로 처리
+    const glossaryMap = new Map<string, { id: string; translations: Record<string, string> }>();
+    
+    // sourceTexts를 chunks로 나눠서 처리 (SQLite 변수 제한 고려)
+    const chunkSize = 500;
+    for (let i = 0; i < sourceTexts.length; i += chunkSize) {
+      const chunk = sourceTexts.slice(i, i + chunkSize);
+      const placeholders = chunk.map(() => '?').join(',');
+      
+      interface GlossaryMatch {
+        id: string;
+        term: string;
+        translation: string;
+        language_code: string;
+      }
+      
+      const glossaryMatches = db.all<GlossaryMatch>(`
+        SELECT id, term, translation, language_code 
+        FROM glossary 
+        WHERE term IN (${placeholders})
+      `, chunk);
+      
+      for (const g of glossaryMatches) {
+        if (!glossaryMap.has(g.term)) {
+          glossaryMap.set(g.term, { id: g.id, translations: {} });
+        }
+        glossaryMap.get(g.term)!.translations[g.language_code] = g.translation;
+      }
+    }
+
+    // Translation 중복 체크
+    let translationIdsInProduct: Set<string> | null = null;
+    
+    if (productCode) {
+      interface ProductTranslation {
+        translation_id: string;
+      }
+      
+      const productTranslations = db.all<ProductTranslation>(
+        'SELECT translation_id FROM translation_products WHERE product_code = ?',
+        [productCode]
+      );
+      
+      if (productTranslations && productTranslations.length > 0) {
+        translationIdsInProduct = new Set(productTranslations.map(pt => pt.translation_id));
+      } else {
+        translationIdsInProduct = new Set();
+      }
+    }
+
+    // Translation matches 조회
+    interface TranslationMatch {
+      id: string;
+      source_text: string;
+    }
+    
+    interface TranslationResult {
+      language_code: string;
+      translated_text: string;
+    }
+    
+    const translationMap = new Map<string, { id: string; translations: Record<string, string> }>();
+    
+    for (let i = 0; i < sourceTexts.length; i += chunkSize) {
+      const chunk = sourceTexts.slice(i, i + chunkSize);
+      const placeholders = chunk.map(() => '?').join(',');
+      
+      const translationMatches = db.all<TranslationMatch>(`
+        SELECT id, source_text 
+        FROM translations 
+        WHERE source_text IN (${placeholders})
+      `, chunk);
+      
+      for (const t of translationMatches) {
+        // 제품 코드 필터 적용
+        if (translationIdsInProduct !== null && !translationIdsInProduct.has(t.id)) {
+          continue;
+        }
+        
+        // translation_results 조회
+        const trResults = db.all<TranslationResult>(
+          'SELECT language_code, translated_text FROM translation_results WHERE translation_id = ?',
+          [t.id]
+        );
+        
+        const translations: Record<string, string> = {};
+        for (const tr of trResults) {
+          translations[tr.language_code] = tr.translated_text;
+        }
+        translationMap.set(t.source_text, { id: t.id, translations });
+      }
+    }
+
+    // 결과 조합
+    for (const sourceText of sourceTexts) {
+      const glossaryMatch = glossaryMap.get(sourceText);
+      const translationMatch = translationMap.get(sourceText);
+
+      if (glossaryMatch && translationMatch) {
+        result.set(sourceText, {
+          status: 'exact',
+          where: 'both',
+          existing_id: glossaryMatch.id,
+          existing_translations: glossaryMatch.translations,
+        });
+      } else if (glossaryMatch) {
+        result.set(sourceText, {
+          status: 'exact',
+          where: 'glossary',
+          existing_id: glossaryMatch.id,
+          existing_translations: glossaryMatch.translations,
+        });
+      } else if (translationMatch) {
+        result.set(sourceText, {
+          status: 'exact',
+          where: 'translation',
+          existing_id: translationMatch.id,
+          existing_translations: translationMatch.translations,
+        });
+      } else {
+        result.set(sourceText, { status: 'new' });
+      }
+    }
+
+    return result;
+  }
+
+  // Supabase mode (기존 코드)
   // Glossary 중복 체크 (한 번의 쿼리로 모든 term 조회)
-  // Note: glossary는 제품별 구분이 없으므로 전체 기준으로 체크
   const { data: glossaryMatches } = await supabase
     .from('glossary')
     .select('id, term, translation, language_code')
@@ -529,7 +661,6 @@ async function checkDuplicatesBatch(
   }
 
   // Translation 중복 체크
-  // productCode가 제공되면 해당 제품에 속한 translation만 필터링
   let translationIdsInProduct: Set<string> | null = null;
   
   if (productCode) {
@@ -541,7 +672,6 @@ async function checkDuplicatesBatch(
     if (productTranslations && productTranslations.length > 0) {
       translationIdsInProduct = new Set(productTranslations.map(pt => pt.translation_id));
     } else {
-      // 해당 제품에 번역이 없으면 빈 결과
       translationIdsInProduct = new Set();
     }
   }
@@ -554,7 +684,6 @@ async function checkDuplicatesBatch(
   const translationMap = new Map<string, { id: string; translations: Record<string, string> }>();
   if (translationMatches) {
     for (const t of translationMatches) {
-      // 제품 코드 필터 적용: 해당 제품에 속한 translation만 포함
       if (translationIdsInProduct !== null && !translationIdsInProduct.has(t.id)) {
         continue;
       }
@@ -575,7 +704,6 @@ async function checkDuplicatesBatch(
     const translationMatch = translationMap.get(sourceText);
 
     if (glossaryMatch && translationMatch) {
-      // 둘 다 있는 경우: where: 'both'
       result.set(sourceText, {
         status: 'exact',
         where: 'both',
@@ -583,7 +711,6 @@ async function checkDuplicatesBatch(
         existing_translations: glossaryMatch.translations,
       });
     } else if (glossaryMatch) {
-      // glossary에만 있으면: where: 'glossary'
       result.set(sourceText, {
         status: 'exact',
         where: 'glossary',
@@ -591,7 +718,6 @@ async function checkDuplicatesBatch(
         existing_translations: glossaryMatch.translations,
       });
     } else if (translationMatch) {
-      // translation에만 있으면: where: 'translation'
       result.set(sourceText, {
         status: 'exact',
         where: 'translation',

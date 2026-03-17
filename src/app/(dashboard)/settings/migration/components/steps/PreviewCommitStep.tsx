@@ -15,6 +15,7 @@ interface PreviewCommitStepProps {
   previewData?: PreviewEntry[];
   versionEntries?: VersionEntries;
   selectedIds: string[];
+  isLoading?: boolean;
   onToggleSelected: (id: string) => void;
   onSelectAll: () => void;
   onClearSelected: () => void;
@@ -30,6 +31,7 @@ export default function PreviewCommitStep({
   previewData,
   versionEntries,
   selectedIds,
+  isLoading = false,
   onToggleSelected,
   onSelectAll,
   onClearSelected,
@@ -148,8 +150,16 @@ export default function PreviewCommitStep({
 
   return (
     <div className="space-y-4">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="w-12 h-12 border-4 border-[#818CF8] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">미리보기 데이터를 불러오는 중...</p>
+        </div>
+      )}
+
       {/* Version Tabs */}
-      {versions.length > 1 ? (
+      {!isLoading && versions.length > 1 ? (
         <div className="flex items-center gap-2 border-b border-gray-200 pb-0">
           <button
             onClick={() => handleVersionChange('all')}
@@ -172,7 +182,7 @@ export default function PreviewCommitStep({
             </button>
           ))}
         </div>
-      ) : (
+      ) : !isLoading && (
         // 버전이 1개일 때: 탭 없이 텍스트만 표시
         <div className="text-xs font-medium text-gray-900 py-1">
           전체 {stats.total}
@@ -180,6 +190,7 @@ export default function PreviewCommitStep({
       )}
 
       {/* 상단 영역: 통계 + 뷰 토글 */}
+      {!isLoading && (
       <div className="flex items-center justify-between">
         {/* 좌측: 비어있음 (전체 개수는 탭에 표시) */}
         <div></div>
@@ -235,10 +246,12 @@ export default function PreviewCommitStep({
           </div>
         </div>
       </div>
+      )}
 
       {/* Table - 번역관리 스타일 */}
       <Card padding="none" className="overflow-hidden">
-        <div className="border border-gray-200 rounded-lg overflow-x-auto">
+        {!isLoading && (
+          <div className="border border-gray-200 rounded-lg overflow-x-auto">
           <table className="w-full text-xs whitespace-nowrap">
             <thead className="bg-gray-50 border-b">
               {activeView === 'basic' ? (
@@ -412,10 +425,11 @@ export default function PreviewCommitStep({
             </tbody>
           </table>
         </div>
+        )}
       </Card>
 
       {/* Pagination - 숫자 형태 */}
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}

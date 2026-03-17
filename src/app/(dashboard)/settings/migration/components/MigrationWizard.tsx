@@ -184,6 +184,7 @@ export default function MigrationWizard() {
                   versionEntries={versionEntries}
                   previewData={entries}
                   selectedIds={selectedIds}
+                  isLoading={loading}
                   onToggleSelected={toggleSelected}
                   onSelectAll={selectAll}
                   onClearSelected={clearSelected}
