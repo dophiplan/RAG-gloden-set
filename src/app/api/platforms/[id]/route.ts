@@ -1,14 +1,84 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { getAuthUser } from '@/lib/api-auth';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { apiSuccess, apiUnauthorized, apiNotFound, apiBadRequest, apiInternalError } from '@/lib/api/response';
+import { isSQLiteMode, getSQLiteConnection } from '@/lib/api/sqlite-helper';
 
-// PATCH - Update a platform
+/**
+ * PATCH - Update a platform
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const body = await request.json();
+    const { code, name, description } = body;
+
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      
+      // Get current platform
+      const currentPlatform = db.get<{ code: string }>('SELECT code FROM platforms WHERE id = ?', [id]);
+      if (!currentPlatform) {
+        return apiNotFound('플랫폼');
+      }
+      
+      // Check if code is being changed
+      const isCodeChanging = code !== undefined && code !== currentPlatform.code;
+      
+      if (isCodeChanging) {
+        // Check duplicate code
+        const existing = db.get('SELECT id FROM platforms WHERE code = ? AND id != ?', [code, id]);
+        if (existing) {
+          return apiBadRequest('이미 사용 중인 플랫폼 코드입니다.');
+        }
+        
+        // Check if code is in use in translations
+        const translationsWithPlatform = db.all<{ id: string; platform_completions: string; work_scope: string }>(
+          'SELECT id, platform_completions, work_scope FROM translations WHERE platform_completions IS NOT NULL OR work_scope IS NOT NULL'
+        );
+        
+        let isUsed = false;
+        for (const t of translationsWithPlatform || []) {
+          const completions = t.platform_completions ? JSON.parse(t.platform_completions) : {};
+          const workScope = t.work_scope ? JSON.parse(t.work_scope) : [];
+          if (currentPlatform.code in completions || workScope.includes(currentPlatform.code)) {
+            isUsed = true;
+            break;
+          }
+        }
+        
+        if (isUsed) {
+          return apiBadRequest('사용 중인 플랫폼 코드는 수정할 수 없습니다.');
+        }
+      }
+      
+      // Build update SQL
+      const updates: string[] = [];
+      const values: any[] = [];
+      
+      if (code !== undefined) { updates.push('code = ?'); values.push(code); }
+      if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+      if (description !== undefined) { updates.push('description = ?'); values.push(description); }
+      
+      if (updates.length > 0) {
+        values.push(id);
+        // FK 제약 일시 비활성화 (코드 변경 시 연계 테이블 FK 위한 방지)
+        db.run('PRAGMA foreign_keys = OFF');
+        try {
+          db.run(`UPDATE platforms SET ${updates.join(', ')} WHERE id = ?`, values);
+        } finally {
+          db.run('PRAGMA foreign_keys = ON');
+        }
+      }
+      
+      const platform = db.get('SELECT * FROM platforms WHERE id = ?', [id]);
+      return apiSuccess({ platform });
+    }
+    
+    // Supabase mode (기존 코드)
     const supabase = await createClient();
     const { user } = await getAuthUser(supabase);
 
@@ -16,14 +86,9 @@ export async function PATCH(
       return apiUnauthorized();
     }
 
-    const body = await request.json();
-    const { code, name, description } = body;
-
     if (!code || !name) {
       return apiBadRequest('플랫폼 코드와 이름은 필수입니다.');
     }
-
-    const { id } = await params;
 
     // Get current platform to check if code is changing
     const { data: currentPlatform } = await supabase
@@ -142,20 +207,58 @@ export async function PATCH(
   }
 }
 
-// DELETE - Delete a platform
+/**
+ * DELETE - Delete a platform
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
+    // SQLite mode
+    if (isSQLiteMode()) {
+      const db = await getSQLiteConnection();
+      
+      // Get platform info
+      const platform = db.get<{ code: string }>('SELECT code FROM platforms WHERE id = ?', [id]);
+      if (!platform) {
+        return apiNotFound('플랫폼');
+      }
+      
+      // Check if platform is in use in translations
+      const translationsWithPlatform = db.all<{ id: string; platform_completions: string; work_scope: string }>(
+        'SELECT id, platform_completions, work_scope FROM translations WHERE platform_completions IS NOT NULL OR work_scope IS NOT NULL'
+      );
+      
+      let isUsed = false;
+      for (const t of translationsWithPlatform || []) {
+        const completions = t.platform_completions ? JSON.parse(t.platform_completions) : {};
+        const workScope = t.work_scope ? JSON.parse(t.work_scope) : [];
+        if (platform.code in completions || workScope.includes(platform.code)) {
+          isUsed = true;
+          break;
+        }
+      }
+      
+      if (isUsed) {
+        return apiBadRequest('사용 중인 플랫폼은 삭제할 수 없습니다. 관련 데이터를 먼저 삭제하세요.');
+      }
+      
+      // Delete platform
+      db.run('DELETE FROM platforms WHERE id = ?', [id]);
+      
+      return apiSuccess({ success: true });
+    }
+    
+    // Supabase mode (기존 코드)
     const supabase = await createClient();
     const { user } = await getAuthUser(supabase);
 
     if (!user) {
       return apiUnauthorized();
     }
-
-    const { id } = await params;
 
     const { error } = await supabase
       .from('platforms')
@@ -169,4 +272,10 @@ export async function DELETE(
     console.error('Error deleting platform:', error);
     return apiInternalError('플랫폼 삭제에 실패했습니다.');
   }
+}
+
+// Helper function for Supabase mode
+async function getAuthUser(supabase: any) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  return { user, error };
 }
