@@ -63,6 +63,9 @@ export default function SettingsPage() {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [savingProduct, setSavingProduct] = useState(false);
+  // Drag and drop states for products
+  const [draggedProduct, setDraggedProduct] = useState<string | null>(null);
+  const [dragOverProduct, setDragOverProduct] = useState<string | null>(null);
 
   // Languages management
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -73,6 +76,9 @@ export default function SettingsPage() {
   const [languageName, setLanguageName] = useState("");
   const [languageDescription, setLanguageDescription] = useState("");
   const [savingLanguage, setSavingLanguage] = useState(false);
+  // Drag and drop states for languages
+  const [draggedLanguage, setDraggedLanguage] = useState<string | null>(null);
+  const [dragOverLanguage, setDragOverLanguage] = useState<string | null>(null);
 
   // Platforms management
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -83,6 +89,9 @@ export default function SettingsPage() {
   const [platformName, setPlatformName] = useState("");
   const [platformDescription, setPlatformDescription] = useState("");
   const [savingPlatform, setSavingPlatform] = useState(false);
+  // Drag and drop states for platforms
+  const [draggedPlatform, setDraggedPlatform] = useState<string | null>(null);
+  const [dragOverPlatform, setDragOverPlatform] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchUser() {
@@ -302,32 +311,78 @@ export default function SettingsPage() {
     }
   };
 
-  // 제품 순서 변경
-  const handleMoveProduct = async (
-    product: Product,
-    direction: "up" | "down",
-  ) => {
-    const currentIndex = products.findIndex((p) => p.id === product.id);
-    if (currentIndex === -1) return;
+  // Product drag and drop handlers
+  const handleProductDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedProduct(id);
+    e.dataTransfer.effectAllowed = "move";
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "0.5";
+  };
 
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= products.length) return;
+  const handleProductDragEnd = (e: React.DragEvent) => {
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "1";
+    setDraggedProduct(null);
+    setDragOverProduct(null);
+  };
 
-    const targetProduct = products[newIndex];
-
-    try {
-      // 두 제품의 display_order 교환
-      await apiPatch(`/api/products/${product.id}`, {
-        display_order: targetProduct.display_order,
-      });
-      await apiPatch(`/api/products/${targetProduct.id}`, {
-        display_order: product.display_order,
-      });
-
-      window.location.reload();
-    } catch (error) {
-      showError("순서 변경에 실패했습니다.");
+  const handleProductDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedProduct && draggedProduct !== id) {
+      setDragOverProduct(id);
     }
+  };
+
+  const handleProductDragLeave = () => {
+    setDragOverProduct(null);
+  };
+
+  const handleProductDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    setDragOverProduct(null);
+
+    if (!draggedProduct || draggedProduct === targetId) return;
+
+    const newItems = [...products];
+    const draggedIndex = newItems.findIndex(
+      (item) => item.id === draggedProduct,
+    );
+    const targetIndex = newItems.findIndex((item) => item.id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [removed] = newItems.splice(draggedIndex, 1);
+      newItems.splice(targetIndex, 0, removed);
+
+      // Update display_order
+      const updatedItems = newItems.map((item, index) => ({
+        ...item,
+        display_order: index + 1,
+      }));
+
+      setProducts(updatedItems);
+
+      // Save to API
+      try {
+        await Promise.all(
+          updatedItems.map((item) =>
+            apiPatch(`/api/products/${item.id}`, {
+              display_order: item.display_order,
+            }),
+          ),
+        );
+        showSuccess("순서가 변경되었습니다.");
+      } catch (error) {
+        showError("순서 변경에 실패했습니다.");
+        // Revert on error
+        const productsData = await apiGet<{ products: Product[] }>(
+          "/api/products",
+        );
+        setProducts(productsData.products || []);
+      }
+    }
+
+    setDraggedProduct(null);
   };
 
   // Language management functions
@@ -424,32 +479,78 @@ export default function SettingsPage() {
     }
   };
 
-  // 언어 순서 변경
-  const handleMoveLanguage = async (
-    language: Language,
-    direction: "up" | "down",
-  ) => {
-    const currentIndex = languages.findIndex((l) => l.id === language.id);
-    if (currentIndex === -1) return;
+  // Language drag and drop handlers
+  const handleLanguageDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedLanguage(id);
+    e.dataTransfer.effectAllowed = "move";
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "0.5";
+  };
 
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= languages.length) return;
+  const handleLanguageDragEnd = (e: React.DragEvent) => {
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "1";
+    setDraggedLanguage(null);
+    setDragOverLanguage(null);
+  };
 
-    const targetLanguage = languages[newIndex];
-
-    try {
-      // 두 언어의 display_order 교환
-      await apiPatch(`/api/languages/${language.id}`, {
-        display_order: targetLanguage.display_order,
-      });
-      await apiPatch(`/api/languages/${targetLanguage.id}`, {
-        display_order: language.display_order,
-      });
-
-      window.location.reload();
-    } catch (error) {
-      showError("순서 변경에 실패했습니다.");
+  const handleLanguageDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedLanguage && draggedLanguage !== id) {
+      setDragOverLanguage(id);
     }
+  };
+
+  const handleLanguageDragLeave = () => {
+    setDragOverLanguage(null);
+  };
+
+  const handleLanguageDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    setDragOverLanguage(null);
+
+    if (!draggedLanguage || draggedLanguage === targetId) return;
+
+    const newItems = [...languages];
+    const draggedIndex = newItems.findIndex(
+      (item) => item.id === draggedLanguage,
+    );
+    const targetIndex = newItems.findIndex((item) => item.id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [removed] = newItems.splice(draggedIndex, 1);
+      newItems.splice(targetIndex, 0, removed);
+
+      // Update display_order
+      const updatedItems = newItems.map((item, index) => ({
+        ...item,
+        display_order: index + 1,
+      }));
+
+      setLanguages(updatedItems);
+
+      // Save to API
+      try {
+        await Promise.all(
+          updatedItems.map((item) =>
+            apiPatch(`/api/languages/${item.id}`, {
+              display_order: item.display_order,
+            }),
+          ),
+        );
+        showSuccess("순서가 변경되었습니다.");
+      } catch (error) {
+        showError("순서 변경에 실패했습니다.");
+        // Revert on error
+        const languagesData = await apiGet<{ languages: Language[] }>(
+          "/api/languages",
+        );
+        setLanguages(languagesData.languages || []);
+      }
+    }
+
+    setDraggedLanguage(null);
   };
 
   // Platform management functions
@@ -548,32 +649,78 @@ export default function SettingsPage() {
     }
   };
 
-  // 플랫폼 순서 변경
-  const handleMovePlatform = async (
-    platform: Platform,
-    direction: "up" | "down",
-  ) => {
-    const currentIndex = platforms.findIndex((p) => p.id === platform.id);
-    if (currentIndex === -1) return;
+  // Platform drag and drop handlers
+  const handlePlatformDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedPlatform(id);
+    e.dataTransfer.effectAllowed = "move";
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "0.5";
+  };
 
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= platforms.length) return;
+  const handlePlatformDragEnd = (e: React.DragEvent) => {
+    const target = e.curre[기밀마스킹]arget as HTMLElement;
+    target.style.opacity = "1";
+    setDraggedPlatform(null);
+    setDragOverPlatform(null);
+  };
 
-    const targetPlatform = platforms[newIndex];
-
-    try {
-      // 두 플랫폼의 display_order 교환
-      await apiPatch(`/api/platforms/${platform.id}`, {
-        display_order: targetPlatform.display_order,
-      });
-      await apiPatch(`/api/platforms/${targetPlatform.id}`, {
-        display_order: platform.display_order,
-      });
-
-      window.location.reload();
-    } catch (error) {
-      showError("순서 변경에 실패했습니다.");
+  const handlePlatformDragOver = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedPlatform && draggedPlatform !== id) {
+      setDragOverPlatform(id);
     }
+  };
+
+  const handlePlatformDragLeave = () => {
+    setDragOverPlatform(null);
+  };
+
+  const handlePlatformDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    setDragOverPlatform(null);
+
+    if (!draggedPlatform || draggedPlatform === targetId) return;
+
+    const newItems = [...platforms];
+    const draggedIndex = newItems.findIndex(
+      (item) => item.id === draggedPlatform,
+    );
+    const targetIndex = newItems.findIndex((item) => item.id === targetId);
+
+    if (draggedIndex !== -1 && targetIndex !== -1) {
+      const [removed] = newItems.splice(draggedIndex, 1);
+      newItems.splice(targetIndex, 0, removed);
+
+      // Update display_order
+      const updatedItems = newItems.map((item, index) => ({
+        ...item,
+        display_order: index + 1,
+      }));
+
+      setPlatforms(updatedItems);
+
+      // Save to API
+      try {
+        await Promise.all(
+          updatedItems.map((item) =>
+            apiPatch(`/api/platforms/${item.id}`, {
+              display_order: item.display_order,
+            }),
+          ),
+        );
+        showSuccess("순서가 변경되었습니다.");
+      } catch (error) {
+        showError("순서 변경에 실패했습니다.");
+        // Revert on error
+        const platformsData = await apiGet<{ platforms: Platform[] }>(
+          "/api/platforms",
+        );
+        setPlatforms(platformsData.platforms || []);
+      }
+    }
+
+    setDraggedPlatform(null);
   };
 
   if (loading || isAuthorized === null) {
@@ -648,20 +795,57 @@ export default function SettingsPage() {
               제품 추가
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-2">
             번역 관리에 사용되는 제품 목록을 관리합니다.
+          </p>
+          <p className="text-xs text-blue-500 mb-4 flex items-center gap-1">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+            드래그하여 순서를 변경할 수 있습니다
           </p>
           {loadingProducts ? (
             <div className="text-center py-8 text-gray-500">로딩 중...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(products || []).map((product, currentIndex) => (
+              {(products || []).map((product) => (
                 <div
                   key={product.id}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  draggable
+                  onDragStart={(e) => handleProductDragStart(e, product.id)}
+                  onDragEnd={handleProductDragEnd}
+                  onDragOver={(e) => handleProductDragOver(e, product.id)}
+                  onDragLeave={handleProductDragLeave}
+                  onDrop={(e) => handleProductDrop(e, product.id)}
+                  className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-move ${
+                    dragOverProduct === product.id ? "ring-2 ring-blue-400" : ""
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
                       <Badge variant="info">{product.code}</Badge>
                       <p className="font-semibold text-gray-900">
                         {product.name}
@@ -669,54 +853,6 @@ export default function SettingsPage() {
                     </div>
                     <DropdownMenu
                       items={[
-                        ...(currentIndex > 0
-                          ? [
-                              {
-                                label: "위로",
-                                onClick: () =>
-                                  handleMoveProduct(product, "up" as const),
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M5 15l7-7 7 7"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                            ]
-                          : []),
-                        ...(currentIndex < products.length - 1
-                          ? [
-                              {
-                                label: "아래로",
-                                onClick: () =>
-                                  handleMoveProduct(product, "down" as const),
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 9l-7 7-7-7"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                            ]
-                          : []),
                         {
                           label: "수정",
                           onClick: () => openProductModal(product),
@@ -783,20 +919,59 @@ export default function SettingsPage() {
               언어 추가
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-2">
             번역 지원 언어 목록을 관리합니다.
+          </p>
+          <p className="text-xs text-blue-500 mb-4 flex items-center gap-1">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+            드래그하여 순서를 변경할 수 있습니다
           </p>
           {loadingLanguages ? (
             <div className="text-center py-8 text-gray-500">로딩 중...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(languages || []).map((language, currentIndex) => (
+              {(languages || []).map((language) => (
                 <div
                   key={language.id}
-                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  draggable
+                  onDragStart={(e) => handleLanguageDragStart(e, language.id)}
+                  onDragEnd={handleLanguageDragEnd}
+                  onDragOver={(e) => handleLanguageDragOver(e, language.id)}
+                  onDragLeave={handleLanguageDragLeave}
+                  onDrop={(e) => handleLanguageDrop(e, language.id)}
+                  className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-move ${
+                    dragOverLanguage === language.id
+                      ? "ring-2 ring-blue-400"
+                      : ""
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
                       <Badge variant="info">{language.code}</Badge>
                       <p className="font-semibold text-gray-900">
                         {language.name}
@@ -804,54 +979,6 @@ export default function SettingsPage() {
                     </div>
                     <DropdownMenu
                       items={[
-                        ...(currentIndex > 0
-                          ? [
-                              {
-                                label: "위로",
-                                onClick: () =>
-                                  handleMoveLanguage(language, "up" as const),
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M5 15l7-7 7 7"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                            ]
-                          : []),
-                        ...(currentIndex < languages.length - 1
-                          ? [
-                              {
-                                label: "아래로",
-                                onClick: () =>
-                                  handleMoveLanguage(language, "down" as const),
-                                icon: (
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 9l-7 7-7-7"
-                                    />
-                                  </svg>
-                                ),
-                              },
-                            ]
-                          : []),
                         {
                           label: "수정",
                           onClick: () => openLanguageModal(language),
@@ -918,22 +1045,61 @@ export default function SettingsPage() {
               플랫폼 추가
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 mb-2">
             번역이 사용되는 플랫폼 목록을 관리합니다.
+          </p>
+          <p className="text-xs text-blue-500 mb-4 flex items-center gap-1">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+            드래그하여 순서를 변경할 수 있습니다
           </p>
           {loadingPlatforms ? (
             <div className="text-center py-8 text-gray-500">로딩 중...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {platforms
+              {(platforms || [])
                 .sort((a, b) => a.display_order - b.display_order)
-                .map((platform, currentIndex) => (
+                .map((platform) => (
                   <div
                     key={platform.id}
-                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                    draggable
+                    onDragStart={(e) => handlePlatformDragStart(e, platform.id)}
+                    onDragEnd={handlePlatformDragEnd}
+                    onDragOver={(e) => handlePlatformDragOver(e, platform.id)}
+                    onDragLeave={handlePlatformDragLeave}
+                    onDrop={(e) => handlePlatformDrop(e, platform.id)}
+                    className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-move ${
+                      dragOverPlatform === platform.id
+                        ? "ring-2 ring-blue-400"
+                        : ""
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 8h16M4 16h16"
+                          />
+                        </svg>
                         <Badge variant="info">{platform.code}</Badge>
                         <p className="font-semibold text-gray-900">
                           {platform.name}
@@ -941,57 +1107,6 @@ export default function SettingsPage() {
                       </div>
                       <DropdownMenu
                         items={[
-                          ...(currentIndex > 0
-                            ? [
-                                {
-                                  label: "위로",
-                                  onClick: () =>
-                                    handleMovePlatform(platform, "up" as const),
-                                  icon: (
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 15l7-7 7 7"
-                                      />
-                                    </svg>
-                                  ),
-                                },
-                              ]
-                            : []),
-                          ...(currentIndex < platforms.length - 1
-                            ? [
-                                {
-                                  label: "아래로",
-                                  onClick: () =>
-                                    handleMovePlatform(
-                                      platform,
-                                      "down" as const,
-                                    ),
-                                  icon: (
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 9l-7 7-7-7"
-                                      />
-                                    </svg>
-                                  ),
-                                },
-                              ]
-                            : []),
                           {
                             label: "수정",
                             onClick: () => openPlatformModal(platform),
