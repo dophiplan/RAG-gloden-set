@@ -123,7 +123,7 @@ export default function UploadPage() {
   const [selectedTexts, setSelectedTexts] = useState<Set<number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [dragCounter, setDragCounter] = useState(0);
+  const [_dragCounter, setDragCounter] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
   const [completionDate, setCompletionDate] = useState("");
   const [dateWarning, setDateWarning] = useState("");
@@ -345,25 +345,26 @@ export default function UploadPage() {
       }
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.addEventListener("dragenter", handleDragEnter as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.addEventListener("dragover", handleDragOver as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.addEventListener("dragleave", handleDragLeave as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.addEventListener("drop", handleDrop as any);
+    // Type-safe event listeners - wrap DragEvent handlers as EventListener
+    const dragEnterListener: EventListener = (e) =>
+      handleDragEnter(e as DragEvent);
+    const dragOverListener: EventListener = (e) =>
+      handleDragOver(e as DragEvent);
+    const dragLeaveListener: EventListener = (e) =>
+      handleDragLeave(e as DragEvent);
+    const dropListener: EventListener = (e) => handleDrop(e as DragEvent);
+
+    window.addEventListener("dragenter", dragEnterListener);
+    window.addEventListener("dragover", dragOverListener);
+    window.addEventListener("dragleave", dragLeaveListener);
+    window.addEventListener("drop", dropListener);
     window.addEventListener("keydown", handleEscape);
 
     return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      window.removeEventListener("dragenter", handleDragEnter as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      window.removeEventListener("dragover", handleDragOver as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      window.removeEventListener("dragleave", handleDragLeave as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      window.removeEventListener("drop", handleDrop as any);
+      window.removeEventListener("dragenter", dragEnterListener);
+      window.removeEventListener("dragover", dragOverListener);
+      window.removeEventListener("dragleave", dragLeaveListener);
+      window.removeEventListener("drop", dropListener);
       window.removeEventListener("keydown", handleEscape);
     };
   }, []);
@@ -429,13 +430,10 @@ export default function UploadPage() {
     }
   };
 
-  // Get selected product name for display
+  // Get selected product name for display in header
   const selectedProductName = selectedProduct
     ? products.find((p) => p.code === selectedProduct)?.name || selectedProduct
     : "";
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _unused = selectedProductName; // For future use in header display
 
   return (
     <DashboardLayout
@@ -491,43 +489,67 @@ export default function UploadPage() {
                       파일 업로드
                     </h3>
                   </div>
-                  {uploadedFiles.length > 0 && (
-                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                      <svg
-                        className="w-4 h-4 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      <span className="text-sm text-white font-medium truncate max-w-[150px]">
-                        {uploadedFiles[0].file.name}
-                      </span>
-                      <button
-                        onClick={() => handleFilesChange([])}
-                        className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
-                        aria-label="파일 제거"
-                      >
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
+                  {(uploadedFiles.length > 0 || selectedProduct) && (
+                    <div className="flex items-center gap-3">
+                      {uploadedFiles.length > 0 && (
+                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <svg
+                            className="w-4 h-4 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <span className="text-sm text-white font-medium truncate max-w-[150px]">
+                            {uploadedFiles[0].file.name}
+                          </span>
+                          <button
+                            onClick={() => handleFilesChange([])}
+                            className="ml-1 p-0.5 hover:bg-white/20 rounded-full transition-colors"
+                            aria-label="파일 제거"
+                          >
+                            <svg
+                              className="w-4 h-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      {selectedProductName && (
+                        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                          <svg
+                            className="w-4 h-4 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                          <span className="text-sm text-white font-medium truncate max-w-[150px]">
+                            {selectedProductName}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -787,7 +809,6 @@ export default function UploadPage() {
                         }
                       };
 
-                      // eslint-disable-next-line @typescript-eslint/no-unused-vars
                       const toggleText = (index: number) => {
                         const newSelected = new Set(selectedTexts);
                         if (newSelected.has(index)) {
@@ -821,9 +842,17 @@ export default function UploadPage() {
                             {(allTexts || []).map((text, index) => (
                               <div
                                 key={index}
-                                className="p-4 rounded-lg border border-gray-200 bg-white"
+                                className="p-4 rounded-lg border border-gray-200 bg-white flex items-start gap-3"
                               >
-                                <p className="text-sm text-gray-900">{text}</p>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTexts.has(index)}
+                                  onChange={() => toggleText(index)}
+                                  className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary mt-0.5"
+                                />
+                                <p className="text-sm text-gray-900 flex-1">
+                                  {text}
+                                </p>
                               </div>
                             ))}
                           </div>
