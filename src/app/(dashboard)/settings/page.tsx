@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { mutate } from 'swr';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import Card, { CardTitle } from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
-import DropdownMenu from '@/components/ui/DropdownMenu';
-import AIProviderManager from '@/components/settings/AIProviderManager';
-import { createClient } from '@/lib/supabase/client';
-import { SUPPORTED_LANGUAGES } from '@/types';
-import { showConfirm, showSuccess, showError } from '@/lib/notifications';
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api-utils';
+import { useState, useEffect } from "react";
+import { mutate } from "swr";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import Card, { CardTitle } from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Badge from "@/components/ui/Badge";
+import DropdownMenu from "@/components/ui/DropdownMenu";
+import AIProviderManager from "@/components/settings/AIProviderManager";
+import { createClient } from "@/lib/supabase/client";
+import { SUPPORTED_LANGUAGES } from "@/types";
+import { showConfirm, showSuccess, showError } from "@/lib/notifications";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-utils";
 
 interface UserProfile {
   id: string;
@@ -50,7 +50,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isRsupportUser, setIsRsupportUser] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [accountLevel, setAccountLevel] = useState<string>('');
+  const [accountLevel, setAccountLevel] = useState<string>("");
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const supabase = createClient();
 
@@ -59,9 +59,9 @@ export default function SettingsPage() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [productCode, setProductCode] = useState('');
-  const [productName, setProductName] = useState('');
-  const [productDescription, setProductDescription] = useState('');
+  const [productCode, setProductCode] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productDescription, setProductDescription] = useState("");
   const [savingProduct, setSavingProduct] = useState(false);
 
   // Languages management
@@ -69,9 +69,9 @@ export default function SettingsPage() {
   const [loadingLanguages, setLoadingLanguages] = useState(true);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
-  const [languageCode, setLanguageCode] = useState('');
-  const [languageName, setLanguageName] = useState('');
-  const [languageDescription, setLanguageDescription] = useState('');
+  const [languageCode, setLanguageCode] = useState("");
+  const [languageName, setLanguageName] = useState("");
+  const [languageDescription, setLanguageDescription] = useState("");
   const [savingLanguage, setSavingLanguage] = useState(false);
 
   // Platforms management
@@ -79,17 +79,19 @@ export default function SettingsPage() {
   const [loadingPlatforms, setLoadingPlatforms] = useState(true);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
-  const [platformCode, setPlatformCode] = useState('');
-  const [platformName, setPlatformName] = useState('');
-  const [platformDescription, setPlatformDescription] = useState('');
+  const [platformCode, setPlatformCode] = useState("");
+  const [platformName, setPlatformName] = useState("");
+  const [platformDescription, setPlatformDescription] = useState("");
   const [savingPlatform, setSavingPlatform] = useState(false);
 
   useEffect(() => {
     async function fetchUser() {
       try {
         // Use the same API endpoint as ProfileMenu
-        const data = await apiGet<{ user: UserProfile & { roles?: string[]; account_level?: string } }>('/api/auth/me');
-        console.log('🔍 /api/auth/me data:', data);
+        const data = await apiGet<{
+          user: UserProfile & { roles?: string[]; account_level?: string };
+        }>("/api/auth/me");
+        console.log("🔍 /api/auth/me data:", data);
 
         if (data.user) {
           setUser({
@@ -100,14 +102,20 @@ export default function SettingsPage() {
           });
 
           // Check account level for authorization
-          const email = data.user.email || '';
+          const email = data.user.email || "";
           const roles = data.user.roles || [];
-          const level = data.user.account_level || '';
-          const isRsupport = email.endsWith('@rsupport.com');
-          const hasAdminRole = roles.includes('admin') || roles.includes('owner');
-          const isMasterUser = level === 'master' || level === '1st_master';
+          const level = data.user.account_level || "";
+          const isRsupport = email.endsWith("@rsupport.com");
+          const hasAdminRole =
+            roles.includes("admin") || roles.includes("owner");
+          const isMasterUser = level === "master" || level === "1st_master";
 
-          console.log('🔍 Settings page - User check:', { email, isRsupport, hasAdminRole, accountLevel: level });
+          console.log("🔍 Settings page - User check:", {
+            email,
+            isRsupport,
+            hasAdminRole,
+            accountLevel: level,
+          });
 
           setIsRsupportUser(isRsupport);
           setIsAdmin(hasAdminRole);
@@ -115,7 +123,7 @@ export default function SettingsPage() {
           setIsAuthorized(isMasterUser);
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error("Error fetching user:", error);
       } finally {
         setLoading(false);
       }
@@ -129,10 +137,10 @@ export default function SettingsPage() {
     async function fetchProducts() {
       setLoadingProducts(true);
       try {
-        const data = await apiGet<{ products: Product[] }>('/api/products');
+        const data = await apiGet<{ products: Product[] }>("/api/products");
         setProducts(data.products || []);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error("Error fetching products:", error);
       } finally {
         setLoadingProducts(false);
       }
@@ -146,30 +154,34 @@ export default function SettingsPage() {
     async function fetchLanguages() {
       setLoadingLanguages(true);
       try {
-        const data = await apiGet<{ languages: Language[] }>('/api/languages');
+        const data = await apiGet<{ languages: Language[] }>("/api/languages");
         if (data.languages && data.languages.length > 0) {
           setLanguages(data.languages);
         } else {
           // Fallback: Use hardcoded languages if API returns empty
-          const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
+          const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(
+            ([code, name], index) => ({
+              id: code,
+              code,
+              name,
+              description: null,
+              display_order: index + 1,
+            }),
+          );
+          setLanguages(fallbackLanguages);
+        }
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+        // Fallback: Use hardcoded languages on error
+        const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(
+          ([code, name], index) => ({
             id: code,
             code,
             name,
             description: null,
             display_order: index + 1,
-          }));
-          setLanguages(fallbackLanguages);
-        }
-      } catch (error) {
-        console.error('Error fetching languages:', error);
-        // Fallback: Use hardcoded languages on error
-        const fallbackLanguages = Object.entries(SUPPORTED_LANGUAGES).map(([code, name], index) => ({
-          id: code,
-          code,
-          name,
-          description: null,
-          display_order: index + 1,
-        }));
+          }),
+        );
         setLanguages(fallbackLanguages);
       } finally {
         setLoadingLanguages(false);
@@ -184,10 +196,10 @@ export default function SettingsPage() {
     async function fetchPlatforms() {
       setLoadingPlatforms(true);
       try {
-        const data = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+        const data = await apiGet<{ platforms: Platform[] }>("/api/platforms");
         setPlatforms(data.platforms || []);
       } catch (error) {
-        console.error('Error fetching platforms:', error);
+        console.error("Error fetching platforms:", error);
       } finally {
         setLoadingPlatforms(false);
       }
@@ -202,12 +214,12 @@ export default function SettingsPage() {
       setEditingProduct(product);
       setProductCode(product.code);
       setProductName(product.name);
-      setProductDescription(product.description || '');
+      setProductDescription(product.description || "");
     } else {
       setEditingProduct(null);
-      setProductCode('');
-      setProductName('');
-      setProductDescription('');
+      setProductCode("");
+      setProductName("");
+      setProductDescription("");
     }
     setIsProductModalOpen(true);
   };
@@ -215,14 +227,14 @@ export default function SettingsPage() {
   const closeProductModal = () => {
     setIsProductModalOpen(false);
     setEditingProduct(null);
-    setProductCode('');
-    setProductName('');
-    setProductDescription('');
+    setProductCode("");
+    setProductName("");
+    setProductDescription("");
   };
 
   const handleSaveProduct = async () => {
     if (!productCode.trim() || !productName.trim()) {
-      showError('제품 코드와 이름은 필수입니다.');
+      showError("제품 코드와 이름은 필수입니다.");
       return;
     }
 
@@ -238,7 +250,7 @@ export default function SettingsPage() {
         });
       } else {
         // Create new product
-        await apiPost('/api/products', {
+        await apiPost("/api/products", {
           code: productCode.trim(),
           name: productName.trim(),
           description: productDescription.trim() || null,
@@ -246,34 +258,75 @@ export default function SettingsPage() {
         });
       }
 
-      showSuccess(editingProduct ? '제품이 수정되었습니다.' : '제품이 추가되었습니다.');
+      showSuccess(
+        editingProduct ? "제품이 수정되었습니다." : "제품이 추가되었습니다.",
+      );
       closeProductModal();
-      
+
       // 페이지 새로고침으로 목록 갱신
       window.location.reload();
     } catch (error) {
-      showError(error instanceof Error ? error.message : '제품 저장에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "제품 저장에 실패했습니다.",
+      );
     } finally {
       setSavingProduct(false);
     }
   };
 
   const handleDeleteProduct = async (product: Product) => {
-    if (!showConfirm(`제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`)) return;
+    if (
+      !showConfirm(
+        `제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`,
+      )
+    )
+      return;
 
     try {
       await apiDelete(`/api/products/${product.id}`);
 
       // Refresh products list
-      const productsData = await apiGet<{ products: Product[] }>('/api/products');
+      const productsData = await apiGet<{ products: Product[] }>(
+        "/api/products",
+      );
       setProducts(productsData.products || []);
 
       // Invalidate SWR cache for products (real-time sync)
-      mutate('/api/products');
+      mutate("/api/products");
 
-      showSuccess('제품이 삭제되었습니다.');
+      showSuccess("제품이 삭제되었습니다.");
     } catch (error) {
-      showError(error instanceof Error ? error.message : '제품 삭제에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "제품 삭제에 실패했습니다.",
+      );
+    }
+  };
+
+  // 제품 순서 변경
+  const handleMoveProduct = async (
+    product: Product,
+    direction: "up" | "down",
+  ) => {
+    const currentIndex = products.findIndex((p) => p.id === product.id);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= products.length) return;
+
+    const targetProduct = products[newIndex];
+
+    try {
+      // 두 제품의 display_order 교환
+      await apiPatch(`/api/products/${product.id}`, {
+        display_order: targetProduct.display_order,
+      });
+      await apiPatch(`/api/products/${targetProduct.id}`, {
+        display_order: product.display_order,
+      });
+
+      window.location.reload();
+    } catch (error) {
+      showError("순서 변경에 실패했습니다.");
     }
   };
 
@@ -283,12 +336,12 @@ export default function SettingsPage() {
       setEditingLanguage(language);
       setLanguageCode(language.code);
       setLanguageName(language.name);
-      setLanguageDescription(language.description || '');
+      setLanguageDescription(language.description || "");
     } else {
       setEditingLanguage(null);
-      setLanguageCode('');
-      setLanguageName('');
-      setLanguageDescription('');
+      setLanguageCode("");
+      setLanguageName("");
+      setLanguageDescription("");
     }
     setIsLanguageModalOpen(true);
   };
@@ -296,14 +349,14 @@ export default function SettingsPage() {
   const closeLanguageModal = () => {
     setIsLanguageModalOpen(false);
     setEditingLanguage(null);
-    setLanguageCode('');
-    setLanguageName('');
-    setLanguageDescription('');
+    setLanguageCode("");
+    setLanguageName("");
+    setLanguageDescription("");
   };
 
   const handleSaveLanguage = async () => {
     if (!languageCode.trim() || !languageName.trim()) {
-      showError('언어 코드와 이름은 필수입니다.');
+      showError("언어 코드와 이름은 필수입니다.");
       return;
     }
 
@@ -319,7 +372,7 @@ export default function SettingsPage() {
         });
       } else {
         // Create new language
-        await apiPost('/api/languages', {
+        await apiPost("/api/languages", {
           code: languageCode.trim(),
           name: languageName.trim(),
           description: languageDescription.trim() || null,
@@ -328,31 +381,74 @@ export default function SettingsPage() {
       }
 
       // Refresh languages list
-      const languagesData = await apiGet<{ languages: Language[] }>('/api/languages');
+      const languagesData = await apiGet<{ languages: Language[] }>(
+        "/api/languages",
+      );
       setLanguages(languagesData.languages || []);
 
-      showSuccess(editingLanguage ? '언어가 수정되었습니다.' : '언어가 추가되었습니다.');
+      showSuccess(
+        editingLanguage ? "언어가 수정되었습니다." : "언어가 추가되었습니다.",
+      );
       closeLanguageModal();
     } catch (error) {
-      showError(error instanceof Error ? error.message : '언어 저장에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "언어 저장에 실패했습니다.",
+      );
     } finally {
       setSavingLanguage(false);
     }
   };
 
   const handleDeleteLanguage = async (language: Language) => {
-    if (!showConfirm(`언어 "${language.name}" (${language.code})을(를) 삭제하시겠습니까?`)) return;
+    if (
+      !showConfirm(
+        `언어 "${language.name}" (${language.code})을(를) 삭제하시겠습니까?`,
+      )
+    )
+      return;
 
     try {
       await apiDelete(`/api/languages/${language.id}`);
 
       // Refresh languages list
-      const languagesData = await apiGet<{ languages: Language[] }>('/api/languages');
+      const languagesData = await apiGet<{ languages: Language[] }>(
+        "/api/languages",
+      );
       setLanguages(languagesData.languages || []);
 
-      showSuccess('언어가 삭제되었습니다.');
+      showSuccess("언어가 삭제되었습니다.");
     } catch (error) {
-      showError(error instanceof Error ? error.message : '언어 삭제에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "언어 삭제에 실패했습니다.",
+      );
+    }
+  };
+
+  // 언어 순서 변경
+  const handleMoveLanguage = async (
+    language: Language,
+    direction: "up" | "down",
+  ) => {
+    const currentIndex = languages.findIndex((l) => l.id === language.id);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= languages.length) return;
+
+    const targetLanguage = languages[newIndex];
+
+    try {
+      // 두 언어의 display_order 교환
+      await apiPatch(`/api/languages/${language.id}`, {
+        display_order: targetLanguage.display_order,
+      });
+      await apiPatch(`/api/languages/${targetLanguage.id}`, {
+        display_order: language.display_order,
+      });
+
+      window.location.reload();
+    } catch (error) {
+      showError("순서 변경에 실패했습니다.");
     }
   };
 
@@ -362,12 +458,12 @@ export default function SettingsPage() {
       setEditingPlatform(platform);
       setPlatformCode(platform.code);
       setPlatformName(platform.name);
-      setPlatformDescription(platform.description || '');
+      setPlatformDescription(platform.description || "");
     } else {
       setEditingPlatform(null);
-      setPlatformCode('');
-      setPlatformName('');
-      setPlatformDescription('');
+      setPlatformCode("");
+      setPlatformName("");
+      setPlatformDescription("");
     }
     setIsPlatformModalOpen(true);
   };
@@ -375,14 +471,14 @@ export default function SettingsPage() {
   const closePlatformModal = () => {
     setIsPlatformModalOpen(false);
     setEditingPlatform(null);
-    setPlatformCode('');
-    setPlatformName('');
-    setPlatformDescription('');
+    setPlatformCode("");
+    setPlatformName("");
+    setPlatformDescription("");
   };
 
   const handleSavePlatform = async () => {
     if (!platformCode.trim() || !platformName.trim()) {
-      showError('플랫폼 코드와 이름은 필수입니다.');
+      showError("플랫폼 코드와 이름은 필수입니다.");
       return;
     }
 
@@ -398,7 +494,7 @@ export default function SettingsPage() {
         });
       } else {
         // Create new platform
-        await apiPost('/api/platforms', {
+        await apiPost("/api/platforms", {
           code: platformCode.trim(),
           name: platformName.trim(),
           description: platformDescription.trim() || null,
@@ -407,31 +503,76 @@ export default function SettingsPage() {
       }
 
       // Refresh platforms list
-      const platformsData = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+      const platformsData = await apiGet<{ platforms: Platform[] }>(
+        "/api/platforms",
+      );
       setPlatforms(platformsData.platforms || []);
 
-      showSuccess(editingPlatform ? '플랫폼이 수정되었습니다.' : '플랫폼이 추가되었습니다.');
+      showSuccess(
+        editingPlatform
+          ? "플랫폼이 수정되었습니다."
+          : "플랫폼이 추가되었습니다.",
+      );
       closePlatformModal();
     } catch (error) {
-      showError(error instanceof Error ? error.message : '플랫폼 저장에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "플랫폼 저장에 실패했습니다.",
+      );
     } finally {
       setSavingPlatform(false);
     }
   };
 
   const handleDeletePlatform = async (platform: Platform) => {
-    if (!showConfirm(`플랫폼 "${platform.name}" (${platform.code})을(를) 삭제하시겠습니까?`)) return;
+    if (
+      !showConfirm(
+        `플랫폼 "${platform.name}" (${platform.code})을(를) 삭제하시겠습니까?`,
+      )
+    )
+      return;
 
     try {
       await apiDelete(`/api/platforms/${platform.id}`);
 
       // Refresh platforms list
-      const platformsData = await apiGet<{ platforms: Platform[] }>('/api/platforms');
+      const platformsData = await apiGet<{ platforms: Platform[] }>(
+        "/api/platforms",
+      );
       setPlatforms(platformsData.platforms || []);
 
-      showSuccess('플랫폼이 삭제되었습니다.');
+      showSuccess("플랫폼이 삭제되었습니다.");
     } catch (error) {
-      showError(error instanceof Error ? error.message : '플랫폼 삭제에 실패했습니다.');
+      showError(
+        error instanceof Error ? error.message : "플랫폼 삭제에 실패했습니다.",
+      );
+    }
+  };
+
+  // 플랫폼 순서 변경
+  const handleMovePlatform = async (
+    platform: Platform,
+    direction: "up" | "down",
+  ) => {
+    const currentIndex = platforms.findIndex((p) => p.id === platform.id);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= platforms.length) return;
+
+    const targetPlatform = platforms[newIndex];
+
+    try {
+      // 두 플랫폼의 display_order 교환
+      await apiPatch(`/api/platforms/${platform.id}`, {
+        display_order: targetPlatform.display_order,
+      });
+      await apiPatch(`/api/platforms/${targetPlatform.id}`, {
+        display_order: platform.display_order,
+      });
+
+      window.location.reload();
+    } catch (error) {
+      showError("순서 변경에 실패했습니다.");
     }
   };
 
@@ -451,12 +592,29 @@ export default function SettingsPage() {
       <DashboardLayout title="접근 불가" subtitle="">
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg
+              className="w-16 h-16 text-red-500 mx-auto mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
             </svg>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한이 없습니다</h2>
-            <p className="text-gray-600 mb-6">이 페이지는 관리자만 접근할 수 있습니다.</p>
-            <Button variant="primary" onClick={() => window.location.href = '/'}>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              접근 권한이 없습니다
+            </h2>
+            <p className="text-gray-600 mb-6">
+              이 페이지는 관리자만 접근할 수 있습니다.
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => (window.location.href = "/")}
+            >
               대시보드로 돌아가기
             </Button>
           </div>
@@ -466,163 +624,310 @@ export default function SettingsPage() {
   }
 
   return (
-    <DashboardLayout
-      title="설정"
-      subtitle="계정 및 환경 설정을 관리합니다."
-    >
+    <DashboardLayout title="설정" subtitle="계정 및 환경 설정을 관리합니다.">
       <div className="max-w-5xl mx-auto space-y-8">
         {/* AI Provider API Keys - Only visible to admins or rsupport users */}
         {(isAdmin || isRsupportUser) && (
           <>
-            {console.log('🔍 Rendering AIProviderManager with:', { isRsupportUser, isAdmin })}
-            <AIProviderManager isRsupportUser={isRsupportUser} isAdmin={isAdmin} />
+            {console.log("🔍 Rendering AIProviderManager with:", {
+              isRsupportUser,
+              isAdmin,
+            })}
+            <AIProviderManager
+              isRsupportUser={isRsupportUser}
+              isAdmin={isAdmin}
+            />
           </>
         )}
 
         {/* Product Management */}
         <Card>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>제품 관리</CardTitle>
-              <Button size="sm" onClick={() => openProductModal()}>
-                제품 추가
-              </Button>
-            </div>
-            <p className="text-sm text-gray-500 mb-4">
-              번역 관리에 사용되는 제품 목록을 관리합니다.
-            </p>
-            {loadingProducts ? (
-              <div className="text-center py-8 text-gray-500">로딩 중...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(products || []).map((product) => (
-                  <div
-                    key={product.id}
-                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="info">{product.code}</Badge>
-                        <p className="font-semibold text-gray-900">{product.name}</p>
-                      </div>
-                      <DropdownMenu
-                        items={[
-                          {
-                            label: '수정',
-                            onClick: () => openProductModal(product),
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: '삭제',
-                            onClick: () => handleDeleteProduct(product),
-                            variant: 'danger' as const,
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            ),
-                          },
-                        ]}
-                      />
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>제품 관리</CardTitle>
+            <Button size="sm" onClick={() => openProductModal()}>
+              제품 추가
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            번역 관리에 사용되는 제품 목록을 관리합니다.
+          </p>
+          {loadingProducts ? (
+            <div className="text-center py-8 text-gray-500">로딩 중...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(products || []).map((product, currentIndex) => (
+                <div
+                  key={product.id}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="info">{product.code}</Badge>
+                      <p className="font-semibold text-gray-900">
+                        {product.name}
+                      </p>
                     </div>
-                    {product.description && (
-                      <p className="text-sm text-gray-600 mt-2">{product.description}</p>
-                    )}
+                    <DropdownMenu
+                      items={[
+                        ...(currentIndex > 0
+                          ? [
+                              {
+                                label: "위로",
+                                onClick: () =>
+                                  handleMoveProduct(product, "up" as const),
+                                icon: (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 15l7-7 7 7"
+                                    />
+                                  </svg>
+                                ),
+                              },
+                            ]
+                          : []),
+                        ...(currentIndex < products.length - 1
+                          ? [
+                              {
+                                label: "아래로",
+                                onClick: () =>
+                                  handleMoveProduct(product, "down" as const),
+                                icon: (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 9l-7 7-7-7"
+                                    />
+                                  </svg>
+                                ),
+                              },
+                            ]
+                          : []),
+                        {
+                          label: "수정",
+                          onClick: () => openProductModal(product),
+                          icon: (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          ),
+                        },
+                        {
+                          label: "삭제",
+                          onClick: () => handleDeleteProduct(product),
+                          variant: "danger" as const,
+                          icon: (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
-                ))}
-                {(products || []).length === 0 && (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    등록된 제품이 없습니다.
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+                  {product.description && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {product.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {(products || []).length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  등록된 제품이 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Language Management */}
         <Card>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>언어 관리</CardTitle>
-              <Button size="sm" onClick={() => openLanguageModal()}>
-                언어 추가
-              </Button>
-            </div>
-            <p className="text-sm text-gray-500 mb-4">
-              번역 지원 언어 목록을 관리합니다.
-            </p>
-            {loadingLanguages ? (
-              <div className="text-center py-8 text-gray-500">로딩 중...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(languages || []).map((language) => (
-                  <div
-                    key={language.id}
-                    className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="info">{language.code}</Badge>
-                        <p className="font-semibold text-gray-900">{language.name}</p>
-                      </div>
-                      <DropdownMenu
-                        items={[
-                          {
-                            label: '수정',
-                            onClick: () => openLanguageModal(language),
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: '삭제',
-                            onClick: () => handleDeleteLanguage(language),
-                            variant: 'danger' as const,
-                            icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            ),
-                          },
-                        ]}
-                      />
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>언어 관리</CardTitle>
+            <Button size="sm" onClick={() => openLanguageModal()}>
+              언어 추가
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            번역 지원 언어 목록을 관리합니다.
+          </p>
+          {loadingLanguages ? (
+            <div className="text-center py-8 text-gray-500">로딩 중...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(languages || []).map((language, currentIndex) => (
+                <div
+                  key={language.id}
+                  className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="info">{language.code}</Badge>
+                      <p className="font-semibold text-gray-900">
+                        {language.name}
+                      </p>
                     </div>
-                    {language.description && (
-                      <p className="text-sm text-gray-600 mt-2">{language.description}</p>
-                    )}
+                    <DropdownMenu
+                      items={[
+                        ...(currentIndex > 0
+                          ? [
+                              {
+                                label: "위로",
+                                onClick: () =>
+                                  handleMoveLanguage(language, "up" as const),
+                                icon: (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 15l7-7 7 7"
+                                    />
+                                  </svg>
+                                ),
+                              },
+                            ]
+                          : []),
+                        ...(currentIndex < languages.length - 1
+                          ? [
+                              {
+                                label: "아래로",
+                                onClick: () =>
+                                  handleMoveLanguage(language, "down" as const),
+                                icon: (
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 9l-7 7-7-7"
+                                    />
+                                  </svg>
+                                ),
+                              },
+                            ]
+                          : []),
+                        {
+                          label: "수정",
+                          onClick: () => openLanguageModal(language),
+                          icon: (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          ),
+                        },
+                        {
+                          label: "삭제",
+                          onClick: () => handleDeleteLanguage(language),
+                          variant: "danger" as const,
+                          icon: (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
-                ))}
-                {(languages || []).length === 0 && (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    등록된 언어가 없습니다.
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+                  {language.description && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {language.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+              {(languages || []).length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  등록된 언어가 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Platform Management */}
         <Card>
-            <div className="flex items-center justify-between mb-4">
-              <CardTitle>플랫폼 관리</CardTitle>
-              <Button size="sm" onClick={() => openPlatformModal()}>
-                플랫폼 추가
-              </Button>
-            </div>
-            <p className="text-sm text-gray-500 mb-4">
-              번역이 사용되는 플랫폼 목록을 관리합니다.
-            </p>
-            {loadingPlatforms ? (
-              <div className="text-center py-8 text-gray-500">로딩 중...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {platforms
-                  .sort((a, b) => a.code.localeCompare(b.code))
-                  .map((platform) => (
+          <div className="flex items-center justify-between mb-4">
+            <CardTitle>플랫폼 관리</CardTitle>
+            <Button size="sm" onClick={() => openPlatformModal()}>
+              플랫폼 추가
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            번역이 사용되는 플랫폼 목록을 관리합니다.
+          </p>
+          {loadingPlatforms ? (
+            <div className="text-center py-8 text-gray-500">로딩 중...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {platforms
+                .sort((a, b) => a.display_order - b.display_order)
+                .map((platform, currentIndex) => (
                   <div
                     key={platform.id}
                     className="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
@@ -630,26 +935,99 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="info">{platform.code}</Badge>
-                        <p className="font-semibold text-gray-900">{platform.name}</p>
+                        <p className="font-semibold text-gray-900">
+                          {platform.name}
+                        </p>
                       </div>
                       <DropdownMenu
                         items={[
+                          ...(currentIndex > 0
+                            ? [
+                                {
+                                  label: "위로",
+                                  onClick: () =>
+                                    handleMovePlatform(platform, "up" as const),
+                                  icon: (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 15l7-7 7 7"
+                                      />
+                                    </svg>
+                                  ),
+                                },
+                              ]
+                            : []),
+                          ...(currentIndex < platforms.length - 1
+                            ? [
+                                {
+                                  label: "아래로",
+                                  onClick: () =>
+                                    handleMovePlatform(
+                                      platform,
+                                      "down" as const,
+                                    ),
+                                  icon: (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                      />
+                                    </svg>
+                                  ),
+                                },
+                              ]
+                            : []),
                           {
-                            label: '수정',
+                            label: "수정",
                             onClick: () => openPlatformModal(platform),
                             icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
                               </svg>
                             ),
                           },
                           {
-                            label: '삭제',
+                            label: "삭제",
                             onClick: () => handleDeletePlatform(platform),
-                            variant: 'danger' as const,
+                            variant: "danger" as const,
                             icon: (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
                               </svg>
                             ),
                           },
@@ -657,18 +1035,20 @@ export default function SettingsPage() {
                       />
                     </div>
                     {platform.description && (
-                      <p className="text-sm text-gray-600 mt-2">{platform.description}</p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {platform.description}
+                      </p>
                     )}
                   </div>
                 ))}
-                {(platforms || []).length === 0 && (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    등록된 플랫폼이 없습니다.
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+              {(platforms || []).length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  등록된 플랫폼이 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* QA / TQC */}
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
@@ -677,16 +1057,17 @@ export default function SettingsPage() {
             <Badge variant="success">94.1% A등급</Badge>
           </div>
           <p className="text-sm text-gray-600 mb-4">
-            시스템 품질 메트릭스 및 테스트 결과를 확인합니다. 현재 품질 점수는 90점 목표를 달성했습니다.
+            시스템 품질 메트릭스 및 테스트 결과를 확인합니다. 현재 품질 점수는
+            90점 목표를 달성했습니다.
           </p>
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
             <span>✓ 테스트: 243개 통과</span>
             <span>✓ API 표준화: 100%</span>
             <span>✓ Error Boundary: 9개 적용</span>
           </div>
-          <Button 
-            variant="secondary" 
-            onClick={() => window.location.href = '/settings/qa'}
+          <Button
+            variant="secondary"
+            onClick={() => (window.location.href = "/settings/qa")}
             className="w-full"
           >
             QA 보고서 상세 보기 →
@@ -698,7 +1079,10 @@ export default function SettingsPage() {
           <CardTitle>정보</CardTitle>
           <div className="mt-4 text-sm text-gray-500 space-y-2">
             <p>Translation Resource Manager v1.1.0</p>
-            <p>기획서 PDF에서 번역 대상 텍스트를 추출하고, 번역 상태를 관리하는 웹 서비스입니다.</p>
+            <p>
+              기획서 PDF에서 번역 대상 텍스트를 추출하고, 번역 상태를 관리하는
+              웹 서비스입니다.
+            </p>
             <p className="text-xs text-gray-400 mt-4">
               Built with Next.js, Supabase, OpenAI, and Tailwind CSS
             </p>
@@ -710,19 +1094,29 @@ export default function SettingsPage() {
       {isProductModalOpen && (
         <div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         >
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingProduct ? '제품 수정' : '제품 추가'}
+                {editingProduct ? "제품 수정" : "제품 추가"}
               </h3>
               <button
                 onClick={closeProductModal}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -767,7 +1161,7 @@ export default function SettingsPage() {
                 loading={savingProduct}
                 disabled={!productCode.trim() || !productName.trim()}
               >
-                {editingProduct ? '수정' : '추가'}
+                {editingProduct ? "수정" : "추가"}
               </Button>
             </div>
           </div>
@@ -778,19 +1172,29 @@ export default function SettingsPage() {
       {isPlatformModalOpen && (
         <div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         >
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingPlatform ? '플랫폼 수정' : '플랫폼 추가'}
+                {editingPlatform ? "플랫폼 수정" : "플랫폼 추가"}
               </h3>
               <button
                 onClick={closePlatformModal}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -835,7 +1239,7 @@ export default function SettingsPage() {
                 loading={savingPlatform}
                 disabled={!platformCode.trim() || !platformName.trim()}
               >
-                {editingPlatform ? '수정' : '추가'}
+                {editingPlatform ? "수정" : "추가"}
               </Button>
             </div>
           </div>
@@ -846,19 +1250,29 @@ export default function SettingsPage() {
       {isLanguageModalOpen && (
         <div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         >
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingLanguage ? '언어 수정' : '언어 추가'}
+                {editingLanguage ? "언어 수정" : "언어 추가"}
               </h3>
               <button
                 onClick={closeLanguageModal}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -903,7 +1317,7 @@ export default function SettingsPage() {
                 loading={savingLanguage}
                 disabled={!languageCode.trim() || !languageName.trim()}
               >
-                {editingLanguage ? '수정' : '추가'}
+                {editingLanguage ? "수정" : "추가"}
               </Button>
             </div>
           </div>
