@@ -5,6 +5,8 @@ import { mutate } from "swr";
 import Card, { CardTitle } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Badge from "@/components/ui/Badge";
+import DropdownMenu from "@/components/ui/DropdownMenu";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-utils";
 import { showSuccess, showError, showConfirm } from "@/lib/notifications";
 import { SettingItem } from "../hooks/useSettings";
@@ -73,7 +75,10 @@ export function LanguagesSection({ languages, isLoading, onRefresh }: LanguagesS
         showSuccess("언어가 추가되었습니다.");
       }
       closeLanguageModal();
-      window.location.reload();
+      
+      const languagesData = await apiGet<{ languages: SettingItem[] }>("/api/languages");
+      onRefresh(languagesData.languages || []);
+      mutate("/api/languages");
     } catch (error) {
       showError(error instanceof Error ? error.message : "언어 저장에 실패했습니다.");
     } finally {
@@ -98,20 +103,15 @@ export function LanguagesSection({ languages, isLoading, onRefresh }: LanguagesS
   const handleLanguageDragStart = (e: React.DragEvent, id: string) => {
     setDraggedLanguage(id);
     e.dataTransfer.effectAllowed = "move";
-    const target = e.curre[기밀마스킹]arget as HTMLElement;
-    target.style.opacity = "0.5";
   };
 
-  const handleLanguageDragEnd = (e: React.DragEvent) => {
-    const target = e.curre[기밀마스킹]arget as HTMLElement;
-    target.style.opacity = "1";
+  const handleLanguageDragEnd = () => {
     setDraggedLanguage(null);
     setDragOverLanguage(null);
   };
 
   const handleLanguageDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
     if (draggedLanguage && draggedLanguage !== id) {
       setDragOverLanguage(id);
     }
@@ -163,25 +163,30 @@ export function LanguagesSection({ languages, isLoading, onRefresh }: LanguagesS
     <Card>
       <div className="flex items-center justify-between mb-4">
         <CardTitle>언어 관리</CardTitle>
-        <Button onClick={() => openLanguageModal()} size="sm">
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button
+          onClick={() => openLanguageModal()}
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          언어 추가
-        </Button>
+          <span>언어 추가</span>
+        </button>
       </div>
 
-      <p className="text-sm text-gray-500 mb-4">지원하는 언어를 관리합니다. 드래그하여 순서를 변경할 수 있습니다.</p>
+      <p className="text-sm text-gray-500 mb-2">번역 지원 언어 목록을 관리합니다.</p>
+      <p className="text-xs text-blue-500 mb-4 flex items-center gap-1">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        드래그하여 순서를 변경할 수 있습니다
+      </p>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
-        </div>
-      ) : languages.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">등록된 언어가 없습니다.</div>
+        <div className="text-center py-8 text-gray-500">로딩 중...</div>
       ) : (
-        <div className="space-y-2">
-          {languages.map((language) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {(languages || []).map((language) => (
             <div
               key={language.id}
               draggable
@@ -190,86 +195,117 @@ export function LanguagesSection({ languages, isLoading, onRefresh }: LanguagesS
               onDragOver={(e) => handleLanguageDragOver(e, language.id)}
               onDragLeave={handleLanguageDragLeave}
               onDrop={(e) => handleLanguageDrop(e, language.id)}
-              className={`flex items-center justify-between p-3 bg-white border rounded-lg cursor-move transition-all ${
-                dragOverLanguage === language.id ? "border-blue-400 bg-blue-50" : "border-gray-200"
+              className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-move ${
+                dragOverLanguage === language.id ? "ring-2 ring-blue-400" : ""
               } ${draggedLanguage === language.id ? "opacity-50" : ""}`}
             >
-              <div className="flex items-center space-x-3">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <div>
-                  <div className="font-medium">{language.name}</div>
-                  <div className="text-sm text-gray-500">{language.code}</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                  </svg>
+                  <Badge variant="info">{language.code}</Badge>
+                  <p className="font-semibold text-gray-900">{language.name}</p>
                 </div>
+                <DropdownMenu
+                  items={[
+                    {
+                      label: "수정",
+                      onClick: () => openLanguageModal(language),
+                      icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      ),
+                    },
+                    {
+                      label: "삭제",
+                      onClick: () => handleDeleteLanguage(language),
+                      variant: "danger" as const,
+                      icon: (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      ),
+                    },
+                  ]}
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => openLanguageModal(language)}
-                  className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => handleDeleteLanguage(language)}
-                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
+              {language.description && (
+                <p className="text-sm text-gray-600 mt-2">{language.description}</p>
+              )}
             </div>
           ))}
+          {(languages || []).length === 0 && (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              등록된 언어가 없습니다.
+            </div>
+          )}
         </div>
       )}
 
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingLanguage ? "언어 수정" : "언어 추가"}
-            </h3>
-            <div className="space-y-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingLanguage ? "언어 수정" : "언어 추가"}
+              </h3>
+              <button
+                onClick={closeLanguageModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <Input
+                label="언어 코드 *"
+                value={languageCode}
+                onChange={(e) => setLanguageCode(e.target.value)}
+                placeholder="예: ko, en, ja, zh-CN"
+              />
+              <Input
+                label="언어 이름 *"
+                value={languageName}
+                onChange={(e) => setLanguageName(e.target.value)}
+                placeholder="예: 한국어, English, 日本語"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  언어 코드 <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명 (선택)
                 </label>
-                <Input
-                  value={languageCode}
-                  onChange={(e) => setLanguageCode(e.target.value)}
-                  placeholder="예: ko, en, ja"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  언어명 <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={languageName}
-                  onChange={(e) => setLanguageName(e.target.value)}
-                  placeholder="예: 한국어, English, 日本語"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
-                <Input
+                <textarea
                   value={languageDescription}
                   onChange={(e) => setLanguageDescription(e.target.value)}
-                  placeholder="언어 설명 (선택사항)"
+                  placeholder="언어에 대한 간단한 설명"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  rows={3}
                 />
               </div>
             </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button variant="secondary" onClick={closeLanguageModal}>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-lg">
+              <button
+                onClick={closeLanguageModal}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
                 취소
-              </Button>
-              <Button onClick={handleSaveLanguage} disabled={savingLanguage}>
+              </button>
+              <button
+                onClick={handleSaveLanguage}
+                disabled={savingLanguage || !languageCode.trim() || !languageName.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
                 {savingLanguage ? "저장 중..." : editingLanguage ? "수정" : "추가"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
