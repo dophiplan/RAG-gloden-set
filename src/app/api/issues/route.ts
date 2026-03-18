@@ -1,42 +1,59 @@
-import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { IssueType, ProductCode } from '@/types';
-import { apiSuccess, apiUnauthorized, apiBadRequest, apiInternalError } from '@/lib/api/response';
+import { NextRequest } from "next/server";
+import { createAdminClient } from "@/lib/supabase/server";
+import { IssueType, ProductCode } from "@/types";
+import {
+  apiSuccess,
+  apiUnauthorized,
+  apiBadRequest,
+  apiInternalError,
+} from "@/lib/api/response";
 
-// GET - List issues
+/**
+ * GET handler for listing issues
+ * Supports filtering by product_code, issue_type, and resolved status
+ * @param request - Next.js request object
+ * @returns API response with filtered issues list
+ */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = createAdminClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     // Development mode bypass
-    if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
-      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/issues');
+    if (
+      (authError || !user) &&
+      process.env.NODE_ENV === "development" &&
+      process.env.ALLOW_AUTH_BYPASS === "true"
+    ) {
+      console.warn("⚠️  DEV MODE: Auth bypass enabled for /api/issues");
       // Continue without auth check
     } else if (authError || !user) {
       return apiUnauthorized();
     }
 
     const { searchParams } = new URL(request.url);
-    const product_code = searchParams.get('product_code') as ProductCode | null;
-    const issue_type = searchParams.get('issue_type') as IssueType | null;
-    const resolved = searchParams.get('resolved');
+    const product_code = searchParams.get("product_code") as ProductCode | null;
+    const issue_type = searchParams.get("issue_type") as IssueType | null;
+    const resolved = searchParams.get("resolved");
 
     let query = supabase
-      .from('issues')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("issues")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (product_code) {
-      query = query.eq('product_code', product_code);
+      query = query.eq("product_code", product_code);
     }
 
     if (issue_type) {
-      query = query.eq('issue_type', issue_type);
+      query = query.eq("issue_type", issue_type);
     }
 
     if (resolved !== null) {
-      query = query.eq('resolved', resolved === 'true');
+      query = query.eq("resolved", resolved === "true");
     }
 
     const { data: issues, error } = await query;
@@ -44,24 +61,36 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     return apiSuccess({ issues });
-
   } catch (error: unknown) {
-    console.error('Error fetching issues:', error);
-    return apiInternalError(error instanceof Error ? error.message : '알 수 없는 오류');
+    console.error("Error fetching issues:", error);
+    return apiInternalError(
+      error instanceof Error ? error.message : "알 수 없는 오류",
+    );
   }
 }
 
-// POST - Create new issue
+/**
+ * POST handler for creating a new issue
+ * @param request - Next.js request object containing issue data
+ * @returns API response with created issue
+ */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = createAdminClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     // Development mode bypass
     let userId = user?.id;
-    if ((authError || !user) && process.env.NODE_ENV === 'development' && process.env.ALLOW_AUTH_BYPASS === 'true') {
-      console.warn('⚠️  DEV MODE: Auth bypass enabled for /api/issues');
-      userId = 'dev-mode-user';
+    if (
+      (authError || !user) &&
+      process.env.NODE_ENV === "development" &&
+      process.env.ALLOW_AUTH_BYPASS === "true"
+    ) {
+      console.warn("⚠️  DEV MODE: Auth bypass enabled for /api/issues");
+      userId = "dev-mode-user";
     } else if (authError || !user) {
       return apiUnauthorized();
     }
@@ -80,11 +109,11 @@ export async function POST(request: NextRequest) {
     };
 
     if (!issue_type || !description) {
-      return apiBadRequest('이슈 타입과 설명이 필요합니다.');
+      return apiBadRequest("이슈 타입과 설명이 필요합니다.");
     }
 
     const { data: issue, error } = await supabase
-      .from('issues')
+      .from("issues")
       .insert({
         product_code,
         issue_type,
@@ -99,9 +128,10 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return apiSuccess({ issue });
-
   } catch (error: unknown) {
-    console.error('Error creating issue:', error);
-    return apiInternalError(error instanceof Error ? error.message : '알 수 없는 오류');
+    console.error("Error creating issue:", error);
+    return apiInternalError(
+      error instanceof Error ? error.message : "알 수 없는 오류",
+    );
   }
 }

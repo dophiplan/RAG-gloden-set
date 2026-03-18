@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin, isErrorResponse } from "@/lib/api/auth-middleware";
 import {
   platformCreateSchema,
@@ -7,7 +7,6 @@ import {
 } from "@/lib/validation/schemas";
 import {
   apiSuccess,
-  apiUnauthorized,
   apiInternalError,
   apiBadRequest,
   apiConflict,
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Supabase mode (기존 코드)
     const auth = await requireAdmin();
     if (isErrorResponse(auth)) return auth.error;
-    const { user, supabase } = auth.context;
+    const { supabase } = auth.context;
 
     // Check duplicate
     const { data: existing } = await supabase

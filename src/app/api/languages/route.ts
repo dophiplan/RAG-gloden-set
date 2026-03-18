@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin, isErrorResponse } from "@/lib/api/auth-middleware";
 import {
   languageCreateSchema,
@@ -7,7 +7,6 @@ import {
 } from "@/lib/validation/schemas";
 import {
   apiSuccess,
-  apiUnauthorized,
   apiInternalError,
   apiBadRequest,
   apiConflict,
@@ -17,7 +16,14 @@ import { isSQLiteMode, getSQLiteConnection } from "@/lib/api/sqlite-helper";
 /**
  * GET - List all languages
  */
-export async function GET(request: NextRequest) {
+/**
+ * GET /api/languages
+ * 모든 언어 목록을 조회합니다. (공개 API)
+ * @param _request - Next.js request 객체 (미사용)
+ * @returns 언어 목록
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_: NextRequest) {
   try {
     // SQLite mode
     if (isSQLiteMode()) {
@@ -28,7 +34,7 @@ export async function GET(request: NextRequest) {
       return apiSuccess({ languages: languages || [] });
     }
 
-    // Supabase mode (기존 코드)
+    // Supabase mode: admin client로 언어 목록 조회
     const adminClient = createAdminClient();
     const { data: languages, error } = await adminClient
       .from("languages")
@@ -45,7 +51,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST - Create a new language (admin only)
+ * POST /api/languages
+ * 새 언어를 생성합니다. (관리자 전용)
+ * @param request - Next.js request 객체
+ * @returns 생성된 언어 정보
  */
 export async function POST(request: NextRequest) {
   try {
@@ -84,7 +93,8 @@ export async function POST(request: NextRequest) {
     // Supabase mode (기존 코드)
     const auth = await requireAdmin();
     if (isErrorResponse(auth)) return auth.error;
-    const { user, supabase } = auth.context;
+    // admin context에서 supabase client만 사용 (user는 인증 확인용으로 이미 검증됨)
+    const { supabase } = auth.context;
 
     // Check duplicate
     const { data: existing } = await supabase

@@ -1,14 +1,12 @@
 import { NextRequest } from "next/server";
-import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { requireAdmin, isErrorResponse } from "@/lib/api/auth-middleware";
 import {
   productCreateSchema,
   validateAndSanitize,
 } from "@/lib/validation/schemas";
 import {
-  apiCachedSuccess,
   apiSuccess,
-  apiUnauthorized,
   apiInternalError,
   apiBadRequest,
   apiConflict,
@@ -18,7 +16,12 @@ import { isSQLiteMode, getSQLiteConnection } from "@/lib/api/sqlite-helper";
 /**
  * GET - List all products
  */
-export async function GET(request: NextRequest) {
+/**
+ * GET - 모든 제품 목록 조회
+ * @param _request - Next.js 요청 객체 (사용하지 않음)
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
     // SQLite mode
     if (isSQLiteMode()) {
@@ -83,7 +86,8 @@ export async function POST(request: NextRequest) {
     // Supabase mode (기존 코드)
     const auth = await requireAdmin();
     if (isErrorResponse(auth)) return auth.error;
-    const { user, supabase } = auth.context;
+    // 인증된 관리자 정보에서 supabase 클라이언트 추출
+    const { supabase } = auth.context;
 
     // Check duplicate
     const { data: existing } = await supabase
