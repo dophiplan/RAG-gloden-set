@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { mutate } from "swr";
 import Card, { CardTitle } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Badge from "@/components/ui/Badge";
 import DropdownMenu from "@/components/ui/DropdownMenu";
@@ -17,9 +16,15 @@ interface ProductsSectionProps {
   onRefresh: (products: SettingItem[]) => void;
 }
 
-export function ProductsSection({ products, isLoading, onRefresh }: ProductsSectionProps) {
+export function ProductsSection({
+  products,
+  isLoading,
+  onRefresh,
+}: ProductsSectionProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<SettingItem | null>(null);
+  const [editingProduct, setEditingProduct] = useState<SettingItem | null>(
+    null,
+  );
   const [productCode, setProductCode] = useState("");
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -75,29 +80,42 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
         showSuccess("제품이 추가되었습니다.");
       }
       closeProductModal();
-      
+
       // Refresh list
-      const productsData = await apiGet<{ products: SettingItem[] }>("/api/products");
+      const productsData = await apiGet<{ products: SettingItem[] }>(
+        "/api/products",
+      );
       onRefresh(productsData.products || []);
       mutate("/api/products");
     } catch (error) {
-      showError(error instanceof Error ? error.message : "제품 저장에 실패했습니다.");
+      showError(
+        error instanceof Error ? error.message : "제품 저장에 실패했습니다.",
+      );
     } finally {
       setSavingProduct(false);
     }
   };
 
   const handleDeleteProduct = async (product: SettingItem) => {
-    if (!showConfirm(`제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`)) return;
+    if (
+      !showConfirm(
+        `제품 "${product.name}" (${product.code})을(를) 삭제하시겠습니까?`,
+      )
+    )
+      return;
 
     try {
       await apiDelete(`/api/products/${product.id}`);
-      const productsData = await apiGet<{ products: SettingItem[] }>("/api/products");
+      const productsData = await apiGet<{ products: SettingItem[] }>(
+        "/api/products",
+      );
       onRefresh(productsData.products || []);
       mutate("/api/products");
       showSuccess("제품이 삭제되었습니다.");
     } catch (error) {
-      showError(error instanceof Error ? error.message : "제품 삭제에 실패했습니다.");
+      showError(
+        error instanceof Error ? error.message : "제품 삭제에 실패했습니다.",
+      );
     }
   };
 
@@ -128,7 +146,9 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
     if (!draggedProduct || draggedProduct === targetId) return;
 
     const newItems = [...products];
-    const draggedIndex = newItems.findIndex((item) => item.id === draggedProduct);
+    const draggedIndex = newItems.findIndex(
+      (item) => item.id === draggedProduct,
+    );
     const targetIndex = newItems.findIndex((item) => item.id === targetId);
 
     if (draggedIndex !== -1 && targetIndex !== -1) {
@@ -147,13 +167,15 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
           updatedItems.map((item) =>
             apiPatch(`/api/products/${item.id}`, {
               display_order: item.display_order,
-            })
-          )
+            }),
+          ),
         );
         showSuccess("순서가 변경되었습니다.");
       } catch (error) {
         showError("순서 변경에 실패했습니다.");
-        const productsData = await apiGet<{ products: SettingItem[] }>("/api/products");
+        const productsData = await apiGet<{ products: SettingItem[] }>(
+          "/api/products",
+        );
         onRefresh(productsData.products || []);
       }
     }
@@ -162,31 +184,37 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
 
   return (
     <Card>
-      <div className="flex items-center justify-between mb-4">
-        <CardTitle>제품 관리</CardTitle>
+      <div className="flex items-center justify-between mb-3">
+        <CardTitle className="text-base">제품 관리</CardTitle>
         <button
           onClick={() => openProductModal()}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
-          <span>제품 추가</span>
+          <span>추가</span>
         </button>
       </div>
 
-      <p className="text-sm text-gray-500 mb-2">번역 관리에 사용되는 제품 목록을 관리합니다.</p>
-      <p className="text-xs text-blue-500 mb-4 flex items-center gap-1">
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-        드래그하여 순서를 변경할 수 있습니다
+      <p className="text-xs text-gray-500 mb-3">
+        번역 관리에 사용되는 제품 목록을 관리합니다.
       </p>
 
       {isLoading ? (
-        <div className="text-center py-8 text-gray-500">로딩 중...</div>
+        <div className="text-center py-6 text-gray-500 text-sm">로딩 중...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
           {(products || []).map((product) => (
             <div
               key={product.id}
@@ -196,17 +224,31 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
               onDragOver={(e) => handleProductDragOver(e, product.id)}
               onDragLeave={handleProductDragLeave}
               onDrop={(e) => handleProductDrop(e, product.id)}
-              className={`p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-move ${
+              className={`p-2.5 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow cursor-move ${
                 dragOverProduct === product.id ? "ring-2 ring-blue-400" : ""
               } ${draggedProduct === product.id ? "opacity-50" : ""}`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-3 h-3 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8h16M4 16h16"
+                    />
                   </svg>
-                  <Badge variant="info">{product.code}</Badge>
-                  <p className="font-semibold text-gray-900">{product.name}</p>
+                  <Badge variant="info" className="text-xs px-1.5 py-0.5">
+                    {product.code}
+                  </Badge>
+                  <p className="font-medium text-sm text-gray-900">
+                    {product.name}
+                  </p>
                 </div>
                 <DropdownMenu
                   items={[
@@ -214,8 +256,18 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
                       label: "수정",
                       onClick: () => openProductModal(product),
                       icon: (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
                         </svg>
                       ),
                     },
@@ -224,8 +276,18 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
                       onClick: () => handleDeleteProduct(product),
                       variant: "danger" as const,
                       icon: (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       ),
                     },
@@ -233,12 +295,14 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
                 />
               </div>
               {product.description && (
-                <p className="text-sm text-gray-600 mt-2">{product.description}</p>
+                <p className="text-xs text-gray-600 mt-1 truncate">
+                  {product.description}
+                </p>
               )}
             </div>
           ))}
           {(products || []).length === 0 && (
-            <div className="col-span-full text-center py-8 text-gray-500">
+            <div className="col-span-full text-center py-6 text-gray-500 text-sm">
               등록된 제품이 없습니다.
             </div>
           )}
@@ -247,7 +311,10 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.05)" }}
+        >
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b">
@@ -258,8 +325,18 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
                 onClick={closeProductModal}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -302,10 +379,16 @@ export function ProductsSection({ products, isLoading, onRefresh }: ProductsSect
               </button>
               <button
                 onClick={handleSaveProduct}
-                disabled={savingProduct || !productCode.trim() || !productName.trim()}
+                disabled={
+                  savingProduct || !productCode.trim() || !productName.trim()
+                }
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {savingProduct ? "저장 중..." : editingProduct ? "수정" : "추가"}
+                {savingProduct
+                  ? "저장 중..."
+                  : editingProduct
+                    ? "수정"
+                    : "추가"}
               </button>
             </div>
           </div>
