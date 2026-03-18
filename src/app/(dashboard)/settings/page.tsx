@@ -4,22 +4,14 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Card, { CardTitle } from "@/components/ui/Card";
 import AIProviderManager from "@/components/settings/AIProviderManager";
 import { useSettings } from "./hooks/useSettings";
-import { SettingSection } from "./components/SettingSection";
+import { ProductsSection } from "./components/ProductsSection";
+import { LanguagesSection } from "./components/LanguagesSection";
+import { PlatformsSection } from "./components/PlatformsSection";
 
 /**
  * Settings Page
  * 
  * User settings and system configuration management
- * Composed of modular sections:
- * - User profile info
- * - Products management
- * - Languages management  
- * - Platforms management
- * - AI Provider settings
- * 
- * @see hooks/useSettings.ts - Data management
- * @see components/SettingSection.tsx - Reusable section component
- * @see components/DraggableList.tsx - Drag & drop list
  */
 export default function SettingsPage() {
   const {
@@ -82,42 +74,24 @@ export default function SettingsPage() {
         </div>
 
         {/* Products Section */}
-        <SettingSection
-          title="제품 관리"
-          description="번역 대상 제품을 관리합니다"
-          items={products}
+        <ProductsSection
+          products={products}
           isLoading={loadingProducts}
-          apiEndpoint="/api/products"
           onRefresh={refreshProducts}
-          codeLabel="제품 코드"
-          nameLabel="제품명"
-          emptyMessage="등록된 제품이 없습니다."
         />
 
         {/* Languages Section */}
-        <SettingSection
-          title="언어 관리"
-          description="지원하는 언어를 관리합니다"
-          items={languages}
+        <LanguagesSection
+          languages={languages}
           isLoading={loadingLanguages}
-          apiEndpoint="/api/languages"
           onRefresh={refreshLanguages}
-          codeLabel="언어 코드"
-          nameLabel="언어명"
-          emptyMessage="등록된 언어가 없습니다."
         />
 
         {/* Platforms Section */}
-        <SettingSection
-          title="플랫폼 관리"
-          description="지원하는 플랫폼을 관리합니다"
-          items={platforms}
+        <PlatformsSection
+          platforms={platforms}
           isLoading={loadingPlatforms}
-          apiEndpoint="/api/platforms"
           onRefresh={refreshPlatforms}
-          codeLabel="플랫폼 코드"
-          nameLabel="플랫폼명"
-          emptyMessage="등록된 플랫폼이 없습니다."
         />
 
         {/* AI Settings Section */}
