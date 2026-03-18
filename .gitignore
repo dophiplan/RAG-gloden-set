@@ -52,3 +52,11 @@ nixpacks.toml
 # Personal backlog / todo files
 todo/
 blog/
+
+# SQLite database files (generated at runtime)
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+*.db
+*.db-shm
+*.db-wal
