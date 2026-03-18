@@ -1,21 +1,24 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { LanguageCode, ProductCode } from '@/types';
 import { sanitizeText } from '@/lib/validation/schemas';
 import { enforceRateLimit } from '@/lib/api/rate-limiter';
 import { getAuthUser, unauthorizedResponse } from '@/lib/api-auth';
 import { apiSuccess, apiInternalError, apiBadRequest, apiConflict } from '@/lib/api/response';
 import { GlossaryRepository } from '@/repositories';
-// AI translation is done dynamically to avoid top-level import issues
 
-// GET - List glossary terms
+/**
+ * GET - 용어집 목록 조회
+ * @param request - Next.js 요청 객체
+ * @returns 용어집 목록 및 페이지네이션 정보
+ */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return unauthorizedResponse ? unauthorizedResponse() : apiInternalError('Unauthorized');
+      return unauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -28,12 +31,12 @@ export async function GET(request: NextRequest) {
     const importedBefore = searchParams.get('imported_before');
     const sort = searchParams.get('sort') || 'term';
 
-    // Pagination parameters
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
+    // 페이지네이션 파라미터
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
     const offset = (page - 1) * limit;
 
-    // Build select statement with inner join if filtering by product
+    // 제품 필터링 시 inner join 사용
     const selectStatement = productCode
       ? `
         *,
@@ -53,7 +56,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (productCode) {
-      // Filter by glossary_products table
       query = query.eq('glossary_products.product_code', productCode);
     }
 
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
       query = query.or(`term.ilike.%${search}%,translation.ilike.%${search}%`);
     }
 
-    // Apply sorting
+    // 정렬 적용
     if (sort === 'hit_count') {
       query = query.order('hit_count', { ascending: false });
     } else if (sort === 'imported_at') {
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
       query = query.order('term', { ascending: true });
     }
 
-    // Apply pagination
+    // 페이지네이션 적용
     query = query.range(offset, offset + limit - 1);
 
     const { data, error, count } = await query;
@@ -109,23 +111,27 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create glossary term with AI translation for all languages
+/**
+ * POST - 용어 생성 (AI 번역 포함)
+ * @param request - Next.js 요청 객체
+ * @returns 생성된 용어 목록
+ */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { user, error: authError } = await getAuthUser(supabase);
 
     if (authError || !user) {
-      return unauthorizedResponse ? unauthorizedResponse() : apiInternalError('Unauthorized');
+      return unauthorizedResponse();
     }
 
-    // Check rate limit for glossary creation
+    // 용어 생성 rate limit 확인
     const rateLimitResult = await enforceRateLimit(user.id, 'glossary_create');
     if (!rateLimitResult.allowed) {
       return rateLimitResult.response;
     }
 
-    // Parse request body
+    // 요청 본문 파싱
     const body = await request.json();
     const { 
       sourceText, 
@@ -135,20 +141,20 @@ export async function POST(request: NextRequest) {
       targetLanguages 
     } = body;
 
-    // Validate required fields
+    // 필수 필드 검증
     if (!sourceText || !sourceText.trim()) {
       return apiBadRequest('원문을 입력해주세요.');
     }
 
-    if (!targetLanguages || !Array.isArray(targetLanguages) || (targetLanguages || []).length === 0) {
+    if (!targetLanguages || !Array.isArray(targetLanguages) || targetLanguages.length === 0) {
       return apiBadRequest('번역할 언어를 선택해주세요.');
     }
 
-    // Sanitize text inputs
+    // 텍스트 입력 정제
     const sanitizedSourceText = sanitizeText(sourceText);
     const sanitizedContext = context ? sanitizeText(context) : null;
 
-    // Check for duplicate term (same term and product)
+    // 중복 용어 확인 (동일한 용어와 제품)
     let duplicateQuery = supabase
       .from('glossary')
       .select('id')
@@ -166,7 +172,7 @@ export async function POST(request: NextRequest) {
       return apiConflict('이미 등록된 용어입니다.');
     }
 
-    // Get user profile for audit log
+    // 감사 로그용 사용자 프로필 조회
     const { data: userProfile } = await supabase
       .from('users')
       .select('name')
@@ -176,11 +182,10 @@ export async function POST(request: NextRequest) {
     const repository = new GlossaryRepository(supabase);
     const createdTerms = [];
 
-    // Translate for each target language using AI
+    // 각 대상 언어에 대해 AI 번역 수행
     for (const langCode of targetLanguages) {
       try {
-        // Call Kimi AI for translation
-        // Note: Using the translateWithProvider pattern
+        // Kimi AI를 통한 번역 호출
         const { translateWithProvider } = await import('@/lib/ai');
         const aiTranslations = await translateWithProvider('kimi', {
           sourceText: sanitizedSourceText,
@@ -194,7 +199,7 @@ export async function POST(request: NextRequest) {
 
         const translatedText = aiTranslations[0]?.translatedText || sanitizedSourceText;
 
-        // Create glossary term for this language
+        // 해당 언어로 용어 생성
         const term = await repository.create(
           {
             term: sanitizedSourceText,
@@ -204,7 +209,7 @@ export async function POST(request: NextRequest) {
             product_code: product_code,
             product_codes: product_codes,
             source_type: 'ai_generated',
-            approval_status: 'pending', // All new terms start as pending
+            approval_status: 'pending', // 모든 새 용어는 보류 상태로 시작
           },
           {
             id: user.id,
@@ -216,17 +221,17 @@ export async function POST(request: NextRequest) {
         createdTerms.push(term);
       } catch (translationError) {
         console.error(`Error translating to ${langCode}:`, translationError);
-        // Continue with other languages even if one fails
+        // 하나가 실패해도 다른 언어는 계속 진행
       }
     }
 
-    if ((createdTerms || []).length === 0) {
+    if (createdTerms.length === 0) {
       return apiInternalError('용어 생성에 실패했습니다.');
     }
 
     return apiSuccess({
       terms: createdTerms,
-      message: `${(createdTerms || []).length}개 언어로 용어가 추가되었습니다.`,
+      message: `${createdTerms.length}개 언어로 용어가 추가되었습니다.`,
     });
   } catch (error) {
     console.error('Error creating glossary term:', error);
