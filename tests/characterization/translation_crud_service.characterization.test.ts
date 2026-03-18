@@ -5,7 +5,7 @@
  * Rule: These tests MUST pass before and after refactoring
  * Note: Tests implementation details intentionally - this is characterization, not specification
  */
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Manual mock implementations
 const mockFindById = vi.fn();
@@ -63,7 +63,7 @@ import { TranslationCrudService, TranslationCreateInput } from '@/services/trans
 
 describe('TranslationCrudService - Characterization Tests', () => {
   let service: TranslationCrudService;
-  let mockSupabase: any;
+  let mockSupabase: Record<string, unknown>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -298,11 +298,6 @@ describe('TranslationCrudService - Characterization Tests', () => {
         ],
       });
 
-      // Should only create results for non-empty translations
-      const calls = mockCreateMany.mock.calls.filter(
-        call => call[0] && Array.isArray(call[0]) && call[0][0]?.translation_id
-      );
-      
       // ResultRepository.createMany called with filtered translations
       expect(mockCreateMany).toHaveBeenCalled();
     });
