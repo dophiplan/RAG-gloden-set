@@ -56,6 +56,7 @@ export interface InputElement extends BaseElement {
   type: "input";
   inputType: "button" | "textfield";
   label: string;
+  action?: { onClick: "goToPage"; target: string }; // M3: 버튼 클릭 시 이동할 페이지
 }
 
 export type Element = ContainerElement | TextElement | ImageElement | InputElement;

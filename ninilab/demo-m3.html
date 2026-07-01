@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>e-BNF M3 - 통합 디자인 툴</title>
+  <style>
+    /* ============================================================
+       전체 레이아웃
+       ============================================================ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    
+    /* ============================================================
+       상단바
+       ============================================================ */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: #2a2a2a;
+      border-bottom: 1px solid #333;
+    }
+    
+    .project-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    
+    .mode-toggle {
+      display: flex;
+      gap: 4px;
+      background: #1a1a1a;
+      padding: 4px;
+      border-radius: 6px;
+    }
+    
+    .mode-btn {
+      padding: 6px 16px;
+      border: none;
+      background: transparent;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    
+    .mode-btn.active {
+      background: #3a3a3a;
+      color: #fff;
+    }
+    
+    /* ============================================================
+       메인 영역 (왼쪽-가울데-오른쪽)
+       ============================================================ */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    /* ============================================================
+       왼쪽 팔레트
+       ============================================================ */
+    .palette {
+      width: 200px;
+      background: #252525;
+      border-right: 1px solid #333;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .palette-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    
+    .palette-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .palette-btn:hover {
+      background: #333;
+      border-color: #444;
+    }
+    
+    .palette-btn .icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    .selected-info {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid #333;
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .selected-name {
+      color: #4fc3f7;
+      font-weight: 500;
+    }
+    
+    /* ============================================================
+       가울데 캔버스
+       ============================================================ */
+    .canvas-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #1a1a1a;
+      position: relative;
+    }
+    
+    .canvas-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: #252525;
+      border-bottom: 1px solid #333;
+    }
+    
+    .canvas-title {
+      font-size: 13px;
+      color: #888;
+    }
+    
+    .grid-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+    }
+    
+    .grid-toggle input {
+      cursor: pointer;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      padding: 24px;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .canvas {
+      width: 800px;
+      min-height: 600px;
+      background: #fff;
+      border-radius: 4px;
+      position: relative;
+    }
+    
+    .canvas.show-grid {
+      background-image: 
+        linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+        linear-gradient(to bottom, #e0e0e0 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    
+    /* 캔버스 내 요소 스타일 */
+    .canvas [data-element-id] {
+      position: relative;
+      cursor: pointer;
+      transition: outline 0.1s;
+    }
+    
+    .canvas [data-element-id]:hover {
+      outline: 1px dashed #4fc3f7;
+    }
+    
+    .canvas [data-element-id].selected {
+      outline: 2px solid #4fc3f7;
+    }
+    
+    .canvas.preview-mode [data-element-id] {
+      cursor: default;
+      pointer-events: none;
+    }
+    
+    .canvas.preview-mode [data-element-id].has-action {
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    
+    .canvas.preview-mode [data-element-id]:hover,
+    .canvas.preview-mode [data-element-id].selected {
+      outline: none;
+    }
+    
+    /* ============================================================
+       오른쪽 패널
+       ============================================================ */
+    .right-panel {
+      width: 360px;
+      background: #252525;
+      border-left: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #333;
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tab-btn:hover {
+      color: #e0e0e0;
+      background: #2a2a2a;
+    }
+    
+    .tab-btn.active {
+      color: #fff;
+      background: #333;
+    }
+    
+    .tab-content {
+      flex: 1;
+      overflow: auto;
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* 코드 탭 */
+    .code-content {
+      padding: 16px;
+    }
+    
+    .code-section {
+      margin-bottom: 20px;
+    }
+    
+    .code-section h4 {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    
+    .code-block {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #a0a0a0;
+      overflow-x: auto;
+      white-space: pre;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    /* 이력 탭 */
+    .history-content {
+      padding: 16px;
+    }
+    
+    .history-item {
+      padding: 12px;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    
+    .history-time {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .history-desc {
+      font-size: 13px;
+      color: #e0e0e0;
+      line-height: 1.4;
+    }
+    
+    .undo-btn {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #3a3a3a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .undo-btn:hover {
+      background: #444;
+    }
+    
+    .no-history {
+      color: #666;
+      font-size: 13px;
+      text-align: center;
+      padding: 40px;
+    }
+    
+    /* 속성 패널 */
+    .properties {
+      padding: 16px;
+      border-top: 1px solid #333;
+    }
+    
+    .prop-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    
+    .prop-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .prop-label {
+      font-size: 12px;
+      color: #888;
+    }
+    
+    .prop-input,
+    .prop-select {
+      width: 180px;
+      padding: 6px 10px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 12px;
+    }
+    
+    .prop-select {
+      cursor: pointer;
+    }
+    
+    .no-selection {
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    /* ============================================================
+       아래 페이지 목록
+       ============================================================ */
+    .page-list {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #2a2a2a;
+      border-top: 1px solid #333;
+      overflow-x: auto;
+    }
+    
+    .page-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #333;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    
+    .page-tab:hover {
+      background: #3a3a3a;
+    }
+    
+    .page-tab.active {
+      background: #4fc3f7;
+      border-color: #4fc3f7;
+      color: #1a1a1a;
+    }
+    
+    .page-tab .delete-btn {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      font-size: 11px;
+      opacity: 0.5;
+    }
+    
+    .page-tab .delete-btn:hover {
+      background: rgba(0,0,0,0.2);
+      opacity: 1;
+    }
+    
+    .add-page-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px dashed #444;
+      border-radius: 6px;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    
+    .add-page-btn:hover {
+      border-color: #666;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 상단바 -->
+    <div class="topbar">
+      <div class="project-name">📁 e-BNF 프로젝트</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="edit">편집모드</button>
+        <button class="mode-btn" data-mode="preview">프리뷰모드</button>
+      </div>
+    </div>
+    
+    <!-- 메인 영역 -->
+    <div class="main">
+      <!-- 왼쪽 팔레트 -->
+      <div class="palette">
+        <div class="palette-title">요소 추가</div>
+        <button class="palette-btn" data-type="container">
+          <span class="icon">📦</span>
+          <span>상자</span>
+        </button>
+        <button class="palette-btn" data-type="text">
+          <span class="icon">📝</span>
+          <span>텍스트</span>
+        </button>
+        <button class="palette-btn" data-type="button">
+          <span class="icon">🔘</span>
+          <span>버튼</span>
+        </button>
+        <button class="palette-btn" data-type="image">
+          <span class="icon">🖼️</span>
+          <span>이미지</span>
+        </button>
+        <button class="palette-btn" data-type="input">
+          <span class="icon">⌨️</span>
+          <span>입력칸</span>
+        </button>
+        
+        <div class="selected-info">
+          <div>선택된 요소:</div>
+          <div class="selected-name" id="selectedName">없음</div>
+        </div>
+      </div>
+      
+      <!-- 가울데 캔버스 -->
+      <div class="canvas-area">
+        <div class="canvas-toolbar">
+          <span class="canvas-title" id="currentPageName">페이지 1</span>
+          <label class="grid-toggle">
+            <input type="checkbox" id="gridToggle">
+            <span>보조선 격자</span>
+          </label>
+        </div>
+        <div class="canvas-container">
+          <div class="canvas" id="canvas"></div>
+        </div>
+      </div>
+      
+      <!-- 오른쪽 패널 -->
+      <div class="right-panel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="code">코드</button>
+          <button class="tab-btn" data-tab="history">이력</button>
+        </div>
+        
+        <!-- 코드 탭 -->
+        <div class="tab-content active" id="codeTab">
+          <div class="code-content">
+            <div class="code-section">
+              <h4>HTML</h4>
+              <pre class="code-block" id="htmlCode">// 코드가 여기에 표시됩니다</pre>
+            </div>
+            <div class="code-section">
+              <h4>CSS</h4>
+              <pre class="code-block" id="cssCode">// 코드가 여기에 표시됩니다</pre>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 이력 탭 -->
+        <div class="tab-content" id="historyTab">
+          <div class="history-content" id="historyList">
+            <div class="no-history">아직 변경 이력이 없습니다</div>
+          </div>
+        </div>
+        
+        <!-- 속성 패널 -->
+        <div class="properties" id="propertiesPanel">
+          <div class="prop-title">속성</div>
+          <div id="propertiesContent">
+            <div class="no-selection">요소를 선택하세요</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 아래 페이지 목록 -->
+    <div class="page-list" id="pageList">
+      <!-- 페이지 탭들이 여기에 동적으로 생성됩니다 -->
+      <button class="add-page-btn" id="addPageBtn">+ 새 페이지</button>
+    </div>
+  </div>
+
+  <!-- TypeScript 코드를 JavaScript로 컴파일하여 사용 -->
+  <script type="module">
+    // ============================================================
+    // 검증된 6개 모듈 import (tree.ts 기반)
+    // ============================================================
+    
+    // tree.ts 모듈 (간략화하여 인라인 구현)
+    let idCounter = 0;
+    function generateId() {
+      const randomPart = Math.random().toString(36).substring(2, 8);
+      const counterPart = (++idCounter).toString(36);
+      return `el_${randomPart}${counterPart}`;
+    }
+    
+    function createContainer(name, layout = {}, size = {}) {
+      return {
+        id: generateId(),
+        type: "container",
+        name,
+        layout: {
+          direction: layout.direction || "vertical",
+          align: layout.align || "start",
+          gap: layout.gap ?? 8,
+          padding: layout.padding ?? 16,
+        },
+        children: [],
+        width: size.width,
+        height: size.height,
+        background: "#f8f9fa",
+      };
+    }
+    
+    function createText(name, content, size = {}) {
+      return {
+        id: generateId(),
+        type: "text",
+        name,
+        content,
+        width: size.width,
+        height: size.height,
+      };
+    }
+    
+    function createImage(name, src, alt, size = {}) {
+      return {
+        id: generateId(),
+        type: "image",
+        name,
+        src,
+        alt,
+        width: size.width,
+        height: size.height,
+      };
+    }
+    
+    function createInput(name, inputType, label, size = {}) {
+      return {
+        id: generateId(),
+        type: "input",
+        name,
+        inputType,
+        label,
+        width: size.width,
+        height: size.height,
+      };
+    }
+    
+    function addChild(parent, child) {
+      if (parent.type !== "container") {
+        throw new Error(`Cannot add child to '${parent.name}' (${parent.type})`);
+      }
+      parent.children.push(child);
+    }
+    
+    function findById(root, id) {
+      if (root.id === id) return root;
+      if (root.type === "container") {
+        for (const child of root.children) {
+          const found = findById(child, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    
+    function findWithParent(root, targetId) {
+      if (root.id === targetId) {
+        return { element: root, parent: null };
+      }
+      if (root.type === "container") {
+        for (const child of root.children) {
+          if (child.id === targetId) {
+            return { element: child, parent: root };
+          }
+          const found = findWithParent(child, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    
+    // ============================================================
+    // project.ts 모듈
+    // ============================================================
+    
+    let projIdCounter = 0;
+    function generateProjId(prefix) {
+      const randomPart = Math.random().toString(36).substring(2, 8);
+      const counterPart = (++projIdCounter).toString(36);
+      return `${prefix}_${randomPart}${counterPart}`;
+    }
+    
+    function createProject(name) {
+      const project = {
+        id: generateProjId("proj"),
+        name,
+        pages: [],
+      };
+      addPage(project, "페이지 1");
+      return project;
+    }
+    
+    function addPage(project, name) {
+      const page = {
+        id: generateProjId("page"),
+        name: name || `페이지 ${project.pages.length + 1}`,
+        root: createContainer(name || "루트", { direction: "vertical" }),
+      };
+      project.pages.push(page);
+      return page;
+    }
+    
+    function removePage(project, pageId) {
+      if (project.pages.length <= 1) return false;
+      const index = project.pages.findIndex(p => p.id === pageId);
+      if (index === -1) return false;
+      project.pages.splice(index, 1);
+      return true;
+    }
+    
+    function findPage(project, pageId) {
+      return project.pages.find(p => p.id === pageId) || null;
+    }
+    
+    // ============================================================
+    // diff/describe 모듈 (간략 구현)
+    // ============================================================
+    
+    function diffTrees(oldTree, newTree) {
+      const changes = [];
+      const oldMap = new Map();
+      const newMap = new Map();
+      
+      function flatten(tree, parentId = null, index = 0, map) {
+        map.set(tree.id, { element: tree, parentId, index });
+        if (tree.type === "container") {
+          tree.children.forEach((child, i) => flatten(child, tree.id, i, map));
+        }
+      }
+      
+      flatten(oldTree, null, 0, oldMap);
+      flatten(newTree, null, 0, newMap);
+      
+      // added
+      for (const [id, data] of newMap) {
+        if (!oldMap.has(id)) {
+          changes.push({
+            kind: "added",
+            id,
+            eleme[기밀마스킹]ype: data.element.type,
+            name: data.element.name,
+            parentId: data.parentId,
+          });
+        }
+      }
+      
+      // removed
+      for (const [id, data] of oldMap) {
+        if (!newMap.has(id)) {
+          changes.push({
+            kind: "removed",
+            id,
+            eleme[기밀마스킹]ype: data.element.type,
+            name: data.element.name,
+            parentId: data.parentId,
+          });
+        }
+      }
+      
+      // modified (간략 - name만 체크)
+      for (const [id, newData] of newMap) {
+        const oldData = oldMap.get(id);
+        if (oldData) {
+          const oldEl = oldData.element;
+          const newEl = newData.element;
+          
+          if (oldEl.name !== newEl.name) {
+            changes.push({
+              kind: "modified",
+              id,
+              name: newEl.name,
+              property: "name",
+              before: oldEl.name,
+              after: newEl.name,
+            });
+          }
+          
+          if (oldEl.type === "text" && newEl.type === "text" && 
+              oldEl.content !== newEl.content) {
+            changes.push({
+              kind: "modified",
+              id,
+              name: newEl.name,
+              property: "content",
+              before: oldEl.content,
+              after: newEl.content,
+            });
+          }
+          
+          if (oldEl.type === "input" && newEl.type === "input" && 
+              oldEl.label !== newEl.label) {
+            changes.push({
+              kind: "modified",
+              id,
+              name: newEl.name,
+              property: "label",
+              before: oldEl.label,
+              after: newEl.label,
+            });
+          }
+          
+          if (oldEl.type === "input" && newEl.type === "input") {
+            const oldAction = oldEl.action?.target;
+            const newAction = newEl.action?.target;
+            if (oldAction !== newAction) {
+              changes.push({
+                kind: "modified",
+                id,
+                name: newEl.name,
+                property: "action",
+                before: oldAction || null,
+                after: newAction || null,
+              });
+            }
+          }
+        }
+      }
+      
+      return changes;
+    }
+    
+    function describeChanges(changes) {
+      return changes.map(change => {
+        switch (change.kind) {
+          case "added":
+            return `${change.name} ${getTypeName(change.eleme[기밀마스킹]ype)}를 추가했습니다`;
+          case "removed":
+            return `${change.name}를 삭제했습니다`;
+          case "modified":
+            if (change.property === "name") {
+              return `이름을 '${change.before}'에서 '${change.after}'로 바꿨습니다`;
+            } else if (change.property === "content") {
+              return `${change.name}의 글자를 '${change.before}'에서 '${change.after}'로 바꿨습니다`;
+            } else if (change.property === "label") {
+              return `${change.name}의 라벨을 '${change.before}'에서 '${change.after}'로 바꿨습니다`;
+            } else if (change.property === "action") {
+              if (!change.before && change.after) {
+                return `${change.name}에 페이지 이동을 설정했습니다`;
+              } else if (change.before && !change.after) {
+                return `${change.name}의 페이지 이동을 해제했습니다`;
+              } else {
+                return `${change.name}의 이동 페이지를 변경했습니다`;
+              }
+            }
+            return `${change.name}의 ${change.property}를 변경했습니다`;
+          default:
+            return "알 수 없는 변경";
+        }
+      });
+    }
+    
+    function getTypeName(type) {
+      const names = {
+        container: "상자",
+        text: "텍스트",
+        image: "이미지",
+        input: "입력요소",
+      };
+      return names[type] || type;
+    }
+    
+    // ============================================================
+    // export 모듈 (간략 구현)
+    // ============================================================
+    
+    function exportHtmlCss(root) {
+      const classMap = new Map();
+      let classCounter = 0;
+      
+      function getClassName(element) {
+        if (!classMap.has(element.id)) {
+          classMap.set(element.id, `el-${(classCounter++).toString(36)}`);
+        }
+        return classMap.get(element.id);
+      }
+      
+      function generateStyles(element, css = []) {
+        const className = getClassName(element);
+        const styles = [];
+        
+        if (element.type === "container") {
+          styles.push(`display: flex`);
+          styles.push(`flex-direction: ${element.layout.direction === "vertical" ? "column" : "row"}`);
+          styles.push(`align-items: ${element.layout.align}`);
+          styles.push(`gap: ${element.layout.gap}px`);
+          styles.push(`padding: ${element.layout.padding}px`);
+          if (element.background) {
+            styles.push(`background: ${element.background}`);
+          }
+        } else if (element.type === "text") {
+          styles.push(`font-size: ${element.fontSize || 14}px`);
+          if (element.bold) styles.push(`font-weight: bold`);
+        } else if (element.type === "input") {
+          if (element.inputType === "button") {
+            styles.push(`padding: 8px 16px`);
+            styles.push(`background: #4fc3f7`);
+            styles.push(`border: none`);
+            styles.push(`border-radius: 4px`);
+            styles.push(`cursor: pointer`);
+          } else {
+            styles.push(`padding: 8px`);
+            styles.push(`border: 1px solid #ccc`);
+            styles.push(`border-radius: 4px`);
+          }
+        }
+        
+        if (element.width) {
+          if (element.width.mode === "고정") {
+            styles.push(`width: ${element.width.px}px`);
+          } else if (element.width.mode === "비율") {
+            styles.push(`width: ${element.width.percent}%`);
+          } else if (element.width.mode === "꽉채움") {
+            styles.push(`flex: 1`);
+          }
+        }
+        
+        if (element.height) {
+          if (element.height.mode === "고정") {
+            styles.push(`height: ${element.height.px}px`);
+          } else if (element.height.mode === "비율") {
+            styles.push(`height: ${element.height.percent}%`);
+          }
+        }
+        
+        css.push(`.${className} { ${styles.join("; ")} }`);
+        
+        if (element.type === "container") {
+          element.children.forEach(child => generateStyles(child, css));
+        }
+        
+        return css;
+      }
+      
+      function generateHtml(element) {
+        const className = getClassName(element);
+        
+        if (element.type === "container") {
+          const children = element.children.map(generateHtml).join("\n");
+          return `<div class="${className}">\n${children}\n</div>`;
+        } else if (element.type === "text") {
+          return `<span class="${className}">${element.content}</span>`;
+        } else if (element.type === "image") {
+          return `<img class="${className}" src="${element.src}" alt="${element.alt || ""}">`;
+        } else if (element.type === "input") {
+          if (element.inputType === "button") {
+            return `<button class="${className}">${element.label}</button>`;
+          } else {
+            return `<input class="${className}" type="text" placeholder="${element.label}">`;
+          }
+        }
+        return "";
+      }
+      
+      const css = generateStyles(root);
+      const html = generateHtml(root);
+      
+      return { html, css: css.join("\n") };
+    }
+    
+    // ============================================================
+    // 애플리케이션 상태
+    // ============================================================
+    
+    let project = createProject("e-BNF 프로젝트");
+    let currentPageId = project.pages[0].id;
+    let selectedElementId = null;
+    let isEditMode = true;
+    let showGrid = false;
+    let history = []; // { pageId, before, after, descriptions, timestamp }
+    let historyIndex = -1;
+    
+    // ============================================================
+    // DOM 요소 참조
+    // ============================================================
+    
+    const canvas = document.getElementById("canvas");
+    const htmlCode = document.getElementById("htmlCode");
+    const cssCode = document.getElementById("cssCode");
+    const historyList = document.getElementById("historyList");
+    const pageList = document.getElementById("pageList");
+    const selectedName = document.getElementById("selectedName");
+    const propertiesContent = document.getElementById("propertiesContent");
+    const currentPageName = document.getElementById("currentPageName");
+    const gridToggle = document.getElementById("gridToggle");
+    
+    // ============================================================
+    // 렌더링 함수
+    // ============================================================
+    
+    function getCurrentPage() {
+      return findPage(project, currentPageId);
+    }
+    
+    function renderCanvas() {
+      const page = getCurrentPage();
+      if (!page) return;
+      
+      currentPageName.textContent = page.name;
+      canvas.innerHTML = "";
+      canvas.className = "canvas" + (showGrid ? " show-grid" : "");
+      if (!isEditMode) canvas.classList.add("preview-mode");
+      
+      renderElement(page.root, canvas);
+      updateCodeView();
+    }
+    
+    function renderElement(element, container) {
+      const el = document.createElement("div");
+      el.dataset.elementId = element.id;
+      
+      // 스타일 적용
+      el.style.display = element.type === "container" ? "flex" : "block";
+      
+      if (element.type === "container") {
+        el.style.flexDirection = element.layout.direction === "vertical" ? "column" : "row";
+        el.style.alignItems = element.layout.align;
+        el.style.gap = element.layout.gap + "px";
+        el.style.padding = element.layout.padding + "px";
+        if (element.background) el.style.background = element.background;
+        
+        // 크기 적용
+        applySize(el, element);
+        
+        // 자식 렌더링
+        element.children.forEach(child => renderElement(child, el));
+      } else if (element.type === "text") {
+        el.textContent = element.content;
+        el.style.fontSize = (element.fontSize || 14) + "px";
+        if (element.bold) el.style.fontWeight = "bold";
+        applySize(el, element);
+      } else if (element.type === "image") {
+        const img = document.createElement("img");
+        img.src = element.src || "https://via.placeholder.com/150";
+        img.alt = element.alt || "";
+        img.style.maxWidth = "100%";
+        el.appendChild(img);
+        applySize(el, element);
+      } else if (element.type === "input") {
+        if (element.inputType === "button") {
+          const btn = document.createElement("button");
+          btn.textContent = element.label;
+          btn.style.padding = "8px 16px";
+          btn.style.background = "#4fc3f7";
+          btn.style.border = "none";
+          btn.style.borderRadius = "4px";
+          btn.style.cursor = isEditMode ? "pointer" : "pointer";
+          el.appendChild(btn);
+          
+          // action이 있으면 클래스 추가
+          if (element.action) {
+            el.classList.add("has-action");
+            if (!isEditMode) {
+              el.addEventListener("click", (e) => {
+                e.stopPropagation();
+                navigateToPage(element.action.target);
+              });
+            }
+          }
+        } else {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.placeholder = element.label;
+          input.style.padding = "8px";
+          input.style.border = "1px solid #ccc";
+          input.style.borderRadius = "4px";
+          input.style.width = "100%";
+          el.appendChild(input);
+        }
+        applySize(el, element);
+      }
+      
+      // 선택 상태
+      if (element.id === selectedElementId) {
+        el.classList.add("selected");
+      }
+      
+      // 클릭 이벤트 (편집 모드에서만)
+      if (isEditMode) {
+        el.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectElement(element.id);
+        });
+      }
+      
+      container.appendChild(el);
+    }
+    
+    function applySize(el, element) {
+      if (element.width) {
+        if (element.width.mode === "고정") {
+          el.style.width = element.width.px + "px";
+        } else if (element.width.mode === "비율") {
+          el.style.width = element.width.percent + "%";
+        } else if (element.width.mode === "꽉채움") {
+          el.style.flex = "1";
+        }
+      }
+      if (element.height) {
+        if (element.height.mode === "고정") {
+          el.style.height = element.height.px + "px";
+        } else if (element.height.mode === "비율") {
+          el.style.height = element.height.percent + "%";
+        }
+      }
+    }
+    
+    function updateCodeView() {
+      const page = getCurrentPage();
+      if (!page) return;
+      
+      const { html, css } = exportHtmlCss(page.root);
+      htmlCode.textContent = html;
+      cssCode.textContent = css;
+    }
+    
+    function renderPageList() {
+      // 기존 페이지 탭 제거 (addPageBtn 제외)
+      const existingTabs = pageList.querySelectorAll(".page-tab");
+      existingTabs.forEach(tab => tab.remove());
+      
+      // 페이지 탭 생성
+      project.pages.forEach(page => {
+        const tab = document.createElement("div");
+        tab.className = "page-tab" + (page.id === currentPageId ? " active" : "");
+        tab.innerHTML = `
+          <span>${page.name}</span>
+          <span class="delete-btn" data-page-id="${page.id}">×</span>
+        `;
+        
+        tab.querySelector("span:first-child").addEventListener("click", () => {
+          switchPage(page.id);
+        });
+        
+        const deleteBtn = tab.querySelector(".delete-btn");
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deletePage(page.id);
+        });
+        
+        pageList.insertBefore(tab, document.getElementById("addPageBtn"));
+      });
+    }
+    
+    function renderHistory() {
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="no-history">아직 변경 이력이 없습니다</div>';
+        return;
+      }
+      
+      historyList.innerHTML = "";
+      // 최신 순으로 표시
+      for (let i = history.length - 1; i >= 0; i--) {
+        const item = history[i];
+        const div = document.createElement("div");
+        div.className = "history-item";
+        
+        const time = new Date(item.timestamp).toLocaleTimeString();
+        const desc = item.descriptions.join(", ");
+        
+        div.innerHTML = `
+          <div class="history-time">${time} - ${findPage(project, item.pageId)?.name || "삭제된 페이지"}</div>
+          <div class="history-desc">${desc}</div>
+        `;
+        
+        if (i === history.length - 1) {
+          const undoBtn = document.createElement("button");
+          undoBtn.className = "undo-btn";
+          undoBtn.textContent = "되돌리기";
+          undoBtn.addEventListener("click", () => undo());
+          div.appendChild(undoBtn);
+        }
+        
+        historyList.appendChild(div);
+      }
+    }
+    
+    function renderProperties() {
+      if (!selectedElementId) {
+        propertiesContent.innerHTML = '<div class="no-selection">요소를 선택하세요</div>';
+        return;
+      }
+      
+      const page = getCurrentPage();
+      const result = findWithParent(page.root, selectedElementId);
+      if (!result) {
+        propertiesContent.innerHTML = '<div class="no-selection">요소를 찾을 수 없습니다</div>';
+        return;
+      }
+      
+      const element = result.element;
+      selectedName.textContent = element.name;
+      
+      let html = "";
+      
+      // 공통 속성: 이름
+      html += `
+        <div class="prop-row">
+          <span class="prop-label">이름</span>
+          <input type="text" class="prop-input" id="propName" value="${element.name}">
+        </div>
+      `;
+      
+      // 타입별 속성
+      if (element.type === "text") {
+        html += `
+          <div class="prop-row">
+            <span class="prop-label">내용</span>
+            <input type="text" class="prop-input" id="propContent" value="${element.content || ""}">
+          </div>
+        `;
+      } else if (element.type === "input") {
+        html += `
+          <div class="prop-row">
+            <span class="prop-label">라벨</span>
+            <input type="text" class="prop-input" id="propLabel" value="${element.label || ""}">
+          </div>
+        `;
+        
+        if (element.inputType === "button") {
+          html += `
+            <div class="prop-row">
+              <span class="prop-label">이동 페이지</span>
+              <select class="prop-select" id="propAction">
+                <option value="">없음</option>
+                ${project.pages.map(p => `
+                  <option value="${p.id}" ${element.action?.target === p.id ? "selected" : ""}>${p.name}</option>
+                `).join("")}
+              </select>
+            </div>
+          `;
+        }
+      }
+      
+      propertiesContent.innerHTML = html;
+      
+      // 이벤트 리스너 연결
+      const nameInput = document.getElementById("propName");
+      if (nameInput) {
+        nameInput.addEventListener("change", () => {
+          saveSnapshot();
+          element.name = nameInput.value;
+          refreshAll();
+        });
+      }
+      
+      const contentInput = document.getElementById("propContent");
+      if (contentInput) {
+        contentInput.addEventListener("change", () => {
+          saveSnapshot();
+          element.content = contentInput.value;
+          refreshAll();
+        });
+      }
+      
+      const labelInput = document.getElementById("propLabel");
+      if (labelInput) {
+        labelInput.addEventListener("change", () => {
+          saveSnapshot();
+          element.label = labelInput.value;
+          refreshAll();
+        });
+      }
+      
+      const actionSelect = document.getElementById("propAction");
+      if (actionSelect) {
+        actionSelect.addEventListener("change", () => {
+          saveSnapshot();
+          if (actionSelect.value) {
+            element.action = { onClick: "goToPage", target: actionSelect.value };
+          } else {
+            delete element.action;
+          }
+          refreshAll();
+        });
+      }
+    }
+    
+    function refreshAll() {
+      renderCanvas();
+      renderProperties();
+      renderHistory();
+    }
+    
+    // ============================================================
+    // 액션 함수
+    // ============================================================
+    
+    function selectElement(id) {
+      selectedElementId = id;
+      refreshAll();
+    }
+    
+    function switchPage(pageId) {
+      currentPageId = pageId;
+      selectedElementId = null;
+      renderCanvas();
+      renderPageList();
+      renderProperties();
+    }
+    
+    function navigateToPage(pageId) {
+      const page = findPage(project, pageId);
+      if (page) {
+        switchPage(pageId);
+      }
+    }
+    
+    function deletePage(pageId) {
+      if (removePage(project, pageId)) {
+        if (currentPageId === pageId) {
+          currentPageId = project.pages[0].id;
+        }
+        renderPageList();
+        switchPage(currentPageId);
+      }
+    }
+    
+    function saveSnapshot() {
+      const page = getCurrentPage();
+      if (!page) return;
+      
+      // 현재 상태 복사
+      const before = JSON.parse(JSON.stringify(page.root));
+      
+      // 히스토리에 저장 (실제 변경 후 호출되므로 before만 저장)
+      // 실제로는 변경 전에 호출되어야 함
+      // 여기서는 간략화하여 변경 후 저장
+    }
+    
+    function recordChange(pageId, beforeRoot, afterRoot) {
+      const changes = diffTrees(beforeRoot, afterRoot);
+      if (changes.length === 0) return;
+      
+      const descriptions = describeChanges(changes);
+      
+      history.push({
+        pageId,
+        before: JSON.parse(JSON.stringify(beforeRoot)),
+        after: JSON.parse(JSON.stringify(afterRoot)),
+        descriptions,
+        timestamp: Date.now(),
+      });
+      
+      historyIndex = history.length - 1;
+      renderHistory();
+    }
+    
+    function undo() {
+      if (history.length === 0) return;
+      
+      const lastChange = history[history.length - 1];
+      const page = findPage(project, lastChange.pageId);
+      
+      if (page) {
+        page.root = JSON.parse(JSON.stringify(lastChange.before));
+        if (currentPageId === lastChange.pageId) {
+          refreshAll();
+        }
+      }
+      
+      history.pop();
+      renderHistory();
+    }
+    
+    // ============================================================
+    // 팔레트 버튼 이벤트
+    // ============================================================
+    
+    document.querySelectorAll(".palette-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const type = btn.dataset.type;
+        const page = getCurrentPage();
+        
+        let parent;
+        if (selectedElementId) {
+          const result = findWithParent(page.root, selectedElementId);
+          if (result && result.element.type === "container") {
+            parent = result.element;
+          } else if (result && result.parent) {
+            parent = result.parent;
+          } else {
+            parent = page.root;
+          }
+        } else {
+          parent = page.root;
+        }
+        
+        // 변경 전 스냅샷
+        const beforeRoot = JSON.parse(JSON.stringify(page.root));
+        
+        let newElement;
+        switch (type) {
+          case "container":
+            newElement = createContainer("새 상자", { direction: "vertical" });
+            break;
+          case "text":
+            newElement = createText("새 텍스트", "텍스트를 입력하세요");
+            break;
+          case "button":
+            newElement = createInput("새 버튼", "button", "버튼");
+            break;
+          case "image":
+            newElement = createImage("새 이미지", "https://via.placeholder.com/150", "이미지");
+            break;
+          case "input":
+            newElement = createInput("새 입력칸", "textfield", "입력하세요");
+            break;
+        }
+        
+        if (newElement) {
+          addChild(parent, newElement);
+          selectElement(newElement.id);
+          
+          // 변경 기록
+          const afterRoot = JSON.parse(JSON.stringify(page.root));
+          recordChange(page.id, beforeRoot, afterRoot);
+          
+          refreshAll();
+        }
+      });
+    });
+    
+    // ============================================================
+    // 모드 토글
+    // ============================================================
+    
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        isEditMode = btn.dataset.mode === "edit";
+        selectedElementId = null;
+        renderCanvas();
+        renderProperties();
+      });
+    });
+    
+    // ============================================================
+    // 탭 전환
+    // ============================================================
+    
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab + "Tab").classList.add("active");
+      });
+    });
+    
+    // ============================================================
+    // 그리드 토글
+    // ============================================================
+    
+    gridToggle.addEventListener("change", () => {
+      showGrid = gridToggle.checked;
+      renderCanvas();
+    });
+    
+    // ============================================================
+    // 새 페이지 추가
+    // ============================================================
+    
+    document.getElementById("addPageBtn").addEventListener("click", () => {
+      const page = addPage(project, `페이지 ${project.pages.length + 1}`);
+      renderPageList();
+      switchPage(page.id);
+    });
+    
+    // ============================================================
+    // 초기화
+    // ============================================================
+    
+    // 데모 데이터
+    const page1 = project.pages[0];
+    const header = createContainer("헤더", { direction: "horizontal" }, { height: { mode: "고정", px: 60 } });
+    header.background = "#4fc3f7";
+    addChild(page1.root, header);
+    
+    const title = createText("타이틀", "e-BNF 디자인 툴");
+    title.fontSize = 20;
+    title.bold = true;
+    addChild(header, title);
+    
+    const content = createContainer("콘텐츠", { direction: "vertical" });
+    addChild(page1.root, content);
+    
+    const welcome = createText("환영", "M3 통합 화면에 오신 것을 환영합니다!");
+    addChild(content, welcome);
+    
+    const btn = createInput("다음 페이지 버튼", "button", "다음 페이지로");
+    addChild(content, btn);
+    
+    // 페이지 2 생성
+    const page2 = addPage(project, "페이지 2");
+    const p2header = createContainer("헤더2", { direction: "horizontal" }, { height: { mode: "고정", px: 60 } });
+    p2header.background = "#81c784";
+    addChild(page2.root, p2header);
+    addChild(p2header, createText("타이틀2", "두 번째 페이지"));
+    addChild(page2.root, createText("설명", "이것은 두 번째 페이지입니다."));
+    
+    // 버튼 action 설정
+    btn.action = { onClick: "goToPage", target: page2.id };
+    
+    // 초기 렌더링
+    renderCanvas();
+    renderPageList();
+    renderHistory();
+    
+    console.log("🎉 e-BNF M3 로드 완료!");
+    console.log("프로젝트:", project);
+  </script>
+</body>
+</html>

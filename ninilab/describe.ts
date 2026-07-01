@@ -112,6 +112,12 @@ function describeMoved(change: Change & { kind: "moved" }): string {
   }
 }
 
+// 값 표시 (undefined/null이면 "없음")
+function fmt(v: unknown): string {
+  if (v === undefined || v === null || v === "") return "없음";
+  return String(v);
+}
+
 function describeModified(change: Change & { kind: "modified" }): string {
   const { name, property, before, after } = change;
 
@@ -123,9 +129,9 @@ function describeModified(change: Change & { kind: "modified" }): string {
     case "name":
       return `이름을 '${before}'에서 '${after}'로 바꿨습니다`;
     case "background":
-      return `${name}의 배경색을 바꿨습니다 (${before} -> ${after})`;
+      return `${name}의 배경색을 바꿨습니다 (${fmt(before)} → ${fmt(after)})`;
     case "fontSize":
-      return `${name}의 글자 크기를 ${before}에서 ${after}로 바꿨습니다`;
+      return `${name}의 글자 크기를 ${fmt(before)}에서 ${fmt(after)}로 바꿨습니다`;
     case "bold":
       if (after === true) {
         return `${name}을(를) 굵게 했습니다`;
@@ -137,11 +143,11 @@ function describeModified(change: Change & { kind: "modified" }): string {
       return `${name}의 배치를 ${afterDir}로 바꿨습니다`;
     }
     case "layout.align":
-      return `${name}의 정렬을 바꿨습니다 (${before} -> ${after})`;
+      return `${name}의 정렬을 바꿨습니다 (${fmt(before)} → ${fmt(after)})`;
     case "layout.gap":
-      return `${name}의 간격을 ${before}에서 ${after}로 바꿨습니다`;
+      return `${name}의 간격을 ${fmt(before)}에서 ${fmt(after)}로 바꿨습니다`;
     case "layout.padding":
-      return `${name}의 안쪽 여백을 ${before}에서 ${after}로 바꿨습니다`;
+      return `${name}의 안쪽 여백을 ${fmt(before)}에서 ${fmt(after)}로 바꿨습니다`;
     case "width": {
       const beforeStr = sizeModeToString(before as SizeMode);
       const afterStr = sizeModeToString(after as SizeMode);
@@ -158,7 +164,7 @@ function describeModified(change: Change & { kind: "modified" }): string {
     case "inputType":
       return `${name}의 입력 타입을 '${before}'에서 '${after}'로 바꿨습니다`;
     default:
-      return `${name}의 ${property}를(을) 바꿨습니다 (${before} -> ${after})`;
+      return `${name}의 ${property}를(을) 바꿨습니다 (${fmt(before)} → ${fmt(after)})`;
   }
 }
 
