@@ -96,7 +96,16 @@ def _ids_from_xlsx(path):
 
 
 def load_golden_ids(prod):
-    """정본 골든셋(통합 대장)의 문항 ID 집합 — ID가 나오는 최고버전 채택"""
+    """전량 검사 참조 집합 = 채점기가 쓰는 바로 그 골든셋 (참조 집합 분열 금지 —
+    게이트와 채점기가 다른 기준을 보면 assert 기준 검증 실패 사고가 된다)"""
+    try:
+        p = golden_xlsx(prod)
+    except FileNotFoundError:
+        return set(), None
+    ids = _ids_from_xlsx(p)
+    if ids:
+        return ids, N(p.name)
+    # 채점용/최고버전에서 ID가 안 나오면 후보 순회 (구형 산출물 호환)
     for p in _ledger_candidates(prod):
         ids = _ids_from_xlsx(p)
         if ids:
@@ -158,9 +167,11 @@ def format_gate(log_path, prod, round_label=None):
     checks.append(("answer null", good, f"{nulls}건"))
     # 1″) [v2] meta 스코프·청크 전 회차 대조 (변동 = 플래그, 사람 ack)
     if round_label and cv:
+        had_history = _meta_history_path(prod).exists()
         warns += meta_history_compare(prod, round_label, cv)
         checks.append(("meta 전 회차 대조", True,
-                       f"변동 {len(warns)}건 (플래그)" if warns else "전 회차와 동일"))
+                       f"변동 {len(warns)}건 (플래그)" if warns
+                       else ("전 회차와 동일" if had_history else "첫 회차 — 기준 등재")))
     # 2) ID 중복 0
     ids = [N(r.get("id", "")) for r in resp]
     dup = len(ids) - len(set(ids))
@@ -210,6 +221,10 @@ def scorer_fingerprint():
 
 
 def golden_xlsx(prod):
+    # '채점용' 시트가 있으면 우선 (채점기 이식 산출물 — 예: RV run_score 규격 변환본)
+    override = sorted((DATA / prod / "08_scoring").glob("*채점용*.xlsx"))
+    if override:
+        return override[-1]
     for p in _ledger_candidates(prod):
         if _ids_from_xlsx(p):
             return p
