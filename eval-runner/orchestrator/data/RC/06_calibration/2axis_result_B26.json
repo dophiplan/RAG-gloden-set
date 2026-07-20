@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-E005@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "리모트콜 Linux 데스크톱 앱 출시 안내가 2,822행 전체 검색 결과 미확인되며 evidence가 null로, '자료에 없음' 회답이 타당하다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "NOTICE 공지 내 선불→후불 변경 안내가 2,822행 전체 검색 결과 미확인되며 evidence가 null로, '자료에 없음' 회답이 타당하다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "AI 자동 상담 요약 기능 출시 안내가 2,822행 전체 검색 결과 미확인되며 evidence가 null로, '자료에 없음' 회답이 타당하다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E008@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "무료 요금제(영구 무료 플랜) 출시 안내가 2,822행 전체 검색 결과 미확인되며 evidence가 null로, '자료에 없음' 회답이 타당하다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '로컬 1차 암호화 후 End-To-End 256-bit AES'와 '2048-bit SSL 암호화 통신'이 직접 인용되어 gold를 완전히 뒷받침한다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'CWE/SANS TOP25', '24x7x365 유인 체제', '생체인식 출입 통제'가 직접 인용되어 gold를 완전히 뒷받침한다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '한국·일본·유럽(네덜란드·아일랜드)·호주·브라질·미국 서부/중부·싱가포르' 및 '15개 edge 지역'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '한국어·영어·일본어·중국어·프랑스어·스페인어·포르투갈어 7개 언어'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '100여 개 기능에 대해 사용 권한 on/off 옵션'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '2048bit SSL', 'IP·MAC Address 범위 접속 제한', '지원 종료 후 모듈 삭제'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'DB Server 256-비트 AES 데이터 암호화 SHA-2 / 2048-비트 SSL'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'https://www.remotecall.io', '설치 없이 웹브라우저에서 접속', '모바일 to 모바일'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '웹 뷰어와 에이전트를 동시 제공', '정기 업데이트로 최신 OS에 대응'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional '3개 세션 접속, 최대 300MB'와 Enterprise '5개 세션 접속, 최대 1000MB'가 직접 대비 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 mobile pack의 '1000MB 파일 송수신·화면 녹화'와 visual pack의 'QR 코드·SMS·스크린샷·스티커/텍스트 도구'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional의 '클립보드 동기화·원격프린트·IP 관리'와 Enterprise의 '소리공유·상담일지·원격 세션 공유/전달' 등 세부 기능이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C004@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 SaaS는 'IT 자원 제한·최소 비용 도입', 구축은 '보안 정책 유지·업무망 분리'가 직접 대비 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '커스터마이징 불가 (단, 관리자 옵션을 통한 업무환경 커스터마이징 가능)'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '월 또는 연 단위 임대', '하드웨어 불필요', '무상 유지보수·업그레이드'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '구매 후 1년 무상, 이후 별도 계약'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '1차 상담→원격지원 대기→Web/App 실행 및 원격접속 승인→원격 연결' 4단계가 순서대로 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '1step 동작으로 1초 이내에 화면 제어권 즉시 회수', '마우스·키보드 조작만으로 가능'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면을 잠그면 주민등록번호 등의 정보 입력 시 노출을 막을 수 있고', '입력 창 부분만 가릴 수 있습니다'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '논리적 망 분리 구성을 통해 업무망과 원격지원용 인터넷망을 분리'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F004@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '비밀번호에 대한 보안 수준을 세부적으로 설정할 수 있습니다'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화살표나 방향 지시 버튼을 선택하여 가이드를 표시'하고 '별도 권한 설정이 필요합니다'가 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C005@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 PC 'Windows·Mac·Linux' 및 모바일 'Android·iOS' 지원 브라우저가 직접 대비 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '위도, 경도로 표시되며 구글 Map으로 연결'과 '낯선 곳에서의 사고 발생 상황'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '글라스, 공작기계 등을 조작하고 있는 경우에는 역접속 방식을 이용'이 직접 인용된다.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'PC 공유 화면 전송 일시 중지'와 '화면 전송 중지 해제'가 직접 인용된다.",
+    "fix_hint": ""
+  }
+]

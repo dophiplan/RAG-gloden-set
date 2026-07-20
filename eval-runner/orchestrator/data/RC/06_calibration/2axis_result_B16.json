@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A123@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 뷰어 아이콘 클릭으로 고객 단말 플래쉬 On/Off(기본 Off) 및 Admin Page 그룹옵션/상담원옵션 > 뷰어기능 설정 > 플래쉬에서 설정 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G049@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 동영상 모드일 때 전면/후면 전환 아이콘이 활성화되고, 전면 카메라일 때는 플래쉬 기능을 사용할 수 없음을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G050@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 뷰어 아이콘 클릭으로 스피커폰 On/Off(기본 Off) 가능하나 iOS는 지원하지 않음을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A124@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 사진모드 기본 해상도 640*480 및 Admin Page > 그룹옵션 > 뷰어 기능 설정 > 사진모드 해상도 옵션을 고해상도로 변경 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D050@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 뷰어 아이콘 클릭으로 위치 정보 요청, 최초 요청 시 고객 위치정보 사용동의 수락 필요, 위도·경도로 구글 Map 확인, 국가별 미제공 지역 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A125@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 영상모드일 때 활성화되며 뷰어 아이콘 클릭 후 팝업에서 앞/뒤/좌/우·대각선·위/아래·하늘/땅·OK 화살표로 방향 안내 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A126@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 영상모드 고객 기능으로 화면전송/중지·접속종료·전후면 카메라 전환·플래쉬 On/Off(플래쉬 없는 단말 미지원)·그리기·그리기 지우기·사진 모드 전환·음성채팅 종료를 사용할 수 있음을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A127@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 사진모드 고객 기능 중 사진촬영모드 돌아가기(다른 사진 공유용)가 있음을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G051@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 USB 외장 카메라 연결·동의 시 화면 전송되나 연결 중 카메라 변경/플래쉬 미표시, Android 10 이상 및 iOS 단말은 미지원함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D051@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 관리자 기능 부여 필요, Agent 로그인 → 뷰어 [직접 입력하기] 전환 → 고객 앱 설정에서 역 접속 방식 사용 ON → 고객 접속 코드 입력 후 [접속하기] 순서를 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A128@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 영상모드일 때 활성화되며 뷰어 아이콘 클릭으로 고객 영상 전송 정지·시작 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A129@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 뷰어 아이콘 클릭으로 사진모드/동영상모드 전환 가능하며, 초기 화면전송 모드는 Admin Page > 그룹옵션 > 뷰어 기능 설정 > 화면 전송 모드에서 설정함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A130@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 화면 저장 시 공유 또는 공용문서\\Rsupport\\RemoteCall\\Capture\\해당날짜\\Support No 경로에 jpg로 저장되며 우측 하단 아이콘으로도 동작함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A131@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Ctrl+Window+Shift로 그리기 시작, 자유 곡선·유형·색상·선 두께 변경·전체 지우기(캡처 이미지 그리기 삭제) 지원함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A132@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 종료 시 종료 메시지와 지원 시작/종료 시간이 표시되며, 오른쪽 상단 지원 종료 버튼 클릭으로 종료함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A133@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 즐겨찾기 메뉴에서 URL과 영상 지원용 단축메시지(영상)를 관리함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A134@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Windows 10 이상, Pentium 4 2.0GHz·512MB 이상, 공인 IP 또는 Static NAT, 방화벽 Out Bound 80/443 포트 오픈 필요함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A135@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Android는 앱 설정에서 Proxy 사용 ON 후 서버 정보 입력, iOS는 단말 설정 > Wi-Fi > HTTP 프록시에서 수동/자동 선택함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A136@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Android·iOS·영상 지원 에이전트 매뉴얼 모두 Ver. 7.6.3 (2025.05.27)임을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C014@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 모바일 지원은 방문 없이 원격지에서 인터넷으로 단말에 연결해 지원하는 것이며, 접속 번호는 연결을 위해 고객이 단말에 입력하는 숫자임을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C015@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Windows 10 이상(Windows 환경만 이용) 및 네트워크로 공인 IP 또는 Static NAT 지원, 방화벽 Out Bound 80/443 포트 오픈 필요함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 뷰어 단축키 변경 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 회사 로고 워터마크 자동 삽입 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 파일 전송 시 동시 전송 개수 상한 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 녹화 파일 자동 삭제 보관 기간 설정 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 다크 테마(야간 모드) 변경 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 상당원 부재 시 자동응답 메시지 설정 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 한 세션 동시 제어 가능 최대 상담원 수 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E008@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 상담원 실시간 위치(GPS) 추적 기능 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E009@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 뷰어 OCR 인식·추출 기능 관련 근거가 전혀 없어 gold의 '자료에 없음' 선언이 적절함을 확인",
+    "fix_hint": ""
+  }
+]

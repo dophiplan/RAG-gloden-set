@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-D006@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌에서 '내 화면 공유 시작하기'→'6자리 숫자와 접속주소(113366.io) 안내'→'화면 선택' 순서가 모두 확인되며 gold의 절차와 정확히 일치함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B4",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "gold에 포함된 '더 다양한 지원 도구 제공'은 evidence_excerpt(RC-NOTICE-UPDATE-033/034)의 두 항목 어디에도 존재하지 않음",
+    "fix_hint": "evidence_excerpt에 '더 다양한 지원 도구 제공' 관련 원문을 추가하거나 gold_answer에서 해당 항목을 제거"
+  },
+  {
+    "id": "RC-D007@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌에서 '기업 로고와 전용 URL' 설정 및 '관리자 페이지' 언급이 각각 확인되어 gold의 기능 설명이 모두 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B4",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "gold의 '확장 프로그램 설치를 통한 기능'과 '파트너/유저 어드민 관리 기능'은 evidence_excerpt(RC-NOTICE-UPDATE-053/054)의 '파일 전송·음성 채팅' 항목에서 확인되지 않음",
+    "fix_hint": "evidence_excerpt에 확장 프로그램 및 어드민 관리 관련 원문을 추가하거나 gold_answer에서 해당 내용을 제거"
+  },
+  {
+    "id": "RC-A010@G-B4",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "gold의 '웹 원격지원·모바일 지원 관련 기능 개선'은 evidence_excerpt의 '오류를 수정하고 개선하여 더 안정적인 원격지원을 할 수 있도록 개편됩니다'라는 일반 문구만으로는 직접 뒷받침되지 않음",
+    "fix_hint": "evidence_excerpt에 '웹 원격지원' 또는 '모바일 지원' 관련 구체 개선 내역을 추가하거나 gold를 발췌 범위 내 일반 개편 내용으로 축소"
+  },
+  {
+    "id": "RC-A011@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2021년 2월 16일 시행으로 리모트콜 서비스 이용약관이 제품 통합약관 적용에 따라 항목·내용 전면 개편'이 gold의 날짜와 사유를 그대로 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2023년 12월 23일 시행으로 알서포트가 제공하는 모든 서비스의 개인정보처리방침을 하나로 통합 공개'가 gold의 날짜와 통합 사실을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-WEB-004의 '2020년 6월 2일...개인정보 처리위탁·수탁업체 추가'와 RC-NOTICE-WEB-005의 '2021년 8월 6일...처리위탁·수탁업체명 변경'이 gold의 두 사유를 각각 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌에서 '위치기반서비스 대상 변경, 보유기간 조항 신설, 책임자 변경'과 '제4조·제5조'가 gold의 3가지 개정 사유 및 조항을 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '변경 내용을 사전 공지하오니'가 gold의 '사전 공지' 방식을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F003@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-TERMS-003의 '30일 이내 별도의 의사표시를 하지 않으신 경우, 동의한 것으로 간주'와 RC-NOTICE-TERMS-004의 '동의하시지 않은 경우...서비스 해지를 요청'이 gold의 두 조건을 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '변경된 약관은 2021년 2월 16일부터 효력이 발생됩니다'가 gold의 효력 발생일을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D009@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-COMPANY-001의 '2024.05.23~05.24 고객지원 업무가 중단되고 05.27 재개'와 RC-NOTICE-COMPANY-030의 '업무 재개일은 2024.05.27(월)'이 gold의 중단·재개 일정을 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2021년 02월 11일(목) ~ 02월 14일(일)'이 gold의 설 연휴 기간을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2021년 11월 5일(금) 종일'이 gold의 창립 기념일 상담 중단 일자를 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C007@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-COMPANY-021의 '2022.05.30(월) ~ 2022.05.31(화): 사내 행사'와 RC-NOTICE-COMPANY-022의 '2022.06.01(수): 전국 지방선거일'이 gold의 두 일자를 각각 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G011@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2021년 9월 17일(금) PM 12:01 ~ 2021년 9월 22(수)'가 gold의 추석 연휴 기간을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G012@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2021년 11월 리모트콜 7.0이 GS(Good Software) 인증 1등급을 획득'이 gold의 시점과 등급을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D010@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '2015년 1월 중국 화웨이가 알서포트와 파트너십을 맺고 리모트콜 모바일팩(RemoteCall + mobile pack) 공급 계약을 체결'이 gold의 시점·기업·제품을 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '리모트콜 비주얼팩(RemoteCall + visual pack)이 2019 대한민국 모바일 어워드 우수상을 수상'이 gold의 연도와 수상 내역을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C008@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '설치형 평균 상담시간 16.5분과 웹방식 평균 상담시간 8.5분'이 gold의 두 수치를 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C009@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-EVENT-008의 '2024년 11월 22일(금요일) 09:00–17:30'와 RC-NOTICE-EVENT-009의 '코엑스 그랜드볼룸...알서포트 부스는 No.13'이 gold의 일시·장소·부스를 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C010@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-EVENT-012의 '2022년 6월 8일(수요일)부터 6월 10일(금요일)'과 RC-NOTICE-EVENT-013의 '코엑스 3층 C, D홀...부스는 C643'이 gold의 기간·장소·부스를 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G013@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "RC-NOTICE-EVENT-004의 '2020년 12월 10일(목)부터 12일(토)까지 총 3일'과 RC-NOTICE-EVENT-005의 '코엑스 A홀(서울시 강남구 삼성동)'이 gold의 기간과 장소를 각각 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D011@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '중소벤처기업부가...비대면 서비스 도입 비용을 최대 70% 지원하는 사업'이 gold의 주관 기관과 지원률을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D012@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "발췌 '알서포트 제품(리모트콜 등)을 최대 80% 할인 받을 수 있는 정부 지원 사업'이 gold의 지원률과 사업 성격을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold가 '자료에 없음'을 명시하여 E형 거절 게이트를 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold가 '자료에 없음'을 명시하여 E형 거절 게이트를 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold가 '자료에 없음'을 명시하여 E형 거절 게이트를 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B4",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold가 '자료에 없음'을 명시하여 E형 거절 게이트를 충족함",
+    "fix_hint": ""
+  }
+]

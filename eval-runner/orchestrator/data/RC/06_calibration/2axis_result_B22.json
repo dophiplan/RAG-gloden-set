@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-E002@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "원격지원 예약 알림 발송 여부는 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "상담원 대기 인원·순서 확인 기능은 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "지문·페이스ID 잠금 여부는 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "영상통화처럼 얼굴 보며 대화 가능 여부는 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "지원 기록(히스토리) 조회 가능 여부는 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "접속 코드를 카카오톡·이메일 QR로 받을 수 있는지는 evidence_excerpt가 null이며 gold가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '알서포트주식회사(회사)가 제공하는 서비스와 관련하여 회사와 회원 간 서비스 이용조건·절차, 권리·의무사항 및 기타 제반사항을 규정함'이 gold의 핵심을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '정회원=유료 이용계약 당사자로 요금 납입의무를 가진 법인·개인, 일반회원=이용약관 동의·회원등록자'로 양측 비교 근거가 명시됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '제품 홈페이지(remotecall.com/kr) 공시로 효력이 발생'함을 명시하여 gold의 '홈페이지 공시로 효력 발생'을 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '적용일로부터 7일전(회원에게 불리하거나 중대한 사항은 30일전)까지 홈페이지 공지 또는 이메일로 고지'하여 경계 조건을 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '동의하지 않는 회원은 서비스 이용을 중단하고 이용계약을 해지(회원탈퇴) 할 수 있습니다. 약관 시행일까지 회원탈퇴를 하지 않은 회원은 개정약관에 동의한 것으로 간주'하여 멀티홉 추론 단계를 모두 포함함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '본 약관에 명시되지 않은 사항은 전자상거래법, 정보통신망법 등 관계법령과 별도 약관·이용규정에 따른다'고 명시됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D002@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '약관 내용에 동의한 뒤 회사가 제시하는 양식·절차에 따라 이용신청을 하고 회사가 승낙함으로써 성립'하여 동의→신청→승낙 순서와 아이디 부여까지 포함함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '미성년자·한정치산자는 부모·법정대리인을 신청자·요금납입책임자로 하여 신청'하고 앱스토어 연계 개인 대상 서비스는 예외로 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '실명 미사용·타인 명의 신청, 허위 기재·서류, 미제공 국가 우회 이용, 공공질서·미풍양속 저해 우려' 시 승낙 유보·거절 가능함을 열거함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '상호·성명·주소·연락처 변경...즉시 이메일 또는 회사 안내에 따라 변경사항을 회사에 알려야 한다'고 명시됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '해약 7일전까지 해지신청서를 제출'과 '제29조 사유 해당 또는 제32조 위반 시 계약을 해지할 수 있다'로 회원·회사 양측 해지 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '서비스 이용료를 선불로 납입한 때부터 서비스를 개시'함을 명시하여 gold의 '선불 납입 시 개시'를 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '연중무휴 1일 24시간을 원칙'이나 '시스템 정기·수시 점검이나 기타 필요한 경우 서비스의 일부·전부 사용을 제한할 수 있다'고 경계 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '무료 제공 서비스의 일부·전부를 정책·운영 필요상 수정·중단·변경할 수 있으며 관계법령에 특별 규정이 없으면 별도 보상을 하지 않는다'고 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 '동의 없이 제 정보를 신용정보회사에 넘겨서 실명 확인'이라는 gold 핵심('사전동의 없이 신용정보회사에 정보를 제공해 실명 확인')이 그대로 노출됨",
+    "fix_hint": "질문을 '회사가 신용정보회사에 회원 정보를 제공하여 실명 확인하는 근거와 절차는?' 등으로 변경"
+  },
+  {
+    "id": "RC-A006@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '웹로그에는 개인정보(이름·나이·주민등록번호 등)가 포함되지 않으며 방문기록·이동경로 등 비개인성 정보만 포함된다'고 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '회원은 언제든 수신거부할 수 있으며'와 '제3자 페이지 연결 시 해당 페이지는 회사 서비스 영역이 아니므로 회사가 신뢰성·안정성을 보장하지 않는다'고 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G007@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '회원정보에 허위 기재가 있으면 모든 권리(당첨자 대상·상품수령)가 박탈될 수 있으며'라고 경계 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F003@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 '미리 알리지도 않고 지울 수 있나요'라는 표현이 gold의 핵심인 '사전통지 없이 삭제 가능'을 그대로 노출함",
+    "fix_hint": "질문을 '회사가 게시물을 삭제하거나 등록을 거부할 수 있는 절차와 사유는?' 등으로 변경"
+  },
+  {
+    "id": "RC-G008@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '회원 게시물의 저작권은 해당 저작권자에게 귀속'하고 '탈퇴 이후에도 별도 요청이 없으면 지속 적용된다'고 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '테스트 종료와 함께 회원정보·게시물이 삭제되며 이용권한도 정지되는 것이 원칙'이라고 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 리모트콜·리모트뷰·리모트에이피아이·리모트미팅·리모트세미나·모비즌 6개 서비스를 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '본 약관과 상이한 내용은 서비스별 세부 이용약관이 우선 적용된다'고 경계 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C002@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '초기비용(가입비·초기설치비 등 최초 1회 발생)'과 '월 이용료·년 이용료·기간 이용료'를 명시하여 양측 비교 근거를 충족함",
+    "fix_hint": ""
+  }
+]

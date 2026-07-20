@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-G035@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 PlayStore 사용 제한 단말은 '[서버 직접 다운로드]' 버튼으로 설치하고 '삼성 5.0 미만 단말용 모바일지원 for 삼성 앱은 서버 직접 다운로드 미지원'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G036@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '단말 제조사·OS가 삼성 5.0 미만인 경우 PlayStore에서 [모바일 지원 for 삼성] 앱을 설치해야 원활한 상담 지원이 가능하다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A090@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 색상을 4/16/64/256/High Color 중 선택하며 기본값은 256 Color'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G037@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '중/고 설정 시 패킷 수신량이 증가한다(기본값 자동)'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D039@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '수락 시 새 상담원과 접속이 이루어지고 기존 상담원 연결은 종료된다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G038@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Android OS 버전이 10 이상이면 기능 사용에 일부 제한이 있을 수 있다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A091@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '에이전트 > 원격지원 환경설정에서 설정된 저장 위치에 날짜별로 저장된다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G039@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 조명 시간이 10분으로 변경되고 지원 종료 후 이전 설정 값으로 복구된다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D040@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 정보 수신을 지원하지 않는 단말기이거나 화면 전송이 중단된 경우, 현재 화면 정보를 통해 단말기의 화면 정보를 확인할 수 있다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A092@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '전화번호, 통신사, 루팅 여부, 모델 번호, Android 버전, 배터리 수준, 내부/SD 저장공간, 3G/4G·Wi-Fi 신호 강도, 메모리, 시리얼 번호, 빌드 번호, MSISDN, IMEI, 비행기 모드, Wi-Fi, 화면 해상도, 블루투스, 언어' 등을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G040@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'CPU와 프로세스별 정보(프로세스·CPU·메모리·종료)는 지원되지 않는다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D041@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '종료할 프로세스 우측의 종료[x] 버튼 클릭 → 종료 확인 메시지에서 [예] 클릭 시 프로세스가 종료되며 단말기에 프로세스 종료 안내 메시지가 나타난다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A093@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '토글 버튼으로 기본 응용프로그램(C)/사용자 설치 응용프로그램(U) 목록을 전환하고, 더블 클릭으로 프로그램 실행, 제거(x) 버튼과 [예] 클릭'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G041@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '구글 정책으로 인해 시스템 로그 취득은 지원되지 않는다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D042@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '[어드민 페이지 > 모바일 시스템 로그 명령어] 메뉴에서 [추가] 버튼으로 등록'하고 '그룹옵션정보 > 모바일 시스템 로그 명령어 옵션이 사용함으로 설정'되어야 함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G042@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '개인정보보호 옵션 사용 시 상담원 측에 고객 지원 이력이 출력되지 않으며, 관리자 페이지 지원 이력에도 고객 개인정보(고객명, 모바일 번호, MSISDN/IMEI, 공인/로컬 IP, MAC 주소)를 저장하지 않는다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A094@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '단말기의 IMEI로 이전 지원 이력을 검색해 보여주며, 이력이 없거나 확인 불가한 경우 표시되지 않는다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G043@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'OS 11 이상 단말은 전송·삭제 시 일부 폴더·파일에 제한이 있을 수 있다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A095@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Esc=Back'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G044@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '스피커폰 켜기/끄기(OS 12 단말 연결 시 미제공)'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A096@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '연락 받을 번호를 입력하여 전화를 요청할 수 있으며, 요청 시 상담원 뷰어가 활성화되고 전화 요청 메시지가 나타난다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G045@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Android OS 버전이 10 이상이면 일부 화면에서 퀵 메뉴 아이콘이 노출되지 않을 수 있다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D043@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '[직접 입력하기]로 역 접속 모드 전환 → 고객 앱 설정에서 [역 접속 방식 사용] 선택 → 고객으로부터 접속 코드를 확인해 뷰어에 입력한 뒤 [접속하기]' 순서를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A097@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 코드를 고객이 아닌 상담원이 입력하는 방식으로, 고객이 접속 코드를 입력하기 힘든 상황을 위한 기능'임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A098@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '앱 설치 정보 SMS 전송을 클릭하고 전화번호와 발송 메시지를 입력한 후 [요청] 버튼을 클릭'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A099@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '관리자페이지 > 제품사용관리 > 상담지원이력 상세 > 지원내용 > 상담일지에서 확인 가능하다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A100@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'HD 해상도(1280*720) 기준 20~100% 배율로 조절하며 HD보다 낮은 해상도는 30~100%로 조절한다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A101@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '공유문서(or 공용문서)\\\\Rsupport\\\\RemoteCall\\\\Capture\\\\해당날짜\\\\Support No' 저장 경로와 'URL 전송은 고객 단말기에 URL을 전송해 웹 페이지에 접속시킨다'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A102@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '제어권을 얻어 고객 단말기를 제어하는 기능'과 '화살표 모양 포인터를 표시해 특정 위치나 움직임을 쉽게 안내하는 기능'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A103@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '각 항목을 클릭해 설정을 변경할 수 있는 기능이며, 단말기 제조사·기기별로 지원 불가능한 기능이 존재할 수 있다'를 명시",
+    "fix_hint": ""
+  }
+]

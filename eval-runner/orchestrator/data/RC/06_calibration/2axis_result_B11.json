@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A041@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 Ctrl+Windows+W(선택)와 Ctrl+Windows+Left/Right(이동)를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A042@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 뷰어 화면 배율 25~200%와 Ctrl+Windows+Down/Up을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C007@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 화면 맞춤·실제 크기·전체화면(Ctrl+Windows+Enter) 3방식을 각각 구분하여 설명",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G021@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 화면 잠금 해제는 상담원 요청 후 고객 동의 하에 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A043@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 Ctrl+Windows+C, jpg 저장, 공유문서\\Rsupport\\RemoteCall\\Capture\\해당날짜\\Support No 경로를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A044@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 URL 전송(Ctrl+Windows+U)으로 고객 PC에 웹 브라우저를 실행해 URL 실행함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C008@G-B2-1",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "gold_answer에 '저장 Received Files'가 포함되나 evidence_excerpt에는 파일 저장 위치가 전혀 기재되지 않음(발췌 밖 지식)",
+    "fix_hint": "evidence에 저장 경로가 없으므로 '저장 Received Files'를 제거하거나 해당 근거를 추가해야 함"
+  },
+  {
+    "id": "RC-A045@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 상담원 PC와 고객 PC의 클립보드 내용을 확인·교환할 수 있음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A046@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 상담원 화면 공유 시 고객의 그리기·파일 전송 및 제어권 허용 시 제어 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A047@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 채팅내용과 파일전송 이력이 지원이력에 저장되고 재실행 시 기존 이력이 유지됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G022@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 음성 채팅 사용을 위해 사운드 카드 드라이브 정상 설치와 마이크·이어폰 단자 연결을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G023@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 사운드카드 종류에 따라 소리 공유가 지원되지 않을 수 있음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G024@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 녹화 파일은 상담원 PC에 날짜별 저장되며 음성채팅 내용은 함께 기록되지 않음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A048@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 원하는 프로그램만 선택하거나 전체 공유 체크가 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A049@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 블라인더 열기로 특정 영역 공유를 제한하고 제한 영역은 흐릿하게 보임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A050@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 즐겨찾기·시스템 정보·프로세스 정보·단축키 정보 4가지 추가기능을 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G025@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 접속 안내 창 종료 시 상담원과의 원격 연결이 끊어짐을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A051@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 음성·문자 채팅, 그리기, 블라인더, 파일 전송, 받은 파일 폴더 열기, 프로그램 공유, 원격 프린터 설치/제거, 화면 전송/중지, 최소화, 원격 종료 등을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A052@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 채팅 창 종료 상태에서도 상담원 메시지 입력 시 하단 알림 창이 노출되고 클릭 시 재참여 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D017@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 가상 프린터 드라이버 설치 후 프린터 설정에서 Rsupport Remote Printer6 선택 및 인쇄 실행 단계를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A053@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 기본 저장 경로 C:\\Users\\Public\\Documents\\Rsupport\\RemoteCall\\Record와 경로 지정 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D018@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 세션서버 연결 실패 시 스크린 샷 모드로 전환되고 뷰어에 5초마다 전송됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A054@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 지원 구분이 'Screenshot(PC)'로 출력됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A055@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 웹 지원 요청 시 상담원 분배 및 웹 채팅·원격제어 지원, 설치 없이 웹 브라우저로 문자·음성 연결됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D019@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 ①Agent 로그인 ②상담/예약 요청 ③요청 메시지 표시·클릭 후 지원 ④채팅 메뉴 원격지원 ⑤예약 목록 확인 후 뷰어 대기 순서를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G026@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 상담불가능은 예약가능수 초과 및 업무시간 종료·휴일이거나 해당 창구에 할당된 상담원이 없는 경우임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C009@G-B2-1",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "gold_answer에 예약 지원 시 '전화번호·상담가능 일시 입력'이 포함되나 evidence_excerpt에는 해당 내용이 전혀 기재되지 않음(발췌 밖 지식)",
+    "fix_hint": "evidence에 '전화번호·상담가능 일시 입력' 근거가 없으므로 해당 내용을 제거하거나 근거를 추가해야 함"
+  },
+  {
+    "id": "RC-D020@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 원격지원 아이콘 클릭 → 원격 요청 → 고객 측 수락 시 상담원 PC에 뷰어 실행 단계를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A056@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 파일 보내기, 채팅 세션 공유, 즐겨찾기, 리포트, 원격 지원 시작, 대화 내용 저장, 단축 메시지 전송 기능을 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D021@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "근거에서 파일 전송 요청 시 수락/거절 메시지가 출력되고 거절 시 상담원 채팅 창에 전송 취소 메시지가 출력됨을 명시",
+    "fix_hint": ""
+  }
+]

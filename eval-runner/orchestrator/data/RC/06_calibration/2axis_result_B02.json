@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A022@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 SecretKey 미존재 시 Response status 401을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A023@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 표준 HTTP 상태 코드 리턴 및 JSON 형태로 전송함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A024@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 에러코드 상세 정보는 별첨의 에러코드 명세에서 확인 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A025@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 HTTP 상태 오류를 제외한 서비스 오류코드는 Error Page로 표시함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A026@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 웹뷰어 SDK 항목의 보기 버튼 클릭으로 키를 확인함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A027@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 사용자 상세 페이지의 url에 userId 값이 있음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A028@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 URI /wv/sdk/start의 Method가 GET임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G007@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 미입력 또는 지원하지 않는 언어 코드 입력 시 브라우저 기본 언어로 자동 설정됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A029@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 상담 종료 시 window.close() 스크립트로 창을 자동으로 닫음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G008@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 a 태그 방식은 브라우저나 설정에 따라 상담 종료 시 창이 자동으로 닫히지 않을 수 있음을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A030@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 창 자동 닫기 기능의 가장 안정적인 동작을 보장하므로 window.open() 방식을 강력히 권장함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A031@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 UIApplication.shared.open() 함수로 전달하여 설치된 브라우저를 호출함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A032@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 RemoteCall 서비스의 API 이용과 관련된 문의는 아래 정보를 참조바랍니다고 안내함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 검증 완료 후 정식 라이선스 계약을 진행하며 정식 API 인증정보는 영업담당자에게 요청함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D002@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 POST /wv/sdk/secret/verify로 인증 후 GET /wv/sdk/start에 토큰을 쿼리로 전달해 호출함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 997은 secretKey 불일치이며 HTTP 헤더에 Authorization: Bearer SecretKey를 담아 요청함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 고객사 정보 사전 등록 후 문의 양식 작성·신청이 승인되면 Email로 정보를 수신함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 사용자 인증 API 상세([RC-SPEC-WVSDK-009])의 sdkLoginAccessToken을 start API([RC-SPEC-WVSDK-011]) 파라미터로 사용함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D006@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 모바일 및 PC의 최저 사양은 각 플랫폼/OS 제공사의 수명 종료 정책(End of OS Life Policy)과 동일하게 지원함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A033@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 RemoteCall Professional은 월 170,000원이며 VAT 별도, 1개 ID 기준임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A034@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional은 바로 구매하기 링크와 연간 결제 할인 문의 안내가 제공됨을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A035@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional은 설치 없이 웹브라우저로 접속 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A036@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional은 지원ㆍ접속 이력 조회 및 저장을 제공함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A037@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 RemoteCall Enterprise는 월 190,000원이며 VAT 별도, 1개 ID 기준임을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A038@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Enterprise는 설치 없이 웹브라우저로 접속 가능함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A039@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Enterprise는 소리ㆍ프로그램 공유 기능을 제공함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A040@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Enterprise는 상담일지 기록 기능을 제공함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A041@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional과 Enterprise 모두 접속 페이지 템플릿 커스터마이징을 지원함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A042@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional과 Enterprise 모두 지원 종료 후 모듈 자동 삭제를 지원함을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A043@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Professional과 Enterprise 모두 지원 시작 전 고객 약관 동의 절차를 지원함을 명시",
+    "fix_hint": ""
+  }
+]

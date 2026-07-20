@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-E023@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고, gold_answer_required가 '자료에 없음'을 명시하도록 요구하여 npm 패키지 설치 여부에 대한 E형 무응답 처리가 타당함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E024@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, sdkLoginAccessToken 유효 시간에 대한 근거가 전혀 없어 '자료에 없음' 처리가 적합함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E025@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고, 웹뷰어 SDK 연동 테스트용 샌드박스 서버 도메인 존재 여부에 대한 자료가 부재함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E026@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 웹뷰어 SDK API 명세가 OpenAPI(Swagger) 형태로 제공되는지에 대한 근거가 자료 내 미존재함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E027@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고, SDK 인증 API 요청 본문의 최대 크기(KB)에 대한 정보가 제공된 자료에 없음.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E028@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 영상 지원 세션 제3자 참관 동시 접속 인원 제한에 대한 근거가 전혀 부재함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E029@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고, 리모트콜 API 구버전 지원 종료(deprecation) 정책에 대한 자료가 존재하지 않음.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E030@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며, 웹뷰어 SDK 인증 IP 화이트리스트 최대 개수 제한에 대한 근거가 자료 내 미존재함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Ver. 7.6.3(2025.05.27)'을 직접 인용하여 gold의 버전 정보가 충분히 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '방문하지 않고 인터넷을 통해 고객 PC를 원격연결한 후 상담원이 원격지에서 지원'이 gold의 '방문 없이, 원격연결 지원' 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 관리자는 '원격지원 환경과 상담원 정보를 관리', 상담원은 '채팅지원·원격지원을 담당', 고객은 '채팅지원·원격지원을 요청'으로 세 역할을 명확히 구분함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 에이전트는 '상담원이 고객지원 시 실행시키는 프로그램', 뷰어는 '원격지원 시 고객의 PC를 제어할 수 있게 연결하는 프로그램'으로 각각 정의함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 에이전트 대기는 '채팅 상담을 위해 상담원이 고객을 기다리는 상태', 뷰어 대기는 '원격지원을 위해 상담원이 고객을 기다리는 상태'로 채팅과 원격지원을 구분함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원 연결을 위해 고객이 중계페이지에서 입력하는 숫자'로 접속 코드를 정의하여 gold의 '중계페이지 입력 숫자'를 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객의 사전 동의 하에 고객 PC의 마우스·키보드를 제어할 수 있는 권한'으로 제어권을 정의하여 gold의 필수 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '창구별 전문 상담원을 배정하고 고객이 필요에 맞는 창구를 선택해 상담을 요청할 수 있는 웹 페이지 상의 공간'으로 창구를 정의함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격으로 진단·해결하는 원격지원 도구'이며 '문자대화·음성대화 등 커뮤니케이션 도구와 파일전송·원격 프린트 등 부가기능을 제공'함을 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '프로그램을 설치할 필요가 없으며, 웹 브라우저에서 접속코드를 입력하거나 아이콘만 클릭하면' 채팅 상담 시작 가능함을 기술하여 무설치 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A011@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Windows 10, 11(32bit·64bit 공통)'과 'Pentium 4 2.0GHz, 512MB 이상'을 권장 환경으로 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Google Chrome 107 이상, Mozilla FireFox 106 이상, Microsoft Edge 107 이상, Whale 3.14 이상(모두 최신버전)'을 권장 브라우저로 기술함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '방화벽은 Out Bound 80(http)/443(https) 포트가 열려 있어야 한다'고 기술하여 gold의 OutBound 80, 443 요건과 포트·방향 모두 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Windows 8.1 이하 버전에서는 Microsoft 측의 기술지원 종료에 따라 일부 기능이 정상 작동되지 않을 수 있다'고 기술하여 일부 기능 제한 조건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Mac OS 12(Monterey)~15(Sequoia)/64bit'와 'Intel 및 Apple Silicon 기반'을 명시하여 gold의 OS 버전 및 칩셋 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Apple Safari 15.4 이상, Google Chrome 107 이상, Mozilla Firefox 106 이상, Microsoft Edge 107 이상'을 권장 브라우저로 기술하여 4종 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Linux 32bit GUI는 지원하지 않는다'고 명시하여 32bit GUI 미지원 조건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Google Chrome 107 이상, Mozilla Firefox 106 이상'과 '방화벽은 Out Bound 80/443 포트 오픈'을 기술하여 브라우저 2종 및 포트 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '포트(80/443)를 차단한 경우 서비스 이용이 불가능할 수 있다'고 기술하여 차단 시 이용 불가 요건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Macintosh 환경의 상담원은 리모트콜 웹뷰어 제품을 사용하여 고객을 지원할 수 있다'고 기술하여 웹뷰어 제품 사용 조건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '홈페이지 접속 → 고객지원 > 제품 매뉴얼/설치파일 클릭 → 통합 에이전트 다운로드 → rcStartSupport.exe 실행 → 안내에 따라 설치 → 바탕화면 바로가기 생성'의 전체 순서를 기술하여 다운로드→실행→설치 순서를 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A017@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Proxy 선택 옵션에서 본인 환경에 맞는 옵션을 선택'하고 'Proxy Server 정보는 네트워크 관리자에게 문의'함을 기술하여 Proxy 옵션 선택 요건을 충족함.",
+    "fix_hint": ""
+  }
+]

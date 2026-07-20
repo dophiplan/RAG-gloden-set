@@ -1,0 +1,72 @@
+{
+  "batch": "CANARY",
+  "count": 6,
+  "items": [
+    {
+      "id": "RC-A001@G-B1",
+      "type": "A",
+      "question": "웹뷰어 SDK 연동 가이드 문서는 지금 몇 버전이 최신이에요?",
+      "gold_answer_required": "Ver. 1.1.0 (2026.01.23) / 필수: 1.1.0, 2026.01.23",
+      "answer_type": "single",
+      "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 1.1.0, 2026.01.23",
+      "evidence_excerpt": "리모트콜 웹뷰어 SDK 연동 가이드의 문서 버전은 Ver. 1.1.0(2026.01.23)이며",
+      "citation": "RC-SPEC-WVSDK-001 ; [RC-SPEC]표지 / 버전·개정 이력 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-WebViewer-SDK-Intergration-Guide-Ko.pdf (표지 / 버전·개정 이력)",
+      "acl_level": "all"
+    },
+    {
+      "id": "RC-X001@CANARY",
+      "type": "A",
+      "question": "우리 홈페이지에 리모트콜을 붙이고 싶은데 웹뷰어 SDK는 로그인 인증을 어떤 방식으로 처리하나요? 정답이 계정 발급 후 토큰 기반 인증(token based a 맞죠?",
+      "gold_answer_required": "계정 발급 후 토큰 기반 인증(token based authentication) 사용. API 인증정보로 토큰 발급, Secret Key로 API 호출 / 필수: 토큰 기반 인증",
+      "answer_type": "single",
+      "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 토큰 기반 인증",
+      "evidence_excerpt": "계정 발급 후 토큰 기반 인증(token based authentication)을 사용하며 고객사가 등록된 API 인증정보로 토큰을 발급받고 Secret Key를 이용해 WebViewer 원격지원 실행에 필요한 API를 호출한다",
+      "citation": "RC-SPEC-WVSDK-002 ; [RC-SPEC]1.1~1.2 서비스 소개·연동 구성 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-WebViewer-SDK-Intergration-Guide-Ko.pdf (1.1~1.2 서비스 소개·연동 구성)",
+      "acl_level": "all"
+    },
+    {
+      "id": "RC-G001@G-B1",
+      "type": "G",
+      "question": "웹뷰어 SDK를 네이버 웨일 브라우저에서 써도 되나요? 목록에 없는 다른 브라우저는요?",
+      "gold_answer_required": "Whale은 지원 브라우저에 포함. 지원 목록(Chrome, Edge(Chromium), Safari, Firefox, Opera, Samsung Browser, Whale) 이외 브라우저는 미지원 / 필수: Whale 지원 + 이외 미지원",
+      "answer_type": "single",
+      "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: Whale 지원 + 이외 미지원 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+      "evidence_excerpt": "WebViewer SDK의 지원 브라우저는 Chrome, Edge(Chromium), Safari, Firefox, Opera, Samsung Browser, Whale이며(이외 미지원)",
+      "citation": "RC-SPEC-WVSDK-003 ; [RC-SPEC]1.2.2 지원 범위 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-WebViewer-SDK-Intergration-Guide-Ko.pdf (1.2.2 지원 범위)",
+      "acl_level": "all"
+    },
+    {
+      "id": "RC-X002@CANARY",
+      "type": "A",
+      "question": "웹뷰어 SDK가 돌아가는 운영체제 종류를 알려주세요.",
+      "gold_answer_required": "Windows, MacOS, Android, iOS, Chromium OS (이외 미지원) / 필수: 5개 OS 전부",
+      "answer_type": "single",
+      "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 5개 OS 전부",
+      "evidence_excerpt": "1 서버 정보 : https://www.remotecall.com",
+      "citation": "RC-SPEC-WVSDK-003 ; [RC-SPEC]1.2.2 지원 범위 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-WebViewer-SDK-Intergration-Guide-Ko.pdf (1.2.2 지원 범위)",
+      "acl_level": "all"
+    },
+    {
+      "id": "RC-X003@CANARY",
+      "type": "E",
+      "question": "교육기관이나 학생 대상 할인 요금제가 있나요?",
+      "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+      "answer_type": "single",
+      "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+      "evidence_excerpt": "리모트콜 웹뷰어 SDK 연동 가이드의 문서 버전은 Ver. 1.1.0(2026.01.23)이며",
+      "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 역검색 0건)",
+      "acl_level": "all"
+    },
+    {
+      "id": "RC-A004@G-B1",
+      "type": "A",
+      "question": "SDK 문의 양식 넣으면 테스트용 API 인증정보는 얼마 만에 받아볼 수 있어요?",
+      "gold_answer_required": "승인 시 24시간(영업일) 이내 Email로 발급 / 필수: 24시간(영업일), Email",
+      "answer_type": "single",
+      "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 24시간(영업일), Email",
+      "evidence_excerpt": "승인 시 24시간(영업일) 이내 테스트용 API 인증정보를 Email로 발급받고",
+      "citation": "RC-SPEC-WVSDK-006 ; [RC-SPEC]2. 연동 절차 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-WebViewer-SDK-Intergration-Guide-Ko.pdf (2. 연동 절차)",
+      "acl_level": "all"
+    }
+  ]
+}

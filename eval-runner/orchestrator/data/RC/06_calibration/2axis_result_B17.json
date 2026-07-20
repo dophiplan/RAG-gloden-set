@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-E010@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold_answer가 '자료에 없음'을 명시하도록 요구하여 E형 조건(근거 부재 시 거절)을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E011@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이며 gold_answer가 '자료에 없음' 응답을 강제하여, 커버리지맵 2,822행 부재 검증 결과와 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E012@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold_answer가 '자료에 없음' 명시를 요구해 E형 무응답 기준에 부합함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'https://admin.startsupport.com/'와 '제품 구입 시 파트너 또는 본인이 지정한 값'이 gold_answer의 필수 요소를 직접 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Internet Explorer 7.0 이상·FireFox·Google Chrome·Safari'와 'Microsoft Office Excel 2000 이상'이 gold_answer의 브라우저 및 Excel 조건을 그대로 지지함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 회사관리자 전용 범위(접속페이지 설정·회사옵션 설정·통계 조회)와 그룹관리자·일반사용자를 포함한 3권한 구분이 gold_answer와 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '사용자 관리·상담도구관리·제품 사용 관리·통계(상담 통계)' 4개 메뉴가 gold_answer 필수 4개 메뉴와 정확히 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '이력 데이터 저장 안함 설정 시 지원 이력을 저장하지 않으며'와 '보존 기간은 6개월/12개월(기본 12개월)'이 gold_answer의 저장 안함 및 보존 기간 조건을 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 하(6~24자 영문·숫자)·중(8~24자, 연속 숫자 3자 이상 불가)·상(8~24자 대소문자·숫자·특수문자)·최상(12~24자, 최근 2회 재사용 불가, 아이디·이메일 일부 포함 불가) 4단계 조건이 gold_answer와 완전히 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '로그인 실패(비밀번호 오류) 5회 시 계정 잠금 설정', '관리자가 초기화·변경 후 재로그인', '로그인 잠금 시간 설정'이 gold_answer의 5회 잠금 및 관리자 초기화 절차를 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '비밀번호 사용 기간을 30·60·90일로 설정할 수 있고 초과 시 보안 단계 규칙에 따라 변경해야 한다'가 gold_answer의 30/60/90일 및 초과 시 변경 규칙을 지지함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '메일 인증은 사전 등록 Email로 발송된 8자리 인증번호'와 '구글 OTP는 Google Authenticator 앱에서 생성된 OTP'가 gold_answer의 메일 8자리 vs OTP 앱 구분을 정확히 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '관리자만 사용자의 OTP 코드를 (재)생성할 수 있다'가 gold_answer의 '관리자만 (재)생성' 필수 조건과 정확히 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '사용' 시 로그인 URL(50자 이하)·로고 이미지(500KB 이하)·안내문구(20자 이하) 설정 및 '미사용 시 기본값'이 gold_answer의 사용 설정 및 3가지 항목을 그대로 지지함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '아이디(수정 불가)'와 비밀번호·권한·사용자명·대화명·전화·휴대폰·이메일·수신 여부·Google OTP 인증 키 설정 가능이 gold_answer의 아이디 수정 불가 및 수정 항목과 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '그룹옵션에서 해당 기능이 전체사용 또는 사용 안함이면 상담원 옵션을 변경할 수 없다'가 gold_answer의 그룹옵션 우선 원인을 직접 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'PC 지원·창구형 지원·Android 지원·iOS 지원·영상 지원·Android SDK·iOS SDK·웹뷰어 지원'별 사용 여부 설정이 gold_answer의 제품별 설정과 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 영상 지원 전용 옵션으로 화면 확대/축소·회전·플래쉬·화질·포커스·스피커폰·전후면 전환·모드 전환·위치정보·전송 모드·저장·해상도(640*480/고해상도)가 gold_answer의 5개 이상 필수 항목을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '채팅 종료 시 대화 기록 저장(상담원측·고객측)'을 제어함이 gold_answer의 대화 기록 저장 제어 필수 조건과 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 에이전트 로그파일·자동 로그아웃·동의서·알림 창 제어 금지·세션 비밀번호·모듈 삭제·IP·MAC·블라인더 등 보안 옵션 목록이 gold_answer의 항목 5개 이상 필수를 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F004@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '전체 사용(강제 사용)·사용 안함(강제 미사용)·사용자 설정' 3상태와 '구매 제품에 해당 기능 권한이 없는 경우 변경 불가'가 gold_answer의 3상태 및 변경 불가 사유와 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '그룹 보안설정에서 전체 사용/사용자 설정 후 상담원 옵션에서 자동/고정 패스워드를 선택'하고 '고객이 아이콘 클릭 후 4자리 패스워드를 확인'함이 gold_answer의 그룹 설정→상담원 자동/고정→4자리 절차를 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '전체사용으로 동일 구역' 적용과 '사용자설정 후 사용자별 보안설정에서 IP(사설/공인)·MAC 추가' 및 '구분기호 없이' 작성이 gold_answer의 전체 vs 상담원별 구분을 지지함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속페이지정보 email 전송을 전체사용'(기본 메일 클라이언트 미설치 시 불가)과 '앱 설치 정보 SMS 전송을 전체사용 변경 후 발송 내용 입력'이 gold_answer의 email vs SMS 설정을 각각 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A011@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '채팅 종료 시 대화 기록 저장(상담원측) 전체사용' 시 서버 자동 저장과 'Professional 이상 버전에서 지원'이 gold_answer의 전체사용 및 버전 조건을 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '종료 팝업 창(URL 지정) 전체사용' 시 지정 사이트 표시와 '모듈 삭제를 전체사용으로 하면 접속 종료 후 실행 모듈 자동 삭제'가 gold_answer의 종료 팝업 URL 및 모듈 삭제 전체사용을 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객 측 알림 창 제어 금지 기능을 사용 안함으로 변경하면' 상담원이 동의 확인 메시지 박스를 직접 확인/취소 클릭 가능함이 gold_answer의 제어 금지 사용 안함과 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 페이지는 회사 관리자 권한만 접근 가능'하며 '개인정보보호 사용 시 지원내역 상세의 상담원 정보·고객 PC명·IP·Mac·MSISDN/IMEI 미표시'가 gold_answer의 회사관리자만 및 미표시 항목과 정확히 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '한국어·일본어·영어·중국어 간체/번체·스페인어·프랑스어·포르투갈어' 지원 및 기본 언어 설정 가능이 gold_answer의 언어 목록과 일치함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C004@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 EXE(일회성 실행파일·브라우저 무관)·설치형(접속 번호 입력 전 모든 모듈 자동 업데이트)·개선형 EXE(고속)(속도 향상) 3방식 구분이 gold_answer의 3방식 구분과 정확히 일치함.",
+    "fix_hint": ""
+  }
+]

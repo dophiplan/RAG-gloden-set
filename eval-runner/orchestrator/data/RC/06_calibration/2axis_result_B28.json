@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A010@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '고객과 상담사가 원격지원 도중 PC에 저장된 파일을 서로 주고받을 수 있습니다'로 양방향 파일 송수신을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B6",
+    "verdict": "의심",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "fail",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문은 기업 브랜드 로고·이미지 커스터마이징 가능 여부를 묻는 속성/기능 질문인데 F(권한/거버넌스)로 선언됨",
+    "fix_hint": "type을 A(속성/기능)으로 변경"
+  },
+  {
+    "id": "RC-A011@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '원격지원 시작 버튼을 클릭하여 지원을 시작하세요'와 지원 시작 페이지 주소로 절차를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'Windows용 파일'과 'rcstartsupport.exe'를 명시하여 설치 파일을 특정",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '웹 브라우저만 열면'과 '별도 설치가 필요 없이'로 무설치 브라우저 로그인을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C002@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 ①접속 준비·②접속번호 생성·③원격지원 연결의 3단계 순서를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B6",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 'PC·모바일·영상'이라는 정답 핵심 키워드가 그대로 포함되어 정답 누설",
+    "fix_hint": "질문에서 PC·모바일·영상 키워드를 제거하고 '웹 원격지원에서도 핵심 지원 기능을 쓸 수 있나요?' 등으로 재구성"
+  },
+  {
+    "id": "RC-C003@G-B6",
+    "verdict": "의심",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "fail",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문은 'Windows 10~11, macOS 13~26' 등 지원 환경 사양을 묻는 속성 질문인데 C(순서/프로세스)로 선언됨",
+    "fix_hint": "type을 A(속성/사양)으로 변경"
+  },
+  {
+    "id": "RC-A015@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '기존 웹 어플리케이션에 원격지원 기능을 추가할 수 있습니다'로 SDK를 통한 웹앱 탑재를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '기존 애플리케이션(웹/앱)에서 바로 원격 지원'과 '버튼 클릭 한 번으로 리모트콜 웹뷰어에 연결'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '고객이 지정한 영역은 상담사 화면에서 자동으로 가려집니다'로 블라인드 보호 경계 조건을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A017@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '창구 기능 고객이 원하는 시점에 원격 지원 요청 버튼'과 '상담 일지 작성'을 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D002@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '모듈 자동 삭제'·'블라인더'·'모바일 기기에서도 PC 지원 가능' 3가지 보안 기능을 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A018@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'IT 개발·서비스 기업의 기술지원'과 '사내 IT 자산·인프라 관리'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '블라인더를 제공합니다'·'원격접속모듈을 자동 삭제'·'기능별/ID별/그룹별로 개별 관리' 3가지 경계 조건을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A019@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'PC 없이 모바일 기기에서도 지원할 수 있습니다'와 'SMS로 접속주소를 발송하면'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '모바일 지원 도중 영상 지원으로 전환하여... 교차 가능합니다(모바일, 영상 라이선스 보유 시 가능)'로 경계 조건을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 상담사 측의 '6자리 번호' 안내와 고객 측의 '앱스토어/플레이스토어에서 앱 다운로드' 절차를 모두 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A020@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '통신사'와 '이러닝 업체'를 활용 업종으로 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A021@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '카메라로 현장 영상을 공유하여 같이 보면서 문제를 진단하고 해결 방법을 안내하는 원격 지원 방법'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '고객이 앱을 설치하지 않아도 지원 가능하며, 상담사가 영상 아이콘 클릭으로 접속 경로를 SMS로 전달'로 예외 조건을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A022@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '가전기기 제조사'와 '건설·제조 현장'을 활용 산업으로 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '원격지원 웹사이트를 엽니다'·'로그인 후 지원 시작 버튼을 클릭하면 고객에게 안내할 여섯 자리의 번호가 표기됩니다'로 단계를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A023@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '바코드를 확인하면 발주서의 상태와 대조해볼 수 있고, 전문가의 기술 지원도 영상을 통해 실시간으로 제공'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A024@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '은행권, 제2금융권, 인터넷전문은행 등 국내 금융권의 80%가 도입한 영상 인증 솔루션'을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'remotecall.io'·'113366.io'·'6자리 접속 코드는 일회성'으로 순서와 필수 요소를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A025@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '지원하는 측 화면 상단 중앙에 기능 툴바가 나타나고, 지원받는 측 화면 하단 중앙에' 툴바 위치를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A026@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '나가기 버튼 또는 햄버거 메뉴의 ‘지원 종료하기’로 종료할 수 있고'를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D006@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '로그인'·'여섯 자리 초대코드'·'초대 링크를 복사하여... 전달'·'원격지원 중 문구'로 단계를 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A027@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '상담원의 화면 상단에 메뉴바'·'고객의 경우 화면 하단에 메뉴바'·'그리기 옵션을 이용하여 화면에 직접 표시'를 명시",
+    "fix_hint": ""
+  }
+]

@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-C005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 창구 방식의 분배 방식(전체/창구/순차)과 창구 정보 옵션(대기 시간 표시·상담 요청 시 입력 정보·상담 예약 사용)을 모두 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '사용자디자인 설정'이 디자인 파일을 zip로 저장해 템플릿 설정에 업로드하는 방식임을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 상담 구분 추가가 '그룹 관리자 권한 이상'만 가능하고 동일 레벨 내 드래그 앤 드롭 순서 변경 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 관리자 추가 URL은 상담원이 임의 수정·삭제할 수 없고 일반 상담원은 내 설정 탭에서 단축 메시지 추가·변경·삭제 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 아이폰 안내 이미지 최대 10개 등록과 상담원 PIP(웹뷰어)의 고객 모바일 화면 PIP 영역 노출·위치 설정 기능을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F009@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 제품 사용 관리의 현재 로그인한 사용자에 '강제종료 가능'이 명시되어 있고 세션·이력·회수 확인도 기술됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 상담지원이력(Excel 다운로드)·동시 상담 사용자 현황(동시사용자수 라이선스 대비 조회)·다운로드(본사 제공 문서·프로그램) 3기능을 모두 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F010@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 통계 메뉴가 '회사 관리자 권한 계정에서만 확인 가능'하고 시간대별·일별·요일별·월별·상담원별·상담구분별·지원시간별·운영체제별·웹 브라우저별 통계 및 Excel 출력을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 WebViewer를 '원격지원 시 고객의 PC를 제어할 수 있게 연결하는 웹 브라우저 창'으로 정의함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A017@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 WebViewer가 PC OS 기반 화면 공유·원격 진단 도구이며 상담원·고객 모두 '별도 프로그램 설치 없이 웹 브라우저 환경에서 사용' 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A018@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Windows 10·11(32/64bit), Pentium 4 2.0GHz·512MB 이상, Chrome 107·Edge 107·FireFox 106·Whale 3.14 이상, 방화벽 Out Bound 80/443을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Mac OS 12~15/64bit·Safari 15.4↑(Safari 15 미만 일부 제한)과 Linux 상담원 Ubuntu 14.04·CentOS 7.5 이상/64bit·Chrome 107·Firefox 106 이상을 모두 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 크롬북은 화면 제어 메뉴가 비활성화되어 '고객 화면 공유만 가능'하고 크롬 이외 브라우저 접속 시 제약 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 remotecall.io 로그인→뷰어 대기창 실행→113366.io 안내→접속번호 입력→파일 실행 순서를 단계별로 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A019@G-B2-2",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 '비밀번호 재설정'이라는 gold 핵심 키워드가 직접 노출되어 정답 누설",
+    "fix_hint": "질문을 '로그인 시 보안단계 설정에 따라 추가 요구가 있나요?' 등으로 수정"
+  },
+  {
+    "id": "RC-D006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 RCmacHost.app 실행과 Mac OS 10.14 이상의 화면 기록/손쉬운 사용 권한을 [시스템 환경설정]>[보안 및 개인정보 보호]에서 설정함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A020@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 메인 화면의 '[원격지원 시작하기]' 버튼으로 뷰어 대기창을 실행하고 SMS·E-mail 안내가 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A021@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 지원 종료 시 상담원·고객 브라우저에 '지원 시간과 상담원 정보'가 표시되고 종료 페이지에 상담원 대화명(없으면 이름)이 표기됨을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 [내 화면 공유 시작하기]→접속번호 입력→공유 정보 선택(동의)→화면·창 선택→공유(허용) 클릭 순서와 Safari 선택 창 미표시 예외를 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Mac OS Chrome 환경의 화면공유 권한을 [시스템 환경설정]>[보안 및 개인정보 보호]>[화면 기록]에서 설정해야 함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 화면 캡처는 'Chromium 기반 브라우저에서만 활성화되어 Safari·Firefox 브라우저는 지원하지 않음'을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A022@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Windows PC 기준 화면 품질을 고품질(30fps)·일반품질(20fps)·저품질(7fps) 중 선택 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D009@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 클립보드 동기화 사용 시 상담원·고객 PC 내역 동기화되며 상담원 브라우저 클립보드 권한을 [허용]으로 변경해야 원활함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 가상 키보드·특수키 전송·시스템 정보 메뉴는 '제어 권한이 활성화 상태인 경우에만 실행할 수 있다'를 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A023@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 전체 지우기 시 '상담원·고객 그리기 내역이 모두 삭제'되며 화면 일정 비율 이상 변경·전환 시 삭제될 수 있음을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D010@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 [내 기기로 가져오기] 클릭→고객 PC 파일 탐색기 열림→파일 선택→전송 확인창 [보내기] 클릭 순서를 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B2-2",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 '단방향'이라는 gold 핵심 키워드가 직접 노출되어 정답 누설",
+    "fix_hint": "질문을 '고객 PC 마이크 설정 여부에 따라 음성채팅 방식이 달라지나요?' 등으로 수정"
+  },
+  {
+    "id": "RC-A024@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 하단 -, + 버튼으로 '50~200% 배율 조절'이 가능함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A025@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 상담원 측 화면 녹화가 'WebM 파일'로 저장되며 사용 권한 설정과 별도 확장프로그램(Extensions) 설치가 필요함을 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A026@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 고객 접속 안내 창의 화면 일시 정지/해제·그리기·파일전송·마이크·종료하기·최소화 기능을 확인",
+    "fix_hint": ""
+  }
+]

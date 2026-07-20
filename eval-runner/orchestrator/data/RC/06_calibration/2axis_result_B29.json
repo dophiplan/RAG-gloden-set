@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A028@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Google Play·App Store·APK/앱스토어 링크 안내가 evidence_excerpt에 그대로 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A029@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "제품 소개서·도입안내서·브로셔·리플렛·화이트페이퍼 등이 evidence_excerpt에 모두 열거됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F003@G-B6",
+    "verdict": "의심",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "fail",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "사용자 매뉴얼 구성 질문은 권한/거버넌스(F)보다 사실추출형(A)에 가까움",
+    "fix_hint": "type을 A로 변경 권장"
+  },
+  {
+    "id": "RC-D007@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "remotecall.io 로그인→임시 비밀번호 변경→원격지원 시작 절차가 evidence_excerpt에 단계별로 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C004@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Windows 10~11·macOS 13~26·Linux 지원이 evidence_excerpt에 명시됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A030@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "rcstartsupport.exe 다운로드·설치 후 로그인 절차가 evidence_excerpt에 명시됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A031@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "2011년 리모트콜 모바일팩 최초 출시가 evidence_excerpt에 직접 기술됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A032@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "경동나비엔이 영상지원(RemoteCall + Visual Pack / Server)을 도입한 사실이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C005@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "KDS·Mobile Pack·Visual Pack 결합 및 해외 딜러 원격 제어·영상 상담 내용이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A033@G-B6",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 정답 요소인 '비주얼팩'이 그대로 포함되어 정답 누설 발생",
+    "fix_hint": "질문을 'LG전자는 리모트콜의 어떤 기능을 활용했어?' 등으로 변경"
+  },
+  {
+    "id": "RC-A034@G-B6",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "질문에 정답 요소인 '모바일팩'이 그대로 포함되어 정답 누설 발생",
+    "fix_hint": "질문을 'LG전자가 리모트콜의 어떤 제품을 언제 적용했고 무엇에 썼어?' 등으로 변경"
+  },
+  {
+    "id": "RC-A035@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "포스코 모바일팩 도입 및 화면 데이터 압축·최소 데이터 전송 특성이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A036@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "GreatCall의 모바일팩 도입 및 콜센터 폰 화면 지원 내용이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C006@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "2012년 3월 안심원격서포트·1600만·3개 콜센터가 evidence_excerpt에 모두 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A037@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "분당제생병원 홈페이지 https://www.dmc.or.kr/ 및 영상지원(Visual Pack) 도입이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A038@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "kakaoent.com·osstem.com 홈페이지와 영상지원(Visual Pack) 도입이 evidence_excerpt에 모두 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C007@G-B6",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "BNK부산은행·전북은행의 영상지원(Visual Pack) 여부가 evidence_excerpt에 없어 gold_answer의 '모두 영상지원' 주장이 뒷받침되지 않음",
+    "fix_hint": "BNK부산은행·전북은행 영상지원 근거를 evidence_excerpt에 추가하거나 '모두 영상지원' 문구를 제거"
+  },
+  {
+    "id": "RC-G007@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "K◯◯뱅크 영상지원·K은행 SDK 도입이 각각 evidence_excerpt에 수록되고 둘의 차이가 명확함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C008@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "kjbank.com·standardchartered.co.kr·wooribank.com 홈페이지가 evidence_excerpt에 각각 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A039@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "myasset.com·ceragem.co.kr 홈페이지가 evidence_excerpt에 각각 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A040@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "H인증중고차 고객사례가 리모트콜 SDK 도입 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A041@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "huawei.com·oneplus.com 홈페이지가 evidence_excerpt에 각각 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G008@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "경동나비엔·K자동차 고객사례 모두 영상지원(Visual Pack) 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "LG전자(가전)·LG전자(모바일) 고객사례 모두 홈페이지가 https://www.lge.co.kr/로 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "㈜엠클라우드소프트·투씨에스지 고객사례 모두 영상지원(Visual Pack) 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A042@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "posco.co.kr·puritech.co.kr 홈페이지가 evidence_excerpt에 각각 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A043@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "고객명 한양대학교 및 영상지원(Visual Pack) 도입 내용이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A044@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "한국도박문제예방치유원·서울화력발전소·예술의전당 모두 영상지원(Visual Pack) 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G011@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "상해사범대학·웅진씽크빅 고객사례 모두 영상지원(Visual Pack) 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G012@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "아쿠아리프·씨디네트웍스·클루커스 모두 영상지원(Visual Pack) 내용을 다룸이 evidence_excerpt에 수록됨",
+    "fix_hint": ""
+  }
+]
