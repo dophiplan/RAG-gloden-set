@@ -165,10 +165,10 @@ def make_mock_response_log():
             answer = ans if correct else "잘 모르겠습니다. 다른 자료를 확인해 주세요."
         responses.append({"id": qid, "hits": hits, "answer": answer})
     log = {"meta": {"run_date": "2026-07-16", "system_version": "mock@e2e",
-                    "corpus_version": f"TT corpus — 문서 {len(CORPUS_DOCS)}건·청크 "
+                    "corpus_version": f"{PROD} corpus — 문서 {len(CORPUS_DOCS)}건·청크 "
                                       f"{sum(len(v) for v in CORPUS_DOCS.values())}건"},
            "responses": responses}
-    out = DATA / "08_scoring" / "TT_응답로그_r1.json"
+    out = DATA / "08_scoring" / f"{PROD}_응답로그_r1.json"
     out.write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"  [팀장님 시뮬] 응답 로그 {len(responses)}건 → {N(out.name)}")
 
@@ -178,7 +178,7 @@ def main():
     # ── 초기화: 이전 TT 흔적 제거
     if DATA.exists():
         shutil.rmtree(DATA)
-    td = ROOT / "terrain.d" / "TT.yaml"
+    td = ROOT / "terrain.d" / f"{PROD}.yaml"
     if td.exists():
         td.unlink()
     st_path = ROOT / "state.json"
@@ -220,7 +220,7 @@ def main():
         ("캘리브 판정30", list((DATA / "06_calibration").glob("*.xlsx"))),
         ("판정대장", list((DATA / "07_stage2").glob("*판정대장*.xlsx"))),
         ("질문셋 발행본", list((DATA / "08_scoring").glob("*발행본*.xlsx"))),
-        ("성적표", list((ROOT / "results").glob("score_TT_*/score_report.json"))),
+        ("성적표", list((ROOT / "results").glob(f"score_{PROD}_*/score_report.json"))),
     ]
     ok = True
     for name, files in checks:

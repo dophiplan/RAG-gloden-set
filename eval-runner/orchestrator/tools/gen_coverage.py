@@ -63,12 +63,31 @@ SYSTEM = """[TASK:COVERAGE_UNITS] 너는 RAG 평가용 커버리지맵 추출기
 4. source 필드에는 입력 청크의 source 값을 그대로."""
 
 
+CHUNK_BATCH = 25   # 호출당 청크 수 — 실코퍼스(수천 청크)는 한 번에 못 넣는다 (컨텍스트·타임아웃)
+
+
 def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
-    payload = {"product": prod,
-               "chunks": [c for c in chunks if retry_ids is None
-                          or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]}
-    out = llm.chat(role, SYSTEM, json.dumps(payload, ensure_ascii=False), cfg)
-    return llm.extract_json(out)
+    """청크를 배치로 나눠 호출 — 대형 코퍼스 대응. 배치 단위 실패는 기록 후 계속."""
+    target = [c for c in chunks if retry_ids is None
+              or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]
+    units = []
+    total = (len(target) + CHUNK_BATCH - 1) // CHUNK_BATCH
+    for bi in range(0, len(target), CHUNK_BATCH):
+        part = target[bi:bi + CHUNK_BATCH]
+        bno = bi // CHUNK_BATCH + 1
+        try:
+            out = llm.chat(role, SYSTEM,
+                           json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), cfg)
+            got = llm.extract_json(out)
+            units += got if isinstance(got, list) else [got]
+        except Exception as e:
+            # 배치 실패는 침묵하지 않는다 — 기록하고 나머지는 계속 (부분 커버리지 > 전체 실패)
+            ledger_append("COVERAGE_MAP", "COVERAGE_BATCH_FAILED", f"script:{role}",
+                          evidence={"batch": f"{bno}/{total}", "chunks": len(part),
+                                    "err": str(e)[:200]}, product=prod)
+        if total > 4 and bno % 5 == 0:
+            print(f"  [{role}] 커버리지 추출 {bno}/{total} 배치…")
+    return units
 
 
 def _ensemble_roles(cfg):
@@ -110,7 +129,8 @@ def ensemble_generate(prod, chunks, cfg):
             fails.append({"role": role, "err": str(e)[:150]})
             ledger_append("COVERAGE_MAP", "ENSEMBLE_EXTRACTOR_FAILED", f"script:{role}",
                           evidence={"err": str(e)[:200]}, product=prod)
-    if len(roles) > 1 and pool:
+    MERGE_LIMIT = 200   # 이 이상이면 LLM 병합 생략 — 기계 dedup(정확 일치)만으로 충분·안전
+    if len(roles) > 1 and pool and len(pool) <= MERGE_LIMIT:
         merged_out = llm.chat("generator", MERGE_SYSTEM,
                               json.dumps({"units": pool}, ensure_ascii=False), cfg)
         merged = llm.extract_json(merged_out)
@@ -119,6 +139,11 @@ def ensemble_generate(prod, chunks, cfg):
             merged = pool
     else:
         merged = pool
+        if len(pool) > MERGE_LIMIT:
+            ledger_append("COVERAGE_MAP", "MERGE_SKIPPED_SCALE", "script:ensemble",
+                          evidence={"pool": len(pool), "limit": MERGE_LIMIT,
+                                    "처리": "기계 dedup만 적용 — 부분집합 통합은 사람확인 큐에서"},
+                          product=prod)
     # ID 재부여 — 모델 간 ID 충돌 제거 (문서약칭 + 일련번호)
     from collections import defaultdict
     seq = defaultdict(int)
