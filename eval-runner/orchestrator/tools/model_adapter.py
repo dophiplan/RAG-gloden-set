@@ -55,12 +55,20 @@ def detect_mode(cfg=None, env=None):
         # [v2] provider "cli" = 구독 로그인 CLI — 키 없이도 가용
         have[role] = bool(m and (m.get("provider") == "cli"
                                  or env.get(m.get("api_key_env", ""), "")))
-    nkeys = sum(have.values())
+    def _identity(role):
+        m = models.get(role) or {}
+        cmd = m.get("command") or []
+        cmd0 = cmd[0] if isinstance(cmd, list) and cmd else str(cmd)
+        return (m.get("provider"), cmd0, m.get("model"), m.get("api_key_env"))
+
+    # 같은 엔진이 생성·판정을 겸하면 = 1키 모드 (판정은 신규 세션② · 사람 재검 10% 강화)
+    same_engine = (have["generator"] and have["judge"]
+                   and _identity("generator") == _identity("judge"))
     if not have["generator"]:
         mode = 0  # 키 없음 — 모델 호출 전면 불가 (검수·상태 기계만 동작)
-    elif have["judge"] and have["reviewer"]:
+    elif have["judge"] and have["reviewer"] and not same_engine:
         mode = 3
-    elif have["judge"]:
+    elif have["judge"] and not same_engine:
         mode = 2
     else:
         mode = 1
