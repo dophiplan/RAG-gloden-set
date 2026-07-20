@@ -1,0 +1,17 @@
+{
+  "r2": {
+    "docs": 993,
+    "chunks": 8767,
+    "corpus_version": "rsupport KB documents 컬렉션 — remotecall.com 크롤 문서 974건·청크 8353건 + 인입잡 1304-1322 문서 19건·청크 414건 (계 문서 993건·청크 8767건) indexedAt 2026-06-30~2026-07-13 (문서 수는 doc_id 기준 · 테넌트 전체 23508건)"
+  },
+  "r4": {
+    "docs": 1073,
+    "chunks": 9967,
+    "corpus_version": "rsupport KB documents 컬렉션 — remotecall,remtoecall 매칭(URL·제목) 문서 1073건·청크 9967건 indexedAt 2026-06-30~2026-07-13 (문서 수는 doc_id 기준 · 테넌트 전체 23508건) · 검색 스코프=ingest_job_id 1030-1071,1076-1095,1097-1112,11"
+  },
+  "r5": {
+    "docs": 1054,
+    "chunks": 9553,
+    "corpus_version": "rsupport KB documents 컬렉션 — remotecall,remtoecall 매칭(URL·제목) 문서 1054건·청크 9553건 indexedAt 2026-06-30~2026-06-30 (문서 수는 doc_id 기준 · 테넌트 전체 23094건) · 검색 스코프=ingest_job_id 1030-1071,1076-1095,1097-1112,11"
+  }
+}
