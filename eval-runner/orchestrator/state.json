@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-20T19:19:08",
+  "updated": "2026-07-20T19:22:07",
   "products": {
     "RV": {
       "stage": "MAINTENANCE",
@@ -84,7 +84,8 @@
         }
       ],
       "halt_reason": null,
-      "judge_fingerprint": "713f4f20db31e29fa3ac89e5679b32b55d59fe71c26d52c74314e91c4b725507"
+      "judge_fingerprint": "713f4f20db31e29fa3ac89e5679b32b55d59fe71c26d52c74314e91c4b725507",
+      "key_released": "2026-07-20 (r1, 난희 결정)"
     },
     "RC": {
       "stage": "MAINTENANCE",
@@ -468,7 +469,8 @@
           "issued": "2026-07-20T13:45:57"
         }
       ],
-      "halt_reason": null
+      "halt_reason": null,
+      "key_released": "2026-07-18 (r5, 인수인계서 v2 §0)"
     },
     "RM": {
       "stage": "CORPUS_AUDIT",
@@ -478,7 +480,8 @@
       "compare_blocked": false,
       "stage_history": {},
       "open_gates": [],
-      "halt_reason": null
+      "halt_reason": null,
+      "key_released": null
     },
     "HR": {
       "stage": "CORPUS_AUDIT",
@@ -488,7 +491,8 @@
       "compare_blocked": false,
       "stage_history": {},
       "open_gates": [],
-      "halt_reason": null
+      "halt_reason": null,
+      "key_released": null
     },
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -498,7 +502,8 @@
       "compare_blocked": false,
       "stage_history": {},
       "open_gates": [],
-      "halt_reason": null
+      "halt_reason": null,
+      "key_released": null
     },
     "RC2": {
       "stage": "CORPUS_AUDIT",
@@ -508,29 +513,76 @@
       "compare_blocked": false,
       "stage_history": {},
       "open_gates": [],
-      "halt_reason": null
+      "halt_reason": null,
+      "key_released": null
     },
     "TT": {
-      "stage": "TERRAIN",
+      "stage": "SCORING",
       "status": "WAITING_HUMAN",
-      "calibration_passed": false,
-      "scorer_version": null,
+      "calibration_passed": true,
+      "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-20T19:19:08"
+          "done_at": "2026-07-20T19:21:56"
+        },
+        "TERRAIN": {
+          "done_at": "2026-07-20T19:21:56"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-07-20T19:21:57"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-07-20T19:22:00"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-07-20T19:22:01"
+        },
+        "CALIBRATION": {
+          "done_at": "2026-07-20T19:22:03"
+        },
+        "STAGE2": {
+          "done_at": "2026-07-20T19:22:03"
         }
       },
       "open_gates": [
         {
-          "id": "TERRAIN_TT",
-          "stage": "TERRAIN",
-          "flags": [],
+          "id": "SCORE_TT_r1",
+          "stage": "SCORING",
+          "flags": [
+            {
+              "type": "E형 환각(원시) 문맥 확인",
+              "id": "TT-E13",
+              "candidates": [
+                "양자암호 전송은 설정 메뉴에서 켤 수 있습니다."
+              ],
+              "ack_required": true
+            }
+          ],
           "acked": false,
-          "issued": "2026-07-20T19:19:08"
+          "issued": "2026-07-20T19:22:07"
         }
       ],
-      "halt_reason": null
+      "halt_reason": null,
+      "goldenset": {
+        "phase": "DONE",
+        "round": 1,
+        "done_units": [
+          "TT-MANUAL-001",
+          "TT-MANUAL-002",
+          "TT-MANUAL-003",
+          "TT-MANUAL-004",
+          "TT-NOTICE-001",
+          "TT-NOTICE-002",
+          "TT-NOTICE-003",
+          "TT-NOTICE-004",
+          "TT-POLICY-001",
+          "TT-POLICY-002",
+          "TT-POLICY-003",
+          "TT-POLICY-004"
+        ],
+        "batch": "B1"
+      }
     }
   }
 }
