@@ -72,10 +72,34 @@ def measure_agreement(path):
 
 
 # ── 규칙 C 지문 ─────────────────────────────────────────────
+def _cli_version(cmd0):
+    """[FIX-06] CLI 버전 문자열 — 회귀용 오버라이드(ORCH_CLI_VERSION_OVERRIDE) 지원.
+    한계: 클라이언트 업그레이드만 감지 — 서버 쪽 구독 기본모델 교체는 못 잡는다.
+    1차 방어는 config에 model 명시 고정 (지문은 클라이언트까지만 본다)."""
+    import os
+    import subprocess
+    ov = os.environ.get("ORCH_CLI_VERSION_OVERRIDE")
+    if ov:
+        return ov
+    try:
+        p = subprocess.run([cmd0, "--version"], capture_output=True, text=True, timeout=20)
+        v = (p.stdout or p.stderr).strip()[:120]
+        return v or "unknown"
+    except Exception:
+        print(f"⚠ {cmd0} --version 실패 — 지문에 'unknown' 반영 (버전 변경 감지 불가 상태)")
+        return "unknown"
+
+
 def fingerprint(prod, cfg=None):
     cfg = cfg or load_config()
     h = hashlib.sha256()
     h.update(json.dumps(cfg.get("models", {}), sort_keys=True, ensure_ascii=False).encode())
+    # [FIX-06] CLI provider 는 클라이언트 버전 문자열도 지문에 포함
+    for role, m in sorted((cfg.get("models") or {}).items()):
+        if m and m.get("provider") == "cli":
+            cmd = m.get("command") or ["claude"]
+            cmd0 = cmd[0] if isinstance(cmd, list) else str(cmd).split()[0]
+            h.update(f"{role}:{_cli_version(cmd0)}".encode())
     # 기준서(judge 프롬프트) 파일들 — 07_stage2 의 프롬프트 md
     for p in sorted((DATA / prod / "07_stage2").glob("*프롬프트*")):
         h.update(p.read_bytes())
