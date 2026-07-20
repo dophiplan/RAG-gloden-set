@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 평가 관제판 — 오케스트레이터 v0</title>
+<style>
+  :root{
+    --ink:#12151f; --panel:#1a1f2e; --panel2:#161a27; --line:#2b3247;
+    --tx:#dfe3ef; --tx2:#8e96b0;
+    --run:#3dd6b0; --human:#e879a8; --input:#d6b23d; --halt:#e85d6f; --doneC:#5a6486;
+    --mono:'IBM Plex Mono','Menlo',monospace; --sans:-apple-system,'Apple SD Gothic Neo','IBM Plex Sans KR',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh}
+  .num{font-family:var(--mono)}
+  header{display:flex;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{font-weight:700;letter-spacing:.02em}
+  .brand small{display:block;font-weight:400;color:var(--tx2);font-size:11px}
+  .tabs{display:flex;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px}
+  .tabs button{background:none;border:0;color:var(--tx2);font:inherit;padding:5px 14px;border-radius:6px;cursor:pointer}
+  .tabs button[aria-selected="true"]{background:var(--panel);color:var(--tx);font-weight:700}
+  .tabs button.addbtn{color:var(--run);font-weight:700}
+  .tabs button:focus-visible{outline:2px solid var(--run)}
+  .spacer{flex:1}
+  .badge{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--panel2)}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .ok{background:var(--run)} .off{background:var(--doneC)} .warn{background:var(--input)} .bad{background:var(--halt)}
+  .tabbadge{display:inline-block;min-width:16px;font-size:10px;font-family:var(--mono);background:var(--human);color:#2a1020;border-radius:8px;padding:0 5px;margin-left:6px;font-weight:700}
+  .tabbadge.inp{background:var(--input)}
+
+  .track-wrap{padding:26px 24px 10px}
+  .track-title{font-size:11px;letter-spacing:.14em;color:var(--tx2);margin-bottom:16px}
+  .track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;padding-bottom:14px}
+  .stage{position:relative;flex:1;min-width:96px;text-align:center;cursor:pointer;border-radius:8px;padding-top:2px}
+  .stage::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .stage:first-child::before{display:none}
+  .node{position:relative;z-index:1;width:32px;height:32px;margin:0 auto;border-radius:50%;border:2px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:var(--tx2)}
+  .stage.done .node{border-color:var(--doneC);color:var(--tx);background:#232a3d}
+  .stage.done::before{background:var(--doneC)}
+  .stage.gate .node{transform:rotate(45deg);border-radius:6px}
+  .stage.gate .node span{display:block;transform:rotate(-45deg)}
+  .stage.human .node{border-color:var(--human);color:var(--human);animation:pulse 2.2s infinite}
+  .stage.input .node{border-color:var(--input);color:var(--input);animation:pulse 2.2s infinite}
+  .stage.run .node{border-color:var(--run);color:var(--run);animation:pulse 2.2s infinite}
+  .stage.halt .node{border-color:var(--halt);color:var(--halt)}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(214,178,61,.35)}50%{box-shadow:0 0 0 9px rgba(214,178,61,0)}}
+  @media (prefers-reduced-motion: reduce){.stage .node{animation:none!important}}
+  .s-name{margin-top:9px;font-size:12px;font-weight:500}
+  .s-state{font-size:10px;letter-spacing:.06em;margin-top:2px}
+  .st-done{color:var(--doneC)} .st-run{color:var(--run)} .st-human{color:var(--human)} .st-input{color:var(--input)} .st-halt{color:var(--halt)} .st-none{color:#3a4158}
+  .stage:hover .s-name,.stage.tipon .s-name{color:var(--run)}
+  .stage:focus-visible{outline:2px solid var(--run);outline-offset:-2px}
+
+  /* 트랙 툴팁 — body 직속 fixed 팝오버 */
+  .tip{display:none;position:fixed;z-index:9999;width:372px;max-height:78vh;overflow-y:auto;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.62)}
+  .tip.show{display:block}
+  .tip .th{padding:11px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .gatechip{font-size:10px;color:var(--human);border:1px solid var(--human);border-radius:6px;padding:1px 7px;white-space:nowrap}
+  .tip .tb{padding:12px 14px}
+  .tip .what{font-size:12px;color:var(--tx);line-height:1.65;margin-bottom:11px}
+  .io{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;font-size:11.5px;margin-bottom:11px}
+  .io .k{color:var(--tx2);white-space:nowrap} .io .v{color:var(--tx)}
+  .io .tool{color:var(--run);font-family:var(--mono);font-size:11px}
+  .files{border-top:1px dashed var(--line);padding-top:9px}
+  .files .fh{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px}
+  .frow{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0}
+  .frow .star{color:var(--input);width:10px}
+  .frow .fn{flex:1;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .frow .dl{color:var(--run);text-decoration:none;font-size:11px;border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+  .frow .dl:focus-visible{outline:2px solid var(--run)}
+  .frow .sz{color:var(--tx2);font-family:var(--mono);font-size:10px}
+  .nonef{font-size:11.5px;color:var(--tx2);font-style:italic}
+
+  main{display:grid;grid-template-columns:360px 1fr 300px;gap:16px;padding:8px 24px 20px}
+  @media(max-width:1100px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .p-head{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;color:var(--tx2);display:flex;justify-content:space-between;align-items:center}
+  .p-body{padding:14px 16px}
+  .card{border:1px solid var(--line);border-left:3px solid var(--input);border-radius:10px;padding:12px 14px;margin-bottom:12px;background:var(--panel2)}
+  .card.human-card{border-left-color:var(--human)}
+  .card h4{font-size:13px;margin-bottom:4px}
+  .card .meta{font-size:11px;color:var(--tx2);margin-bottom:8px}
+  .card .evidence{font-family:var(--mono);font-size:11.5px;background:var(--ink);border-radius:6px;padding:8px 10px;margin-bottom:9px;white-space:pre-wrap;max-height:180px;overflow-y:auto}
+  .ackrow{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);margin:3px 0}
+  .ackrow input{accent-color:var(--human);margin-top:3px}
+  .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .btn{font:inherit;font-size:12px;font-weight:700;border-radius:7px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--tx)}
+  .btn.approve{border-color:var(--run);color:var(--run)}
+  .btn.approve:disabled{opacity:.4;cursor:not-allowed}
+  .btn.reject{border-color:var(--halt);color:var(--halt)}
+  .btn:focus-visible{outline:2px solid var(--tx)}
+  .hint{font-size:10px;color:var(--tx2)}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .kv .cell{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .cell .k{font-size:11px;color:var(--tx2)}
+  .cell .v{font-family:var(--mono);font-size:17px;font-weight:600;margin-top:2px;word-break:break-all}
+  .cell .v small{font-size:11px;color:var(--tx2);font-weight:400}
+  .note{font-size:12px;color:var(--tx2);border-left:2px solid var(--line);padding-left:10px;margin-top:6px;white-space:pre-wrap}
+  .score-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12px;gap:8px}
+  .score-row:last-child{border-bottom:0}
+  .score-row .num{font-size:13px;font-weight:600}
+  .trend{font-family:var(--mono);color:var(--tx2);font-size:11px}
+  .warnbadge{display:inline-block;font-size:10px;color:var(--input);border:1px solid var(--input);border-radius:5px;padding:1px 7px;margin-left:6px}
+  .haltbadge{display:inline-block;font-size:10px;color:var(--halt);border:1px solid var(--halt);border-radius:5px;padding:1px 7px;margin-left:6px}
+  .ledger-wrap{padding:0 24px 24px}
+  .ledger .p-body{font-family:var(--mono);font-size:11.5px;line-height:1.9;color:var(--tx2);max-height:170px;overflow-y:auto}
+  .lg-row b{color:var(--tx);font-weight:600}
+  .lg-appeal{color:var(--human)} .lg-halt{color:var(--halt)} .lg-script{color:var(--run)}
+  dialog{background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:14px;padding:0;max-width:430px;width:92%}
+  dialog::backdrop{background:rgba(6,8,14,.72)}
+  .dlg-head{padding:16px 20px;border-bottom:1px solid var(--line);font-weight:700}
+  .dlg-body{padding:18px 20px}
+  .dlg-body label{display:block;font-size:12px;color:var(--tx2);margin:12px 0 4px}
+  .dlg-body input,.dlg-body select,.dlg-body textarea{width:100%;font:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:9px 12px}
+  .dlg-body input:focus-visible,.dlg-body select:focus-visible,.dlg-body textarea:focus-visible{outline:2px solid var(--run)}
+  .dlg-steps{font-size:12px;color:var(--tx2);background:var(--ink);border-radius:8px;padding:10px 13px;margin-top:14px;line-height:1.9}
+  .dlg-steps b{color:var(--tx)}
+  .dlg-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+  .toast{position:fixed;bottom:18px;right:18px;z-index:10000;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:12px;max-width:420px;white-space:pre-wrap;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">RAG 평가 관제판<small>오케스트레이터 v0 · 실데이터</small></div>
+  <div class="tabs" role="tablist" aria-label="제품" id="tabs"></div>
+  <div class="spacer"></div>
+  <div class="badge" id="modeBadge"></div>
+  <div class="badge" id="calBadge"></div>
+  <div class="badge" id="killBadge"></div>
+</header>
+
+<section id="view"></section>
+<div class="ledger-wrap">
+  <div class="panel ledger">
+    <div class="p-head">원장 테일 — ledger.jsonl (append-only · 읽기 전용)<span class="hint" id="ledgerCount"></span></div>
+    <div class="p-body" id="ledger"></div>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">제품 추가 — 파이프라인 온보딩</div>
+  <div class="dlg-body">
+    <label for="f-code">제품 코드 (terrain 프로파일 키)</label>
+    <input id="f-code" placeholder="예: RM" maxlength="8">
+    <label for="f-name">제품 이름</label>
+    <input id="f-name" placeholder="예: 리모트미팅">
+    <label for="f-base">terrain 프로파일 시작점</label>
+    <select id="f-base">
+      <option value="blank">빈 프로파일 (지형 판정 ②에서 확정)</option>
+      <option value="RV">RV 복제 후 수정</option>
+      <option value="RC">RC 복제 후 수정</option>
+    </select>
+    <div class="dlg-steps">추가하면 자동으로 일어나는 일:<br>
+      <b>1.</b> data/&lt;코드&gt;/ 폴더 스캐폴드 · <b>2.</b> 상태 생성(① PENDING)<br>
+      <b>3.</b> 트랙이 ① 코퍼스 실측에서 <b>입력 대기</b> 정지 — INPUT 카드 발행<br>
+      <b>4.</b> calibration_passed=false 시작 (규칙 C) · <b>5.</b> 원장 ONBOARD 행</div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" onclick="dlg.close()">취소</button>
+    <button class="btn approve" onclick="doOnboard()">추가</button>
+  </div>
+</dialog>
+
+<dialog id="rdlg">
+  <div class="dlg-head">반려 — 사유 필수 (원장 기록)</div>
+  <div class="dlg-body">
+    <label for="r-reason">반려 사유</label>
+    <textarea id="r-reason" rows="3" placeholder="실측 근거를 포함해 주세요"></textarea>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" onclick="rdlg.close()">취소</button>
+    <button class="btn reject" onclick="doReject()">반려 확정</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const STAGE_ORDER = ["CORPUS_AUDIT","TERRAIN","COVERAGE_MAP","GOLDENSET_BATCH","UNIFIED_LEDGER","CALIBRATION","STAGE2","SCORING","MAINTENANCE"];
+const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
+const GATE_DIAMOND = new Set(["CALIBRATION"]);           // 마름모(사람 게이트 시그니처)
+let S = {state:null, catalog:null, queue:null, scores:null, ledger:null};
+let cur = "RV", rejectTarget = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const kb = n => n>=1048576?(n/1048576).toFixed(1)+'MB':(n/1024).toFixed(1)+'KB';
+
+async function loadAll(){
+  const [st,cat,q,sc,lg] = await Promise.all([
+    fetch('/api/state').then(r=>r.json()),
+    fetch('/api/catalog').then(r=>r.json()),
+    fetch('/api/queue').then(r=>r.json()),
+    fetch('/api/scores').then(r=>r.json()),
+    fetch('/api/ledger').then(r=>r.json()),
+  ]);
+  S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg};
+  if(!st.products[cur]) cur = Object.keys(st.products)[0];
+  render();
+}
+
+function stageView(prod){
+  const ps = S.state.products[prod];
+  const hist = ps.stage_history||{};
+  const curIdx = STAGE_ORDER.indexOf(ps.stage);
+  return STAGE_ORDER.map((k,i)=>{
+    if(hist[k] && (i<curIdx || ps.status==='DONE')) return {k, cls:'done', label:'완료'};
+    if(i===curIdx){
+      const map = {RUNNING:['run','실행 중'], WAITING_HUMAN:['human','사람 게이트'],
+                   WAITING_INPUT:['input','입력 대기'], HALTED:['halt','HALT'],
+                   PENDING:['none','대기'], REJECTED:['human','반려 — 재제출 대기'], DONE:['done','완료']};
+      const [cls,label] = map[ps.status]||['none',ps.status];
+      return {k, cls, label};
+    }
+    return {k, cls:'', label:'—'};
+  });
+}
+
+function render(){
+  const st = S.state, prods = Object.keys(st.products);
+  // 탭
+  $('tabs').innerHTML = prods.map(p=>{
+    const q = S.queue.filter(c=>c.product===p);
+    const human = q.some(c=>c.kind==='GATE');
+    const badge = q.length?`<span class="tabbadge ${human?'':'inp'}">${q.length}</span>`:'';
+    return `<button role="tab" aria-selected="${p===cur}" onclick="cur='${p}';render()">${p}${badge}</button>`;
+  }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
+  // 배지
+  const md = st._mode||{};
+  $('modeBadge').innerHTML = `⚙ 모델 <span class="num">${md.mode}키</span> · 재검 <span class="num">${md.recheck??'—'}</span>`;
+  const ps = st.products[cur];
+  $('calBadge').innerHTML = `<span class="dot ${ps.calibration_passed?'ok':'warn'}"></span>캘리브레이션 ${ps.calibration_passed?'통과':'미통과(규칙 C)'}`;
+  const hc = st._halt_count;
+  $('killBadge').innerHTML = `<span class="dot ${hc? 'bad':'off'}"></span>킬스위치 · ${hc?`HALT ${hc}`:'정상 (HALT 0)'}`;
+
+  // 트랙
+  const stages = stageView(cur);
+  const stCls = {done:'st-done',run:'st-run',human:'st-human',input:'st-input',halt:'st-halt','':'st-none',none:'st-none'};
+  const humanN = S.queue.filter(c=>c.product===cur&&c.kind==='GATE').length;
+  const inputN = S.queue.filter(c=>c.product===cur&&c.kind==='INPUT').length;
+  const catStages = (S.catalog.products[cur]||{stages:[]}).stages;
+  let html = `
+  <div class="track-wrap">
+    <div class="track-title">파이프라인 트랙 — ${cur} · 사람 게이트 ${humanN} · 입력 대기 ${inputN}</div>
+    <div class="track" id="track">${stages.map((s,i)=>{
+      const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
+      return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
+        aria-label="${CIRC[i]} ${catStages[i]?catStages[i].name:''} — ${s.label}">
+        <div class="node"><span>${CIRC[i]}</span></div>
+        <div class="s-name">${catStages[i]?catStages[i].name:s.k}</div>
+        <div class="s-state ${stCls[s.cls]||'st-none'}">${s.label}</div>
+      </div>`;}).join('')}
+    </div>
+  </div>
+  <main>
+    <div class="panel"><div class="p-head">검수큐 <span class="num">${S.queue.filter(c=>c.product===cur).length}건</span></div><div class="p-body" id="queuebody">
+      ${renderQueue()}
+    </div></div>
+    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${ps.status}</div><div class="p-body">
+      ${renderDetail(ps)}
+    </div></div>
+    <div class="panel"><div class="p-head">회차 성적 — ${cur} <span class="hint">run_score_v11 실측</span></div><div class="p-body">
+      ${renderScores(ps)}
+    </div></div>
+  </main>`;
+  $('view').innerHTML = html;
+  document.querySelectorAll('.stage').forEach(el=>{
+    const i = +el.dataset.i;
+    el.addEventListener('mouseenter',()=>showTip(el,i));
+    el.addEventListener('focusin',()=>showTip(el,i));
+    el.addEventListener('mouseleave',scheduleHide);
+    el.addEventListener('focusout',scheduleHide);
+  });
+  renderLedger();
+}
+
+function renderQueue(){
+  const cards = S.queue.filter(c=>c.product===cur);
+  if(!cards.length) return `<div class="note">열린 카드 없음</div>`;
+  return cards.map((c,ci)=>{
+    const bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
+    const acks = c.acks.map((a,ai)=>`<div class="ackrow"><input type="checkbox" id="ack_${ci}_${ai}" onchange="ackCheck(${ci})"><label for="ack_${ci}_${ai}">${esc(a)}</label></div>`).join('');
+    const btns = c.kind==='GATE' ? `<div class="btns">
+        <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
+        <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
+      </div>${c.acks.length?`<div class="hint">플래그/체크 전건 ack 후 승인 활성화</div>`:''}` : `<div class="hint">파일 투입 후: 자동 입구 검사 → RUNNING 전이 (터미널: pipeline run --product ${cur})</div>`;
+    return `<div class="card ${c.kind==='GATE'?'human-card':''}">
+      <h4>${esc(c.title)}</h4>
+      <div class="meta">${c.kind==='GATE'?'사람 게이트':'입력 대기'} · ${esc(c.file)}</div>
+      <div class="evidence">${esc(bodyMain.slice(0,900))}</div>
+      ${acks}${btns}</div>`;
+  }).join('');
+}
+
+function ackCheck(ci){
+  const card = document.querySelectorAll('#queuebody .card')[ci];
+  const boxes = card.querySelectorAll('input[type=checkbox]');
+  const all = [...boxes].every(b=>b.checked);
+  const btn = card.querySelector('.btn.approve');
+  if(btn) btn.disabled = !all;
+}
+
+function renderDetail(ps){
+  const i = STAGE_ORDER.indexOf(ps.stage);
+  const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
+  const files = cs? cs.files : [];
+  // P-02: 실측 수치만 — 카탈로그 실측 + 상태
+  const kv = [
+    ["보유 산출물", `${files.length} <small>개</small>`],
+    ["캘리브레이션", ps.calibration_passed?'통과':'미통과 <small>규칙 C</small>'],
+    ["열린 게이트", `${ps.open_gates.length}`],
+    ["회차 비교", ps.compare_blocked?'차단 <small>규칙 D</small>':'허용'],
+  ];
+  const note = cs? `${cs.what}\n\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}\n도구: ${cs.tool}` : '';
+  return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
+    ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ HALT: ${esc(ps.halt_reason)}\n해제: pipeline resume --after-fix ${cur} --reason "..."</div>`:''}
+    <div class="note">${esc(note)}</div>`;
+}
+
+function renderScores(ps){
+  const sc = S.scores[cur];
+  if(!sc || !Object.keys(sc).length) return `<div class="note">실측 회차 없음 — 실물 채점 후 표시 (P-02: 실측 전에는 어떤 값도 표시하지 않는다)</div>`;
+  const rounds = Object.keys(sc).sort();
+  const last = sc[rounds[rounds.length-1]];
+  const trend = k => rounds.map(r=>sc[r][k]).join('→');
+  const blocked = ps.compare_blocked;
+  const cmp = blocked? `<span class="haltbadge">비교 불가 — 규칙 D</span>` : '';
+  const rows = [
+    ["검색 top1", blocked?'':trend('top1'), last.top1],
+    ["검색 top5", blocked?'':trend('top5'), last.top5],
+    ["생성 pass", blocked?'':trend('pass'), last.pass],
+    ["E형 거절", blocked?'':trend('E거절'), last["E거절"]],
+    ["E형 환각", blocked?'':trend('E환각'), last["E환각"]],
+  ];
+  return `<div class="score-row"><span>회차</span><span class="trend">${rounds.join(' · ')}</span><span class="num">${last.n}문항</span></div>`
+    + rows.map(([a,b,c])=>`<div class="score-row"><span>${a}</span><span class="trend">${b}</span><span class="num">${c}</span></div>`).join('')
+    + `<div class="score-row"><span>채점기</span><span class="trend">${last.scorer}</span><span>${cmp||'<span class="hint">동일 자 기준</span>'}</span></div>`;
+}
+
+function renderLedger(){
+  const rows = S.ledger.map(r=>{
+    const cls = r.stage==='APPEAL'||r.action==='appeal' ? 'lg-appeal'
+      : (r.action||'').includes('HALT')||(r.action||'').includes('REFUSED')||(r.action||'').includes('LEAK') ? 'lg-halt' : '';
+    const actor = (r.actor||'').startsWith('script') ? `<span class="lg-script">${esc(r.actor)}</span>` : esc(r.actor);
+    const ev = r.evidence && Object.keys(r.evidence).length ? ` · evidence=${esc(JSON.stringify(r.evidence)).slice(0,110)}` : '';
+    return `<div class="lg-row ${cls}">${esc((r.ts||'').slice(5,16))} <b>${esc(r.stage)}${r.product?'·'+esc(r.product):''}</b> · ${actor} · ${esc(r.action)}${r.reason?' · '+esc(r.reason).slice(0,80):''}${ev}</div>`;
+  }).join('');
+  $('ledger').innerHTML = rows || '(원장 비어 있음)';
+  $('ledgerCount').textContent = `최근 ${S.ledger.length}행`;
+}
+
+/* ── 트랙 툴팁 (fixed 팝오버) ── */
+const tip = document.createElement('div'); tip.className='tip'; document.body.appendChild(tip);
+let hideT=null;
+tip.addEventListener('mouseenter',()=>clearTimeout(hideT));
+tip.addEventListener('mouseleave',scheduleHide);
+function showTip(el,i){
+  clearTimeout(hideT);
+  const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
+  if(!cs) return;
+  const files = cs.files.map(f=>`<div class="frow"><span class="star">${f.canonical?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`).join('')
+    || '<div class="nonef">아직 보유 자료 없음 — 실측 전에는 어떤 값도 표시하지 않는다 (P-02)</div>';
+  tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
+    <div class="tb"><div class="what">${esc(cs.what)}</div>
+      <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
+        <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span>
+        <span class="k">도구</span><span class="v tool">${esc(cs.tool)}</span></div>
+      <div class="files"><div class="fh">보유 자료 ${cs.file_count}</div>${files}</div></div>`;
+  tip.classList.add('show');
+  const r = el.querySelector('.node').getBoundingClientRect();
+  const tw=tip.offsetWidth, th=tip.offsetHeight, vw=innerWidth, vh=innerHeight;
+  let left=Math.max(8,Math.min(r.left+r.width/2-tw/2, vw-tw-8));
+  let top=r.bottom+12; if(top+th>vh-8) top=Math.max(8,r.top-th-12);
+  tip.style.left=left+'px'; tip.style.top=top+'px';
+  document.querySelectorAll('.stage.tipon').forEach(e=>e.classList.remove('tipon'));
+  el.classList.add('tipon');
+}
+function scheduleHide(){hideT=setTimeout(()=>{tip.classList.remove('show');
+  document.querySelectorAll('.stage.tipon').forEach(e=>e.classList.remove('tipon'));},180);}
+
+/* ── 액션 ── */
+function toast(msg, ms=5000){
+  const t=$('toast'); t.textContent=msg; t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', ms);
+}
+async function act(payload){
+  const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const d = await r.json();
+  toast(d.out || (d.ok?'완료':'실패'));
+  await loadAll();
+  return d;
+}
+async function doApprove(id, nAcks){
+  await act({cmd:'approve', gate_id:id, ack_all:nAcks>0});
+  await act({cmd:'run', product:cur});
+}
+function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
+async function doReject(){
+  const reason = $('r-reason').value.trim();
+  if(!reason){ $('r-reason').focus(); return; }
+  rdlg.close();
+  await act({cmd:'reject', gate_id:rejectTarget, reason});
+}
+async function doOnboard(){
+  const code=$('f-code').value.trim().toUpperCase(), name=$('f-name').value.trim();
+  if(!code){$('f-code').focus();return;}
+  dlg.close();
+  await act({cmd:'onboard', product:code, name, base:$('f-base').value});
+  cur=code; await loadAll();
+}
+const dlg=$('dlg'), rdlg=$('rdlg');
+
+loadAll();
+setInterval(loadAll, 15000);   // 15초 자동 갱신
+</script>
+</body>
+</html>
