@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+llm.py — 공통 LLM 클라이언트 (사양서 §3 모델 어댑터의 실행부)
+
+- config.models.<role> {provider, model, api_key_env} 로 호출.
+- provider: openai 호환(moonshot/openai/…) REST · anthropic REST.
+- 키가 없고 ORCH_MOCK=1 이면 결정적 mock 백엔드 — 전 트랙 E2E 검증용.
+  (mock 은 난수·시계 없이 입력의 해시로만 동작 — 재실행 시 동일 산출)
+- 규칙 B: 세션 없음 — 매 호출이 독립 (대화 상태를 만들 방법 자체가 없다).
+"""
+import hashlib
+import json
+import os
+import re
+import sys
+import unicodedata
+import urllib.request
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from olib import load_config
+
+
+def N(s):
+    return unicodedata.normalize("NFC", str(s)) if s is not None else ""
+
+
+def is_mock():
+    return os.environ.get("ORCH_MOCK") == "1"
+
+
+def chat(role, system, user, cfg=None, max_tokens=4000):
+    """단발 호출 — 반환: 응답 텍스트. 키 없으면 mock(ORCH_MOCK=1) 또는 예외."""
+    cfg = cfg or load_config()
+    m = cfg["models"].get(role)
+    if is_mock():
+        return _mock_chat(role, system, user)
+    if not m:
+        raise RuntimeError(f"config.models.{role} 미설정")
+    provider = m.get("provider", "openai")
+    if provider == "cli":
+        # [v2 결정] 계정(구독) 기반 CLI 앙상블 — API 키 대신 구독 로그인된 CLI 호출
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            print("⚠ ANTHROPIC_API_KEY 가 설정되어 있음 — CLI가 구독 대신 키로 과금될 수 있다. 비워두라 (인수인계서 v2 §4).")
+        return _cli(m, system, user)
+    key = os.environ.get(m.get("api_key_env", ""), "")
+    if not key:
+        raise RuntimeError(f"{m.get('api_key_env')} 미설정 — 키를 넣거나 ORCH_MOCK=1 로 모의 실행")
+    if provider == "anthropic":
+        return _anthropic(m["model"], key, system, user, max_tokens)
+    base = {"moonshot": "https://api.moonshot.ai/v1",
+            "openai": "https://api.openai.com/v1"}.get(provider, m.get("base_url", ""))
+    return _openai_compat(base, m["model"], key, system, user, max_tokens)
+
+
+def _cli(m, system, user):
+    """구독 CLI 어댑터 — 예: {provider: cli, command: [claude, -p], model: ...}
+    프롬프트는 stdin. 세션 없음(매 호출 독립) = 규칙 B 유지."""
+    import subprocess
+    cmd = m.get("command") or ["claude", "-p"]
+    if isinstance(cmd, str):
+        cmd = cmd.split()
+    if m.get("model"):
+        cmd = cmd + ["--model", m["model"]]
+    p = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}",
+                       capture_output=True, text=True, timeout=1200)
+    if p.returncode != 0:
+        raise RuntimeError(f"CLI 호출 실패({cmd[0]}): {p.stderr[:300]}")
+    return p.stdout
+
+
+def _post(url, headers, payload):
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
+                                 headers={"Content-Type": "application/json", **headers})
+    with urllib.request.urlopen(req, timeout=600) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def _openai_compat(base, model, key, system, user, max_tokens):
+    d = _post(f"{base}/chat/completions", {"Authorization": f"Bearer {key}"},
+              {"model": model, "temperature": 0.3, "max_tokens": max_tokens,
+               "messages": [{"role": "system", "content": system},
+                            {"role": "user", "content": user}]})
+    return d["choices"][0]["message"]["content"]
+
+
+def _anthropic(model, key, system, user, max_tokens):
+    d = _post("https://api.anthropic.com/v1/messages",
+              {"x-api-key": key, "anthropic-version": "2023-06-01"},
+              {"model": model, "max_tokens": max_tokens, "system": system,
+               "messages": [{"role": "user", "content": user}]})
+    return "".join(b.get("text", "") for b in d["content"])
+
+
+def extract_json(text):
+    """응답에서 JSON 배열/객체 추출 (코드펜스·전후 설명 허용)"""
+    text = re.sub(r"```(?:json)?", "", text)
+    m = re.search(r"(\[.*\]|\{.*\})", text, re.S)
+    if not m:
+        raise ValueError("응답에서 JSON을 찾지 못함: " + text[:200])
+    return json.loads(m.group(1))
+
+
+# ══════════════════ 결정적 MOCK 백엔드 ══════════════════
+# 목적: 키 없이 파이프라인 전 트랙(생성→검수→판정→발행→채점)을 기계적으로 관통 검증.
+# 원칙: 입력에서만 파생(해시 기반) — 같은 입력이면 언제나 같은 출력.
+
+def _mock_chat(role, system, user):
+    task = None
+    for t in ("COVERAGE_UNITS", "GOLDENSET_ITEMS", "JUDGE_VERDICTS", "ALLOCATION_PLAN"):
+        if f"[TASK:{t}]" in system:
+            task = t
+            break
+    if task == "COVERAGE_UNITS":
+        return _mock_coverage(user)
+    if task == "GOLDENSET_ITEMS":
+        return _mock_goldenset(user)
+    if task == "JUDGE_VERDICTS":
+        return _mock_judge(user)
+    if task == "ALLOCATION_PLAN":
+        return json.dumps({"plan": "단일 배치 B1 — 전 단위 직접 커버", "batches": ["B1"]},
+                          ensure_ascii=False)
+    return "MOCK: " + hashlib.sha256((system + user).encode()).hexdigest()[:16]
+
+
+def _sentences(text):
+    return [s.strip() for s in re.split(r"(?<=[.다음됨함닙니다])\s+|\n+", N(text)) if len(s.strip()) >= 10]
+
+
+def _mock_coverage(user):
+    """입력: {product, chunks:[{doc,chunk_id,text}]} → 커버 단위 배열"""
+    d = json.loads(user)
+    units = []
+    for ch in d["chunks"]:
+        sents = _sentences(ch["text"])
+        if not sents:
+            continue
+        fact = " ".join(sents[:2])
+        title = sents[0][:30]
+        units.append({
+            "unit_id": f"{d['product']}-{N(ch['doc']).upper()[:6]}-{ch['chunk_id']:03d}",
+            "type": "Doc", "title": title, "fact": fact,
+            "source": ch.get("source", ch["doc"]), "chunk": ch["chunk_id"],
+            "question_hint": f"{title} 은(는) 무엇인가?",
+        })
+    return json.dumps(units, ensure_ascii=False)
+
+
+def _mock_goldenset(user):
+    """입력: {product, prefix, start_no, units:[{unit_id,fact,...}], want_e} → 문항 배열"""
+    d = json.loads(user)
+    items = []
+    no = d["start_no"]
+    types = ["A", "G", "C", "F"]
+    for i, u in enumerate(d["units"]):
+        t = types[int(hashlib.sha256(u["unit_id"].encode()).hexdigest(), 16) % len(types)]
+        fact_sent = _sentences(u["fact"])[0]
+        # 필수 요소: fact 의 숫자·최장 단어 2개 (결정적)
+        toks = re.findall(r"[\w가-힣.%]+", fact_sent)
+        nums = [w for w in toks if re.search(r"\d", w)]
+        longs = sorted((w for w in toks if len(w) >= 3), key=len, reverse=True)
+        req = (nums[:2] + [w for w in longs if w not in nums])[:2] or toks[:1]
+        items.append({
+            "ID": f"{d['prefix']}-{t}{no:02d}", "유형": t,
+            "출제 의도": f"{u['title'][:20]} 확인",
+            "질문": f"{d.get('product_name', d['product'])}에서 {u['title'][:24]}에 대해 알려줘.",
+            "정답": f"{u['fact']}\n필수: {', '.join(req)}",
+            "근거 출처": f"{u['unit_id']} ; https://corpus.local/{u.get('source') or 'doc.md'} § {u['title'][:16]}",
+            "합격 기준": "정답 필수 요소 포함 + 근거 출처 실재",
+            "근거 원문 발췌": fact_sent,
+        })
+        no += 1
+    if d.get("want_e"):
+        items.append({
+            "ID": f"{d['prefix']}-E{no:02d}", "유형": "E",
+            "출제 의도": "부재 확인(자료에 없음)",
+            "질문": f"{d.get('product_name', d['product'])}의 양자암호 전송 기능 설정법을 알려줘.",
+            "정답": "자료에 없음 — 해당 기능은 코퍼스에 존재하지 않는다.",
+            "근거 출처": "N/A (E형 — 부재 근거)",
+            "합격 기준": "부재 인정(자료에 없음) 명시 — 창작/유사 대체 시 0점",
+            "근거 원문 발췌": "",
+        })
+    return json.dumps(items, ensure_ascii=False)
+
+
+def _mock_judge(user):
+    """입력: {items:[{ID,질문,정답,...}], rubric} → 판정 배열 (결정적: 해시 기반 소수 불합격)"""
+    d = json.loads(user)
+    out = []
+    for it in d["items"]:
+        h = int(hashlib.sha256(N(it["ID"]).encode()).hexdigest(), 16)
+        verdict = "합격" if h % 17 else "부분"     # ~6% 부분 판정 — 재검·대조 경로 검증용
+        out.append({"ID": it["ID"], "판정": verdict,
+                    "판정문": f"{it['ID']}: 정답 필수 요소 대조 — {verdict}. 근거 출처 실재 확인."})
+    return json.dumps(out, ensure_ascii=False)
