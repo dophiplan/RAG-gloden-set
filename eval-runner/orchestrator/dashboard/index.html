@@ -71,7 +71,10 @@
   .io .k{color:var(--tx2);white-space:nowrap} .io .v{color:var(--tx)}
   .io .tool{color:var(--run);font-family:var(--mono);font-size:11px}
   .files{border-top:1px dashed var(--line);padding-top:9px}
-  .files .fh{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px}
+  .files .fh{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+  .archbtn{font:inherit;font-size:10px;letter-spacing:0;cursor:pointer;color:var(--tx2);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+  .archbtn.on,.archbtn:hover{color:var(--tx);border-color:var(--tx2)}
+  .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
   .frow{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0}
   .frow .star{color:var(--input);width:10px}
   .frow .fn{flex:1;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -415,18 +418,19 @@ function showTip(el,i){
   clearTimeout(hideT);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   if(!cs) return;
-  // 현역은 바로, 은퇴는 세대별 📦 보관함(아코디언)으로 — 여러 세대가 쌓여도 접혀 있어요
+  // 현역 리스트는 깨끗하게 — 은퇴분은 [📦 보관함] 버튼 뒤로 (누르면 세대별 아코디언)
   const frow = f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`;
   const curF = cs.files.filter(f=>!f.gen), oldF = cs.files.filter(f=>f.gen);
   const groups = {};
   oldF.forEach(f=>(groups[f.gen]=groups[f.gen]||[]).push(f));
   const files = (curF.map(frow).join('') || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>')
-    + Object.entries(groups).map(([g,fl])=>`<details class="arch"><summary>📦 보관함 · ${esc(g)} — ${fl.length}개 (안 쓰는 자료)</summary>${fl.map(frow).join('')}</details>`).join('');
+    + `<div class="archwrap" style="display:none">${Object.entries(groups).map(([g,fl]) =>
+        `<details class="arch"><summary>${esc(g)} — ${fl.length}개 (안 쓰는 자료 · 참고용)</summary>${fl.map(frow).join('')}</details>`).join('')}</div>`;
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
       <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
         <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
-      <div class="files"><div class="fh">보유 자료 ${curF.length}${oldF.length?` · 보관함 ${oldF.length}`:''}</div>${files}</div></div>`;
+      <div class="files"><div class="fh"><span>보유 자료 ${curF.length}</span>${oldF.length?`<button class="archbtn" onclick="toggleArch(this)">📦 보관함 ${oldF.length}</button>`:''}</div>${files}</div></div>`;
   tip.classList.add('show');
   const r = el.querySelector('.node').getBoundingClientRect();
   const tw=tip.offsetWidth, th=tip.offsetHeight, vw=innerWidth, vh=innerHeight;
@@ -435,6 +439,12 @@ function showTip(el,i){
   tip.style.left=left+'px'; tip.style.top=top+'px';
 }
 function scheduleHide(){hideT=setTimeout(()=>tip.classList.remove('show'),180);}
+function toggleArch(btn){   // 📦 보관함 버튼 — 은퇴 세대 목록을 따로 열고 닫기
+  const w = btn.closest('.files').querySelector('.archwrap');
+  const open = w.style.display==='none';
+  w.style.display = open?'block':'none';
+  btn.classList.toggle('on', open);
+}
 
 /* 액션 — U5: 처리 중 표시 */
 function toast(msg, ms=6000){
