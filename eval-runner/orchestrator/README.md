@@ -28,6 +28,9 @@ models:
 - CLI 도 model 명시 고정 필수(FIX-06) · ANTHROPIC_API_KEY 는 자식 env에서 자동 제거(FIX-05)
 - 실전 견고화: 실모델이 단위ID를 흘려 써도 **발췌(원문)로 단위를 역추적해 citation 재기입**(gen_goldenset.ground_citations),
   judge JSONL/코드펜스 응답도 흡수(llm.extract_json), 본판정 중단 시 배치 resume(FIX-04)
+- **앙상블 출제 (2026-07-20, 송하 설계)**: ③ 커버리지맵은 **가용 모델 전원**(claude·Kimi·codex)이
+  각자 추출 → 기계 dedup → generator(claude)가 부분집합 병합 → **1축 원문 재검수**가 최종 관문.
+  기여도(모델별 추출·신규 발견 수)가 원장과 게이트 카드에 실측 기록된다 — 촘촘함은 합집합에서 나온다.
 
 ## 켜는 법 (비개발자용)
 
