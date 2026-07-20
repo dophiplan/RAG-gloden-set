@@ -1,0 +1,259 @@
+{
+ "batch": "B30",
+ "count": 23,
+ "items": [
+  {
+   "id": "RC-G013@G-B6",
+   "type": "G",
+   "question": "코웍스정보기술, 크레소티, 크로니아이티 고객사례 제품은?",
+   "gold_answer_required": "세 곳 모두 리모트콜 영상지원(Visual Pack) 도입·활용 사례 / 필수: 셋 다 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 셋 다 영상지원 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+   "evidence_excerpt": "[RC-WEB-USECASE-113] 코웍스정보기술 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-116] 크레소티 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-119] 크로니아이티 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-113 + RC-WEB-USECASE-116 + RC-WEB-USECASE-119 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/coworks-it (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/cresoty (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/cronyit (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-G014@G-B6",
+   "type": "G",
+   "question": "쿠도 커뮤니케이션, 지아이티, 굿모닝아이텍 고객사례는 뭘 도입했어?",
+   "gold_answer_required": "세 곳 모두 리모트콜 영상지원(Visual Pack) 도입·활용 사례 / 필수: 셋 다 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 셋 다 영상지원 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+   "evidence_excerpt": "[RC-WEB-USECASE-122] 쿠도 커뮤니케이션 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-125] 지아이티 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-128] 굿모닝아이텍 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-122 + RC-WEB-USECASE-125 + RC-WEB-USECASE-128 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/cudo-communication (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/git (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/goodmit (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A045@G-B6",
+   "type": "A",
+   "question": "GreatCall이랑 하우리 고객사례 페이지는 무슨 제품을 다뤄?",
+   "gold_answer_required": "GreatCall과 하우리 고객사례 문서 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용 / 필수: 둘 다 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 둘 다 영상지원",
+   "evidence_excerpt": "[RC-WEB-USECASE-131] GreatCall 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-134] 하우리 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-131 + RC-WEB-USECASE-134 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/greatcall (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/hauri (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-G015@G-B6",
+   "type": "G",
+   "question": "아이디어정보기술, 이니텍, 제이원아이티 고객사례 제품은?",
+   "gold_answer_required": "세 곳 모두 리모트콜 영상지원(Visual Pack) 도입·활용 사례 / 필수: 셋 다 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 셋 다 영상지원 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+   "evidence_excerpt": "[RC-WEB-USECASE-137] 아이디어정보기술 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-140] 이니텍 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-143] 제이원아이티 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-137 + RC-WEB-USECASE-140 + RC-WEB-USECASE-143 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/ideait (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/initech (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/jwonit (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-G016@G-B6",
+   "type": "G",
+   "question": "코이스, [기밀마스킹] [기밀마스킹], 삼일인포마인 고객사례는 뭘 다뤄?",
+   "gold_answer_required": "세 곳 모두 리모트콜 영상지원(Visual Pack) 도입·활용 사례 / 필수: 셋 다 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 셋 다 영상지원 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+   "evidence_excerpt": "[RC-WEB-USECASE-146] 코이스 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-149] [기밀마스킹] [기밀마스킹] 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.\n[RC-WEB-USECASE-152] 삼일인포마인 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-146 + RC-WEB-USECASE-149 + RC-WEB-USECASE-152 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 + [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/koiis (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/[기밀마스킹]-[기밀마스킹] (고객사례 본문 / 도입·활용 제품) + https://www.remotecall.com/kr/use-cases/success-stories/technology/samil (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A046@G-B6",
+   "type": "A",
+   "question": "(주)티이에스 고객사례는 리모트콜 뭘 도입했어?",
+   "gold_answer_required": "(주)티이에스(TES Inc.) 고객사례 문서는 리모트콜 영상지원(Visual Pack) 도입·활용 내용을 다룸 / 필수: 영상지원",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 영상지원",
+   "evidence_excerpt": "(주)티이에스 (TES Inc.) 고객사례 문서는 리모트콜 영상지원(Visual Pack)의 도입 또는 활용 내용을 다룬다.",
+   "citation": "RC-WEB-USECASE-155 ; [RC-MANUAL]고객사례 본문 / 도입·활용 제품 | https://www.remotecall.com/kr/use-cases/success-stories/technology/tes-inc (고객사례 본문 / 도입·활용 제품)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A047@G-B6",
+   "type": "A",
+   "question": "리모트콜 웹 원격지원 접속 페이지를 회사 맞춤형으로 바꾸려면 어디서 설정하나요?",
+   "gold_answer_required": "관리자 페이지(admin.startsupport.com)의 사용자 관리>회사>회사 옵션 정보에서 고객사 로그인 페이지 URL과 로고를 '사용'으로 설정하면 접속 페이지(remotecall.io)를 회사 맞춤형으로 커스터마이징 가능 / 필수: 관리자>회사>회사 옵션에서 URL·로고 설정",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 관리자>회사>회사 옵션에서 URL·로고 설정",
+   "evidence_excerpt": "리모트콜 웹 원격지원의 접속 페이지(remotecall.io)는 관리자 페이지(admin.startsupport.com)의 사용자 관리>회사>회사 옵션 정보에서 고객사 로그인 페이지 URL과 로고를 '사용'으로 설정해 회사 맞춤형으로 커스터마이징할 수 있다.",
+   "citation": "RC-BLOG-TIP-001 ; [RC-MANUAL]blog/access-page-template | https://www.remotecall.com/kr/blog/access-page-template/ (blog/access-page-template)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-G017@G-B6",
+   "type": "G",
+   "question": "원격지원 중 계좌번호 같은 민감정보가 상담사에게 보이지 않게 하려면?",
+   "gold_answer_required": "원격지원 중 화면공유 시 로그인 정보·계좌번호·주민번호·내부문서 등 민감정보 노출을 막는 '블라인더(blinder)' 기능으로 특정 화면 영역을 가린 채 공유 가능 / 필수: 블라인더로 특정 영역 가림",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 블라인더로 특정 영역 가림 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
+   "evidence_excerpt": "리모트콜은 원격지원 중 화면공유 시 로그인 정보·계좌번호·주민번호·내부문서 등 민감정보 노출을 막는 '블라인더(blinder)' 기능을 제공해 특정 화면 영역을 가린 채 화면을 공유할 수 있다.",
+   "citation": "RC-BLOG-TIP-002 ; [RC-MANUAL]blog/remote-support-blinder | https://www.remotecall.com/kr/blog/remote-support-blinder/ (blog/remote-support-blinder)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A048@G-B6",
+   "type": "A",
+   "question": "바이브 코딩 환경에서 리모트콜 원격지원 기능을 어떻게 붙이나요?",
+   "gold_answer_required": "바이브 코딩(vibe coding) 환경에서 웹뷰어 SDK를 코드 몇 줄로 웹 애플리케이션에 연동해 원격지원 기능을 추가하는 방법을 프롬프트 예시와 함께 안내 / 필수: 웹뷰어 SDK 코드 몇 줄 연동",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 웹뷰어 SDK 코드 몇 줄 연동",
+   "evidence_excerpt": "리모트콜은 바이브 코딩(vibe coding) 환경에서 웹뷰어 SDK를 코드 몇 줄로 웹 애플리케이션에 연동해 원격지원 기능을 추가하는 방법을 프롬프트 예시와 함께 안내한다.",
+   "citation": "RC-BLOG-TIP-004 ; [RC-MANUAL]blog/how-to-add-remote-support-vibe-coding | https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/ (blog/how-to-add-remote-support-vibe-coding)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A049@G-B6",
+   "type": "A",
+   "question": "알서포트가 일본 샤프에 리모트콜을 제공한 소식은 언제 보도됐나요?",
+   "gold_answer_required": "블로그 언론보도(2023.02.16)는 알서포트가 일본 샤프(SHARP)에 원격지원 솔루션 리모트콜을 제공했다고 소개 (해당 보도 기준) / 필수: 2023.02.16 + 샤프(SHARP) 제공",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 2023.02.16 + 샤프(SHARP) 제공",
+   "evidence_excerpt": "블로그 언론보도(2023.02.16)는 알서포트가 일본 샤프(SHARP)에 원격지원 솔루션 리모트콜을 제공했다고 소개한다.",
+   "citation": "RC-BLOG-TIP-011 ; [RC-MANUAL]blog/sharp-cases | https://www.remotecall.com/kr/blog/sharp-cases/ (blog/sharp-cases)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A050@G-B6",
+   "type": "A",
+   "question": "리모트콜(알서포트)의 ISO/IEC 27001:2022 획득을 다룬 블로그가 있나요?",
+   "gold_answer_required": "국제 인증 ISO/IEC 27001:2022 획득! 블로그 문서가 국제 표준 보안 관리 체계로 제품·서비스를 제공하는 기업(알서포트)의 보안 인증 내용을 다룸 / 필수: ISO/IEC 27001:2022 획득 블로그",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: ISO/IEC 27001:2022 획득 블로그",
+   "evidence_excerpt": "국제 인증 ISO/IEC 27001:2022 획득! 문서는 「국제 표준 보안 관리 체계로 제품 및 서비스를 제공하는 기업, 알서포트」 항목에서 보안에 관한 RemoteCall 사용법·기능·보안 정보를 다룬다.",
+   "citation": "RC-WEB-BLOG-049 ; [RC-MANUAL]본문 / 국제 표준 보안 관리 체계로 제품 및 서비스를 제공하는 기업, 알서포트 | https://www.remotecall.com/kr/blog/iso27001-certification/ (본문 / 국제 표준 보안 관리 체계로 제품 및 서비스를 제공하는 기업, 알서포트)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A051@G-B6",
+   "type": "A",
+   "question": "리모트콜 블로그에 바이브 코딩으로 원격지원을 붙이는 실습 글이 있나요?",
+   "gold_answer_required": "'바이브 코딩으로 5분만에 뚝딱?! 실제 프롬프트 복붙하기!' 블로그 문서가 RemoteCall 사용법·기능·보안 팁을 다룸 / 필수: 바이브 코딩 프롬프트 블로그 존재",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 바이브 코딩 프롬프트 블로그 존재",
+   "evidence_excerpt": "바이브 코딩으로 5분만에 뚝딱?! 실제 프롬프트 복붙하기! 블로그 문서는 RemoteCall 사용법, 기능 또는 보안 팁을 다룬다.",
+   "citation": "RC-WEB-BLOG-040 ; [RC-MANUAL]본문 / H1 | https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/ (본문 / H1)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-A052@G-B6",
+   "type": "A",
+   "question": "리모트콜은 설치 없이 웹 브라우저만으로 원격 접속이 되나요?",
+   "gold_answer_required": "리모트콜은 별도 설치 과정 없이 웹 브라우저만으로 PC·모바일 기기에 원격 접속해 문제 해결과 지원을 할 수 있음 / 필수: 무설치 웹 브라우저 원격 접속",
+   "answer_type": "single",
+   "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 무설치 웹 브라우저 원격 접속",
+   "evidence_excerpt": "[RC-WEB-BLOG-102] 리모트콜은 별도 설치 과정 없이 웹 브라우저만으로 PC·모바일 기기에 원격 접속해 문제 해결과 지원을 할 수 있다고 설명된다.\n[RC-WEB-BLOG-103] 리모트콜은 별도 설치 과정 없이 웹 브라우저만으로 PC·모바일 기기에 원격 접속해 문제 해결과 지원을 할 수 있다.",
+   "citation": "RC-WEB-BLOG-102 + RC-WEB-BLOG-103 ; [RC-MANUAL]본문 / H1 + [RC-MANUAL]본문 / 별도 설치 과정 없이 웹 브라우저만으로 문제 해결 지원 | https://www.remotecall.com/kr/blog/remotecall-various-support/ (본문 / H1) + https://www.remotecall.com/kr/blog/remotecall-various-support/ (본문 / 별도 설치 과정 없이 웹 브라우저만으로 문제 해결 지원)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E001@G-B6",
+   "type": "E",
+   "question": "리모트콜 웹사이트에 원격지원 세션당 과금(건별 종량제) 요금표가 안내돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E002@G-B6",
+   "type": "E",
+   "question": "리모트콜 온프레미스(구축형)에 무료 평가판 사용 기간(며칠/몇 개월)이 웹에 명시돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E003@G-B6",
+   "type": "E",
+   "question": "리모트콜 블로그에 자사 소스코드를 오픈소스로 공개했다는 글이 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E004@G-B6",
+   "type": "E",
+   "question": "리모트콜 웹사이트에 경쟁사 실명을 넣은 기능 비교표가 게시돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E005@G-B6",
+   "type": "E",
+   "question": "리모트콜 AI 어시스턴트가 음성(STT/TTS) 통화 응대까지 지원한다고 웹에 안내돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E006@G-B6",
+   "type": "E",
+   "question": "리모트콜 웹사이트에 오프라인(인터넷 미연결) 원격지원 모드가 안내돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E007@G-B6",
+   "type": "E",
+   "question": "리모트콜 웹사이트에 웹 접근성 인증(WA 마크) 획득 표기가 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E008@G-B6",
+   "type": "E",
+   "question": "리모트콜 상담사 1인이 보유할 수 있는 최대 라이선스 수 상한이 웹에 명시돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E009@G-B6",
+   "type": "E",
+   "question": "리모트콜 고객사례에 도입 기업의 연간 유지보수 계약 금액이 원 단위로 공개돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  },
+  {
+   "id": "RC-E010@G-B6",
+   "type": "E",
+   "question": "리모트콜 블로그에 자사 클라우드 데이터센터의 전력 사용량(PUE 수치)이 공개돼 있나요?",
+   "gold_answer_required": "자료에 없음. 해당 정보는 제공된 자료에서 확인되지 않음을 명시하고 답을 지어내지 않아야 함 / 필수: '자료에 없음' 명시",
+   "answer_type": "single",
+   "pass_criteria": "Knock-out: '자료에 없음/확인 불가' 명시 없이 구체 답을 지어내면 0점 (거절 게이트)",
+   "evidence_excerpt": null,
+   "citation": "해당 없음 ; (부재 검증 — 커버리지맵 전체 2,822행 변형 검색 0건)",
+   "acl_level": "all"
+  }
+ ]
+}

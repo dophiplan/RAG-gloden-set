@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A001@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 문서 버전 'Ver. 1.1.0(2026.01.23)'이 명시되어 gold_answer_required의 필수 1.1.0, 2026.01.23이 모두 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '토큰 기반 인증(token based authentication)'과 Secret Key를 이용한 API 호출이 명시되어 필수 '토큰 기반 인증'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 지원 브라우저 'Chrome, Edge(Chromium), Safari, Firefox, Opera, Samsung Browser, Whale'과 '이외 미지원'이 명시되어 필수 Whale 지원 및 이외 미지원이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 지원 OS 'Windows, MacOS, Android, iOS, Chromium OS'와 '이외 미지원'이 명시되어 필수 5개 OS 전부가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 최소 사양 'Windows 7·MacOS 13, Dual core 2.4GHz, RAM 4GB, 10Mbps 이상'과 권장 사양 'Windows 10·MacOS 15, Quad core, RAM 8GB, 100Mbps 이상'이 명시되어 필수 최소·권장 모두 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'Chrome·Edge 100, Whale 3.14, Safari 15.4, Firefox 99' 최소 버전이 명시되어 필수 Chrome 100 기준 및 99 미달 판단이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'H.264 코덱 미지원 일부 Android 기기 미동작'이 명시되어 필수 H.264 코덱 미지원 기기 조건이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C002@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'UDP 443·TCP 443 포트를 열고 Whitelist에 등록'이 명시되어 필수 UDP 443, TCP 443, Whitelist가 모두 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '승인 시 24시간(영업일) 이내 ... Email로 발급'이 명시되어 필수 24시간(영업일), Email이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '정식 계약 전 고객은 1회만 연장 가능'과 '라이선스에 따라 자동 만료'가 명시되어 필수 1회만 연장이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'POST /wv/sdk/secret/verify (Host: remotecall.io)'가 명시되어 필수 POST, /wv/sdk/secret/verify가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '997(secretKey 불일치)'가 명시되어 필수 secretKey 불일치가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '893(라이선스에 sdk secretKey 없음)'이 명시되어 필수 '라이선스에 sdk secretKey 없음'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 userId가 '사용자 아이디가 아닌 UUID'임이 명시되어 필수 '아이디 아님, UUID'가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'retcode(100 성공), message, sdkLoginAccessToken(SDK 검증용 토큰), requestId(SDK api 이력용 id)'가 명시되어 필수 retcode 100, sdkLoginAccessToken이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C003@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 SDK Key 취득 경로(유저어드민>사용자 관리>회사>라이선스 정보>웹뷰어 SDK 항목 보기)와 userId 취득 위치(사용자 상세 페이지 URL의 userId 값)가 모두 명시되어 필수 두 위치 모두가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '상담원 화면 공유 그룹 설정 비활성 시 viewer는 host로 강제 변경'이 명시되어 필수 '그룹 설정 비활성 시 host 강제'가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'sdkLoginAccessToken(필수), requestId(필수)'가 명시되어 필수 sdkLoginAccessToken, requestId가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A011@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'JavaScript 이벤트 핸들러로 window.open() 호출(권장, 창 자동 닫기 안정)'이 명시되어 필수 window.open, 권장이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '고객의 PC 또는 모바일 기기에 원격 접속하여 문제를 진단하고 해결하는 기업용 원격지원 솔루션'이 명시되어 필수 원격 접속, 기업용 원격지원이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'iOS는 Cisco의 상표(Internetwork Operating System: iOS)'가 명시되어 필수 Cisco가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '명시적으로 동의 후 화면 제어 등의 기능을 사용할 수 있습니다'가 명시되어 필수 명시적 동의 후가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'www.remotecall.io 에 접속하지 않고 고객사의 시스템에서 바로 이용할 수 있는 방법'이 명시되어 필수 사이트 미접속, 고객사 시스템에서 바로가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '계정발급 받고, API 호출시에 발급한 계정을 사용하는 토큰 기반 인증방식(token based authentication)'이 명시되어 필수 토큰 기반 인증이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A017@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '원격지원, 파일전송, 그리기, 화면 저장, 녹화 등 RemoteCall에서 제공하는 기능'이 명시되어 필수 원격지원·파일전송·그리기·화면 저장·녹화가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A018@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '각 OS 제공사의 수명 종료 정책(End of OS Life Policy)과 동일하게 지원'이 명시되어 필수 End of OS Life Policy가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A019@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 'Android OS 8.0 이상, iOS 16 이상'이 명시되어 필수 Android 8.0, iOS 16이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A020@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '서버 정보 : https://www.remotecall.com'가 명시되어 필수 https://www.remotecall.com가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '공인에서 발급된 API 인증정보는 라이선스 정보에 따라 자동으로 만료됩니다'가 명시되어 필수 라이선스에 따라 자동 만료가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A021@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '계약 조건에 따라 RemoteCall API 를 이용하실 수 있습니다'가 명시되어 필수 계약 조건이 뒷받침됨",
+    "fix_hint": ""
+  }
+]

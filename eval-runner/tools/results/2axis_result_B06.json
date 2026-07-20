@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-G020@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '클립보드 동기화는 Professional·Enterprise는 전체, mobile pack은 Android에서 지원된다'가 gold의 'mobile pack=Android 한정'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A097@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '그리기·레이저 포인터·문자 채팅·음성 채팅·양방향 그리기는 4개 에디션 모두 제공'이 gold의 '4에디션 공통'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G021@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '채팅 세션 공유·프로그램 공유는 Enterprise·mobile pack만 제공'이 gold의 'Professional 불가·Ent·mobile pack 한정'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A098@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '보안 장비 지원(Proxy·Firewall·IDS·IPS)·개인정보 보호·SSL 암호화 통신·뷰어 자동 잠금·접속 종료 시 모듈 삭제·접속 비밀번호는 4개 에디션 모두 제공'이 gold의 6개 항목 및 '6항목 중 5개 이상'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G022@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '지원 미사용 시 자동 로그아웃은 Enterprise·mobile pack만 제공'이 gold의 'Ent·mobile pack 한정'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A099@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '사전 동의·세션 공유 및 전달 시 자동 수락은 4개 모두, 제어 중 동의는 visual pack 제외, 화면 녹화 동의는 Enterprise·mobile pack·visual pack'이 gold의 3구분을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A100@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '상담사 정보 관리·그룹별 상담원 구성·그룹 및 사용자 관리·기능 옵션 관리·접속 페이지 관리·지원 구분 관리·지원 이력 저장·지원 이력 엑셀 출력은 4개 에디션 모두 제공'이 gold의 8개 항목 및 '8항목 중 6개 이상'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A101@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '영상 지원 전용 기능(…스팟라이트…바코드 인식 모드…)은 visual pack에서만 제공'이 gold의 'visual pack 전용'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G023@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '화면 녹화 동의 기능은 Enterprise, mobile pack, visual pack에서 지원'이 gold의 'Professional 미포함'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A102@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '모바일 시스템 정보 출력 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A103@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '모바일 설치 app 정보 출력 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A104@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '모바일 화면 제어 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A105@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '마우스/키보드 제어 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션(visual pack 제외)'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A106@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '멀티 모니터 선택 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A107@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '가상 키보드 실행 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A108@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '재 연결 요청 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A109@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '제어 중 동의 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G024@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '원격 세션 공유 / 전달 기능은 Enterprise, mobile pack에서 지원'이 gold의 'Ent·mobile pack 한정·Professional 불가'를 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A110@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '즐겨찾기 (url, 파일) 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G025@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '모바일 플래쉬 On/Off 기능은 visual pack에서 지원'이 gold의 'visual pack·mobile pack 아님'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A111@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '뷰어 크기 배율 조절 기능은 RemoteCall Professional, Enterprise, mobile pack, visual pack 모두에서 지원'이 gold의 '4에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A112@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence 'url 전송 기능은 RemoteCall Professional, Enterprise, mobile pack, visual pack 모두에서 지원'이 gold의 '4에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A113@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '특수키 전송 기능은 Professional, Enterprise, mobile pack에서 지원'이 gold의 '3에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G026@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '모바일 제어 동의 (Android) 기능은 mobile pack에서 지원'이 gold의 'Android 한정'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A114@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '파일 송수신 동의 (Android) 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A115@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '고객 모바일 화면 잠금 (Android) 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A116@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '플로팅 아이콘 노출 (Android) 기능은 mobile pack에서 지원'이 gold의 'mobile pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A117@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '전용 에이전트 제공 기능은 RemoteCall Professional, Enterprise, mobile pack, visual pack 모두에서 지원'이 gold의 '4에디션'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A118@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '카메라 방향 지시 기능은 visual pack에서 지원'이 gold의 'visual pack'을 직접 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A119@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence '자사의 소프트웨어에 기능을 연동하여 상호 작용할 수 있도록 설계된 인터페이스 프로그램'이 gold의 '연동 인터페이스'를 직접 뒷받침함",
+    "fix_hint": ""
+  }
+]

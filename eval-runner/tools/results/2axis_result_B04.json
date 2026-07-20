@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-C011@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 Enterprise ID당 5개 세션(RC-SPEC-STENT-007)과 최대 1,000MB 파일 송수신(RC-SPEC-STENT-008)을 각각 명시하여 gold의 두 필수 요소를 모두 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C012@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 Mobile Pack의 모바일 화면 공유(RC-SPEC-STMPACK-006)와 모바일 디바이스 화면 제어(RC-SPEC-STMPACK-007)를 모두 상품 구성으로 명시하여 gold의 ‘두 기능 모두’ 요구 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D012@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일팩은 Enterprise 모든 기능 포함(RC-SPEC-PRICE-023)이고 Enterprise는 ID당 5개 세션(RC-SPEC-STENT-007)임을 밝혀, 포함 관계를 통한 5세션 도출에 발췌 외 추측 불필요",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D013@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "multi_equivalent",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Pro는 3세션(RC-SPEC-STPRO-006), Enterprise는 5세션(RC-SPEC-STENT-007)으로 4명 지원 불가를 인지하게 하며, 상담원 2인 이상 시 라이선스 추가 구매(RC-SPEC-PRICE-040)도 근거로 제시되어 두 대안 모두 뒷받침되고 충돌 없음",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D014@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 Enterprise 월 190,000원(RC-SPEC-PRICE-007)과 Mobile Pack 월 380,000원(RC-SPEC-PRICE-022)을 각각 제시하여 차액 190,000원(VAT 별도) 산출에 발췌 외 지식 불필요",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A062@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 Windows 지원을 Windows 10 ~ 11 (32bit, 64bit 지원)으로 명시하여 gold의 10~11 및 32/64bit 요구 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 macOS 지원 범위를 13(Ventura)~26(Tahoe)로 명시하여 macOS 12는 하한 미달이라는 gold의 경계 판단을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A063@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 Linux 지원 배포판을 Ubuntu 14.04 이상 / CentOS 7.5 이상으로 명시하여 gold와 일치",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 Android 지원 범위를 8(Oreo)~16(Baklava)로 명시하여 Android 7.0은 하한 미달이라는 gold의 경계 판단을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G011@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 iOS/iPadOS 지원 기기를 iPhone 8 이상으로 명시하여 iPhone 7은 기기 하한 미달이라는 gold의 경계 판단을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A064@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 지원 브라우저를 Chrome 100↑, Firefox 99↑, Edge Chromium 100↑, Safari 15.4↑, Whale 3.14↑(OS별 상이)로 명시하여 gold의 5종+최소 버전 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A065@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 전용 에이전트 방식 Windows 지원을 Windows 10 ~ 11 (32bit, 64bit 지원)으로 명시하여 gold의 10~11 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G012@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일 OS 원격지원 시 원격제어 기능은 제외되며 화면공유와 그리기로 지원 가능함을 명시하여 gold의 ‘제어 제외+대체 수단’ 경계 설명을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A066@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 상담사 화면 녹화를 위해서는 브라우저를 최신 버전으로 업데이트해야 한다고 명시하여 gold와 일치",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A067@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 PC 지원 표 Windows 항목을 Windows 10 ~ 11 (32bit, 64bit 지원)으로 명시하여 gold의 10~11 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A068@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 PC 지원 표 macOS 항목을 13(Ventura)~26(Tahoe)로 명시하여 gold의 13~26 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A069@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 PC 지원 표 Browser 항목에서 OS 공통 Chrome 100↑·Firefox 99↑·Edge Chromium 100↑, Windows 추가 Opera 80↑·Whale 3.14↑, macOS 추가 Safari 15.4↑를 명시하여 gold의 공통 3종+OS별 구분 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G013@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 전용 에이전트 방식 Linux 지원 배포판을 Ubuntu 12.04·14.04(LTS만 지원)·Mint 13·17·Redhat 6.2~6.5·CentOS 5.7~6.5·구름OS 2.2·TmaxOS 21로 명시하여 gold의 LTS만 지원 경계를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A070@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 PC 지원 표 Browser 항목의 Windows 범주에 Internet Explorer 10 ~ 11을 명시하여 gold의 IE 10~11 필수 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A071@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일/영상 지원 표 Android 항목을 Android 8(Oreo)~16(Baklava) 및 Android TV로 명시하여 gold의 8~16+Android TV 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A072@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일/영상 지원 표 iOS 항목을 iOS/iPadOS 16~26 및 iPhone 8 이상·iPad 5세대/Air 3세대/mini 5세대/Pro 이상으로 명시하여 gold의 16~26+기기 조건 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A073@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일/영상 지원 표 Browser 항목에서 Android는 Chrome 100↑·Samsung Internet 16↑, iOS/iPadOS는 Safari 15.4↑로 명시하여 gold의 3종+플랫폼 구분 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G014@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 Windows 8.1 이하 버전은 Microsoft 기술지원종료에 따라 일부 기능이 정상 작동되지 않을 수 있음을 명시하여 gold의 일부 기능 제한 가능 경계를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A074@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 음성채팅 사용을 위해 브라우저의 최신 버전 업데이트가 필요함을 명시하여 gold의 최신 버전 업데이트 필수 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A075@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 모바일 지원 표 Network 항목을 5G/LTE/3G/Wi-Fi로 명시하여 gold의 4종 네트워크 및 3G 포함 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A076@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 영상 지원 표 Android 항목을 Android 8(Oreo)~16(Baklava)로 명시하여 gold의 8~16 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A077@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 영상 지원 표 iOS 항목의 기기 범위에 iPad mini 5세대를 명시하여 gold의 mini 5세대 포함 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A078@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 영상 지원 표 Camera 항목을 카메라 내장된 스마트기기로 명시하여 gold의 카메라 내장 필수 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A079@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 리모트콜 PC지원 안내 자료가 구동원리부터 상세기능까지 모두 안내함을 명시하여 gold의 구동원리~상세기능 충족",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C013@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 웹브라우저 방식 Windows 지원을 10~11(32/64bit)(RC-SPEC-REQ-001), macOS 지원을 13(Ventura)~26(Tahoe)(RC-SPEC-REQ-002)로 각각 명시하여 gold의 두 OS 범위 모두 뒷받침",
+    "fix_hint": ""
+  }
+]

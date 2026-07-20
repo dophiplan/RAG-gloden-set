@@ -1,0 +1,347 @@
+[
+  {
+    "id": "RC-G013@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 코웍스정보기술·크레소티·크로니아이티 고객사례가 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G014@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 쿠도커뮤니케이션·지아이티·굿모닝아이텍 고객사례가 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A045@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 GreatCall·하우리 고객사례 문서가 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G015@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 아이디어정보기술·이니텍·제이원아이티 고객사례가 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G016@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 코이스·[기밀마스킹] [기밀마스킹]·삼일인포마인 고객사례가 모두 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A046@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 (주)티이에스(TES Inc.) 고객사례가 리모트콜 영상지원(Visual Pack) 도입·활용 내용임을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A047@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 관리자 페이지(admin.startsupport.com)의 사용자 관리>회사>회사 옵션 정보에서 고객사 로그인 페이지 URL과 로고를 '사용'으로 설정하여 커스터마이징함을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G017@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 원격지원 중 민감정보 노출을 막는 '블라인더(blinder)' 기능으로 특정 화면 영역을 가린 채 공유할 수 있음을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A048@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 바이브 코딩 환경에서 웹뷰어 SDK를 코드 몇 줄로 웹 애플리케이션에 연동하는 방법을 프롬프트 예시와 함께 안내함을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A049@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 2023.02.16 자 블로그 언론보도가 알서포트의 일본 샤프(SHARP) 리모트콜 제공 소식을 다룸을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A050@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '국제 인증 ISO/IEC 27001:2022 획득!' 문서가 알서포트의 ISO/IEC 27001:2022 보안 인증 내용을 다룸을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A051@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '바이브 코딩으로 5분만에 뚝딱?! 실제 프롬프트 복붙하기!' 블로그가 RemoteCall 사용법·기능·보안 팁을 다룸을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A052@G-B6",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "fail",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "question에 '설치 없이 웹 브라우저만으로 원격 접속'이라는 gold_answer 핵심 내용이 그대로 포함되어 정답 누설이 발생함",
+    "fix_hint": "question에서 '설치 없이 웹 브라우저만으로 원격 접속' 문구를 제거하고, '리모트콜 원격 접속 시 별도 설치가 필요한가?' 등 중립적 표현으로 수정"
+  },
+  {
+    "id": "RC-E001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E008@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E009@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E010@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E이고 evidence_excerpt가 null이며, gold_answer가 '자료에 없음'을 명시하도록 요구함",
+    "fix_hint": ""
+  }
+]
