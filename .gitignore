@@ -3,9 +3,14 @@
 __pycache__/
 *.pyc
 
-# 오케스트레이터 — 커밋 금지 항목
-eval-runner/orchestrator/키설정.txt          # 실제 키가 들어가는 파일 (예시만 커밋)
-eval-runner/orchestrator/우체통/             # 별도 git 저장소 (postbox)
+# ── 오케스트레이터 커밋 금지 항목 ──
+# (FIX-01: gitignore는 후행 주석 미지원 — 주석은 반드시 독립 줄)
+# 실제 키가 들어가는 파일 — 예시(키설정.예시.txt)만 커밋한다
+eval-runner/orchestrator/키설정.txt
+# 우체통 — 별도 git 저장소 (postbox, FIX-07로 원격도 분리)
+eval-runner/orchestrator/우체통/
+# 회귀 임시 산출물
 eval-runner/orchestrator/results/_regression_tmp/
+# 대용량 중복 아카이브·백업
 eval-runner/아카이브.zip
 eval-runner/eval-runner_old/
