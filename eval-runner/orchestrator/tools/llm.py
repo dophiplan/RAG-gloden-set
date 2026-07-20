@@ -65,8 +65,13 @@ def _cli(m, system, user):
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     if os.environ.get("ANTHROPIC_API_KEY"):
         print("⚠ ANTHROPIC_API_KEY 감지 — 구독 과금 방지를 위해 자식 프로세스 env에서 제거하고 호출함 (FIX-05).")
+    prompt = f"{system}\n\n---\n\n{user}"
+    stdin_input = prompt
+    if m.get("prompt_arg"):        # 일부 CLI(codex exec 등)는 프롬프트를 인자로 받음
+        cmd = cmd + [prompt]
+        stdin_input = ""
     try:
-        p = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}",
+        p = subprocess.run(cmd, input=stdin_input,
                            capture_output=True, text=True, timeout=1200, env=env)
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CLI 호출 타임아웃({cmd[0]}, 1200s) — 배치 축소 또는 구독 한도 확인 필요") from e

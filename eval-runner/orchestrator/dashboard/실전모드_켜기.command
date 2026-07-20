@@ -24,16 +24,25 @@ if [ -n "$ANTHROPIC_API_KEY" ]; then
 fi
 
 # 3) config를 CLI 앙상블로 전환 (원본은 config.yaml.apikeys 로 1회 백업)
+#    코덱스(codex)가 설치·로그인돼 있으면 채점관으로 자동 투입 = 2키 이종 앙상블
 if [ ! -f config.yaml.apikeys ]; then cp config.yaml config.yaml.apikeys; fi
-python3 - << 'PY'
+if command -v codex >/dev/null 2>&1; then JUDGE=codex; else JUDGE=claude; fi
+JUDGE=$JUDGE python3 - << 'PY'
+import os
 from pathlib import Path
 c = Path("config.yaml"); t = c.read_text(encoding="utf-8")
 rest = t[t.index("pipeline:"):] if "pipeline:" in t else t
+if os.environ.get("JUDGE") == "codex":
+    judge = '  judge:     {provider: "cli", command: ["codex", "exec"], prompt_arg: true, model: ""}\n'
+    label = "생성=claude · 채점=codex (이종 2키 앙상블) ★"
+else:
+    judge = '  judge:     {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}\n'
+    label = "claude 단독 (1키 모드 — 사람 재검 10% 강화. codex 설치 시 자동 승격)"
 cli = ('models:\n'
        '  generator: {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}\n'
-       '  judge:     {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}\n\n')
+       + judge + '\n')
 c.write_text(cli + rest, encoding="utf-8")
-print("config → CLI 앙상블(claude 구독)로 전환 완료")
+print(f"config 전환 완료 — {label}")
 PY
 
 # 4) 기존 서버 끄고 실전 모드(ORCH_MOCK 없이)로 재시작
