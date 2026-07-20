@@ -8,7 +8,7 @@
 #   주의: ANTHROPIC_API_KEY 환경변수가 있으면 자식 env에서 자동 제거됨(FIX-05) — 그래도 비워둘 것.
 models:
   generator: {provider: "anthropic", model: "claude-opus-4-8", api_key_env: "GEN_KEY"}
-  judge:     {provider: "moonshot",  model: "kimi-k2-0711-preview", api_key_env: "JUDGE_KEY"}
+  judge:     {provider: "moonshot",  model: "kimi-k3", temperature: 1, api_key_env: "JUDGE_KEY"}
   # reviewer: {provider: "", model: "", api_key_env: "REV_KEY"}   # 미설정 = 3차 교차 생략
 
 pipeline:

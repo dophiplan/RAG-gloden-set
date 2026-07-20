@@ -33,6 +33,10 @@ def _load_keyfile():
         k, v = k.strip(), v.strip().strip('"').strip("'")
         if k and v and not os.environ.get(k):
             os.environ[k] = v
+    # 별칭: 채점관 키(JUDGE_KEY)가 비어 있으면 기존 KIMI_API_KEY 를 그대로 쓴다
+    # (RC 2축 판정 관행 — Kimi 가 채점관. 키를 두 군데 관리하지 않게)
+    if not os.environ.get("JUDGE_KEY") and os.environ.get("KIMI_API_KEY"):
+        os.environ["JUDGE_KEY"] = os.environ["KIMI_API_KEY"]
 
 
 _load_keyfile()
