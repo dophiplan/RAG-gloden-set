@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T07:50:22",
+  "updated": "2026-07-21T08:20:52",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -10,7 +10,8 @@
       "stage_history": {},
       "open_gates": [],
       "halt_reason": null,
-      "key_released": null
+      "key_released": null,
+      "strategy": "ensemble"
     },
     "RC2": {
       "stage": "CORPUS_AUDIT",
@@ -22,6 +23,67 @@
       "open_gates": [],
       "halt_reason": null,
       "key_released": null
+    },
+    "EE": {
+      "stage": "SCORING",
+      "status": "WAITING_HUMAN",
+      "calibration_passed": true,
+      "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
+      "compare_blocked": false,
+      "stage_history": {
+        "CORPUS_AUDIT": {
+          "done_at": "2026-07-21T08:20:27"
+        },
+        "TERRAIN": {
+          "done_at": "2026-07-21T08:20:28"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-07-21T08:20:29"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-07-21T08:20:32"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-07-21T08:20:33"
+        },
+        "CALIBRATION": {
+          "done_at": "2026-07-21T08:20:35"
+        },
+        "STAGE2": {
+          "done_at": "2026-07-21T08:20:35"
+        }
+      },
+      "open_gates": [
+        {
+          "id": "SCORE_EE_r1",
+          "stage": "SCORING",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-21T08:20:39"
+        }
+      ],
+      "halt_reason": null,
+      "strategy": "ensemble",
+      "start_mode": "full",
+      "goldenset": {
+        "phase": "DONE",
+        "round": 1,
+        "done_units": [
+          "EE-MANUAL-001",
+          "EE-MANUAL-002",
+          "EE-MANUAL-003",
+          "EE-MANUAL-004",
+          "EE-NOTICE-001",
+          "EE-NOTICE-002",
+          "EE-NOTICE-003",
+          "EE-NOTICE-004",
+          "EE-POLICY-001",
+          "EE-POLICY-002",
+          "EE-POLICY-003",
+          "EE-POLICY-004"
+        ],
+        "batch": "B1"
+      }
     }
   }
 }

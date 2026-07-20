@@ -197,7 +197,12 @@ def api_action(payload):
                  "--actor", payload.get("actor", "난희")]
     elif cmd == "onboard":
         args += ["onboard", "--product", payload["product"], "--name", payload.get("name", ""),
-                 "--base", payload.get("base", "blank"), "--actor", payload.get("actor", "난희")]
+                 "--base", payload.get("base", "blank"), "--actor", payload.get("actor", "난희"),
+                 "--start", payload.get("start", "full"),
+                 "--strategy", payload.get("strategy", "ensemble")]
+    elif cmd == "set-strategy":
+        args += ["set-strategy", "--product", payload["product"],
+                 "--strategy", payload["strategy"], "--actor", payload.get("actor", "난희")]
     elif cmd == "run":
         args += ["run", "--product", payload["product"]]
     else:
@@ -261,6 +266,9 @@ class H(SimpleHTTPRequestHandler):
         name = N(unquote(q.get("name", ["upload.bin"])[0]))
         name = name.replace("/", "_").replace("\\", "_").replace("..", "_")  # 경로 이탈 차단
         sub = next((d for k, d in self.UPLOAD_DIRS.items() if k in target), "corpus")
+        # 채점만 모드: SCORING 카드에 골든셋(xlsx)과 로그(json)를 같이 올려도 자동 분류
+        if "SCORING" in target and name.lower().endswith(".xlsx"):
+            sub = "05_unified_ledger"
         if not re.fullmatch(r"[A-Z0-9]{1,8}", prod):
             return {"ok": False, "out": f"제품 코드 오류: {prod}"}
         dest_dir = ROOT / "data" / prod / sub

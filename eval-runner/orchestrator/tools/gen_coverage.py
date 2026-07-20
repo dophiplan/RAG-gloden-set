@@ -90,14 +90,41 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
     return units
 
 
-def _ensemble_roles(cfg):
-    """[앙상블 출제] 가용한 모든 모델이 커버 단위를 추출한다 — 촘촘함은 합집합에서 나온다."""
+def get_strategy(prod):
+    """제품별 실행 전략 (대시보드 셀렉트박스에서 설정): ensemble | solo | cross_check | self_check"""
+    from olib import load_state
+    return load_state()["products"].get(prod, {}).get("strategy", "ensemble")
+
+
+def _ensemble_roles(cfg, strategy="ensemble"):
+    """추출기 편성 — 전략에 따라: 앙상블=가용 전원 / 그 외=generator 단독"""
+    if strategy != "ensemble":
+        return ["generator"]
     if llm.is_mock():
         return ["generator", "judge"]     # mock = 2키 상당
     import os
     from model_adapter import detect_mode
     have = detect_mode(cfg, os.environ)["have"]
-    return [r for r in ("generator", "judge", "reviewer") if have.get(r)]
+    return [r for r in ("generator", "judge", "reviewer") if have.get(r)] or ["generator"]
+
+
+REVIEW_SYSTEM = """[TASK:COVERAGE_REVIEW] 너는 커버리지맵 검수자다 — 생성에는 관여하지 않았다.
+입력: {chunks(코퍼스 원문 일부), units(추출된 커버 단위 목록)}.
+검수 관점: ① 코퍼스에 있는데 단위로 안 뽑힌 문장(누락) ② 원문과 다른 fact(변형 의심).
+출력: JSON만 — {"누락 의심": ["문장…", …], "변형 의심": ["unit_id", …], "총평": "1문장"}. 문제 없으면 빈 배열."""
+
+
+def ai_review(prod, chunks, units, cfg, strategy):
+    """[cross_check/self_check] 생성에 참여 안 한 세션이 결과를 검수 — 의견은 게이트 카드에 '참고'로."""
+    role = "judge" if strategy == "cross_check" else "generator"   # self_check도 새 세션(호출 독립)
+    payload = {"chunks": chunks[:40],
+               "units": [{"unit_id": u["unit_id"], "fact": u["fact"]} for u in units]}
+    try:
+        out = llm.chat(role, REVIEW_SYSTEM, json.dumps(payload, ensure_ascii=False), cfg)
+        op = llm.extract_json(out)
+        return op if isinstance(op, dict) else {"총평": str(op)[:200]}
+    except Exception as e:
+        return {"검수 실패": str(e)[:150]}
 
 
 MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
@@ -108,9 +135,10 @@ MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
 출력: JSON 배열만 — 입력과 같은 스키마."""
 
 
-def ensemble_generate(prod, chunks, cfg):
-    """모든 가용 모델이 추출 → 기계 dedup → 병합자(generator)가 부분집합 통합 → 검수는 호출측."""
-    roles = _ensemble_roles(cfg)
+def ensemble_generate(prod, chunks, cfg, strategy=None):
+    """전략별 추출 → 기계 dedup → (앙상블이면) 병합 → 검수는 호출측."""
+    strategy = strategy or get_strategy(prod)
+    roles = _ensemble_roles(cfg, strategy)
     pool, contrib, fails = [], {}, []
     seen = set()
     for role in roles:
@@ -207,19 +235,24 @@ def run(prod, cfg):
     chunks = load_corpus(prod)
     if not chunks:
         return "WAITING_INPUT", {"코퍼스 청크": 0}
-    # [앙상블 출제] 가용 모델 전원 추출 → 병합 → 최종 1축 재검수 (병합 변형도 걸러짐)
-    merged, contrib, fails = ensemble_generate(prod, chunks, cfg)
+    # 전략별 추출 (셀렉트박스 설정) → 최종 1축 재검수 (병합/생성 변형도 걸러짐)
+    strategy = get_strategy(prod)
+    merged, contrib, fails = ensemble_generate(prod, chunks, cfg, strategy)
     ok, rej = verify_units(merged, chunks)
     if not ok:
         return "HALTED", {"halt": "생성 단위 전건 검수 불합격 — 카운트 미실측 방지",
                           "기여도": contrib, "추출기 실패": fails}
     path = write_map(prod, ok)
     gaps = gap_audit(prod, chunks, ok)
-    ev = {"커버 단위(병합·검수 통과)": len(ok),
-          "앙상블 기여도": contrib,
-          "병합 후 재검수 탈락": len(rej),
+    ev = {"실행 전략": strategy,
+          "커버 단위(검수 통과)": len(ok),
+          "기여도": contrib,
+          "재검수 탈락": len(rej),
           "1축 문자 대조": "불일치 0 (통과분)", "GAP_AUDIT 누락 문서": len(gaps),
           "산출": N(path.name)}
+    if strategy in ("cross_check", "self_check"):
+        op = ai_review(prod, chunks, ok, cfg, strategy)
+        ev["AI 검수 의견 (참고 — 판정은 사람)"] = op
     if fails:
         ev["추출기 실패"] = fails
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
