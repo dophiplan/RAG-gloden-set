@@ -140,22 +140,23 @@
 </div>
 
 <dialog id="dlg">
-  <div class="dlg-head">제품 추가 — 파이프라인 온보딩</div>
+  <div class="dlg-head">새 제품 평가 시작하기</div>
   <div class="dlg-body">
-    <label for="f-code">제품 코드 (terrain 프로파일 키)</label>
+    <label for="f-code">제품 코드 (영문 대문자 짧게)</label>
     <input id="f-code" placeholder="예: RM" maxlength="8">
     <label for="f-name">제품 이름</label>
     <input id="f-name" placeholder="예: 리모트미팅">
-    <label for="f-base">terrain 프로파일 시작점</label>
+    <label for="f-base">채점 규칙, 어느 제품과 비슷하게 시작할까요?</label>
     <select id="f-base">
-      <option value="blank">빈 프로파일 (지형 판정 ②에서 확정)</option>
-      <option value="RV">RV 복제 후 수정</option>
-      <option value="RC">RC 복제 후 수정</option>
+      <option value="RV">리모트뷰(RV)와 비슷하게</option>
+      <option value="RC">리모트콜(RC)과 비슷하게</option>
+      <option value="blank">잘 모르겠어요 (나중에 ② 단계에서 정함)</option>
     </select>
-    <div class="dlg-steps">추가하면 자동으로 일어나는 일:<br>
-      <b>1.</b> data/&lt;코드&gt;/ 폴더 스캐폴드 · <b>2.</b> 상태 생성(① PENDING)<br>
-      <b>3.</b> 트랙이 ① 코퍼스 실측에서 <b>입력 대기</b> 정지 — INPUT 카드 발행<br>
-      <b>4.</b> calibration_passed=false 시작 (규칙 C) · <b>5.</b> 원장 ONBOARD 행</div>
+    <div class="dlg-steps"><b>이건 순서 선택이 아니에요</b> — 어디서 시작할지는 올리는 파일이 정해요:<br>
+      · 문서 뭉치(코퍼스)만 → <b>처음부터</b> 시험지 제작<br>
+      · 골든셋(시험지)이 이미 있음 → 해당 단계 폴더에 넣으면 <b>건너뜀</b><br>
+      · 응답 로그까지 있음 → <b>채점만</b> 진행<br>
+      추가하면: 폴더 만들어지고 → "파일 올려주세요" 카드가 떠요 (📎 업로드 버튼)</div>
   </div>
   <div class="dlg-foot">
     <button class="btn" onclick="dlg.close()">취소</button>
