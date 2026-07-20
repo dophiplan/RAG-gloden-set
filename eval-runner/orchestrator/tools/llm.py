@@ -99,12 +99,30 @@ def _anthropic(model, key, system, user, max_tokens):
 
 
 def extract_json(text):
-    """응답에서 JSON 배열/객체 추출 (코드펜스·전후 설명 허용)"""
-    text = re.sub(r"```(?:json)?", "", text)
-    m = re.search(r"(\[.*\]|\{.*\})", text, re.S)
-    if not m:
-        raise ValueError("응답에서 JSON을 찾지 못함: " + text[:200])
-    return json.loads(m.group(1))
+    """응답에서 JSON 추출 — 배열/객체/JSONL(줄당 객체)/코드펜스/전후 설명 모두 허용.
+    실모델은 형식이 흔들린다: 배열 대신 JSONL, 코드펜스, 앞뒤 설명. 전부 흡수한다."""
+    raw = re.sub(r"```(?:json)?", "", text).strip()
+    # 1) 정석: 첫 '[' ~ 마지막 ']' (배열)
+    a, b = raw.find("["), raw.rfind("]")
+    if a != -1 and b > a:
+        try:
+            return json.loads(raw[a:b + 1])
+        except json.JSONDecodeError:
+            pass
+    # 2) JSONL / 여러 객체 나열: 개별 {...} 를 전부 파싱해 배열로
+    objs = []
+    for m in re.finditer(r"\{(?:[^{}]|\{[^{}]*\})*\}", raw, re.S):
+        try:
+            objs.append(json.loads(m.group(0)))
+        except json.JSONDecodeError:
+            continue
+    if objs:
+        return objs if len(objs) > 1 else objs[0]
+    # 3) 단일 객체
+    a, b = raw.find("{"), raw.rfind("}")
+    if a != -1 and b > a:
+        return json.loads(raw[a:b + 1])
+    raise ValueError("응답에서 JSON을 찾지 못함: " + text[:200])
 
 
 # ══════════════════ 결정적 MOCK 백엔드 ══════════════════
