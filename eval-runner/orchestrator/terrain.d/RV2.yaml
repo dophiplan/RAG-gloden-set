@@ -1,0 +1,12 @@
+RV2:
+  citation_pattern: RV2-[A-Z]+(?:-[A-Z0-9]+)*-\d+
+  question_id_pattern: RV2-[A-Z]\d+
+  anchor_patterns:
+  - \(20\d\d-\d\d-\d\d (게시|시행|인덱싱|작성|서술) 기준\)
+  anchor_suspect_pattern: \(20\d\d-\d\d-\d\d[^)]*\)
+  anchor_required_prefixes: []
+  appendix_switches:
+  - T-1
+  map_fact_column: 이 단위가 말하는 사실
+  map_unit_column: Unit ID
+  onboarding: true
