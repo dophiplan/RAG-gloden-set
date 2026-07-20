@@ -72,8 +72,21 @@ def load_config():
             try:
                 prof = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
                 cfg.setdefault("terrain", {}).setdefault("profiles", {}).update(prof)
-            except yaml.YAMLError:
-                pass
+            except yaml.YAMLError as e:
+                # FLAG-04: 침묵 무시 금지 — 프로파일 증발은 참조 집합 사고다.
+                # ledger_append는 load_config를 재호출하므로(재귀) 원장에 직접 기록한다.
+                print(f"⚠ terrain.d/{f.name} 파싱 실패 — 프로파일 미적용: {str(e)[:120]}")
+                try:
+                    lp = ROOT / cfg["paths"]["ledger"]
+                    with open(lp, "a", encoding="utf-8") as lf:
+                        lf.write(json.dumps(
+                            {"ts": now(), "product": None, "stage": "CONFIG", "gate_id": None,
+                             "actor": "script:load_config", "action": "TERRAIN_OVERLAY_PARSE_FAIL",
+                             "evidence": {"file": N(f.name), "error": str(e)[:200]},
+                             "reason": "깨진 terrain 오버레이 — 해당 제품 프로파일 미적용 상태로 동작 중"},
+                            ensure_ascii=False) + "\n")
+                except OSError:
+                    pass   # 원장 불가 상황은 이후 ledger_append 경로가 HALT로 잡는다
     return cfg
 
 
