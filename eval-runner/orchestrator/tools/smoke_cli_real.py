@@ -21,7 +21,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 os.environ.pop("ORCH_MOCK", None)           # 실모델 경로
 os.environ.pop("ANTHROPIC_API_KEY", None)   # 구독 과금 방지(이중 안전)
-PROD = "TT"
+PROD = "EE"   # 자동 테스트 전용 (TT는 난희 연습장 — 건드리지 않음)
 DATA = ROOT / "data" / PROD
 CONFIG = ROOT / "config.yaml"
 
@@ -83,7 +83,7 @@ def main():
         CONFIG.write_text(CLI_MODELS + "\n" + rest, encoding="utf-8")
         reset()
         print("═══ 실제 claude CLI 전 트랙 스모크 (TT) ═══")
-        run("onboard", "--product", PROD, "--name", "티티뷰어", "--base", "RC", "--force")
+        run("onboard", "--product", PROD, "--name", "자동테스트", "--base", "RC", "--force")
         cdir = DATA / "corpus"
         cdir.mkdir(parents=True, exist_ok=True)
         for doc, chunks in CORPUS.items():
