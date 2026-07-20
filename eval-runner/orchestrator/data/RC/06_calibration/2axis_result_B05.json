@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-C014@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Android 8(Oreo)~16(Baklava)/Android TV와 5G/LTE/3G/Wi-Fi 두 조건을 RC-SPEC-REQ-022·024에서 동시에 발췌 지원",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D015@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "CentOS 7.5는 웹브라우저 방식 7.5 이상·전용 에이전트 5.7~6.5 범위 밖임을 RC-SPEC-REQ-003·020에서 상반 판별",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D016@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Windows 10~11 지원 범위와 8.1 이하 MS 기술지원종료로 일부 기능 미동작 고지를 RC-SPEC-REQ-001·016에서 결합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A080@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "구축형 라인업이 On-premise·구축형 클라우드 두 방식임을 evidence에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A081@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "기업 환경 맞춤형·자사 보안 정책·다수 사용자 동시 접속 3가지 추천 유형을 RC-SPEC-ONPREM-003·004·005에서 발췌",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A082@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "기능·로고 커스터마이징 지원 여부를 RC-SPEC-ONPREM-008에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A083@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "외부 네트워크 연결 없이 폐쇄망 운용 가능함을 RC-SPEC-ONPREM-009에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A084@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "SaaS·On-premise·구축형 클라우드의 운영 방식 3가지 구분을 evidence에서 발췌",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A085@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "SaaS 월간/연간·On-premise 한 번 구축 지속·구축형 클라우드 월간 과금 구분을 evidence에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A086@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "사생활 노출 최소화·ITSM 구축·내부 직원 원격지원·망 분리 보안 접속 4유형을 RC-SPEC-ONPREM-015~018에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A087@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "구축형 클라우드의 구독 방식 도입 가능 여부를 RC-SPEC-ONPREM-019에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A088@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "대기업·공공기관 고객 활용 사례를 RC-SPEC-ONPREM-027에서 발췌",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C015@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "관리 인력 필요 여부·구축 시간 두 축의 SaaS·On-premise 비교를 RC-SPEC-ONPREM-013·011에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C016@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "별도 공간 불필요·초기 비용 부담 절감 두 장점을 RC-SPEC-ONPREM-020·021에서 발췌",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D017@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "On-premise의 폐쇄망 운용 가능과 망 분리 환경 추천 대상을 RC-SPEC-ONPREM-009·018에서 결합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D018@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "서버실 부재·초기 예산 빠듯 조건에 따른 구축형 클라우드 대안을 RC-SPEC-ONPREM-019·020·021 3건으로 지지",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A089@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "소프트웨어 명칭 '리모트콜 v7.0 / RemoteCall v7.0'을 RC-SPEC-CERT-001에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A090@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "인증 등급 '1등급'을 RC-SPEC-CERT-002에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A091@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "증명번호 '21-0555'를 RC-SPEC-CERT-003에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A092@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "인증 효력 날짜 '2021년 11월 8일'을 RC-SPEC-CERT-004에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D019@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "v7.0·1등급·2021-11-08 세 항목을 RC-SPEC-CERT-001·002·004 3건에서 결합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A093@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "PC 지원·모바일 지원·영상 지원 4개 에디션 비교를 RC-SPEC-FEAT-001에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G015@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "창구형 접속이 Enterprise·mobile pack만 제공됨을 RC-SPEC-FEAT-002에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G016@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "e-mail 전송은 Professional·Enterprise, SMS 전송은 mobile pack·visual pack으로 RC-SPEC-FEAT-002에서 구분",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A094@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "접속 번호 입력·웹 브라우저·전용 에이전트·접속 URL 클립보드 복사 4항목이 4개 에디션 공통임을 RC-SPEC-FEAT-002에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A095@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "원격제어 엔진 VRVD·GDI·DDI 방식이 4개 에디션 공통 제공됨을 RC-SPEC-FEAT-003에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G017@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "트루 컬러 지원이 visual pack 제외 3개 에디션임을 RC-SPEC-FEAT-003에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A096@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Professional 3·Enterprise 5·mobile pack 5·visual pack 3 session을 RC-SPEC-FEAT-004에서 직접 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G018@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "파일 전송이 visual pack 미지원임을 RC-SPEC-FEAT-004에서 확인",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G019@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "재부팅 후 자동 재접속(표준/안전 모드)이 visual pack 제외 3개 에디션임을 RC-SPEC-FEAT-005에서 확인",
+    "fix_hint": ""
+  }
+]

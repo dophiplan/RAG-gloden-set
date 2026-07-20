@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-D018@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '방송 시작' 버튼 클릭→고객 화면 기록 허용→단말 화면 웹 브라우저 표시→화면 공유·지원 모드 전환·부가 기능 사용, 라이선스 없으면 영상지원 버튼 미노출로 절차와 예외를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A043@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 및 사진 공유 권한 동의 창이 표시되고 이를 허용해야 원활한 상담 지원이 가능하다(앱 이름: RemoteCall)'로 권한 요구를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D019@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 URL 클릭→'모바일 지원(선택하기)'→AppStore 설치 화면→[열기]→기본 사용 권한·이용 약관 동의 순서를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G011@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 캡처(* Chromium 전용, 고객이 화면 기록 미시작 시 비활성화)'로 경계 조건을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D020@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '전환 요청 화면이 표시되고 고객 단말기 화면의 전환 요청 창에서 [허용하기]를 클릭하면 영상 지원 모드로 전환되며, 웹뷰어 영상 라이선스가 없는 상담원은 영상 지원 버튼이 미노출된다'로 절차와 예외를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G012@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'ARKit 지원 단말에서 활성화, iPhone X 이상 권장', '스티커는 최대 12개까지 삽입 가능', '전체 지우기 시 상담원·고객 AR 그리기 내역이 모두 삭제'로 단말 조건과 기능 한계를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A044@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 모바일 모드(가이드 보기·화면 일시 정지/해제·마이크·파일 전송·종료하기)와 영상 모드(그리기·마이크·카메라 전환·플래쉬·일시 정지/해제·종료·AR 그리기) 기능을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A045@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Ver. 7.6.3'으로 버전을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A046@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '2025.05.27'으로 발행일을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A047@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Ver. 7.6.3'과 '2025.05.27'으로 버전과 발행일을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D021@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 URL/고객 접속페이지 주소 안내 → 접속번호 안내·입력 유도 → 다운로드된 모듈을 실행해 원격지원 서비스에 연결' 순서를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A048@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '돌아가기(홈 이동), 화면 일시 정지/해제, 마이크 OFF/ON(음성채팅 시), 파일 전송(권한 [허용] 필요), 종료하기' 등 고객 기능을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A049@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 캡쳐(스크린샷 영역에 표시), 플래시(※ Android 전용), 마이크 ON/OFF, 화면 일시정지/재개, 화면 회전(90도씩), 카메라 전환(고객 동의 시 전환)'을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A050@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '그리기·전체 지우기, 카메라 전환, 플래쉬(※ Android 전용), 화면 확대/축소(※ Android 전용), 사진첩(사진첩 이미지 공유), 캡처(사진 촬영)' 등을 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E009@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E010@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E011@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E012@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며, 커버리지맵 2,822행 검색 결과 부재로 무응답 타당.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'https://remotecall.io' 로그인, 임시 비밀번호로 최초 로그인 시 '비밀번호 변경 화면이 나타남', 임시 비밀번호는 '무료 체험 신청 시 완료 안내 메일, 온라인 구매 시 구매 단계 등록, 오프라인 구매 시 담당자를 통해 안내된다'로 절차와 발급 경로를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 코드는 일회성으로 창을 열 때마다 새로 생성된다', 'https://113366.io', '6자리 접속 코드', '일회성 설치파일', '지원 종료 후 파일이 자동 삭제'로 재사용 불가 및 절차를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F001@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 관리자 계정 시 '사용자 관리 정보(계정 정보·라이선스·등록 사용자)', 상담사 계정 시 '개인 사용자 정보(관리자 허용 범위 내에서만 변경 가능)'로 권한별 화면 차이를 뒷받침.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F002@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '그룹 항목에서 전체사용/사용안함/사용자 설정', '상담사 ID별 활성 체크박스로 개별 on/off', '화면녹화처럼 고객정보가 유입되는 민감 기능은 권한 있는 상담사에게만 제한 부여를 권장'으로 권한 설정과 거버넌스 원칙을 뒷받침.",
+    "fix_hint": ""
+  }
+]

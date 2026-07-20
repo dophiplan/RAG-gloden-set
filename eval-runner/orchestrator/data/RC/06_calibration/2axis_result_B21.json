@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-D002@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '지원받는 측은 별도 로그인 없이', '구글플레이로 자동 연결', '이용약관 동의하고 계속하기', '접속 코드 입력'으로 무로그인 및 앱 설치 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '앱스토어로 자동 연결', '화면 및 사진 공유 동의 필요', '방송 시작을 클릭하면 모바일 화면이 공유된다'로 iOS 화면 공유 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'SMS로 접속코드가 포함된 접속 링크와 메시지를 전송(접속코드는 일회성)', '화면 좌측·우측 메뉴 배치'로 영상 지원 안내 방식을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Web Viewer는 원격지원 시 고객의 PC를 제어할 수 있게 연결하는 웹 브라우저 창'으로 화면 공유·제어 개념을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원 중 고객 PC 우측 하단에 원격 지원 중 문구가 표시된다'로 고객 화면 표시 여부를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '종료하기'를 접속 안내 창 기능으로 명시하여 고객 측 종료 방법을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 일시 정지/해제(정지 시 상담원 제어 불가·재개 요청 수신)'으로 일시 정지 가능 여부를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '크롬북인 경우 화면 제어 관련 메뉴는 비활성화되어 고객 화면 공유만 가능'으로 크롬북 제어 불가 경계를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'RCmacHost.app을 실행', '[시스템 환경설정] > [보안 및 개인정보 보호]에서 설정'으로 Mac 접속 및 권한 설정 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '레이저 포인터는 고객 화면 안내·지시용으로 상담원 왼쪽 마우스 클릭 시 포인터 상태가 변경된다'로 레이저 포인터 기능을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '[모바일 지원 직접 다운로드] 버튼', 'RSAssistant 앱 설치가 추가로 필요'로 PlayStore 제한 단말의 설치 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G003@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '일부 단말은 화면 제어 기능을 위해 RSAssistant 앱 설치가 추가로 필요'로 추가 설치 예외를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '도구로 고객 단말기 홈·최근 실행 앱·이전 화면(뒤로가기)으로 이동할 수 있다'로 홈·뒤로 제어 가능 여부를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '웹뷰어 영상 라이선스가 없는 상담원은 영상지원 버튼이 미노출된다'로 라이선스 경계를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D006@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객이 단말기 화면의 전환 요청 창에서 [허용하기]를 클릭해야 전환된다'로 모드 전환 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '바코드 읽기(인식 바코드는 채팅 내역 자동 기록)'로 바코드·QR 인식 및 기록 위치를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B2-3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 고객 측 '카메라 전환' 버튼 및 상담원의 '좌우·전후면으로 전환' 관련 원문이 없어 gold_answer의 핵심(전후면 카메라 전환)을 뒷받침하지 못함",
+    "fix_hint": "evidence_excerpt에 고객 카메라 전환 및 상담원 화면 전환 관련 원문을 추가하거나 gold_answer를 evidence 기준으로 축소"
+  },
+  {
+    "id": "RC-D007@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 및 사진 공유 권한 동의 창이 표시되고 이를 허용해야 원활한 상담 지원이 가능하다'로 iOS 최초 설치 시 권한 절차를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 캡처(* Chromium 전용, 고객이 화면 기록 미시작 시 비활성화)'로 iOS 캡처 비활성 예외를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 iOS 모바일 지원 모드의 '가이드 보기·화면 일시 정지·마이크·파일 전송·종료하기'와 영상 모드의 '그리기·카메라 전환·플래쉬·AR 그리기' 등 고객 사용 버튼을 명시",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B2-3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "fail",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 상담원 측 메뉴 위치 '상단 중앙' 및 고객 측 '하단 중앙' 툴바 좌표가 명시되지 않아 '각각 어디에'라는 비교 질문에 대한 근거 부족",
+    "fix_hint": "evidence_excerpt에 상담원 기능 툴바(상단 중앙)와 고객 기능 툴바(하단 중앙) 위치를 명시하는 원문으로 교체"
+  },
+  {
+    "id": "RC-C002@G-B2-3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "fail",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '그리기'와 '스크린샷'의 좌우 배치(좌측·우측) 정보가 없어 좌우 비교 근거 미확보",
+    "fix_hint": "evidence_excerpt에 지원 기능(그리기·텍스트)은 좌측, 커뮤니케이션 기능(스크린샷·문서 채팅)은 우측이라는 원문을 추가"
+  },
+  {
+    "id": "RC-A011@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 캡처는 지원 중인 고객 PC 화면을 상담원 PC에 JPG로 저장(저장 위치: 상담원 브라우저 기본 저장 경로 Download 폴더)'로 저장 위치를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '채팅 영역에서 채팅 메시지...가 표시된다'로 문자 채팅 기능 존재를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'SMS/email 링크 클릭만으로도 바로 연결 가능하나, 메신저(예: 카카오톡)에서 링크 클릭 시 원활하지 않을 수 있다'로 링크 연결 및 예외를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '위치 정보(고객 동의 시 채팅 내역에 고객 위치 맵 표시, 국가별 정책에 따라 미제공 가능)'로 위치 공유 절차 및 경계를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객 PC에 수락 팝업이 노출되고 동의 시 전송이 시작된다'로 파일 전송 시 고객 측 팝업을 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '[내 화면 공유 시작하기]로 대기창을 실행하고... 고객 브라우저에 상담원 화면이 표시된다'로 상담원 화면 공유 가능 여부를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'AR 그리기... 카메라 이동 시에도 피사체 표시 내역이 유지된다'로 AR 그리기 및 카메라 이동 시 유지를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B2-3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "type=E에 evidence_excerpt가 null이고 gold가 '자료에 없음/확인 불가'로 명시하여 무응답 조건 및 Knock-out을 충족",
+    "fix_hint": ""
+  }
+]

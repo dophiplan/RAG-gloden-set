@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-G011@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '실제 이용 여부와 상관없이 서비스 기간에 따라 계산' 및 '00:00~23:59를 1일로 하고 개시·종료가 1일 중도면 1일로 간주'가 명시되어 gold의 '실제 이용 무관, 기간 기준'을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 입금인·입금예정자 불일치 시 '전화·이메일·팩스 통지'와 '영업시간(평일 월~금 09:00~18:00) 내 입금 확인'이 명시되어 gold의 통지 의무와 영업시간 확인을 모두 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G012@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '신청 완료 후 1주일 이내 입금'과 '미입금 시 회사가 신청을 철회할 수 있다'가 명시되어 gold의 '1주일 이내, 미입금 시 철회'를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '7일 이내 철회'만 존재하고 '15영업일 환급' 및 '회사 귀책으로 잔여 기간 요금 환불' 근거가 없어 gold를 뒷받침하지 못함",
+    "fix_hint": "evidence_excerpt를 제27조 전문으로 교체하여 15영업일 환급 및 회사 귀책 환불 근거를 포함시키거나, gold_answer를 evidence 범위인 7일 철회만 담도록 축소하라."
+  },
+  {
+    "id": "RC-A008@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '접수 후 48시간 이내 회신'이 명시되어 gold의 '48시간 이내 회신'을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F004@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 리버스엔지니어링 행위 정의만 있고 '통지 후 사유 해소 시까지 이용을 중지·제한 가능'의 제재 근거가 없어 gold를 뒷받침하지 못함",
+    "fix_hint": "evidence_excerpt를 제29조에서 '통지 후 사유 해소 시까지 이용을 중지·제한할 수 있다'는 문장까지 확장하거나, gold에서 중지·제한 가능 문구를 제거하라."
+  },
+  {
+    "id": "RC-F005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '제3자에게 재판매할 수 없으며'와 '서비스 이용권한·이용계약상 지위를 타인에게 양도·증여할 수 없다'가 명시되어 gold의 '재판매·양도 금지'를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C003@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '개통희망일 서비스 이용 보장', '연중무휴(24시간/365일)', '정당한 의견·불만 즉시 처리', '사전 승낙 없이 타인 배포 금지'가 명시되어 gold의 개통·제공·정보보호 의무를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F006@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '아이디 거래'와 '타인 명예훼손' 2항만 있고 gold의 '허위·도용·음란물·지적재산권·버그 악용·바이러스·직원 사칭·선불 서비스 양도·재판매 불가' 등 대부분 금지 행위 근거가 없음",
+    "fix_hint": "evidence_excerpt를 제32조 전체 금지 행위 목록으로 확장하거나, gold를 excerpt에 실제 포함된 아이디 거래·명예훼손 두 항목만 담도록 축소하라."
+  },
+  {
+    "id": "RC-F007@G-B3",
+    "verdict": "반려",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "fail",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에 '관리 소홀·부정 사용 책임은 회원 본인'과 '시스템 고장 등 회사 책임'은 명시되어 있으나, gold의 '도난·제3자 사용 인지 시 즉시 회사에 통보'는 excerpt에 없어 뒷받침되지 않음",
+    "fix_hint": "evidence_excerpt를 제33조에서 '도난·제3자 사용 인지 시 즉시 회사에 통보' 문장까지 확장하거나, gold에서 해당 통보 의무 문구를 제거하라."
+  },
+  {
+    "id": "RC-A009@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '이메일 주소·연락처를 이용해 통지'와 '불특정다수 회원에 대한 통지는 홈페이지·해당 서비스 게시판 게시'가 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G013@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '실명·아이디는 수정 불가'와 '미통지로 발생한 불이익은 회사가 책임지지 않음'이 명시되어 gold의 '실명·아이디 수정 불가'를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A010@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '거래기록을 최대 5년간 보존'이 명시되어 gold의 '최대 5년'을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '접수 후 4시간 이내 정상화 제외', '월 장애누적 12시간 초과', '최근 3개월 1일 평균요금에 중지시간÷24를 곱한 금액의 3배'가 명시되어 gold의 4시간·12시간 기준과 3배 산식을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G014@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '천재지변·국가비상사태', '회원 귀책 이용장애', '기대 이익 미달성', '회원 상호간·제3자 거래 손해' 등 면책 사유가 명시되어 gold의 면책 사유 목록을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C004@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '회사 소재지 법원을 관할법원', '대한민국 법을 적용', '2021년 2월 16일부터 시행'이 명시되어 gold의 회사 소재지 법원·대한민국 법·2021.2.16 시행을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D006@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '약관조건·업무상·기술상 문제가 없으면 승낙' 원칙과 '실명 미사용·허위 기재·신용불량·미납요금·설비 여유 부족' 등 유보 사유가 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D007@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '기간통신사업자 전기통신서비스 중지', '설비 보수·정기점검', '천재지변·국가비상사태' 등 중지 사유와 '제34조 방법으로 사전 통지'가 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F008@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '비방·명예훼손', '공공질서·미풍양속 위반', '저작권 등 권리 침해', '사전통지 없이 삭제·등록 거부'가 명시되어 gold의 삭제 사유 목록을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '무통장입금·은행자동이체·신용카드결제'와 'In-App결제 포함 시 제3자 결제 방지를 위해 비밀번호 설정 기능'이 명시되어 gold의 결제수단과 In-App 비번을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '구매 시부터 7일 이내 철회', '삭제일로부터 15영업일 이내 환급', '전자상거래법 시행령 이율의 지연이자'가 명시되어 gold의 7일 철회와 15영업일 환급을 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F009@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '해킹·바이러스 유포·광고성 정보 전송', '리버스엔지니어링·디컴파일 등 가공·복제·모방', '통지 후 사유 해소 시까지 이용을 중지·제한'이 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F010@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '허위·타인 정보 도용', '아이디·계정 거래', '무단 개인정보 수집', '이용요금 납부 의무', '선불 납부 서비스 양도·재판매할 수 없다'가 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G015@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '관리 소홀·부정 사용 결과 책임은 회원', '회사 시스템 고장 등 회사 책임 사유는 회사가 책임', '양도·대여·담보 제공 불가'가 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A011@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에 '개인정보 보호법 등 관련법령'과 '회사 개인정보처리방침이 적용'된다고 명시되어 gold를 충분히 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 null이고 gold에 '자료에 없음'이 명시되어, 사망 시 계정 상속 규정에 대한 E형 무응답 조건을 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 null이고 gold에 '자료에 없음'이 명시되어, 한영본 우선순위 준거 언어 조항에 대한 E형 무응답 조건을 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 null이고 gold에 '자료에 없음'이 명시되어, 회원 데이터 국외 이전 규정에 대한 E형 무응답 조건을 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 null이고 gold에 '자료에 없음'이 명시되어, SLA 미달 시 크레딧 보상 조항에 대한 E형 무응답 조건을 충족함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B3",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 null이고 gold에 '자료에 없음'이 명시되어, 미성년자 부모 동의 서면 절차에 대한 E형 무응답 조건을 충족함",
+    "fix_hint": ""
+  }
+]
