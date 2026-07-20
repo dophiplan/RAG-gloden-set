@@ -44,10 +44,17 @@ def norm(s):
 
 
 def load_terrain(config_path, product):
-    cfg = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    # 공용 load_config 사용 — terrain.d/ 오버레이(온보딩 제품 RM/HR/TT…)를 포함해야
+    # 온보딩 제품의 검수가 지형 프로파일을 찾는다. (config.yaml 직접 파싱은 오버레이를 놓침)
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        from olib import load_config
+        cfg = load_config()
+    except Exception:
+        cfg = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
     profiles = cfg.get("terrain", {}).get("profiles", {})
     if product not in profiles:
-        sys.exit(f"[사용 오류] terrain.profiles.{product} 가 config에 없음 — --product 확인")
+        sys.exit(f"[사용 오류] terrain.profiles.{product} 가 config/terrain.d 에 없음 — --product 확인")
     return profiles[product]
 
 
