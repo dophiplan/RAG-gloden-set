@@ -86,6 +86,41 @@ def generate_items(prod, units, start_no, want_e, cfg):
     return llm.extract_json(out)
 
 
+def _norm(s):
+    return re.sub(r"\s+", "", N(s)).lower()
+
+
+def ground_citations(items, units):
+    """[실전 견고화] 실모델이 단위ID를 흘려 쓰는 문제 — '이름이 아니라 내용물'(P-01/B′ 취지).
+    발췌 세그(원문·1축 검증 대상)마다 그것을 포함하는 맵 단위를 찾아, 근거 출처를
+    매칭 단위들로 authoritative하게 전면 재작성한다. 모델의 원래 citation은 신뢰하지 않는다.
+    세그가 어느 단위에도 없으면(비원문) 그 세그는 매칭 실패 → verify ②가 정당하게 반려한다."""
+    facts = [(u["unit_id"], _norm(u.get("fact", "")), u.get("source", "")) for u in units]
+    grounded = 0
+    for it in items:
+        if N(it.get("유형", "")).startswith("E") or "E형" in N(it.get("유형", "")):
+            continue   # E형(코퍼스 부재)은 근거 단위가 없다 — 손대지 않음
+        segs = [re.sub(r"^\[[^\]]*\]\s*", "", N(s)).strip("\"'“”‘’ ")
+                for s in re.split(r"\|\|", N(it.get("근거 원문 발췌", "")))]
+        segs = [s for s in segs if len(s) >= 6]
+        if not segs:
+            continue
+        cited, src0 = [], ""
+        for seg in segs:
+            for uid, fnorm, src in facts:
+                if _norm(seg) in fnorm:
+                    if uid not in cited:
+                        cited.append(uid)
+                        src0 = src0 or src
+                    break
+        if cited:   # 매칭된 단위들로 전면 재작성 (authoritative)
+            new = " ; ".join(cited) + (f" ; {src0}" if src0 else "")
+            if new != N(it.get("근거 출처", "")):
+                it["근거 출처"] = new
+                grounded += 1
+    return grounded
+
+
 def write_batch(prod, items, label, eq=None):
     out = DATA / prod / "04_goldenset_batch" / f"{prod}_골든셋_{label}_{len(items)}문항_v1_0.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -149,6 +184,7 @@ def run(prod, cfg):
             batch_units = remaining[:take]
             items = generate_items(prod, batch_units, start_no=len(gs["done_units"]) + 1,
                                    want_e=is_pilot, cfg=cfg)
+            ground_citations(items, batch_units)   # 발췌→단위 역추적 authoritative 재기입
             label = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             path = write_batch(prod, items, label)
             union = sorted((DATA / prod / "04_goldenset_batch").glob("*.xlsx"))
@@ -159,6 +195,7 @@ def run(prod, cfg):
                 path.unlink()
                 items = generate_items(prod, batch_units, start_no=len(gs["done_units"]) + 1,
                                        want_e=is_pilot, cfg=cfg)
+                ground_citations(items, batch_units)
                 path = write_batch(prod, items, label)
                 rc, out = verify(prod, path, [p for p in union if p.exists() and p != path])
             if rc >= 2:

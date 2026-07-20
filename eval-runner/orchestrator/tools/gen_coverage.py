@@ -53,10 +53,14 @@ def load_corpus(prod):
 
 
 SYSTEM = """[TASK:COVERAGE_UNITS] 너는 RAG 평가용 커버리지맵 추출기다.
-입력 JSON의 각 청크에서 '평가 가능한 사실 단위'를 추출하라.
+입력 JSON의 각 청크에서 '평가 가능한 사실 단위'를 빠짐없이 추출하라.
 출력: JSON 배열만 — [{unit_id, type, title, fact, source, chunk, question_hint}].
-규칙: fact 는 반드시 청크 원문 문장을 그대로 사용(변형 금지 — 문자 대조 검수됨).
-unit_id 형식: <제품>-<문서약칭대문자>-<청크번호3자리>. 청크당 1~2단위."""
+규칙:
+1. 청크의 **모든 독립적 사실 문장을 각각 별도 단위**로 만든다 — 한 문장도 빠뜨리지 마라.
+   (예: "A한다. B도 가능하다." → 단위 2개: fact="A한다.", fact="B도 가능하다.")
+2. fact 는 반드시 청크 원문 문장을 **그대로 복사**(변형·요약·병합 금지 — 문자 대조로 검수됨).
+3. unit_id 형식: <제품>-<문서약칭대문자>-<3자리>. 접미사(-A 등) 붙이지 말고 일련번호로 유일하게.
+4. source 필드에는 입력 청크의 source 값을 그대로."""
 
 
 def generate_units(prod, chunks, cfg, retry_ids=None):
