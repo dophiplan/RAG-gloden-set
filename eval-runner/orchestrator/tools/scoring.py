@@ -342,6 +342,9 @@ def score(prod, log_path, round_label, warns=None):
     ev = {"round": round_label, **{f"공식(v11).{k}": v for k, v in summ.items()},
           "회차 비교": "차단(규칙 D — 소급 재채점 미완)" if compare_blocked else "허용(공식 v1.1 기준)",
           "out": str(out_dir.relative_to(ROOT))}
+    if ps.get("key_released"):
+        ev["⚠ 세대 라벨"] = (f"키 공개 후 참고치 — 정답키 공개({ps['key_released']}). "
+                            "공식 측정은 차세대(신규 출제·봉인) 골든셋 담당")
     if sec_summ:
         ev.update({f"병기(v12).{k}": v for k, v in sec_summ.items()})
     if e_md:

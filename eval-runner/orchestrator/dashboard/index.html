@@ -330,6 +330,8 @@ function renderScores(ps){
   const trend = k => rounds.map(r=>sc[r][k]).join('→');
   const blocked = ps.compare_blocked;
   const cmp = blocked? `<span class="haltbadge">비교 불가 — 규칙 D</span>` : '';
+  const retired = ps.key_released;
+  const retireBadge = retired? `<div class="score-row"><span>세대</span><span class="trend"></span><span class="haltbadge">키 공개 후 — 참고치</span></div>` : '';
   const rows = [
     ["검색 top1", blocked?'':trend('top1'), last.top1],
     ["검색 top5", blocked?'':trend('top5'), last.top5],
@@ -337,7 +339,8 @@ function renderScores(ps){
     ["E형 거절", blocked?'':trend('E거절'), last["E거절"]],
     ["E형 환각", blocked?'':trend('E환각'), last["E환각"]],
   ];
-  return `<div class="score-row"><span>회차</span><span class="trend">${rounds.join(' · ')}</span><span class="num">${last.n}문항</span></div>`
+  return retireBadge
+    + `<div class="score-row"><span>회차</span><span class="trend">${rounds.join(' · ')}</span><span class="num">${last.n}문항</span></div>`
     + rows.map(([a,b,c])=>`<div class="score-row"><span>${a}</span><span class="trend">${b}</span><span class="num">${c}</span></div>`).join('')
     + `<div class="score-row"><span>채점기</span><span class="trend">${last.scorer}</span><span>${cmp||'<span class="hint">동일 자 기준</span>'}</span></div>`;
 }
