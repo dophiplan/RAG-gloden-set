@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-20T19:14:28",
+  "updated": "2026-07-20T19:17:22",
   "products": {
     "RV": {
       "stage": "MAINTENANCE",
@@ -518,25 +518,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-20T18:41:46"
+          "done_at": "2026-07-20T19:17:10"
         },
         "TERRAIN": {
-          "done_at": "2026-07-20T18:41:47"
+          "done_at": "2026-07-20T19:17:11"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-20T18:41:48"
+          "done_at": "2026-07-20T19:17:11"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-20T18:41:51"
+          "done_at": "2026-07-20T19:17:15"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-20T18:41:51"
+          "done_at": "2026-07-20T19:17:15"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-20T18:41:53"
+          "done_at": "2026-07-20T19:17:17"
         },
         "STAGE2": {
-          "done_at": "2026-07-20T18:41:54"
+          "done_at": "2026-07-20T19:17:17"
         }
       },
       "open_gates": [
@@ -554,7 +554,7 @@
             }
           ],
           "acked": false,
-          "issued": "2026-07-20T18:41:57"
+          "issued": "2026-07-20T19:17:22"
         }
       ],
       "halt_reason": null,
