@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-20T17:00:38",
+  "updated": "2026-07-20T17:02:47",
   "products": {
     "RV": {
       "stage": "MAINTENANCE",
@@ -513,6 +513,16 @@
       "halt_reason": null
     },
     "RV2": {
+      "stage": "CORPUS_AUDIT",
+      "status": "WAITING_INPUT",
+      "calibration_passed": false,
+      "scorer_version": null,
+      "compare_blocked": false,
+      "stage_history": {},
+      "open_gates": [],
+      "halt_reason": null
+    },
+    "RC2": {
       "stage": "CORPUS_AUDIT",
       "status": "WAITING_INPUT",
       "calibration_passed": false,
