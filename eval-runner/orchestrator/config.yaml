@@ -1,0 +1,50 @@
+# RAG 평가 오케스트레이터 — config.yaml (사양서 v1.3 §2 · 인수인계서 v2 §4 반영)
+# models: 가용한 항목 개수로 모드 자동 결정 (1키/2키/3키)
+# [v2 결정] API 키 대신 계정(구독) 기반 CLI 앙상블 가능 — provider: "cli"
+#   예) generator: {provider: "cli", command: ["claude", "-p"], model: ""}        # Claude Code 구독
+#       judge:     {provider: "cli", command: ["codex", "exec"], model: ""}       # Codex CLI (ChatGPT 구독)
+#   주의: ANTHROPIC_API_KEY 환경변수가 있으면 구독 대신 키로 과금 — 비워둘 것.
+models:
+  generator: {provider: "anthropic", model: "claude-opus-4-8", api_key_env: "GEN_KEY"}
+  judge:     {provider: "moonshot",  model: "kimi-k2-0711-preview", api_key_env: "JUDGE_KEY"}
+  # reviewer: {provider: "", model: "", api_key_env: "REV_KEY"}   # 미설정 = 3차 교차 생략
+
+pipeline:
+  band: [60, 75]              # 차수당 문항 밴드
+  recheck_rate: 0.05          # 본판정 무작위 재검 (1키 모드면 코드가 0.10으로 강제 상향)
+  recheck_seed: null          # null이면 실행 시 생성 — 원장에 시드+추출 목록 기록 의무
+  calibration_threshold: 0.90
+
+terrain:                      # 제품별 프로파일 — 다제품 충돌 방지 [v1.2]
+  profiles:
+    RV:
+      citation_pattern: 'RV-[A-Z]+(?:-[A-Z0-9]+)*-\d+'
+      question_id_pattern: 'RV[A-Z]*-[A-Z]\d+'
+      anchor_patterns:
+        - '\(20\d\d-\d\d-\d\d (게시|시행|인덱싱|작성|서술) 기준\)'
+      anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)'   # 앵커 변형 의심 후보 (미포착 변형 → 플래그, FAIL 금지)
+      # 앵커 의무 범위 — 실측 근거: RVT(B3 약관) 91/91 · RVB(B6 블로그) 297/297 앵커 100%,
+      # RV/RVW/RVA/RVC 0% (B2 파일럿 7건은 자율 표기 → 플래그 대상 아님)
+      anchor_required_prefixes: [RVT, RVB]
+      appendix_switches: [T-1]
+      map_fact_column: '이 단위가 말하는 사실'
+      map_unit_column: 'Unit ID'
+    RC:
+      citation_pattern: 'RC-[A-Z]+(?:-[A-Z0-9]+)*-\d+'
+      question_id_pattern: 'RC-[A-Z]\d+'
+      anchor_patterns: []
+      anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)'
+      appendix_switches: []
+      map_fact_column: '이 단위가 말하는 사실'
+      map_unit_column: 'Unit ID'
+    RM: {citation_pattern: 'RM-[A-Z]+(?:-[A-Z0-9]+)*-\d+', question_id_pattern: 'RM-[A-Z]\d+', anchor_patterns: [], anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)', appendix_switches: [], map_fact_column: '이 단위가 말하는 사실', map_unit_column: 'Unit ID', onboarding: true}
+    HR: {citation_pattern: 'HR-[A-Z]+(?:-[A-Z0-9]+)*-\d+', question_id_pattern: 'HR-[A-Z]\d+', anchor_patterns: [], anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)', appendix_switches: [], map_fact_column: '이 단위가 말하는 사실', map_unit_column: 'Unit ID', onboarding: true}
+
+paths:
+  data: "./data"
+  tools: "../tools"
+  results: "./results"
+  queue: "./검수큐"
+  ledger: "./ledger.jsonl"
+  state: "./state.json"
+  manifest: "./catalog/manifest.json"
