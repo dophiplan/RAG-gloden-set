@@ -284,7 +284,9 @@ function renderQueue(){
     const btns = c.kind==='GATE' ? `<div class="btns">
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
-      </div>${c.acks.length?`<div class="hint">플래그/체크 전건 ack 후 승인 활성화</div>`:''}` : `<div class="hint">파일 투입 후: 자동 입구 검사 → RUNNING 전이 (터미널: pipeline run --product ${cur})</div>`;
+      </div>${c.acks.length?`<div class="hint">플래그/체크 전건 ack 후 승인 활성화</div>`:''}` : `<div class="btns">
+        <label class="btn approve" style="cursor:pointer">📎 파일 업로드<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}')"></label>
+      </div><div class="hint">파일을 올리면 자동으로: 여기 저장 → 입구 검사 → 다음 단계 진행</div>`;
     return `<div class="card ${c.kind==='GATE'?'human-card':''}">
       <h4>${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'사람 게이트':'입력 대기'} · ${esc(c.file)}</div>
@@ -401,6 +403,19 @@ async function doReject(){
   if(!reason){ $('r-reason').focus(); return; }
   rdlg.close();
   await act({cmd:'reject', gate_id:rejectTarget, reason});
+}
+async function doUpload(input, cardId){
+  const files=[...input.files];
+  if(!files.length) return;
+  toast(`업로드 중… (${files.length}개)`);
+  for(const f of files){
+    const r=await fetch(`/api/upload?product=${cur}&target=${encodeURIComponent(cardId)}&name=${encodeURIComponent(f.name)}`,
+      {method:'POST', body:f});
+    const d=await r.json();
+    toast(d.out||'업로드 실패');
+    if(!d.ok) return;
+  }
+  await act({cmd:'run', product:cur});   // 입구 검사 → 다음 단계
 }
 async function doOnboard(){
   const code=$('f-code').value.trim().toUpperCase(), name=$('f-name').value.trim();

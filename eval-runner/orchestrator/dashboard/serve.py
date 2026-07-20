@@ -202,7 +202,46 @@ class H(SimpleHTTPRequestHandler):
             n = int(self.headers.get("Content-Length", 0))
             payload = json.loads(self.rfile.read(n) or b"{}")
             return self._send(200, j(api_action(payload)))
+        if self.path.startswith("/api/upload"):
+            return self._send(200, j(self._upload()))
         return self._send(404, j({"ok": False}))
+
+    UPLOAD_DIRS = {"CORPUS": "corpus", "SCORING": "08_scoring",
+                   "COVERAGE": "03_coverage_map", "UNIFIED": "05_unified_ledger",
+                   "CALIBRATION": "06_calibration"}
+
+    def _upload(self):
+        """INPUT 카드용 파일 업로드 — 쿼리: product, target(카드 종류), name. 본문 = 파일 원바이트.
+        저장 후 입구 검사는 pipeline run 이 수행 ('받으면 무조건 실측부터')."""
+        from urllib.parse import urlparse, parse_qs, unquote
+        q = parse_qs(urlparse(self.path).query)
+        prod = N(q.get("product", [""])[0])
+        target = N(q.get("target", ["CORPUS"])[0]).upper()
+        name = N(unquote(q.get("name", ["upload.bin"])[0]))
+        name = name.replace("/", "_").replace("\\", "_").replace("..", "_")  # 경로 이탈 차단
+        sub = next((d for k, d in self.UPLOAD_DIRS.items() if k in target), "corpus")
+        if not re.fullmatch(r"[A-Z0-9]{1,8}", prod):
+            return {"ok": False, "out": f"제품 코드 오류: {prod}"}
+        dest_dir = ROOT / "data" / prod / sub
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        n = int(self.headers.get("Content-Length", 0))
+        if n <= 0 or n > 500 * 1024 * 1024:
+            return {"ok": False, "out": f"크기 오류: {n}B"}
+        dest = dest_dir / name
+        with open(dest, "wb") as f:
+            remaining = n
+            while remaining > 0:
+                chunk = self.rfile.read(min(1 << 20, remaining))
+                if not chunk:
+                    break
+                f.write(chunk)
+                remaining -= len(chunk)
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append("INPUT", "FILE_UPLOADED", "사람:대시보드",
+                      evidence={"file": name, "size": n, "dest": f"data/{prod}/{sub}/"},
+                      product=prod)
+        return {"ok": True, "out": f"업로드 완료: {name} ({n:,}B) → data/{prod}/{sub}/ — 입구 검사를 실행합니다"}
 
 
 def main():
