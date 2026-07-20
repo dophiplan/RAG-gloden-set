@@ -31,17 +31,51 @@ def j(o):
     return json.dumps(o, ensure_ascii=False).encode("utf-8")
 
 
+# ── 제품 1뎁스 구조 (U1) ──────────────────────────────────
+# 사용자에게 보이는 건 제품(RV·RC). 내부 트랙 코드(RV2 등)는 세대 구현 상세.
+PRODUCT_META = {
+    "RV2": {"display": "RV", "product_name": "리모트뷰", "gen": "골든셋 v2.0 — 현역(구축 중)"},
+    "RC2": {"display": "RC", "product_name": "리모트콜", "gen": "골든셋 v2.0 — 현역(구축 중)"},
+}
+LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨)
+    "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 은퇴(정답키 공개, 참고용)"}],
+    "RC": [{"code": "RC", "gen": "골든셋 v1.1 · 891문항 — 은퇴(정답키 공개, 참고용)"}],
+}
+
+
+def display_of(code):
+    return PRODUCT_META.get(code, {}).get("display", code)
+
+
 def api_state():
     import os
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
+    # 제품 1뎁스 뷰모델: display 제품 → {현역 트랙 코드, 세대 라벨, 이전 세대들}
+    st["_products"] = {}
+    for code, ps in st["products"].items():
+        meta = PRODUCT_META.get(code, {"display": code, "product_name": code, "gen": "현역"})
+        st["_products"][meta["display"]] = {
+            "code": code, "name": meta["product_name"], "gen": meta["gen"],
+            "legacy": LEGACY_GENS.get(meta["display"], []),
+        }
     # 모델 모드 부가
     try:
         from model_adapter import detect_mode, effective_recheck_rate
         m = detect_mode()
-        st["_mode"] = {"mode": "연습(모의AI)" if os.environ.get("ORCH_MOCK") == "1" else m["mode"],
+        if os.environ.get("ORCH_MOCK") == "1":
+            label, cls = "연습 모드 — 가짜 AI (공짜)", "practice"
+        elif m["mode"] == 0:
+            label, cls = "모델 미연결 — 실전모드_켜기 실행 필요", "off"
+        else:
+            parts = []
+            if m["have"].get("generator"): parts.append("출제 claude")
+            if m["have"].get("judge"): parts.append("채점 Kimi" if m["mode"] >= 2 else "채점 claude(신규세션)")
+            if m["have"].get("reviewer"): parts.append("교차 codex")
+            label, cls = "실전 모드 — " + " · ".join(parts), "live"
+        st["_mode"] = {"mode": m["mode"], "label": label, "cls": cls,
                        "plan": m["plan"], "recheck": effective_recheck_rate()}
     except Exception as e:
-        st["_mode"] = {"mode": "?", "error": str(e)}
+        st["_mode"] = {"mode": "?", "label": "상태 확인 실패", "cls": "off", "error": str(e)}
     # 킬스위치: HALTED 제품 수
     st["_halt_count"] = sum(1 for p in st["products"].values() if p["status"] == "HALTED")
     return st
@@ -97,8 +131,27 @@ def api_scores():
     return out
 
 
+def _scan_stage_files(code, sm, canon, gen_label=None):
+    d = ROOT / "data" / code / sm["dir"]
+    files = []
+    if d.is_dir():
+        fl = sorted((p for p in d.iterdir() if p.is_file() and not p.name.startswith(".")),
+                    key=lambda p: p.name)
+
+        def vkey(p):
+            m = re.search(r"_v(\d+(?:_\d+)+)", p.name)
+            return tuple(int(x) for x in m.group(1).split("_")) if m else (0,)
+        best = max(fl, key=vkey).name if fl else None
+        for p in fl:
+            files.append({"file": N(p.name), "version": "",
+                          "canonical": canon.get(N(p.name), p.name == best),
+                          "size": p.stat().st_size, "gen": gen_label,
+                          "path": f"{code}/{sm['dir']}/{p.name}"})
+    return files
+
+
 def api_catalog():
-    """stage_meta + data/ 실시간 스캔 — 신규 생성 파일 즉시 반영. 정본 표시는 G0 manifest 참조."""
+    """제품(1뎁스) → 단계 → 파일. 현역 세대 + 이전 세대(라벨 병기) 통합 스캔 (U1·U6)."""
     meta = json.loads((ROOT / "catalog" / "stage_meta.json").read_text(encoding="utf-8"))
     canon = {}
     mf = ROOT / "catalog" / "manifest.json"
@@ -108,30 +161,18 @@ def api_catalog():
                 canon[r["file"]] = True
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     out = {"products": {}}
-    for prod in st["products"]:
+    for code in st["products"]:
+        disp = display_of(code)
         stages = []
         for sm in meta["stages"]:
-            d = ROOT / "data" / prod / sm["dir"]
-            files = []
-            if d.is_dir():
-                import re as _re
-                fl = sorted((p for p in d.iterdir() if p.is_file() and not p.name.startswith(".")),
-                            key=lambda p: p.name)
-                # 신규 파일: 계열 내 최고버전을 정본 취급
-                def vkey(p):
-                    m = _re.search(r"_v(\d+(?:_\d+)+)", p.name)
-                    return tuple(int(x) for x in m.group(1).split("_")) if m else (0,)
-                best = max(fl, key=vkey).name if fl else None
-                for p in fl:
-                    files.append({"file": N(p.name), "version": "",
-                                  "canonical": canon.get(N(p.name), p.name == best),
-                                  "size": p.stat().st_size,
-                                  "path": f"{prod}/{sm['dir']}/{p.name}"})
+            files = _scan_stage_files(code, sm, canon)                      # 현역 세대
+            for lg in LEGACY_GENS.get(disp, []):                            # 이전 세대 (참고)
+                files += _scan_stage_files(lg["code"], sm, canon, gen_label="v1·은퇴")
             stages.append({"no": sm["no"], "name": sm["name"], "gate": sm["gate"],
                            "what": sm["what"], "consumes": sm["consumes"],
                            "produces": sm["produces"], "tool": sm["tool"],
                            "file_count": len(files), "files": files})
-        out["products"][prod] = {"stages": stages,
+        out["products"][disp] = {"stages": stages,
                                  "total_files": sum(s["file_count"] for s in stages)}
     return out
 

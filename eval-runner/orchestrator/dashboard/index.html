@@ -30,7 +30,8 @@
   .tabbadge.inp{background:var(--input)}
 
   .track-wrap{padding:26px 24px 10px}
-  .track-title{font-size:11px;letter-spacing:.14em;color:var(--tx2);margin-bottom:16px}
+  .track-title{font-size:12px;letter-spacing:.06em;color:var(--tx2);margin-bottom:10px}
+  .nextbar{background:rgba(61,214,176,.08);border:1px solid rgba(61,214,176,.35);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;color:var(--tx)}
   .track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;padding-bottom:14px}
   .stage{position:relative;flex:1;min-width:96px;text-align:center;cursor:pointer;border-radius:8px;padding-top:2px}
   .stage::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
@@ -182,12 +183,18 @@
 <script>
 const STAGE_ORDER = ["CORPUS_AUDIT","TERRAIN","COVERAGE_MAP","GOLDENSET_BATCH","UNIFIED_LEDGER","CALIBRATION","STAGE2","SCORING","MAINTENANCE"];
 const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
-const GATE_DIAMOND = new Set(["CALIBRATION"]);           // 마름모(사람 게이트 시그니처)
+const GATE_DIAMOND = new Set(["CALIBRATION"]);
+// U3: 상태는 전부 한글로
+const STATUS_KO = {RUNNING:'진행 중', WAITING_HUMAN:'결정 대기 (내 차례)', WAITING_INPUT:'파일 대기',
+                   PENDING:'대기', HALTED:'⛔ 사고 정지', REJECTED:'반려 — 재제출 대기', DONE:'완료'};
 let S = {state:null, catalog:null, queue:null, scores:null, ledger:null};
-let cur = "RV", rejectTarget = null;
+let cur = null, rejectTarget = null, busy = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const kb = n => n>=1048576?(n/1048576).toFixed(1)+'MB':(n/1024).toFixed(1)+'KB';
+// U1: 화면의 주체 = 제품(display). 내부 트랙 코드는 이 두 헬퍼 뒤로 숨긴다.
+const PV = () => S.state._products[cur];          // {code, name, gen, legacy[]}
+const PS = () => S.state.products[PV().code];     // 현역 트랙 상태
 
 async function loadAll(){
   const [st,cat,q,sc,lg] = await Promise.all([
@@ -198,20 +205,21 @@ async function loadAll(){
     fetch('/api/ledger').then(r=>r.json()),
   ]);
   S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg};
-  if(!st.products[cur]) cur = Object.keys(st.products)[0];
+  const disp = Object.keys(st._products||{});
+  if(!cur || !st._products[cur]) cur = disp[0];
   render();
 }
 
-function stageView(prod){
-  const ps = S.state.products[prod];
+function stageView(code){
+  const ps = S.state.products[code];
   const hist = ps.stage_history||{};
   const curIdx = STAGE_ORDER.indexOf(ps.stage);
   return STAGE_ORDER.map((k,i)=>{
     if(hist[k] && (i<curIdx || ps.status==='DONE')) return {k, cls:'done', label:'완료'};
     if(i===curIdx){
-      const map = {RUNNING:['run','실행 중'], WAITING_HUMAN:['human','사람 게이트'],
-                   WAITING_INPUT:['input','입력 대기'], HALTED:['halt','HALT'],
-                   PENDING:['none','대기'], REJECTED:['human','반려 — 재제출 대기'], DONE:['done','완료']};
+      const map = {RUNNING:['run','진행 중'], WAITING_HUMAN:['human','결정 대기'],
+                   WAITING_INPUT:['input','파일 대기'], HALTED:['halt','사고 정지'],
+                   PENDING:['none','대기'], REJECTED:['human','반려'], DONE:['done','완료']};
       const [cls,label] = map[ps.status]||['none',ps.status];
       return {k, cls, label};
     }
@@ -219,32 +227,49 @@ function stageView(prod){
   });
 }
 
+// U4: "지금 할 일" 한 줄 — 화면이 먼저 말해준다
+function nextAction(){
+  const ps = PS(), code = PV().code;
+  const myCards = S.queue.filter(c=>c.product===code);
+  if(busy) return {icon:'⏳', text:'AI 작업 중… 실전 모드에서는 몇 분 걸릴 수 있어요. 이 화면 그대로 두세요.'};
+  if(ps.status==='HALTED') return {icon:'⛔', text:'사고 정지 상태예요 — 원인: '+(ps.halt_reason||'원장 확인')+'. 저(Claude)를 불러주세요.'};
+  if(ps.status==='WAITING_INPUT'){
+    const c = myCards.find(c=>c.kind==='INPUT');
+    return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
+  }
+  if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
+  if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중 — 잠시 후 자동으로 갱신됩니다.'};
+  if(ps.status==='DONE') return {icon:'🎉', text:'이 제품의 현재 사이클이 끝났어요.'};
+  return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
+}
+
 function render(){
-  const st = S.state, prods = Object.keys(st.products);
-  // 탭
-  $('tabs').innerHTML = prods.map(p=>{
-    const q = S.queue.filter(c=>c.product===p);
+  const st = S.state;
+  // U1: 탭 = 제품 (RV·RC) — 내부 코드 숨김
+  $('tabs').innerHTML = Object.entries(st._products).map(([disp,pv])=>{
+    const q = S.queue.filter(c=>c.product===pv.code);
     const human = q.some(c=>c.kind==='GATE');
     const badge = q.length?`<span class="tabbadge ${human?'':'inp'}">${q.length}</span>`:'';
-    return `<button role="tab" aria-selected="${p===cur}" onclick="cur='${p}';render()">${p}${badge}</button>`;
+    return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';render()">${disp} ${esc(pv.name)}${badge}</button>`;
   }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
-  // 배지
+  // U2: 모드 배지 — 지금 가짜인지 진짜인지 크게
   const md = st._mode||{};
-  $('modeBadge').innerHTML = `⚙ 모델 <span class="num">${md.mode}키</span> · 재검 <span class="num">${md.recheck??'—'}</span>`;
-  const ps = st.products[cur];
-  $('calBadge').innerHTML = `<span class="dot ${ps.calibration_passed?'ok':'warn'}"></span>캘리브레이션 ${ps.calibration_passed?'통과':'미통과(규칙 C)'}`;
+  const modeColor = md.cls==='live'?'ok':(md.cls==='practice'?'warn':'bad');
+  $('modeBadge').innerHTML = `<span class="dot ${modeColor}"></span><b>${esc(md.label||'?')}</b>`;
+  const ps = PS();
+  $('calBadge').innerHTML = `<span class="dot ${ps.calibration_passed?'ok':'warn'}"></span>채점관 면접 ${ps.calibration_passed?'통과':'전 (본채점 잠김)'}`;
   const hc = st._halt_count;
-  $('killBadge').innerHTML = `<span class="dot ${hc? 'bad':'off'}"></span>킬스위치 · ${hc?`HALT ${hc}`:'정상 (HALT 0)'}`;
+  $('killBadge').innerHTML = `<span class="dot ${hc?'bad':'off'}"></span>${hc?`사고 정지 ${hc}건`:'사고 0 · 정상'}`;
 
-  // 트랙
-  const stages = stageView(cur);
+  const stages = stageView(PV().code);
   const stCls = {done:'st-done',run:'st-run',human:'st-human',input:'st-input',halt:'st-halt','':'st-none',none:'st-none'};
-  const humanN = S.queue.filter(c=>c.product===cur&&c.kind==='GATE').length;
-  const inputN = S.queue.filter(c=>c.product===cur&&c.kind==='INPUT').length;
   const catStages = (S.catalog.products[cur]||{stages:[]}).stages;
+  const na = nextAction();
+  const legacyLine = (PV().legacy||[]).map(l=>esc(l.gen)).join(' · ');
   let html = `
   <div class="track-wrap">
-    <div class="track-title">파이프라인 트랙 — ${cur} · 사람 게이트 ${humanN} · 입력 대기 ${inputN}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}</div>
+    <div class="nextbar">${na.icon} ${esc(na.text)}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
@@ -256,13 +281,13 @@ function render(){
     </div>
   </div>
   <main>
-    <div class="panel"><div class="p-head">검수큐 <span class="num">${S.queue.filter(c=>c.product===cur).length}건</span></div><div class="p-body" id="queuebody">
+    <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code).length}건</span></div><div class="p-body" id="queuebody">
       ${renderQueue()}
     </div></div>
-    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${ps.status}</div><div class="p-body">
+    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
-    <div class="panel"><div class="p-head">회차 성적 — ${cur} <span class="hint">run_score_v11 실측</span></div><div class="p-body">
+    <div class="panel"><div class="p-head">성적 히스토리 — ${cur} <span class="hint">실측</span></div><div class="p-body">
       ${renderScores(ps)}
     </div></div>
   </main>`;
@@ -278,20 +303,21 @@ function render(){
 }
 
 function renderQueue(){
-  const cards = S.queue.filter(c=>c.product===cur);
-  if(!cards.length) return `<div class="note">열린 카드 없음</div>`;
+  const code = PV().code;
+  const cards = S.queue.filter(c=>c.product===code);
+  if(!cards.length) return `<div class="note">할 일 없음 — 시스템이 알아서 진행하거나 외부 재료를 기다리는 중이에요.</div>`;
   return cards.map((c,ci)=>{
     const bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
     const acks = c.acks.map((a,ai)=>`<div class="ackrow"><input type="checkbox" id="ack_${ci}_${ai}" onchange="ackCheck(${ci})"><label for="ack_${ci}_${ai}">${esc(a)}</label></div>`).join('');
     const btns = c.kind==='GATE' ? `<div class="btns">
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
-      </div>${c.acks.length?`<div class="hint">플래그/체크 전건 ack 후 승인 활성화</div>`:''}` : `<div class="btns">
+      </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
         <label class="btn approve" style="cursor:pointer">📎 파일 업로드<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}')"></label>
-      </div><div class="hint">파일을 올리면 자동으로: 여기 저장 → 입구 검사 → 다음 단계 진행</div>`;
+      </div><div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`;
     return `<div class="card ${c.kind==='GATE'?'human-card':''}">
       <h4>${esc(c.title)}</h4>
-      <div class="meta">${c.kind==='GATE'?'사람 게이트':'입력 대기'} · ${esc(c.file)}</div>
+      <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
       <div class="evidence">${esc(bodyMain.slice(0,900))}</div>
       ${acks}${btns}</div>`;
   }).join('');
@@ -309,40 +335,36 @@ function renderDetail(ps){
   const i = STAGE_ORDER.indexOf(ps.stage);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   const files = cs? cs.files : [];
-  // P-02: 실측 수치만 — 카탈로그 실측 + 상태
   const kv = [
     ["보유 산출물", `${files.length} <small>개</small>`],
-    ["캘리브레이션", ps.calibration_passed?'통과':'미통과 <small>규칙 C</small>'],
-    ["열린 게이트", `${ps.open_gates.length}`],
-    ["회차 비교", ps.compare_blocked?'차단 <small>규칙 D</small>':'허용'],
+    ["채점관 면접", ps.calibration_passed?'통과':'전 <small>본채점 잠김</small>'],
+    ["열린 결정", `${ps.open_gates.length}`],
+    ["회차 비교", ps.compare_blocked?'차단 <small>재채점 중</small>':'허용'],
   ];
-  const note = cs? `${cs.what}\n\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}\n도구: ${cs.tool}` : '';
+  const note = cs? `${cs.what}\n\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
-    ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ HALT: ${esc(ps.halt_reason)}\n해제: pipeline resume --after-fix ${cur} --reason "..."</div>`:''}
+    ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
     <div class="note">${esc(note)}</div>`;
 }
 
+// U6: 성적 히스토리 — 현역 + 이전 세대를 한 탭에서
 function renderScores(ps){
-  const sc = S.scores[cur];
-  if(!sc || !Object.keys(sc).length) return `<div class="note">실측 회차 없음 — 실물 채점 후 표시 (P-02: 실측 전에는 어떤 값도 표시하지 않는다)</div>`;
-  const rounds = Object.keys(sc).sort();
-  const last = sc[rounds[rounds.length-1]];
-  const trend = k => rounds.map(r=>sc[r][k]).join('→');
-  const blocked = ps.compare_blocked;
-  const cmp = blocked? `<span class="haltbadge">비교 불가 — 규칙 D</span>` : '';
-  const retired = ps.key_released;
-  const retireBadge = retired? `<div class="score-row"><span>세대</span><span class="trend"></span><span class="haltbadge">키 공개 후 — 참고치</span></div>` : '';
-  const rows = [
-    ["검색 top1", blocked?'':trend('top1'), last.top1],
-    ["검색 top5", blocked?'':trend('top5'), last.top5],
-    ["생성 pass", blocked?'':trend('pass'), last.pass],
-    ["E형 거절", blocked?'':trend('E거절'), last["E거절"]],
-    ["E형 환각", blocked?'':trend('E환각'), last["E환각"]],
-  ];
-  return retireBadge
-    + `<div class="score-row"><span>회차</span><span class="trend">${rounds.join(' · ')}</span><span class="num">${last.n}문항</span></div>`
-    + rows.map(([a,b,c])=>`<div class="score-row"><span>${a}</span><span class="trend">${b}</span><span class="num">${c}</span></div>`).join('')
-    + `<div class="score-row"><span>채점기</span><span class="trend">${last.scorer}</span><span>${cmp||'<span class="hint">동일 자 기준</span>'}</span></div>`;
+  const pv = PV();
+  const sections = [];
+  const mk = (label, sc, retired) => {
+    if(!sc || !Object.keys(sc).length) return '';
+    const rounds = Object.keys(sc).sort();
+    const last = sc[rounds[rounds.length-1]];
+    const trend = k => rounds.map(r=>sc[r][k]).join('→');
+    return `<div class="score-row"><span><b>${esc(label)}</b></span><span class="trend">${rounds.join(' · ')}</span>
+        <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>`
+      + [["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']]
+        .map(([nm,k])=>`<div class="score-row"><span style="padding-left:10px">${nm}</span><span class="trend">${trend(k)}</span><span class="num">${last[k]}</span></div>`).join('');
+  };
+  sections.push(mk(pv.gen.split(' — ')[0], S.scores[pv.code], false));
+  for(const lg of (pv.legacy||[])) sections.push(mk(lg.gen.split(' — ')[0].split(' · ')[0], S.scores[lg.code], true));
+  const body = sections.filter(Boolean).join('<div style="height:10px"></div>');
+  return body || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`;
 }
 
 function renderLedger(){
@@ -350,14 +372,14 @@ function renderLedger(){
     const cls = r.stage==='APPEAL'||r.action==='appeal' ? 'lg-appeal'
       : (r.action||'').includes('HALT')||(r.action||'').includes('REFUSED')||(r.action||'').includes('LEAK') ? 'lg-halt' : '';
     const actor = (r.actor||'').startsWith('script') ? `<span class="lg-script">${esc(r.actor)}</span>` : esc(r.actor);
-    const ev = r.evidence && Object.keys(r.evidence).length ? ` · evidence=${esc(JSON.stringify(r.evidence)).slice(0,110)}` : '';
+    const ev = r.evidence && Object.keys(r.evidence).length ? ` · ${esc(JSON.stringify(r.evidence)).slice(0,110)}` : '';
     return `<div class="lg-row ${cls}">${esc((r.ts||'').slice(5,16))} <b>${esc(r.stage)}${r.product?'·'+esc(r.product):''}</b> · ${actor} · ${esc(r.action)}${r.reason?' · '+esc(r.reason).slice(0,80):''}${ev}</div>`;
   }).join('');
-  $('ledger').innerHTML = rows || '(원장 비어 있음)';
+  $('ledger').innerHTML = rows || '(운영 기록 시작 — 여기에 모든 결정이 자동으로 남아요)';
   $('ledgerCount').textContent = `최근 ${S.ledger.length}행`;
 }
 
-/* ── 트랙 툴팁 (fixed 팝오버) ── */
+/* 트랙 툴팁 */
 const tip = document.createElement('div'); tip.className='tip'; document.body.appendChild(tip);
 let hideT=null;
 tip.addEventListener('mouseenter',()=>clearTimeout(hideT));
@@ -366,13 +388,12 @@ function showTip(el,i){
   clearTimeout(hideT);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   if(!cs) return;
-  const files = cs.files.map(f=>`<div class="frow"><span class="star">${f.canonical?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`).join('')
-    || '<div class="nonef">아직 보유 자료 없음 — 실측 전에는 어떤 값도 표시하지 않는다 (P-02)</div>';
+  const files = cs.files.map(f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${f.gen?`<span class="hint">[${esc(f.gen)}]</span> `:''}${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`).join('')
+    || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>';
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
       <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
-        <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span>
-        <span class="k">도구</span><span class="v tool">${esc(cs.tool)}</span></div>
+        <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
       <div class="files"><div class="fh">보유 자료 ${cs.file_count}</div>${files}</div></div>`;
   tip.classList.add('show');
   const r = el.querySelector('.node').getBoundingClientRect();
@@ -380,27 +401,30 @@ function showTip(el,i){
   let left=Math.max(8,Math.min(r.left+r.width/2-tw/2, vw-tw-8));
   let top=r.bottom+12; if(top+th>vh-8) top=Math.max(8,r.top-th-12);
   tip.style.left=left+'px'; tip.style.top=top+'px';
-  document.querySelectorAll('.stage.tipon').forEach(e=>e.classList.remove('tipon'));
-  el.classList.add('tipon');
 }
-function scheduleHide(){hideT=setTimeout(()=>{tip.classList.remove('show');
-  document.querySelectorAll('.stage.tipon').forEach(e=>e.classList.remove('tipon'));},180);}
+function scheduleHide(){hideT=setTimeout(()=>tip.classList.remove('show'),180);}
 
-/* ── 액션 ── */
-function toast(msg, ms=5000){
+/* 액션 — U5: 처리 중 표시 */
+function toast(msg, ms=6000){
   const t=$('toast'); t.textContent=msg; t.style.display='block';
-  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', ms);
+  clearTimeout(t._t); if(ms) t._t=setTimeout(()=>t.style.display='none', ms);
 }
 async function act(payload){
-  const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  const d = await r.json();
-  toast(d.out || (d.ok?'완료':'실패'));
-  await loadAll();
-  return d;
+  busy = true; render();
+  toast('⏳ 처리 중… (실전 모드에서는 AI 작업에 몇 분 걸릴 수 있어요)', 0);
+  try{
+    const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d = await r.json();
+    toast(d.out || (d.ok?'완료':'실패'));
+    return d;
+  } finally {
+    busy = false;
+    await loadAll();
+  }
 }
 async function doApprove(id, nAcks){
   await act({cmd:'approve', gate_id:id, ack_all:nAcks>0});
-  await act({cmd:'run', product:cur});
+  await act({cmd:'run', product:PV().code});
 }
 function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
 async function doReject(){
@@ -412,27 +436,30 @@ async function doReject(){
 async function doUpload(input, cardId){
   const files=[...input.files];
   if(!files.length) return;
-  toast(`업로드 중… (${files.length}개)`);
-  for(const f of files){
-    const r=await fetch(`/api/upload?product=${cur}&target=${encodeURIComponent(cardId)}&name=${encodeURIComponent(f.name)}`,
-      {method:'POST', body:f});
-    const d=await r.json();
-    toast(d.out||'업로드 실패');
-    if(!d.ok) return;
-  }
-  await act({cmd:'run', product:cur});   // 입구 검사 → 다음 단계
+  busy = true; render();
+  toast(`⏳ 업로드 중… (${files.length}개)`, 0);
+  try{
+    for(const f of files){
+      const r=await fetch(`/api/upload?product=${PV().code}&target=${encodeURIComponent(cardId)}&name=${encodeURIComponent(f.name)}`,
+        {method:'POST', body:f});
+      const d=await r.json();
+      toast(d.out||'업로드 실패');
+      if(!d.ok){ busy=false; await loadAll(); return; }
+    }
+  } finally { busy = false; }
+  await act({cmd:'run', product:PV().code});
 }
 async function doOnboard(){
   const code=$('f-code').value.trim().toUpperCase(), name=$('f-name').value.trim();
   if(!code){$('f-code').focus();return;}
   dlg.close();
   await act({cmd:'onboard', product:code, name, base:$('f-base').value});
-  cur=code; await loadAll();
+  cur=null; await loadAll();
 }
 const dlg=$('dlg'), rdlg=$('rdlg');
 
 loadAll();
-setInterval(loadAll, 15000);   // 15초 자동 갱신
+setInterval(()=>{ if(!busy) loadAll(); }, 15000);
 </script>
 </body>
 </html>
