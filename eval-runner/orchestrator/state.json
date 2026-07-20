@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-20T13:47:47",
+  "updated": "2026-07-20T15:11:53",
   "products": {
     "RV": {
       "stage": "SCORING",
@@ -446,7 +446,7 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-20T13:47:47"
+          "done_at": "2026-07-20T15:11:53"
         }
       },
       "open_gates": [
@@ -455,7 +455,7 @@
           "stage": "TERRAIN",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-20T13:47:47"
+          "issued": "2026-07-20T15:11:53"
         }
       ],
       "halt_reason": null
