@@ -79,6 +79,12 @@
   .frow .dl:focus-visible{outline:2px solid var(--run)}
   .frow .sz{color:var(--tx2);font-family:var(--mono);font-size:10px}
   .nonef{font-size:11.5px;color:var(--tx2);font-style:italic}
+  .arch{margin-top:7px;border:1px dashed var(--line);border-radius:8px;padding:2px 9px;background:rgba(255,255,255,.02)}
+  .arch summary{cursor:pointer;font-size:11px;color:var(--tx2);padding:5px 0;list-style:none;display:flex;align-items:center;gap:6px;user-select:none}
+  .arch summary::-webkit-details-marker{display:none}
+  .arch summary::before{content:'▸';transition:transform .15s;color:var(--tx2)}
+  .arch[open] summary::before{transform:rotate(90deg)}
+  .arch .frow{opacity:.75}
 
   main{display:grid;grid-template-columns:1fr 320px 300px;gap:16px;padding:8px 24px 20px}
   @media(max-width:1100px){main{grid-template-columns:1fr}}
@@ -355,7 +361,7 @@ function ackCheck(ci){
 function renderDetail(ps){
   const i = STAGE_ORDER.indexOf(ps.stage);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
-  const files = cs? cs.files : [];
+  const files = (cs? cs.files : []).filter(f=>!f.gen);   // 은퇴분은 보관함 — 산출물 수에 안 섞음
   const kv = [
     ["보유 산출물", `${files.length} <small>개</small>`],
     ["채점관 면접", ps.calibration_passed?'통과':'전 <small>본채점 잠김</small>'],
@@ -409,13 +415,18 @@ function showTip(el,i){
   clearTimeout(hideT);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   if(!cs) return;
-  const files = cs.files.map(f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${f.gen?`<span class="hint">[${esc(f.gen)}]</span> `:''}${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`).join('')
-    || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>';
+  // 현역은 바로, 은퇴는 세대별 📦 보관함(아코디언)으로 — 여러 세대가 쌓여도 접혀 있어요
+  const frow = f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`;
+  const curF = cs.files.filter(f=>!f.gen), oldF = cs.files.filter(f=>f.gen);
+  const groups = {};
+  oldF.forEach(f=>(groups[f.gen]=groups[f.gen]||[]).push(f));
+  const files = (curF.map(frow).join('') || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>')
+    + Object.entries(groups).map(([g,fl])=>`<details class="arch"><summary>📦 보관함 · ${esc(g)} — ${fl.length}개 (안 쓰는 자료)</summary>${fl.map(frow).join('')}</details>`).join('');
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
       <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
         <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
-      <div class="files"><div class="fh">보유 자료 ${cs.file_count}</div>${files}</div></div>`;
+      <div class="files"><div class="fh">보유 자료 ${curF.length}${oldF.length?` · 보관함 ${oldF.length}`:''}</div>${files}</div></div>`;
   tip.classList.add('show');
   const r = el.querySelector('.node').getBoundingClientRect();
   const tw=tip.offsetWidth, th=tip.offsetHeight, vw=innerWidth, vh=innerHeight;
