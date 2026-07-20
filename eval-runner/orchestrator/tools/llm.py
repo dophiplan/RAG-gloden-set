@@ -41,8 +41,6 @@ def chat(role, system, user, cfg=None, max_tokens=4000):
     provider = m.get("provider", "openai")
     if provider == "cli":
         # [v2 결정] 계정(구독) 기반 CLI 앙상블 — API 키 대신 구독 로그인된 CLI 호출
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            print("⚠ ANTHROPIC_API_KEY 가 설정되어 있음 — CLI가 구독 대신 키로 과금될 수 있다. 비워두라 (인수인계서 v2 §4).")
         return _cli(m, system, user)
     key = os.environ.get(m.get("api_key_env", ""), "")
     if not key:
@@ -56,15 +54,22 @@ def chat(role, system, user, cfg=None, max_tokens=4000):
 
 def _cli(m, system, user):
     """구독 CLI 어댑터 — 예: {provider: cli, command: [claude, -p], model: ...}
-    프롬프트는 stdin. 세션 없음(매 호출 독립) = 규칙 B 유지."""
+    프롬프트는 stdin. 세션 없음(매 호출 독립) = 규칙 B 유지.
+    [FIX-05] 과금 변수 구조적 차단: 자식 env에서 ANTHROPIC_API_KEY 제거."""
     import subprocess
     cmd = m.get("command") or ["claude", "-p"]
     if isinstance(cmd, str):
         cmd = cmd.split()
     if m.get("model"):
         cmd = cmd + ["--model", m["model"]]
-    p = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}",
-                       capture_output=True, text=True, timeout=1200)
+    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        print("⚠ ANTHROPIC_API_KEY 감지 — 구독 과금 방지를 위해 자식 프로세스 env에서 제거하고 호출함 (FIX-05).")
+    try:
+        p = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}",
+                           capture_output=True, text=True, timeout=1200, env=env)
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(f"CLI 호출 타임아웃({cmd[0]}, 1200s) — 배치 축소 또는 구독 한도 확인 필요") from e
     if p.returncode != 0:
         raise RuntimeError(f"CLI 호출 실패({cmd[0]}): {p.stderr[:300]}")
     return p.stdout
