@@ -1,0 +1,1610 @@
+{
+  "products": {
+    "RV": {
+      "stages": [
+        {
+          "no": "①",
+          "name": "코퍼스 실측",
+          "gate": null,
+          "what": "받은 코퍼스를 파이썬으로 실측한다 — 청크·스코프 카운트, match_corpus 중첩 검사, 적법 재료의 SHA-256을 해시 매니페스트에 등록. '받으면 무조건 실측부터'(영역 0).",
+          "consumes": [
+            "코퍼스 export (data/<제품>/corpus/)"
+          ],
+          "produces": [
+            "대조표",
+            "manifest.json (해시 매니페스트)"
+          ],
+          "tool": "match_corpus.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "②",
+          "name": "지형 판정",
+          "gate": "사람",
+          "what": "제품의 지형(citation 패턴·앵커 패턴·부록 스위치)을 판정해 terrain 프로파일을 확정한다. 판례집 부록 W/V/T/M 스위치 결정. [사람 게이트]",
+          "consumes": [
+            "① 코퍼스 실측 결과",
+            "판례집 부록"
+          ],
+          "produces": [
+            "terrain.profiles.<코드> (config.yaml)"
+          ],
+          "tool": "(사람 판정 + config 기록)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "③",
+          "name": "커버리지맵",
+          "gate": null,
+          "what": "코퍼스를 커버 단위로 쪼갠 지도를 만든다(생성→검수→반려 루프). 확정 후 ③′ GAP_AUDIT를 별도 세션에서 돌려 외부 정본 대비 인입 누락 대조.",
+          "consumes": [
+            "코퍼스 export"
+          ],
+          "produces": [
+            "커버리지맵 (예: v1_3)",
+            "사람확인 큐·충돌 분리"
+          ],
+          "tool": "corpus_loader.py (검수)",
+          "file_count": 9,
+          "files": [
+            {
+              "file": "RV_커버리지맵_OKF_v0_4.xlsx",
+              "version": "v0_4",
+              "canonical": true,
+              "size": 1493907,
+              "path": "RV/03_coverage_map/RV_커버리지맵_OKF_v0_4.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_B0_사전분류.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 21443,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_B0_사전분류.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v1_3.xlsx",
+              "version": "v1_3",
+              "canonical": true,
+              "size": 840361,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_3.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v0_1.xlsx",
+              "version": "v0_1",
+              "canonical": false,
+              "size": 483760,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v0_1.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v0_1_1.xlsx",
+              "version": "v0_1",
+              "canonical": false,
+              "size": 281709,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v0_1_1.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v0_1_2.xlsx",
+              "version": "v0_1",
+              "canonical": false,
+              "size": 333467,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v0_1_2.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 352117,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_0.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": false,
+              "size": 472522,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_1.xlsx"
+            },
+            {
+              "file": "RV_커버리지맵_코퍼스판_v1_2.xlsx",
+              "version": "v1_2",
+              "canonical": false,
+              "size": 838377,
+              "path": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_2.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "④",
+          "name": "골든셋 배치",
+          "gate": "사람",
+          "what": "커버리지맵 기반으로 문항을 배치 단위로 생성한다: 재료실측 → 배분계획[게이트] → 파일럿 → 스크립트 검수 7종 → [게이트] → 차수 반복(밴드) → 배치 마감[게이트].",
+          "consumes": [
+            "커버리지맵",
+            "코퍼스"
+          ],
+          "produces": [
+            "배치 파일 (B1~B6 파일럿·마감·차수)",
+            "사람확정큐"
+          ],
+          "tool": "make_batches.py + verify_batch.py (검수 7종)",
+          "file_count": 26,
+          "files": [
+            {
+              "file": "RV_골든셋_B1_2차_ENT_60문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 25004,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B1_2차_ENT_60문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B1_3차_SLA_ENT_STD_MAC_58문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 24812,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B1_3차_SLA_ENT_STD_MAC_58문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B1_4차_모바일_WOL_QCK_60문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 28418,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B1_4차_모바일_WOL_QCK_60문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B1_5차_마감_61문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 31436,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B1_5차_마감_61문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B1_파일럿_30문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 22648,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B1_파일럿_30문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B2_2차_마감_57문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 30918,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B2_2차_마감_57문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B2_웹_파일럿_30문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 19136,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B2_웹_파일럿_30문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B3_2차_마감_70문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 35391,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B3_2차_마감_70문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B3_약관_파일럿_30문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 18734,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B3_약관_파일럿_30문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B4_1_마감_17문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 15394,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B4_1_마감_17문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B5_2차_마감_42문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 29974,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B5_2차_마감_42문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B5_사례_파일럿_30문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 26258,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B5_사례_파일럿_30문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_2차_기능제품_61문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 31275,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_2차_기능제품_61문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_3차_시사구간_35문항_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 24792,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_3차_시사구간_35문항_v1_1.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_4차_회수구간_22문항_v1_2.xlsx",
+              "version": "v1_2",
+              "canonical": true,
+              "size": 20984,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_4차_회수구간_22문항_v1_2.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_5차_비교가이드_15문항_v1_2.xlsx",
+              "version": "v1_2",
+              "canonical": true,
+              "size": 22022,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_5차_비교가이드_15문항_v1_2.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_6차_제품기능_21문항_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 24581,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_6차_제품기능_21문항_v1_1.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_7차_서사구간_14문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 19407,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_7차_서사구간_14문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_8차_회수구간_16문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 21463,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_8차_회수구간_16문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_9차_마감구간_17문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 22226,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_9차_마감구간_17문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_블로그_파일럿_30문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 24271,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_블로그_파일럿_30문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_3차_시사구간_35문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 23376,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_3차_시사구간_35문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_4차_회수구간_22문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 18321,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_4차_회수구간_22문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_4차_회수구간_22문항_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": false,
+              "size": 20419,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_4차_회수구간_22문항_v1_1.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_5차_비교가이드_15문항_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": false,
+              "size": 21918,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_5차_비교가이드_15문항_v1_1.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_6차_제품기능_21문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 23325,
+              "path": "RV/04_goldenset_batch/RV_골든셋_B6_6차_제품기능_21문항_v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑤",
+          "name": "통합 대장",
+          "gate": null,
+          "what": "전 배치를 하나로 합친다 — 전사 문자 대조, 전 배치 합집합 assert(합집합 원칙), 출처 병기. 여기서 최종 통합 STAGE 대장이 나온다.",
+          "consumes": [
+            "④ 전 배치 산출물(파일럿+전 차수)"
+          ],
+          "produces": [
+            "통합 STAGE 대장 (예: 806문항)"
+          ],
+          "tool": "verify_batch.py (합집합 assert)",
+          "file_count": 4,
+          "files": [
+            {
+              "file": "RV_골든셋_B1_통합_STAGE대장_269문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 95035,
+              "path": "RV/05_unified_ledger/RV_골든셋_B1_통합_STAGE대장_269문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B1_통합_STAGE대장_270문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 95303,
+              "path": "RV/05_unified_ledger/RV_골든셋_B1_통합_STAGE대장_270문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_B6_최종합본_231문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 90194,
+              "path": "RV/05_unified_ledger/RV_골든셋_B6_최종합본_231문항_v1_0.xlsx"
+            },
+            {
+              "file": "RV_골든셋_통합STAGE대장_806문항_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 301381,
+              "path": "RV/05_unified_ledger/RV_골든셋_통합STAGE대장_806문항_v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑥",
+          "name": "캘리브레이션",
+          "gate": "사람 판정측",
+          "what": "채점관(judge)이 사람과 같은 눈을 갖췄는지 30건 이중 판정으로 검사한다 — 일치율 ≥90% 통과해야 본판정 잠금 해제. 채점관·기준서 바뀌면 리셋(규칙 C). [사람 게이트]",
+          "consumes": [
+            "캘리브레이션 세트30 지시서",
+            "판정 기준서(judge 프롬프트)"
+          ],
+          "produces": [
+            "설계본부 블라인드 판정30",
+            "게이트실행 대조표(일치율)"
+          ],
+          "tool": "run_2axis.py",
+          "file_count": 5,
+          "files": [
+            {
+              "file": "RV_judge_게이트실행_판정30_대조표_v1_1_완료.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 16046,
+              "path": "RV/06_calibration/RV_judge_게이트실행_판정30_대조표_v1_1_완료.xlsx"
+            },
+            {
+              "file": "RV_judge_설계본부판정30_블라인드_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 8420,
+              "path": "RV/06_calibration/RV_judge_설계본부판정30_블라인드_v1_0.xlsx"
+            },
+            {
+              "file": "RV_judge_캘리브레이션_지시서_세트30_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 18790,
+              "path": "RV/06_calibration/RV_judge_캘리브레이션_지시서_세트30_v1_1.xlsx"
+            },
+            {
+              "file": "RV_judge_게이트실행_판정30_대조표_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 13665,
+              "path": "RV/06_calibration/RV_judge_게이트실행_판정30_대조표_v1_0.xlsx"
+            },
+            {
+              "file": "RV_judge_캘리브레이션_지시서_세트30_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 18734,
+              "path": "RV/06_calibration/RV_judge_캘리브레이션_지시서_세트30_v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑦",
+          "name": "본판정",
+          "gate": null,
+          "what": "통합 대장 전건을 판정 기준서로 본판정한다 + 무작위 재검(시드 기록). 판정문 전건 보존.",
+          "consumes": [
+            "⑤ 통합 대장",
+            "판정 기준서 vFinal"
+          ],
+          "produces": [
+            "본판정 판정대장 (예: 806)",
+            "재검 추출 목록(시드)"
+          ],
+          "tool": "run_2axis.py (본판정 모드)",
+          "file_count": 6,
+          "files": [
+            {
+              "file": "RV_본판정_judge_프롬프트_diff_v2_to_vFinal_v1_0.md",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 7959,
+              "path": "RV/07_stage2/RV_본판정_judge_프롬프트_diff_v2_to_vFinal_v1_0.md"
+            },
+            {
+              "file": "RV_본판정_judge_프롬프트_vFinal_v1_1.md",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 6259,
+              "path": "RV/07_stage2/RV_본판정_judge_프롬프트_vFinal_v1_1.md"
+            },
+            {
+              "file": "RV_본판정_요약보고_v1_0.md",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 5755,
+              "path": "RV/07_stage2/RV_본판정_요약보고_v1_0.md"
+            },
+            {
+              "file": "RV_본판정_판정대장_806_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 31654,
+              "path": "RV/07_stage2/RV_본판정_판정대장_806_v1_1.xlsx"
+            },
+            {
+              "file": "RV_본판정_judge_프롬프트_vFinal_v1_0.md",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 5415,
+              "path": "RV/07_stage2/RV_본판정_judge_프롬프트_vFinal_v1_0.md"
+            },
+            {
+              "file": "RV_본판정_판정대장_806_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": false,
+              "size": 31248,
+              "path": "RV/07_stage2/RV_본판정_판정대장_806_v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑧",
+          "name": "실물 채점",
+          "gate": "사람 확정",
+          "what": "발행 게이트(질문셋=ID·질문 2컬럼만, 유출 시 HALT) → 질문셋 발행 → 팀장님 시스템 응답 로그 수령 → 형식 게이트 → 채점(selftest 선행) → 판정 문맥 확인 큐 → 성적표. [사람 확정 게이트]",
+          "consumes": [
+            "골든셋(통합 대장)",
+            "응답 로그(팀장님 시스템)"
+          ],
+          "produces": [
+            "질문셋 발행본",
+            "성적표(score_report)"
+          ],
+          "tool": "run_score_v11.py",
+          "file_count": 2,
+          "files": [
+            {
+              "file": "RV_질문셋_발행본_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 41380,
+              "path": "RV/08_scoring/RV_질문셋_발행본_v1_1.xlsx"
+            },
+            {
+              "file": "RV_질문셋_제품명보강_대조표_v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 57791,
+              "path": "RV/08_scoring/RV_질문셋_제품명보강_대조표_v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑨",
+          "name": "유지보수",
+          "gate": "사람",
+          "what": "성적표 발행 후 되먹임 2로: (a) 전제 실효 후보 → 골든셋 vN+1 개정 큐 (b) 오탐·측정불능 → 채점기 개정 큐 → 규칙 D(전 차수 소급 재채점 자동 생성, 완료 전 회차 비교 차단).",
+          "consumes": [
+            "⑧ 성적표",
+            "판례"
+          ],
+          "produces": [
+            "골든셋 개정 큐",
+            "채점기 개정 큐 + 소급 재채점 잡"
+          ],
+          "tool": "run_score_v11.py (재채점)",
+          "file_count": 0,
+          "files": []
+        }
+      ],
+      "total_files": 52
+    },
+    "RC": {
+      "stages": [
+        {
+          "no": "①",
+          "name": "코퍼스 실측",
+          "gate": null,
+          "what": "받은 코퍼스를 파이썬으로 실측한다 — 청크·스코프 카운트, match_corpus 중첩 검사, 적법 재료의 SHA-256을 해시 매니페스트에 등록. '받으면 무조건 실측부터'(영역 0).",
+          "consumes": [
+            "코퍼스 export (data/<제품>/corpus/)"
+          ],
+          "produces": [
+            "대조표",
+            "manifest.json (해시 매니페스트)"
+          ],
+          "tool": "match_corpus.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "②",
+          "name": "지형 판정",
+          "gate": "사람",
+          "what": "제품의 지형(citation 패턴·앵커 패턴·부록 스위치)을 판정해 terrain 프로파일을 확정한다. 판례집 부록 W/V/T/M 스위치 결정. [사람 게이트]",
+          "consumes": [
+            "① 코퍼스 실측 결과",
+            "판례집 부록"
+          ],
+          "produces": [
+            "terrain.profiles.<코드> (config.yaml)"
+          ],
+          "tool": "(사람 판정 + config 기록)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "③",
+          "name": "커버리지맵",
+          "gate": null,
+          "what": "코퍼스를 커버 단위로 쪼갠 지도를 만든다(생성→검수→반려 루프). 확정 후 ③′ GAP_AUDIT를 별도 세션에서 돌려 외부 정본 대비 인입 누락 대조.",
+          "consumes": [
+            "코퍼스 export"
+          ],
+          "produces": [
+            "커버리지맵 (예: v1_3)",
+            "사람확인 큐·충돌 분리"
+          ],
+          "tool": "corpus_loader.py (검수)",
+          "file_count": 2,
+          "files": [
+            {
+              "file": "RC_커버리지맵_코퍼스판_최종통합본.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 868839,
+              "path": "RC/03_coverage_map/RC_커버리지맵_코퍼스판_최종통합본.xlsx"
+            },
+            {
+              "file": "RC_커버리지맵_통합정본_v0_4_1367행.xlsx",
+              "version": "v0_4",
+              "canonical": true,
+              "size": 332493,
+              "path": "RC/03_coverage_map/RC_커버리지맵_통합정본_v0_4_1367행.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "④",
+          "name": "골든셋 배치",
+          "gate": "사람",
+          "what": "커버리지맵 기반으로 문항을 배치 단위로 생성한다: 재료실측 → 배분계획[게이트] → 파일럿 → 스크립트 검수 7종 → [게이트] → 차수 반복(밴드) → 배치 마감[게이트].",
+          "consumes": [
+            "커버리지맵",
+            "코퍼스"
+          ],
+          "produces": [
+            "배치 파일 (B1~B6 파일럿·마감·차수)",
+            "사람확정큐"
+          ],
+          "tool": "make_batches.py + verify_batch.py (검수 7종)",
+          "file_count": 9,
+          "files": [
+            {
+              "file": "RC_골든셋_G-B1_SPEC.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 80310,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B1_SPEC.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B2-1_MANUAL_Agent.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 123424,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B2-1_MANUAL_Agent.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B2-2_MANUAL_AdminUser.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 60065,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B2-2_MANUAL_AdminUser.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B2-3_MANUAL_Customer.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 35256,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B2-3_MANUAL_Customer.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B3_TERMS.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 47413,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B3_TERMS.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B4_NOTICE.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 52158,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B4_NOTICE.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B5_BROCHURE.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 38563,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B5_BROCHURE.xlsx"
+            },
+            {
+              "file": "RC_골든셋_G-B6_WEB.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 83131,
+              "path": "RC/04_goldenset_batch/RC_골든셋_G-B6_WEB.xlsx"
+            },
+            {
+              "file": "RC_골든셋_사람확정큐_32건.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 21799,
+              "path": "RC/04_goldenset_batch/RC_골든셋_사람확정큐_32건.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑤",
+          "name": "통합 대장",
+          "gate": null,
+          "what": "전 배치를 하나로 합친다 — 전사 문자 대조, 전 배치 합집합 assert(합집합 원칙), 출처 병기. 여기서 최종 통합 STAGE 대장이 나온다.",
+          "consumes": [
+            "④ 전 배치 산출물(파일럿+전 차수)"
+          ],
+          "produces": [
+            "통합 STAGE 대장 (예: 806문항)"
+          ],
+          "tool": "verify_batch.py (합집합 assert)",
+          "file_count": 4,
+          "files": [
+            {
+              "file": "RC_골든셋_STAGE1_v2.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 253327,
+              "path": "RC/05_unified_ledger/RC_골든셋_STAGE1_v2.xlsx"
+            },
+            {
+              "file": "RC_골든셋_STAGE1_통합_초안.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 300780,
+              "path": "RC/05_unified_ledger/RC_골든셋_STAGE1_통합_초안.xlsx"
+            },
+            {
+              "file": "RC_골든셋_v1_1.xlsx",
+              "version": "v1_1",
+              "canonical": true,
+              "size": 315407,
+              "path": "RC/05_unified_ledger/RC_골든셋_v1_1.xlsx"
+            },
+            {
+              "file": "RC_골든셋_최종v1_0.xlsx",
+              "version": "v1_0",
+              "canonical": true,
+              "size": 313797,
+              "path": "RC/05_unified_ledger/RC_골든셋_최종v1_0.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑥",
+          "name": "캘리브레이션",
+          "gate": "사람 판정측",
+          "what": "채점관(judge)이 사람과 같은 눈을 갖췄는지 30건 이중 판정으로 검사한다 — 일치율 ≥90% 통과해야 본판정 잠금 해제. 채점관·기준서 바뀌면 리셋(규칙 C). [사람 게이트]",
+          "consumes": [
+            "캘리브레이션 세트30 지시서",
+            "판정 기준서(judge 프롬프트)"
+          ],
+          "produces": [
+            "설계본부 블라인드 판정30",
+            "게이트실행 대조표(일치율)"
+          ],
+          "tool": "run_2axis.py",
+          "file_count": 63,
+          "files": [
+            {
+              "file": "2axis_input_B01.json",
+              "version": "",
+              "canonical": true,
+              "size": 25965,
+              "path": "RC/06_calibration/2axis_input_B01.json"
+            },
+            {
+              "file": "2axis_input_B02.json",
+              "version": "",
+              "canonical": true,
+              "size": 26489,
+              "path": "RC/06_calibration/2axis_input_B02.json"
+            },
+            {
+              "file": "2axis_input_B03.json",
+              "version": "",
+              "canonical": true,
+              "size": 27805,
+              "path": "RC/06_calibration/2axis_input_B03.json"
+            },
+            {
+              "file": "2axis_input_B04.json",
+              "version": "",
+              "canonical": true,
+              "size": 27014,
+              "path": "RC/06_calibration/2axis_input_B04.json"
+            },
+            {
+              "file": "2axis_input_B05.json",
+              "version": "",
+              "canonical": true,
+              "size": 31759,
+              "path": "RC/06_calibration/2axis_input_B05.json"
+            },
+            {
+              "file": "2axis_input_B06.json",
+              "version": "",
+              "canonical": true,
+              "size": 25132,
+              "path": "RC/06_calibration/2axis_input_B06.json"
+            },
+            {
+              "file": "2axis_input_B07.json",
+              "version": "",
+              "canonical": true,
+              "size": 23224,
+              "path": "RC/06_calibration/2axis_input_B07.json"
+            },
+            {
+              "file": "2axis_input_B08.json",
+              "version": "",
+              "canonical": true,
+              "size": 26695,
+              "path": "RC/06_calibration/2axis_input_B08.json"
+            },
+            {
+              "file": "2axis_input_B09.json",
+              "version": "",
+              "canonical": true,
+              "size": 33137,
+              "path": "RC/06_calibration/2axis_input_B09.json"
+            },
+            {
+              "file": "2axis_input_B10.json",
+              "version": "",
+              "canonical": true,
+              "size": 33583,
+              "path": "RC/06_calibration/2axis_input_B10.json"
+            },
+            {
+              "file": "2axis_input_B11.json",
+              "version": "",
+              "canonical": true,
+              "size": 32540,
+              "path": "RC/06_calibration/2axis_input_B11.json"
+            },
+            {
+              "file": "2axis_input_B12.json",
+              "version": "",
+              "canonical": true,
+              "size": 32668,
+              "path": "RC/06_calibration/2axis_input_B12.json"
+            },
+            {
+              "file": "2axis_input_B13.json",
+              "version": "",
+              "canonical": true,
+              "size": 33666,
+              "path": "RC/06_calibration/2axis_input_B13.json"
+            },
+            {
+              "file": "2axis_input_B14.json",
+              "version": "",
+              "canonical": true,
+              "size": 35059,
+              "path": "RC/06_calibration/2axis_input_B14.json"
+            },
+            {
+              "file": "2axis_input_B15.json",
+              "version": "",
+              "canonical": true,
+              "size": 34389,
+              "path": "RC/06_calibration/2axis_input_B15.json"
+            },
+            {
+              "file": "2axis_input_B16.json",
+              "version": "",
+              "canonical": true,
+              "size": 30091,
+              "path": "RC/06_calibration/2axis_input_B16.json"
+            },
+            {
+              "file": "2axis_input_B17.json",
+              "version": "",
+              "canonical": true,
+              "size": 37898,
+              "path": "RC/06_calibration/2axis_input_B17.json"
+            },
+            {
+              "file": "2axis_input_B18.json",
+              "version": "",
+              "canonical": true,
+              "size": 36283,
+              "path": "RC/06_calibration/2axis_input_B18.json"
+            },
+            {
+              "file": "2axis_input_B19.json",
+              "version": "",
+              "canonical": true,
+              "size": 37288,
+              "path": "RC/06_calibration/2axis_input_B19.json"
+            },
+            {
+              "file": "2axis_input_B20.json",
+              "version": "",
+              "canonical": true,
+              "size": 30155,
+              "path": "RC/06_calibration/2axis_input_B20.json"
+            },
+            {
+              "file": "2axis_input_B21.json",
+              "version": "",
+              "canonical": true,
+              "size": 39309,
+              "path": "RC/06_calibration/2axis_input_B21.json"
+            },
+            {
+              "file": "2axis_input_B22.json",
+              "version": "",
+              "canonical": true,
+              "size": 34491,
+              "path": "RC/06_calibration/2axis_input_B22.json"
+            },
+            {
+              "file": "2axis_input_B23.json",
+              "version": "",
+              "canonical": true,
+              "size": 37066,
+              "path": "RC/06_calibration/2axis_input_B23.json"
+            },
+            {
+              "file": "2axis_input_B24.json",
+              "version": "",
+              "canonical": true,
+              "size": 39701,
+              "path": "RC/06_calibration/2axis_input_B24.json"
+            },
+            {
+              "file": "2axis_input_B25.json",
+              "version": "",
+              "canonical": true,
+              "size": 35739,
+              "path": "RC/06_calibration/2axis_input_B25.json"
+            },
+            {
+              "file": "2axis_input_B26.json",
+              "version": "",
+              "canonical": true,
+              "size": 35670,
+              "path": "RC/06_calibration/2axis_input_B26.json"
+            },
+            {
+              "file": "2axis_input_B27.json",
+              "version": "",
+              "canonical": true,
+              "size": 31596,
+              "path": "RC/06_calibration/2axis_input_B27.json"
+            },
+            {
+              "file": "2axis_input_B28.json",
+              "version": "",
+              "canonical": true,
+              "size": 44952,
+              "path": "RC/06_calibration/2axis_input_B28.json"
+            },
+            {
+              "file": "2axis_input_B29.json",
+              "version": "",
+              "canonical": true,
+              "size": 37836,
+              "path": "RC/06_calibration/2axis_input_B29.json"
+            },
+            {
+              "file": "2axis_input_B30.json",
+              "version": "",
+              "canonical": true,
+              "size": 23111,
+              "path": "RC/06_calibration/2axis_input_B30.json"
+            },
+            {
+              "file": "2axis_input_CANARY.json",
+              "version": "",
+              "canonical": true,
+              "size": 5247,
+              "path": "RC/06_calibration/2axis_input_CANARY.json"
+            },
+            {
+              "file": "2axis_result_B01.json",
+              "version": "",
+              "canonical": true,
+              "size": 14011,
+              "path": "RC/06_calibration/2axis_result_B01.json"
+            },
+            {
+              "file": "2axis_result_B02.json",
+              "version": "",
+              "canonical": true,
+              "size": 12969,
+              "path": "RC/06_calibration/2axis_result_B02.json"
+            },
+            {
+              "file": "2axis_result_B03.json",
+              "version": "",
+              "canonical": true,
+              "size": 15699,
+              "path": "RC/06_calibration/2axis_result_B03.json"
+            },
+            {
+              "file": "2axis_result_B04.json",
+              "version": "",
+              "canonical": true,
+              "size": 14806,
+              "path": "RC/06_calibration/2axis_result_B04.json"
+            },
+            {
+              "file": "2axis_result_B05.json",
+              "version": "",
+              "canonical": true,
+              "size": 12836,
+              "path": "RC/06_calibration/2axis_result_B05.json"
+            },
+            {
+              "file": "2axis_result_B06.json",
+              "version": "",
+              "canonical": true,
+              "size": 14513,
+              "path": "RC/06_calibration/2axis_result_B06.json"
+            },
+            {
+              "file": "2axis_result_B07.json",
+              "version": "",
+              "canonical": true,
+              "size": 13548,
+              "path": "RC/06_calibration/2axis_result_B07.json"
+            },
+            {
+              "file": "2axis_result_B08.json",
+              "version": "",
+              "canonical": true,
+              "size": 15011,
+              "path": "RC/06_calibration/2axis_result_B08.json"
+            },
+            {
+              "file": "2axis_result_B09.json",
+              "version": "",
+              "canonical": true,
+              "size": 14052,
+              "path": "RC/06_calibration/2axis_result_B09.json"
+            },
+            {
+              "file": "2axis_result_B10.json",
+              "version": "",
+              "canonical": true,
+              "size": 18193,
+              "path": "RC/06_calibration/2axis_result_B10.json"
+            },
+            {
+              "file": "2axis_result_B11.json",
+              "version": "",
+              "canonical": true,
+              "size": 13901,
+              "path": "RC/06_calibration/2axis_result_B11.json"
+            },
+            {
+              "file": "2axis_result_B12.json",
+              "version": "",
+              "canonical": true,
+              "size": 15517,
+              "path": "RC/06_calibration/2axis_result_B12.json"
+            },
+            {
+              "file": "2axis_result_B13.json",
+              "version": "",
+              "canonical": true,
+              "size": 14291,
+              "path": "RC/06_calibration/2axis_result_B13.json"
+            },
+            {
+              "file": "2axis_result_B14.json",
+              "version": "",
+              "canonical": true,
+              "size": 14673,
+              "path": "RC/06_calibration/2axis_result_B14.json"
+            },
+            {
+              "file": "2axis_result_B15.json",
+              "version": "",
+              "canonical": true,
+              "size": 12969,
+              "path": "RC/06_calibration/2axis_result_B15.json"
+            },
+            {
+              "file": "2axis_result_B16.json",
+              "version": "",
+              "canonical": true,
+              "size": 14898,
+              "path": "RC/06_calibration/2axis_result_B16.json"
+            },
+            {
+              "file": "2axis_result_B17.json",
+              "version": "",
+              "canonical": true,
+              "size": 16295,
+              "path": "RC/06_calibration/2axis_result_B17.json"
+            },
+            {
+              "file": "2axis_result_B18.json",
+              "version": "",
+              "canonical": true,
+              "size": 14862,
+              "path": "RC/06_calibration/2axis_result_B18.json"
+            },
+            {
+              "file": "2axis_result_B19.json",
+              "version": "",
+              "canonical": true,
+              "size": 15207,
+              "path": "RC/06_calibration/2axis_result_B19.json"
+            },
+            {
+              "file": "2axis_result_B20.json",
+              "version": "",
+              "canonical": true,
+              "size": 15172,
+              "path": "RC/06_calibration/2axis_result_B20.json"
+            },
+            {
+              "file": "2axis_result_B21.json",
+              "version": "",
+              "canonical": true,
+              "size": 15231,
+              "path": "RC/06_calibration/2axis_result_B21.json"
+            },
+            {
+              "file": "2axis_result_B22.json",
+              "version": "",
+              "canonical": true,
+              "size": 15496,
+              "path": "RC/06_calibration/2axis_result_B22.json"
+            },
+            {
+              "file": "2axis_result_B23.json",
+              "version": "",
+              "canonical": true,
+              "size": 16647,
+              "path": "RC/06_calibration/2axis_result_B23.json"
+            },
+            {
+              "file": "2axis_result_B24.json",
+              "version": "",
+              "canonical": true,
+              "size": 17585,
+              "path": "RC/06_calibration/2axis_result_B24.json"
+            },
+            {
+              "file": "2axis_result_B25.json",
+              "version": "",
+              "canonical": true,
+              "size": 15177,
+              "path": "RC/06_calibration/2axis_result_B25.json"
+            },
+            {
+              "file": "2axis_result_B26.json",
+              "version": "",
+              "canonical": true,
+              "size": 13940,
+              "path": "RC/06_calibration/2axis_result_B26.json"
+            },
+            {
+              "file": "2axis_result_B27.json",
+              "version": "",
+              "canonical": true,
+              "size": 13894,
+              "path": "RC/06_calibration/2axis_result_B27.json"
+            },
+            {
+              "file": "2axis_result_B28.json",
+              "version": "",
+              "canonical": true,
+              "size": 14290,
+              "path": "RC/06_calibration/2axis_result_B28.json"
+            },
+            {
+              "file": "2axis_result_B29.json",
+              "version": "",
+              "canonical": true,
+              "size": 13324,
+              "path": "RC/06_calibration/2axis_result_B29.json"
+            },
+            {
+              "file": "2axis_result_B30.json",
+              "version": "",
+              "canonical": true,
+              "size": 10943,
+              "path": "RC/06_calibration/2axis_result_B30.json"
+            },
+            {
+              "file": "3rd_input.json",
+              "version": "",
+              "canonical": true,
+              "size": 272145,
+              "path": "RC/06_calibration/3rd_input.json"
+            },
+            {
+              "file": "2axis_result_B01.json",
+              "version": "",
+              "canonical": false,
+              "size": 14747,
+              "path": "RC/06_calibration/2axis_result_B01.json"
+            }
+          ]
+        },
+        {
+          "no": "⑦",
+          "name": "본판정",
+          "gate": null,
+          "what": "통합 대장 전건을 판정 기준서로 본판정한다 + 무작위 재검(시드 기록). 판정문 전건 보존.",
+          "consumes": [
+            "⑤ 통합 대장",
+            "판정 기준서 vFinal"
+          ],
+          "produces": [
+            "본판정 판정대장 (예: 806)",
+            "재검 추출 목록(시드)"
+          ],
+          "tool": "run_2axis.py (본판정 모드)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑧",
+          "name": "실물 채점",
+          "gate": "사람 확정",
+          "what": "발행 게이트(질문셋=ID·질문 2컬럼만, 유출 시 HALT) → 질문셋 발행 → 팀장님 시스템 응답 로그 수령 → 형식 게이트 → 채점(selftest 선행) → 판정 문맥 확인 큐 → 성적표. [사람 확정 게이트]",
+          "consumes": [
+            "골든셋(통합 대장)",
+            "응답 로그(팀장님 시스템)"
+          ],
+          "produces": [
+            "질문셋 발행본",
+            "성적표(score_report)"
+          ],
+          "tool": "run_score_v11.py",
+          "file_count": 7,
+          "files": [
+            {
+              "file": "RC_골든셋_r2_응답로그_2026-07-13.json",
+              "version": "",
+              "canonical": true,
+              "size": 4313329,
+              "path": "RC/08_scoring/RC_골든셋_r2_응답로그_2026-07-13.json"
+            },
+            {
+              "file": "RC_골든셋_응답로그_2026-07-13.json",
+              "version": "",
+              "canonical": true,
+              "size": 4446029,
+              "path": "RC/08_scoring/RC_골든셋_응답로그_2026-07-13.json"
+            },
+            {
+              "file": "RC_질문셋.json",
+              "version": "",
+              "canonical": true,
+              "size": 132813,
+              "path": "RC/08_scoring/RC_질문셋.json"
+            },
+            {
+              "file": "score_report.json",
+              "version": "",
+              "canonical": true,
+              "size": 258552,
+              "path": "RC/08_scoring/score_report.json"
+            },
+            {
+              "file": "score_report.json",
+              "version": "",
+              "canonical": false,
+              "size": 258530,
+              "path": "RC/08_scoring/score_report.json"
+            },
+            {
+              "file": "score_report.xlsx",
+              "version": "",
+              "canonical": false,
+              "size": 86198,
+              "path": "RC/08_scoring/score_report.xlsx"
+            },
+            {
+              "file": "score_report.xlsx",
+              "version": "",
+              "canonical": false,
+              "size": 86496,
+              "path": "RC/08_scoring/score_report.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑨",
+          "name": "유지보수",
+          "gate": "사람",
+          "what": "성적표 발행 후 되먹임 2로: (a) 전제 실효 후보 → 골든셋 vN+1 개정 큐 (b) 오탐·측정불능 → 채점기 개정 큐 → 규칙 D(전 차수 소급 재채점 자동 생성, 완료 전 회차 비교 차단).",
+          "consumes": [
+            "⑧ 성적표",
+            "판례"
+          ],
+          "produces": [
+            "골든셋 개정 큐",
+            "채점기 개정 큐 + 소급 재채점 잡"
+          ],
+          "tool": "run_score_v11.py (재채점)",
+          "file_count": 0,
+          "files": []
+        }
+      ],
+      "total_files": 85
+    },
+    "RM": {
+      "stages": [
+        {
+          "no": "①",
+          "name": "코퍼스 실측",
+          "gate": null,
+          "what": "받은 코퍼스를 파이썬으로 실측한다 — 청크·스코프 카운트, match_corpus 중첩 검사, 적법 재료의 SHA-256을 해시 매니페스트에 등록. '받으면 무조건 실측부터'(영역 0).",
+          "consumes": [
+            "코퍼스 export (data/<제품>/corpus/)"
+          ],
+          "produces": [
+            "대조표",
+            "manifest.json (해시 매니페스트)"
+          ],
+          "tool": "match_corpus.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "②",
+          "name": "지형 판정",
+          "gate": "사람",
+          "what": "제품의 지형(citation 패턴·앵커 패턴·부록 스위치)을 판정해 terrain 프로파일을 확정한다. 판례집 부록 W/V/T/M 스위치 결정. [사람 게이트]",
+          "consumes": [
+            "① 코퍼스 실측 결과",
+            "판례집 부록"
+          ],
+          "produces": [
+            "terrain.profiles.<코드> (config.yaml)"
+          ],
+          "tool": "(사람 판정 + config 기록)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "③",
+          "name": "커버리지맵",
+          "gate": null,
+          "what": "코퍼스를 커버 단위로 쪼갠 지도를 만든다(생성→검수→반려 루프). 확정 후 ③′ GAP_AUDIT를 별도 세션에서 돌려 외부 정본 대비 인입 누락 대조.",
+          "consumes": [
+            "코퍼스 export"
+          ],
+          "produces": [
+            "커버리지맵 (예: v1_3)",
+            "사람확인 큐·충돌 분리"
+          ],
+          "tool": "corpus_loader.py (검수)",
+          "file_count": 1,
+          "files": [
+            {
+              "file": "RM_커버리지맵_v04_2_disposition반영.xlsx",
+              "version": "v04_2",
+              "canonical": true,
+              "size": 856767,
+              "path": "RM/03_coverage_map/RM_커버리지맵_v04_2_disposition반영.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "④",
+          "name": "골든셋 배치",
+          "gate": "사람",
+          "what": "커버리지맵 기반으로 문항을 배치 단위로 생성한다: 재료실측 → 배분계획[게이트] → 파일럿 → 스크립트 검수 7종 → [게이트] → 차수 반복(밴드) → 배치 마감[게이트].",
+          "consumes": [
+            "커버리지맵",
+            "코퍼스"
+          ],
+          "produces": [
+            "배치 파일 (B1~B6 파일럿·마감·차수)",
+            "사람확정큐"
+          ],
+          "tool": "make_batches.py + verify_batch.py (검수 7종)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑤",
+          "name": "통합 대장",
+          "gate": null,
+          "what": "전 배치를 하나로 합친다 — 전사 문자 대조, 전 배치 합집합 assert(합집합 원칙), 출처 병기. 여기서 최종 통합 STAGE 대장이 나온다.",
+          "consumes": [
+            "④ 전 배치 산출물(파일럿+전 차수)"
+          ],
+          "produces": [
+            "통합 STAGE 대장 (예: 806문항)"
+          ],
+          "tool": "verify_batch.py (합집합 assert)",
+          "file_count": 1,
+          "files": [
+            {
+              "file": "RM_골든셋_v1_4.xlsx",
+              "version": "v1_4",
+              "canonical": true,
+              "size": 74745,
+              "path": "RM/05_unified_ledger/RM_골든셋_v1_4.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "⑥",
+          "name": "캘리브레이션",
+          "gate": "사람 판정측",
+          "what": "채점관(judge)이 사람과 같은 눈을 갖췄는지 30건 이중 판정으로 검사한다 — 일치율 ≥90% 통과해야 본판정 잠금 해제. 채점관·기준서 바뀌면 리셋(규칙 C). [사람 게이트]",
+          "consumes": [
+            "캘리브레이션 세트30 지시서",
+            "판정 기준서(judge 프롬프트)"
+          ],
+          "produces": [
+            "설계본부 블라인드 판정30",
+            "게이트실행 대조표(일치율)"
+          ],
+          "tool": "run_2axis.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑦",
+          "name": "본판정",
+          "gate": null,
+          "what": "통합 대장 전건을 판정 기준서로 본판정한다 + 무작위 재검(시드 기록). 판정문 전건 보존.",
+          "consumes": [
+            "⑤ 통합 대장",
+            "판정 기준서 vFinal"
+          ],
+          "produces": [
+            "본판정 판정대장 (예: 806)",
+            "재검 추출 목록(시드)"
+          ],
+          "tool": "run_2axis.py (본판정 모드)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑧",
+          "name": "실물 채점",
+          "gate": "사람 확정",
+          "what": "발행 게이트(질문셋=ID·질문 2컬럼만, 유출 시 HALT) → 질문셋 발행 → 팀장님 시스템 응답 로그 수령 → 형식 게이트 → 채점(selftest 선행) → 판정 문맥 확인 큐 → 성적표. [사람 확정 게이트]",
+          "consumes": [
+            "골든셋(통합 대장)",
+            "응답 로그(팀장님 시스템)"
+          ],
+          "produces": [
+            "질문셋 발행본",
+            "성적표(score_report)"
+          ],
+          "tool": "run_score_v11.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑨",
+          "name": "유지보수",
+          "gate": "사람",
+          "what": "성적표 발행 후 되먹임 2로: (a) 전제 실효 후보 → 골든셋 vN+1 개정 큐 (b) 오탐·측정불능 → 채점기 개정 큐 → 규칙 D(전 차수 소급 재채점 자동 생성, 완료 전 회차 비교 차단).",
+          "consumes": [
+            "⑧ 성적표",
+            "판례"
+          ],
+          "produces": [
+            "골든셋 개정 큐",
+            "채점기 개정 큐 + 소급 재채점 잡"
+          ],
+          "tool": "run_score_v11.py (재채점)",
+          "file_count": 0,
+          "files": []
+        }
+      ],
+      "total_files": 2
+    },
+    "HR": {
+      "stages": [
+        {
+          "no": "①",
+          "name": "코퍼스 실측",
+          "gate": null,
+          "what": "받은 코퍼스를 파이썬으로 실측한다 — 청크·스코프 카운트, match_corpus 중첩 검사, 적법 재료의 SHA-256을 해시 매니페스트에 등록. '받으면 무조건 실측부터'(영역 0).",
+          "consumes": [
+            "코퍼스 export (data/<제품>/corpus/)"
+          ],
+          "produces": [
+            "대조표",
+            "manifest.json (해시 매니페스트)"
+          ],
+          "tool": "match_corpus.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "②",
+          "name": "지형 판정",
+          "gate": "사람",
+          "what": "제품의 지형(citation 패턴·앵커 패턴·부록 스위치)을 판정해 terrain 프로파일을 확정한다. 판례집 부록 W/V/T/M 스위치 결정. [사람 게이트]",
+          "consumes": [
+            "① 코퍼스 실측 결과",
+            "판례집 부록"
+          ],
+          "produces": [
+            "terrain.profiles.<코드> (config.yaml)"
+          ],
+          "tool": "(사람 판정 + config 기록)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "③",
+          "name": "커버리지맵",
+          "gate": null,
+          "what": "코퍼스를 커버 단위로 쪼갠 지도를 만든다(생성→검수→반려 루프). 확정 후 ③′ GAP_AUDIT를 별도 세션에서 돌려 외부 정본 대비 인입 누락 대조.",
+          "consumes": [
+            "코퍼스 export"
+          ],
+          "produces": [
+            "커버리지맵 (예: v1_3)",
+            "사람확인 큐·충돌 분리"
+          ],
+          "tool": "corpus_loader.py (검수)",
+          "file_count": 1,
+          "files": [
+            {
+              "file": "인사팀_커버리지맵_OKF_v3.xlsx",
+              "version": "",
+              "canonical": true,
+              "size": 445295,
+              "path": "HR/03_coverage_map/인사팀_커버리지맵_OKF_v3.xlsx"
+            }
+          ]
+        },
+        {
+          "no": "④",
+          "name": "골든셋 배치",
+          "gate": "사람",
+          "what": "커버리지맵 기반으로 문항을 배치 단위로 생성한다: 재료실측 → 배분계획[게이트] → 파일럿 → 스크립트 검수 7종 → [게이트] → 차수 반복(밴드) → 배치 마감[게이트].",
+          "consumes": [
+            "커버리지맵",
+            "코퍼스"
+          ],
+          "produces": [
+            "배치 파일 (B1~B6 파일럿·마감·차수)",
+            "사람확정큐"
+          ],
+          "tool": "make_batches.py + verify_batch.py (검수 7종)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑤",
+          "name": "통합 대장",
+          "gate": null,
+          "what": "전 배치를 하나로 합친다 — 전사 문자 대조, 전 배치 합집합 assert(합집합 원칙), 출처 병기. 여기서 최종 통합 STAGE 대장이 나온다.",
+          "consumes": [
+            "④ 전 배치 산출물(파일럿+전 차수)"
+          ],
+          "produces": [
+            "통합 STAGE 대장 (예: 806문항)"
+          ],
+          "tool": "verify_batch.py (합집합 assert)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑥",
+          "name": "캘리브레이션",
+          "gate": "사람 판정측",
+          "what": "채점관(judge)이 사람과 같은 눈을 갖췄는지 30건 이중 판정으로 검사한다 — 일치율 ≥90% 통과해야 본판정 잠금 해제. 채점관·기준서 바뀌면 리셋(규칙 C). [사람 게이트]",
+          "consumes": [
+            "캘리브레이션 세트30 지시서",
+            "판정 기준서(judge 프롬프트)"
+          ],
+          "produces": [
+            "설계본부 블라인드 판정30",
+            "게이트실행 대조표(일치율)"
+          ],
+          "tool": "run_2axis.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑦",
+          "name": "본판정",
+          "gate": null,
+          "what": "통합 대장 전건을 판정 기준서로 본판정한다 + 무작위 재검(시드 기록). 판정문 전건 보존.",
+          "consumes": [
+            "⑤ 통합 대장",
+            "판정 기준서 vFinal"
+          ],
+          "produces": [
+            "본판정 판정대장 (예: 806)",
+            "재검 추출 목록(시드)"
+          ],
+          "tool": "run_2axis.py (본판정 모드)",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑧",
+          "name": "실물 채점",
+          "gate": "사람 확정",
+          "what": "발행 게이트(질문셋=ID·질문 2컬럼만, 유출 시 HALT) → 질문셋 발행 → 팀장님 시스템 응답 로그 수령 → 형식 게이트 → 채점(selftest 선행) → 판정 문맥 확인 큐 → 성적표. [사람 확정 게이트]",
+          "consumes": [
+            "골든셋(통합 대장)",
+            "응답 로그(팀장님 시스템)"
+          ],
+          "produces": [
+            "질문셋 발행본",
+            "성적표(score_report)"
+          ],
+          "tool": "run_score_v11.py",
+          "file_count": 0,
+          "files": []
+        },
+        {
+          "no": "⑨",
+          "name": "유지보수",
+          "gate": "사람",
+          "what": "성적표 발행 후 되먹임 2로: (a) 전제 실효 후보 → 골든셋 vN+1 개정 큐 (b) 오탐·측정불능 → 채점기 개정 큐 → 규칙 D(전 차수 소급 재채점 자동 생성, 완료 전 회차 비교 차단).",
+          "consumes": [
+            "⑧ 성적표",
+            "판례"
+          ],
+          "produces": [
+            "골든셋 개정 큐",
+            "채점기 개정 큐 + 소급 재채점 잡"
+          ],
+          "tool": "run_score_v11.py (재채점)",
+          "file_count": 0,
+          "files": []
+        }
+      ],
+      "total_files": 1
+    }
+  }
+}

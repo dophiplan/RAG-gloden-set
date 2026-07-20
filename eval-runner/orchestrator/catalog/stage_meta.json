@@ -1,0 +1,86 @@
+{
+  "_note": "파이프라인 트랙 ①~⑨ 메타. 대시보드 마우스오버 툴팁의 정본. 사양서 v1.3 §4 기준.",
+  "stages": [
+    {
+      "no": "①", "key": "①CORPUS_AUDIT", "dir": "01_corpus_audit", "name": "코퍼스 실측",
+      "gate": null,
+      "what": "받은 코퍼스를 파이썬으로 실측한다 — 청크·스코프 카운트, match_corpus 중첩 검사, 적법 재료의 SHA-256을 해시 매니페스트에 등록. '받으면 무조건 실측부터'(영역 0).",
+      "consumes": ["코퍼스 export (data/<제품>/corpus/)"],
+      "produces": ["대조표", "manifest.json (해시 매니페스트)"],
+      "tool": "match_corpus.py",
+      "waiting_input": "코퍼스 export가 없으면 INPUT_CORPUS 카드 발행 후 WAITING_INPUT 정지"
+    },
+    {
+      "no": "②", "key": "②TERRAIN", "dir": "02_terrain", "name": "지형 판정",
+      "gate": "사람",
+      "what": "제품의 지형(citation 패턴·앵커 패턴·부록 스위치)을 판정해 terrain 프로파일을 확정한다. 판례집 부록 W/V/T/M 스위치 결정. [사람 게이트]",
+      "consumes": ["① 코퍼스 실측 결과", "판례집 부록"],
+      "produces": ["terrain.profiles.<코드> (config.yaml)"],
+      "tool": "(사람 판정 + config 기록)",
+      "waiting_input": null
+    },
+    {
+      "no": "③", "key": "③COVERAGE_MAP", "dir": "03_coverage_map", "name": "커버리지맵",
+      "gate": null,
+      "what": "코퍼스를 커버 단위로 쪼갠 지도를 만든다(생성→검수→반려 루프). 확정 후 ③′ GAP_AUDIT를 별도 세션에서 돌려 외부 정본 대비 인입 누락 대조.",
+      "consumes": ["코퍼스 export"],
+      "produces": ["커버리지맵 (예: v1_3)", "사람확인 큐·충돌 분리"],
+      "tool": "corpus_loader.py (검수)",
+      "waiting_input": "맵 파일이 없으면 INPUT 카드 발행"
+    },
+    {
+      "no": "④", "key": "④GOLDENSET_BATCH", "dir": "04_goldenset_batch", "name": "골든셋 배치",
+      "gate": "사람",
+      "what": "커버리지맵 기반으로 문항을 배치 단위로 생성한다: 재료실측 → 배분계획[게이트] → 파일럿 → 스크립트 검수 7종 → [게이트] → 차수 반복(밴드) → 배치 마감[게이트].",
+      "consumes": ["커버리지맵", "코퍼스"],
+      "produces": ["배치 파일 (B1~B6 파일럿·마감·차수)", "사람확정큐"],
+      "tool": "make_batches.py + verify_batch.py (검수 7종)",
+      "waiting_input": null
+    },
+    {
+      "no": "⑤", "key": "⑤UNIFIED_LEDGER", "dir": "05_unified_ledger", "name": "통합 대장",
+      "gate": null,
+      "what": "전 배치를 하나로 합친다 — 전사 문자 대조, 전 배치 합집합 assert(합집합 원칙), 출처 병기. 여기서 최종 통합 STAGE 대장이 나온다.",
+      "consumes": ["④ 전 배치 산출물(파일럿+전 차수)"],
+      "produces": ["통합 STAGE 대장 (예: 806문항)"],
+      "tool": "verify_batch.py (합집합 assert)",
+      "waiting_input": "배치 산출물 전부 없으면 INPUT 카드 발행"
+    },
+    {
+      "no": "⑥", "key": "⑥CALIBRATION", "dir": "06_calibration", "name": "캘리브레이션",
+      "gate": "사람 판정측",
+      "what": "채점관(judge)이 사람과 같은 눈을 갖췄는지 30건 이중 판정으로 검사한다 — 일치율 ≥90% 통과해야 본판정 잠금 해제. 채점관·기준서 바뀌면 리셋(규칙 C). [사람 게이트]",
+      "consumes": ["캘리브레이션 세트30 지시서", "판정 기준서(judge 프롬프트)"],
+      "produces": ["설계본부 블라인드 판정30", "게이트실행 대조표(일치율)"],
+      "tool": "run_2axis.py",
+      "waiting_input": null
+    },
+    {
+      "no": "⑦", "key": "⑦STAGE2", "dir": "07_stage2", "name": "본판정",
+      "gate": null,
+      "what": "통합 대장 전건을 판정 기준서로 본판정한다 + 무작위 재검(시드 기록). 판정문 전건 보존.",
+      "consumes": ["⑤ 통합 대장", "판정 기준서 vFinal"],
+      "produces": ["본판정 판정대장 (예: 806)", "재검 추출 목록(시드)"],
+      "tool": "run_2axis.py (본판정 모드)",
+      "waiting_input": null
+    },
+    {
+      "no": "⑧", "key": "⑧SCORING", "dir": "08_scoring", "name": "실물 채점",
+      "gate": "사람 확정",
+      "what": "발행 게이트(질문셋=ID·질문 2컬럼만, 유출 시 HALT) → 질문셋 발행 → 팀장님 시스템 응답 로그 수령 → 형식 게이트 → 채점(selftest 선행) → 판정 문맥 확인 큐 → 성적표. [사람 확정 게이트]",
+      "consumes": ["골든셋(통합 대장)", "응답 로그(팀장님 시스템)"],
+      "produces": ["질문셋 발행본", "성적표(score_report)"],
+      "tool": "run_score_v11.py",
+      "waiting_input": "응답 로그 없으면 INPUT_SCORING 카드 발행"
+    },
+    {
+      "no": "⑨", "key": "⑨MAINTENANCE", "dir": "09_maintenance", "name": "유지보수",
+      "gate": "사람",
+      "what": "성적표 발행 후 되먹임 2로: (a) 전제 실효 후보 → 골든셋 vN+1 개정 큐 (b) 오탐·측정불능 → 채점기 개정 큐 → 규칙 D(전 차수 소급 재채점 자동 생성, 완료 전 회차 비교 차단).",
+      "consumes": ["⑧ 성적표", "판례"],
+      "produces": ["골든셋 개정 큐", "채점기 개정 큐 + 소급 재채점 잡"],
+      "tool": "run_score_v11.py (재채점)",
+      "waiting_input": null
+    }
+  ]
+}
