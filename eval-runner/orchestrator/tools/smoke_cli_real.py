@@ -63,14 +63,14 @@ def gates():
 
 def reset():
     shutil.rmtree(DATA, ignore_errors=True)
-    (ROOT / "terrain.d" / "TT.yaml").unlink(missing_ok=True)
+    (ROOT / "terrain.d" / f"{PROD}.yaml").unlink(missing_ok=True)
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     st["products"].pop(PROD, None)
     (ROOT / "state.json").write_text(json.dumps(st, ensure_ascii=False, indent=2), encoding="utf-8")
     for base in [ROOT / "검수큐", ROOT / "검수큐/완료"]:
-        for f in base.glob("*TT*.md"):
+        for f in base.glob(f"*{PROD}*.md"):
             f.unlink()
-    for r in (ROOT / "results").glob("score_TT_*"):
+    for r in (ROOT / "results").glob(f"score_{PROD}_*"):
         shutil.rmtree(r)
 
 
@@ -125,7 +125,7 @@ def main():
             ("통합 대장", list((DATA / "05_unified_ledger").glob("*.xlsx"))),
             ("캘리브 판정30", list((DATA / "06_calibration").glob("*판정*.xlsx"))),
             ("판정대장", list((DATA / "07_stage2").glob("*판정대장*.xlsx"))),
-            ("성적표", list((ROOT / "results").glob("score_TT_*/score_report.json"))),
+            ("성적표", list((ROOT / "results").glob(f"score_{PROD}_*/score_report.json"))),
         ]
         ok = True
         for name, fs in checks:
