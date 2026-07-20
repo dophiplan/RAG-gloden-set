@@ -325,6 +325,15 @@ def cmd_approve(a):
                                   encoding="utf-8")
         if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
             ps["calibration_passed"] = True     # 임계 통과 게이트 승인 시에만
+        if g["stage"] == "SCORING" and a.gate_id.startswith("SCORE_"):
+            # 성적표 확정 = ⑧ 완료 → ⑨ 유지보수로 전진 (재채점 루프 방지)
+            save_state(st)
+            ledger_append("SCORING", "SCORE_CONFIRMED", f"사람:{a.actor}",
+                          gate_id=a.gate_id, product=prod)
+            advance_stage(prod)
+            set_status(prod, "PENDING")
+            print(f"✅ 성적표 확정 — {a.gate_id} · ⑨ 유지보수로 전진")
+            return
         if g["stage"] == "MAINTENANCE":
             ps["status"] = "DONE"
             save_state(st)
