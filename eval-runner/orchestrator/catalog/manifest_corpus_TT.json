@@ -5,19 +5,19 @@
       "file": "manual.md",
       "sha256": "982a6dbf26e10c3186f29c043ebf23ec8be53ea6f5bc0500651cf359b5b54a29",
       "size": 459,
-      "registered": "2026-07-20T19:17:10"
+      "registered": "2026-07-20T19:19:08"
     },
     {
       "file": "notice.md",
-      "sha256": "e598d513c9bd877dc681abdbde3ee04146a562b5f5aa0ae61d07caeee5d3a1f2",
-      "size": 434,
-      "registered": "2026-07-20T19:17:10"
+      "sha256": "de6fe516ab3e2500a1fa12cb2bd9578b4b5522b458efc46f079f9eac04c756ad",
+      "size": 317,
+      "registered": "2026-07-20T19:19:08"
     },
     {
       "file": "policy.md",
-      "sha256": "a6632f5c12a1f84e7865e4738600819b2cbc24c18c5232edd5c7029c32b7a9b4",
-      "size": 429,
-      "registered": "2026-07-20T19:17:10"
+      "sha256": "a4517eddb12104cff7a37d1d06afe53ca2e244deedfa440234885e1c3c010bb3",
+      "size": 371,
+      "registered": "2026-07-20T19:19:08"
     }
   ]
 }

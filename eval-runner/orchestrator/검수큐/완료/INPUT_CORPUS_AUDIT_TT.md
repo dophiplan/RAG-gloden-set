@@ -1,6 +1,6 @@
 # INPUT_CORPUS_AUDIT_TT — 입력 대기
 
-- 발행: 2026-07-20T19:17:10 · WAITING_INPUT 검사기 (자동)
+- 발행: 2026-07-20T19:19:08 · WAITING_INPUT 검사기 (자동)
 - 제품: TT · 단계: ① 코퍼스 실측
 
 ## 무엇을
