@@ -148,6 +148,11 @@
     <input id="f-code" placeholder="예: RM" maxlength="8">
     <label for="f-name">제품 이름</label>
     <input id="f-name" placeholder="예: 리모트미팅">
+    <label for="f-start">무엇부터 시작하나요?</label>
+    <select id="f-start">
+      <option value="full">처음부터 — 코퍼스(문서 뭉치)로 시험지 제작</option>
+      <option value="scoring">채점만 — 골든셋(시험지)과 응답 로그가 이미 있음</option>
+    </select>
     <label for="f-base">채점 규칙, 어느 제품과 비슷하게 시작할까요?</label>
     <select id="f-base">
       <option value="RV">리모트뷰(RV)와 비슷하게</option>
@@ -266,9 +271,16 @@ function render(){
   const catStages = (S.catalog.products[cur]||{stages:[]}).stages;
   const na = nextAction();
   const legacyLine = (PV().legacy||[]).map(l=>esc(l.gen)).join(' · ');
+  const strat = ps.strategy || 'ensemble';
+  const stratSel = `<select id="stratSel" onchange="setStrategy(this.value)" style="font:inherit;font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--tx);padding:4px 8px;margin-left:12px">
+      <option value="ensemble" ${strat==='ensemble'?'selected':''}>제작 방식: 앙상블 — AI 전원이 각자 만들고 병합 (촘촘)</option>
+      <option value="cross_check" ${strat==='cross_check'?'selected':''}>제작 방식: 1개가 만들고 다른 AI가 검수</option>
+      <option value="self_check" ${strat==='self_check'?'selected':''}>제작 방식: 1개가 만들고 새 세션에서 자가 검수</option>
+      <option value="solo" ${strat==='solo'?'selected':''}>제작 방식: AI 1개 단독 (빠름·저비용)</option>
+    </select>`;
   let html = `
   <div class="track-wrap">
-    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
     <div class="nextbar">${na.icon} ${esc(na.text)}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
@@ -449,11 +461,14 @@ async function doUpload(input, cardId){
   } finally { busy = false; }
   await act({cmd:'run', product:PV().code});
 }
+async function setStrategy(v){
+  await act({cmd:'set-strategy', product:PV().code, strategy:v});
+}
 async function doOnboard(){
   const code=$('f-code').value.trim().toUpperCase(), name=$('f-name').value.trim();
   if(!code){$('f-code').focus();return;}
   dlg.close();
-  await act({cmd:'onboard', product:code, name, base:$('f-base').value});
+  await act({cmd:'onboard', product:code, name, base:$('f-base').value, start:$('f-start').value});
   cur=null; await loadAll();
 }
 const dlg=$('dlg'), rdlg=$('rdlg');

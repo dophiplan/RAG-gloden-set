@@ -159,6 +159,9 @@ def _mock_chat(role, system, user):
                 seen.add(k)
                 out.append(u)
         return json.dumps(out, ensure_ascii=False)
+    if "[TASK:COVERAGE_REVIEW]" in system:
+        return json.dumps({"누락 의심": [], "변형 의심": [], "총평": "이상 없음 (모의 검수)"},
+                          ensure_ascii=False)
     if task == "COVERAGE_UNITS":
         return _mock_coverage(user)
     if task == "GOLDENSET_ITEMS":

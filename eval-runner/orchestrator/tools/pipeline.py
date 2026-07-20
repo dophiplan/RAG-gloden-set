@@ -402,6 +402,25 @@ def cmd_set_stage(a):
     print(f"🧭 {a.product} → {a.stage} (원장 기록)")
 
 
+STRATEGY_KO = {"ensemble": "앙상블 (3-AI 각자 추출 → 병합)", "solo": "단독 (AI 1개)",
+               "cross_check": "생성 + 타 AI 교차 검수", "self_check": "생성 + 자가 검수(새 세션)"}
+
+
+def cmd_set_strategy(a):
+    """생성 전략 변경 — 커버리지맵 추출·골든셋 생성 리뷰 방식 (원장 기록)"""
+    st = load_state()
+    ps = st["products"].get(a.product)
+    if not ps:
+        sys.exit(f"미등록 제품: {a.product}")
+    prev = ps.get("strategy", "ensemble")
+    ps["strategy"] = a.strategy
+    save_state(st)
+    ledger_append(ps["stage"], "STRATEGY_SET", f"사람:{a.actor}",
+                  evidence={"전": prev, "후": a.strategy, "설명": STRATEGY_KO[a.strategy]},
+                  product=a.product)
+    print(f"전략 변경: {a.product} → {STRATEGY_KO[a.strategy]}")
+
+
 def cmd_onboard(a):
     """제품 온보딩 — §10.7: 제품은 화면 구조가 아니라 데이터다"""
     prod = a.product.upper()
@@ -432,23 +451,40 @@ def cmd_onboard(a):
     for d in ["corpus", "01_corpus_audit", "03_coverage_map", "04_goldenset_batch",
               "05_unified_ledger", "06_calibration", "07_stage2", "08_scoring", "09_maintenance"]:
         (DATA / prod / d).mkdir(parents=True, exist_ok=True)
-    # ⓒ 상태 생성 (①에서 정지) + ⓓ 규칙 C
-    st["products"][prod] = {"stage": "CORPUS_AUDIT", "status": "PENDING",
+    # ⓒ 상태 생성 + ⓓ 규칙 C + 실행 전략(기본 앙상블)
+    scoring_only = getattr(a, "start", "full") == "scoring"
+    st["products"][prod] = {"stage": "SCORING" if scoring_only else "CORPUS_AUDIT",
+                            "status": "PENDING",
                             "calibration_passed": False, "scorer_version": None,
-                            "compare_blocked": False, "stage_history": {},
-                            "open_gates": [], "halt_reason": None}
+                            "compare_blocked": False,
+                            "stage_history": ({k: {"done_at": "(채점만 모드 — 보유 산출물 인정)"}
+                                               for k in STAGE_KEYS[:STAGE_KEYS.index("SCORING")]}
+                                              if scoring_only else {}),
+                            "open_gates": [], "halt_reason": None,
+                            "strategy": getattr(a, "strategy", "ensemble"),
+                            "start_mode": "scoring" if scoring_only else "full"}
     save_state(st)
     # ⓔ 원장 ONBOARD 행
-    ledger_append("CORPUS_AUDIT", "ONBOARD", f"사람:{a.actor}",
-                  evidence={"name": a.name or prod, "terrain_base": a.base, "dirs": "created"},
+    ledger_append("SCORING" if scoring_only else "CORPUS_AUDIT", "ONBOARD", f"사람:{a.actor}",
+                  evidence={"name": a.name or prod, "terrain_base": a.base, "dirs": "created",
+                            "start": "채점만" if scoring_only else "처음부터",
+                            "strategy": st["products"][prod]["strategy"]},
                   product=prod)
-    # 트랙을 ①에서 WAITING_INPUT 정지 + INPUT_CORPUS 카드
-    issue_input_card(prod, "CORPUS_AUDIT",
-                     what=f"{prod} 코퍼스 export",
-                     where=f"data/{prod}/corpus/",
-                     fmt="export 파일. 투입 시: 청크 실측 + match_corpus 중첩 + 해시 매니페스트 등록 후 ① 시작")
-    set_status(prod, "WAITING_INPUT", reason="온보딩 — 코퍼스 대기")
-    print(f"🆕 {prod} 온보딩 — ① WAITING_INPUT 정지 · INPUT_CORPUS 카드 발행 · calibration_passed=false")
+    if scoring_only:
+        # 중간 시작: 골든셋(xlsx)과 응답 로그(json)만 받으면 바로 채점
+        issue_input_card(prod, "SCORING",
+                         what=f"{prod} 골든셋(xlsx)과 응답 로그(json) — 채점만 모드",
+                         where=f"골든셋 → data/{prod}/05_unified_ledger/ · 로그 → data/{prod}/08_scoring/",
+                         fmt="대시보드 📎 업로드에 두 파일 함께 올려도 됨 — xlsx는 골든셋 자리로, json은 로그 자리로 자동 분류")
+        set_status(prod, "WAITING_INPUT", reason="채점만 모드 — 골든셋·로그 대기")
+        print(f"🆕 {prod} 온보딩(채점만) — ⑧에서 골든셋·로그 대기")
+    else:
+        issue_input_card(prod, "CORPUS_AUDIT",
+                         what=f"{prod} 코퍼스 export",
+                         where=f"data/{prod}/corpus/",
+                         fmt="export 파일. 투입 시: 청크 실측 + match_corpus 중첩 + 해시 매니페스트 등록 후 ① 시작")
+        set_status(prod, "WAITING_INPUT", reason="온보딩 — 코퍼스 대기")
+        print(f"🆕 {prod} 온보딩 — ① WAITING_INPUT 정지 · INPUT_CORPUS 카드 발행 · calibration_passed=false")
 
 
 def main():
@@ -461,11 +497,12 @@ def main():
     s = sub.add_parser("resume"); s.add_argument("--after-fix", required=True, metavar="제품"); s.add_argument("--reason"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("appeal"); s.add_argument("gate_id"); s.add_argument("--evidence"); s.add_argument("--product"); s.add_argument("--actor", default="작업AI")
     s = sub.add_parser("set-stage"); s.add_argument("--product", required=True); s.add_argument("--stage", required=True); s.add_argument("--reason"); s.add_argument("--calibration-passed", action="store_true", dest="calibration_passed"); s.add_argument("--actor", default="난희")
-    s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희"); s.add_argument("--start", default="full", choices=["full", "scoring"]); s.add_argument("--strategy", default="ensemble", choices=["ensemble", "solo", "cross_check", "self_check"])
+    s = sub.add_parser("set-strategy"); s.add_argument("--product", required=True); s.add_argument("--strategy", required=True, choices=["ensemble", "solo", "cross_check", "self_check"]); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
-     "onboard": cmd_onboard}[a.cmd](a)
+     "onboard": cmd_onboard, "set-strategy": cmd_set_strategy}[a.cmd](a)
 
 
 if __name__ == "__main__":
