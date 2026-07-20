@@ -54,7 +54,9 @@ def load_items(prod):
 
 def load_rubric(prod):
     for pat in ("*프롬프트*vFinal*", "*기준서*", "*프롬프트*"):
-        c = sorted((DATA / prod / "07_stage2").glob(pat))
+        # FLAG-02: diff 파일(_diff_v2_to_vFinal_ 등) 오매칭 제외
+        c = [p for p in sorted((DATA / prod / "07_stage2").glob(pat))
+             if "diff" not in N(p.name).lower()]
         if c:
             return c[-1].read_text(encoding="utf-8"), N(c[-1].name)
     return "판정 기준서: 정답 필수 요소 전건 포함=합격 / 일부=부분 / 상충·창작=0점. E형은 부재 인정만 합격.", "(기본 기준서)"
@@ -64,8 +66,15 @@ SYSTEM_J = """[TASK:JUDGE_VERDICTS] 너는 골든셋 2축 판정관이다. 입�
 출력: JSON 배열만 — [{ID, 판정(합격|부분|0점), 판정문}]. 판정문에 조항 근거를 인용하라(전건 보존됨)."""
 
 
+RUBRIC_LIMIT = 4000
+
+
 def judge_batch(items, rubric, cfg, batch=20):
     """규칙 B: build_judge_request 로 오염 키 제거 후 호출. 배치 단위 독립 호출(새 세션)."""
+    # FLAG-01: 기준서 절단 금지 — 초과 시 명시 정지 (조항이 잘린 채 판정되는 사고 방지)
+    if len(rubric) > RUBRIC_LIMIT:
+        raise RuntimeError(f"기준서 {len(rubric):,}자 — {RUBRIC_LIMIT:,}자 한도 초과. "
+                           "분할 불가: 한도 상향 또는 기준서 축약 필요 (절단 판정 금지)")
     env = None
     if llm.is_mock():   # mock 모드 = 2키 구성으로 간주 (generator+judge)
         env = {m["api_key_env"]: "mock" for m in cfg["models"].values() if m and m.get("api_key_env")}
@@ -75,7 +84,7 @@ def judge_batch(items, rubric, cfg, batch=20):
         reqs = [build_judge_request(it, rubric, cfg, env=env)["inputs"]["문항"]
                 for it in part]
         resp = llm.chat("judge", SYSTEM_J,
-                        json.dumps({"items": reqs, "rubric": rubric[:4000]}, ensure_ascii=False), cfg)
+                        json.dumps({"items": reqs, "rubric": rubric}, ensure_ascii=False), cfg)
         out += llm.extract_json(resp)
     return out
 
@@ -124,7 +133,9 @@ def run_calibration_judging(prod, cfg):
     return "DONE", ev
 
 
-def run_stage2(prod, cfg):
+def run_stage2(prod, cfg, batch_size=20):
+    """[FIX-04] 배치 영속화 + resume (불변 단서 ②) — 사용량 한도·중단에도 기왕 판정 보존."""
+    import os
     st = load_state()
     if not st["products"][prod]["calibration_passed"]:
         return "BLOCKED", {"사유": "규칙 C — calibration_passed=false"}
@@ -132,8 +143,59 @@ def run_stage2(prod, cfg):
     if not items:
         return "WAITING_INPUT", {"통합 대장": "없음"}
     rubric, rname = load_rubric(prod)
-    verdicts = judge_batch(items, rubric, cfg)
-    vmap = {N(v["ID"]): v for v in verdicts}
+
+    # 진행 파일: 배치마다 즉시 append — 재실행 시 완료 ID 건너뜀
+    prog = DATA / prod / "07_stage2" / "_stage2_progress.jsonl"
+    prog.parent.mkdir(parents=True, exist_ok=True)
+    done = {}
+    if prog.exists():
+        for line in prog.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                done[N(r["ID"])] = r
+    todo = [it for it in items if it["ID"] not in done]
+    if done:
+        print(f"  ↻ resume: 기완료 {len(done)} / 전체 {len(items)} — 잔여 {len(todo)}부터 재개")
+
+    fail_at = os.environ.get("ORCH_FAIL_AT_BATCH")      # 회귀 T13 훅: N번째 배치 강제 예외
+    drop_id = os.environ.get("ORCH_DROP_ID")            # 회귀 T13 훅: 판정 응답 ID 누락 주입
+    try:
+        for bi in range(0, len(todo), batch_size):
+            bno = bi // batch_size + 1
+            if fail_at and bno == int(fail_at):
+                raise RuntimeError(f"[T13 주입] 배치 {bno} 강제 예외 (구독 한도 모의)")
+            part = todo[bi:bi + batch_size]
+            verdicts = judge_batch(part, rubric, cfg, batch=batch_size)
+            vmap = {N(v.get("ID", "")): v for v in verdicts}
+            if drop_id and drop_id in vmap:
+                del vmap[drop_id]
+            with open(prog, "a", encoding="utf-8") as f:
+                for it in part:
+                    v = vmap.get(it["ID"])
+                    if v:   # 미수신 ID는 기록하지 않는다 — 침묵 "미판정" 집계 금지
+                        row = {"ID": it["ID"], "유형": it.get("유형", ""),
+                               "판정": N(v.get("판정", "")), "판정문": N(v.get("판정문", ""))}
+                        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                        done[it["ID"]] = row
+    except Exception as e:
+        ledger_append("STAGE2", "STAGE2_PARTIAL", "script:judge_run",
+                      evidence={"완료": len(done), "전체": len(items), "기준서": rname,
+                                "오류": str(e)[:200]},
+                      reason="중단 — progress 보존됨", product=prod)
+        print(f"⛔ 본판정 중단: {e}\n   진행 {len(done)}/{len(items)} 보존 — 같은 명령 재실행 시 이어서 판정한다.")
+        raise
+
+    # 전건 응답 확인 — 미판정 > 0 이면 DONE 금지, 사람 게이트 (FIX-04-4)
+    missing = [it["ID"] for it in items if it["ID"] not in done]
+    if missing:
+        issue_gate_card(prod, "STAGE2", f"S2MISS_{prod}",
+                        what_stopped=f"본판정 응답 ID 누락 {len(missing)}건 — judge 응답에서 미수신, 침묵 집계 금지",
+                        evidence={"누락": missing[:20], "완료": len(done), "전체": len(items)},
+                        flags=[{"type": "미판정", "id": i, "candidates": [], "ack_required": True}
+                               for i in missing[:20]],
+                        recommendation="재실행(resume)으로 재시도하거나, 반복 누락 시 문항/프롬프트 점검")
+        return "WAITING_HUMAN", {"미판정": len(missing), "완료": len(done)}
+
     # 무작위 재검 — 시드+추출 목록 원장 기록 의무 [v1.1]
     seed = cfg["pipeline"].get("recheck_seed") or int.from_bytes(
         __import__("hashlib").sha256(f"{prod}{len(items)}{rname}".encode()).digest()[:4], "big")
@@ -141,21 +203,22 @@ def run_stage2(prod, cfg):
     rng = random.Random(seed)
     recheck_ids = sorted(rng.sample([i["ID"] for i in items], max(1, int(len(items) * rate))))
     out = DATA / prod / "07_stage2" / f"{prod}_본판정_판정대장_{len(items)}_v1_0.xlsx"
-    out.parent.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "판정대장"
     ws.append(["문항ID", "유형", "판정", "판정문(전건 보존)", "재검 대상"])
     cnt = Counter()
     for it in items:
-        v = vmap.get(it["ID"], {})
-        verdict = N(v.get("판정", "미판정"))
-        cnt[verdict] += 1
-        ws.append([it["ID"], it.get("유형", ""), verdict, N(v.get("판정문", "")),
+        v = done[it["ID"]]
+        cnt[v["판정"]] += 1
+        ws.append([it["ID"], it.get("유형", ""), v["판정"], v["판정문"],
                    "○" if it["ID"] in set(recheck_ids) else ""])
     wb.save(out)
+    # progress 봉인 — 삭제 금지(증적), 판정문 원본으로 개명 보존
+    sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건.jsonl")
+    prog.rename(sealed)
     ev = {"판정": dict(cnt), "재검": f"{len(recheck_ids)}건 (rate {rate})",
-          "seed": seed, "기준서": rname, "산출": N(out.name)}
+          "seed": seed, "기준서": rname, "산출": N(out.name), "판정문 봉인": N(sealed.name)}
     ledger_append("STAGE2", "STAGE2_JUDGED", "script:judge_run",
                   evidence={**ev, "recheck_ids": recheck_ids}, product=prod)
     return "DONE", ev
