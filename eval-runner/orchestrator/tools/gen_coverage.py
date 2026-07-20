@@ -63,12 +63,70 @@ SYSTEM = """[TASK:COVERAGE_UNITS] 너는 RAG 평가용 커버리지맵 추출기
 4. source 필드에는 입력 청크의 source 값을 그대로."""
 
 
-def generate_units(prod, chunks, cfg, retry_ids=None):
+def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
     payload = {"product": prod,
                "chunks": [c for c in chunks if retry_ids is None
                           or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]}
-    out = llm.chat("generator", SYSTEM, json.dumps(payload, ensure_ascii=False), cfg)
+    out = llm.chat(role, SYSTEM, json.dumps(payload, ensure_ascii=False), cfg)
     return llm.extract_json(out)
+
+
+def _ensemble_roles(cfg):
+    """[앙상블 출제] 가용한 모든 모델이 커버 단위를 추출한다 — 촘촘함은 합집합에서 나온다."""
+    if llm.is_mock():
+        return ["generator", "judge"]     # mock = 2키 상당
+    import os
+    from model_adapter import detect_mode
+    have = detect_mode(cfg, os.environ)["have"]
+    return [r for r in ("generator", "judge", "reviewer") if have.get(r)]
+
+
+MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
+여러 AI가 같은 코퍼스에서 추출한 커버 단위들의 합집합을 받는다. 다음을 수행하라:
+1. fact 가 동일하거나 한쪽이 다른쪽에 완전히 포함되는(부분집합) 단위는 하나로 통합 — 더 완전한 fact 를 남긴다.
+2. fact 원문은 절대 변형·요약·병합 금지 (문자 대조 검수됨) — 남길 단위를 고르는 것만 허용.
+3. title/question_hint 는 남긴 단위 것을 유지.
+출력: JSON 배열만 — 입력과 같은 스키마."""
+
+
+def ensemble_generate(prod, chunks, cfg):
+    """모든 가용 모델이 추출 → 기계 dedup → 병합자(generator)가 부분집합 통합 → 검수는 호출측."""
+    roles = _ensemble_roles(cfg)
+    pool, contrib, fails = [], {}, []
+    seen = set()
+    for role in roles:
+        try:
+            units = generate_units(prod, chunks, cfg, role=role)
+            ok, _rej = verify_units(units, chunks)     # 추출기별 1축 선별 (쓰레기 조기 제거)
+            new = 0
+            for u in ok:
+                k = norm(u.get("fact", ""))
+                if k not in seen:
+                    seen.add(k)
+                    pool.append(u)
+                    new += 1
+            contrib[role] = {"추출(검수통과)": len(ok), "신규 기여": new}
+        except Exception as e:
+            fails.append({"role": role, "err": str(e)[:150]})
+            ledger_append("COVERAGE_MAP", "ENSEMBLE_EXTRACTOR_FAILED", f"script:{role}",
+                          evidence={"err": str(e)[:200]}, product=prod)
+    if len(roles) > 1 and pool:
+        merged_out = llm.chat("generator", MERGE_SYSTEM,
+                              json.dumps({"units": pool}, ensure_ascii=False), cfg)
+        merged = llm.extract_json(merged_out)
+        # 병합자가 단위를 과도 삭제/변형했는지 안전판: 병합 결과가 풀의 50% 미만이면 풀 유지
+        if not isinstance(merged, list) or len(merged) < max(1, len(pool) // 2):
+            merged = pool
+    else:
+        merged = pool
+    # ID 재부여 — 모델 간 ID 충돌 제거 (문서약칭 + 일련번호)
+    from collections import defaultdict
+    seq = defaultdict(int)
+    for u in merged:
+        doc = re.sub(r"[^A-Z0-9]", "", N(u.get("source", u.get("unit_id", "DOC"))).upper())[:6] or "DOC"
+        seq[doc] += 1
+        u["unit_id"] = f"{prod}-{doc}-{seq[doc]:03d}"
+    return merged, contrib, fails
 
 
 def verify_units(units, chunks):
@@ -124,26 +182,21 @@ def run(prod, cfg):
     chunks = load_corpus(prod)
     if not chunks:
         return "WAITING_INPUT", {"코퍼스 청크": 0}
-    units = generate_units(prod, chunks, cfg)
-    ok, rej = verify_units(units, chunks)
-    # 반려 루프 (최대 2회): 불합격 단위 재생성
-    for attempt in range(2):
-        if not rej:
-            break
-        ledger_append("COVERAGE_MAP", "UNITS_REJECTED", "script:coverage_verify",
-                      evidence={"round": attempt + 1, "reject": len(rej),
-                                "reasons": [r for _, r in rej[:5]]}, product=prod)
-        retry = generate_units(prod, chunks, cfg, retry_ids=[N(u.get("unit_id", "")) for u, _ in rej])
-        ok2, rej = verify_units(retry, chunks)
-        known = {N(u["unit_id"]) for u in ok}
-        ok += [u for u in ok2 if N(u["unit_id"]) not in known]
+    # [앙상블 출제] 가용 모델 전원 추출 → 병합 → 최종 1축 재검수 (병합 변형도 걸러짐)
+    merged, contrib, fails = ensemble_generate(prod, chunks, cfg)
+    ok, rej = verify_units(merged, chunks)
     if not ok:
-        return "HALTED", {"halt": "생성 단위 전건 검수 불합격 — 카운트 미실측 방지"}
+        return "HALTED", {"halt": "생성 단위 전건 검수 불합격 — 카운트 미실측 방지",
+                          "기여도": contrib, "추출기 실패": fails}
     path = write_map(prod, ok)
     gaps = gap_audit(prod, chunks, ok)
-    ev = {"커버 단위(검수 통과)": len(ok), "반려 잔존": len(rej),
+    ev = {"커버 단위(병합·검수 통과)": len(ok),
+          "앙상블 기여도": contrib,
+          "병합 후 재검수 탈락": len(rej),
           "1축 문자 대조": "불일치 0 (통과분)", "GAP_AUDIT 누락 문서": len(gaps),
           "산출": N(path.name)}
+    if fails:
+        ev["추출기 실패"] = fails
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
     flags = ([{"type": "GAP_AUDIT 누락 의심", "id": d, "candidates": [],
                "ack_required": True} for d in gaps]

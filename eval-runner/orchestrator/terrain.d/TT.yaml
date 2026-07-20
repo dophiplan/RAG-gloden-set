@@ -7,4 +7,4 @@ TT:
   appendix_switches: []
   map_fact_column: 이 단위가 말하는 사실
   map_unit_column: Unit ID
-  onboarding: true
+  onboarding: false

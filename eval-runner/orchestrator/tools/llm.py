@@ -145,10 +145,20 @@ def extract_json(text):
 
 def _mock_chat(role, system, user):
     task = None
-    for t in ("COVERAGE_UNITS", "GOLDENSET_ITEMS", "JUDGE_VERDICTS", "ALLOCATION_PLAN"):
+    for t in ("COVERAGE_UNITS", "COVERAGE_MERGE", "GOLDENSET_ITEMS", "JUDGE_VERDICTS", "ALLOCATION_PLAN"):
         if f"[TASK:{t}]" in system:
             task = t
             break
+    if task == "COVERAGE_MERGE":
+        # 결정적 병합: fact 정규화 중복 제거 후 그대로 반환
+        d = json.loads(user)
+        seen, out = set(), []
+        for u in d["units"]:
+            k = re.sub(r"\s+", "", N(u.get("fact", ""))).lower()
+            if k and k not in seen:
+                seen.add(k)
+                out.append(u)
+        return json.dumps(out, ensure_ascii=False)
     if task == "COVERAGE_UNITS":
         return _mock_coverage(user)
     if task == "GOLDENSET_ITEMS":
