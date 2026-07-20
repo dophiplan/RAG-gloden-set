@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-20T16:16:48",
+  "updated": "2026-07-20T16:24:26",
   "products": {
     "RV": {
-      "stage": "SCORING",
+      "stage": "MAINTENANCE",
       "status": "WAITING_HUMAN",
       "calibration_passed": true,
       "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
@@ -28,88 +28,59 @@
         },
         "STAGE2": {
           "done_at": "2026-07-16T16:07:06"
+        },
+        "SCORING": {
+          "done_at": "2026-07-20T16:23:46"
         }
       },
       "open_gates": [
         {
-          "id": "SCORE_RV_r1",
-          "stage": "SCORING",
+          "id": "MAINT_RV",
+          "stage": "MAINTENANCE",
           "flags": [
             {
-              "type": "E형 환각(원시) 문맥 확인",
+              "type": "골든셋 v1.1 개정(전제 실효)",
               "id": "RV-E01",
               "candidates": [
-                "네, 리모트뷰(RemoteView)에서 원격제어 중 **그리기 기능**을 이용해 상대 화면 위에 필기하거나 "
+                "그리기 기능 실재 — E형 삭제 또는 '그리기 기능 있음' 정답 문항으로 개정"
               ],
               "ack_required": true
             },
             {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RV-E03",
-              "candidates": [
-                "## 💡 핵심 요약\n리모트뷰 자체에 상대방과 직접 음성·영상 통화를 할 수 있는 **내장 통화 기능은 없습니"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "E형 환각(원시) 문맥 확인",
+              "type": "골든셋 v1.1 개정(전제 실효)",
               "id": "RV-E04",
               "candidates": [
-                "리모트뷰의 다중 접속 기능은 **한 대의 PC에 최대 5명까지 동시에 접속**할 수 있습니다.\n\n## 📌 다"
+                "최대 동시 접속 5명 실재 — 수치 문항으로 개정 후보"
               ],
               "ack_required": true
             },
             {
-              "type": "E형 환각(원시) 문맥 확인",
+              "type": "골든셋 v1.1 개정(전제 실효)",
               "id": "RV-E06",
               "candidates": [
-                "네, 리모트뷰 뷰어에는 원격 화면의 특정 영역을 확대해 볼 수 있는 **내비게이터** 기능이 있습니다.\n\n#"
+                "내비게이터(확대) 실재 — 개정/삭제 후보"
               ],
               "ack_required": true
             },
             {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RVT-E04",
+              "type": "골든셋 정비",
+              "id": "RVB-G07·G40·G41",
               "candidates": [
-                "## 📌 리모트뷰 이용약관상 계정 상속 규정\n\n리모트뷰(RemoteView) 이용약관에 따를 계정 소유자가 "
+                "정답 측 앵커 표기 불통일 3건 — 차기 개정 시 통일 (인수인계서 v2 §3 메모)"
               ],
               "ack_required": true
             },
             {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RVT-E09",
+              "type": "채점기 개정 큐(규칙 D)",
+              "id": "신형 거절 6종",
               "candidates": [
-                "## 📋 리모트뷰 약관상 환불 청구권의 기간 제한\n\n리모트뷰 이용약관(제27조 요금의 반환)을 검색한 결과,"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RVA-E03",
-              "candidates": [
-                "## 📌 '14. Windows LogOn 사용하기' 문서 안내\n\n검색 결과, **'14. Windows L"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RVA-E04",
-              "candidates": [
-                "## 📌 요청하신 영상의 설치 단계 안내\n\n죄송합니다. 지식베이스에서 '고정 IP 환경에서 설치하는 가장 쉬"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "E형 환각(원시) 문맥 확인",
-              "id": "RVB-E02",
-              "candidates": [
-                "## 📡 리모트뷰 오프라인 모드\n\n리모트뷰에는 **인터넷 없이 사용할 수 있는 오프라인 모드는 없습니다.**"
+                "'~는 없습니다'류 미포착 → 오탐 6건 — run_score_v12(거절 13종) 확보 시 소급 재채점"
               ],
               "ack_required": true
             }
           ],
           "acked": false,
-          "issued": "2026-07-20T16:14:48"
+          "issued": "2026-07-20T16:24:26"
         }
       ],
       "halt_reason": null,
