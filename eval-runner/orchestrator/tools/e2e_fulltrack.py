@@ -23,7 +23,7 @@ from pathlib import Path
 os.environ.setdefault("ORCH_MOCK", "1")
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
-PROD = "TT"
+PROD = "EE"   # 자동 테스트 전용 (TT는 난희 연습장 — 건드리지 않음)
 DATA = ROOT / "data" / PROD
 
 
@@ -190,7 +190,7 @@ def main():
 
     print("═══ E2E 전 트랙: 신규 제품 TT (mock 모델) ═══")
     # 1) 온보딩
-    sh("onboard", "--product", PROD, "--name", "티티뷰어", "--base", "RC")
+    sh("onboard", "--product", PROD, "--name", "자동테스트", "--base", "RC")
     assert state()["stage"] == "CORPUS_AUDIT" and state()["status"] == "WAITING_INPUT"
     print("① 온보딩 → WAITING_INPUT (INPUT_CORPUS 카드) ✅")
 

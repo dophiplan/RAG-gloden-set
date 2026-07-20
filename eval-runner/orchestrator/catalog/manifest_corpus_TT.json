@@ -3,21 +3,21 @@
   "entries": [
     {
       "file": "manual.md",
-      "sha256": "982a6dbf26e10c3186f29c043ebf23ec8be53ea6f5bc0500651cf359b5b54a29",
-      "size": 459,
-      "registered": "2026-07-20T19:21:56"
+      "sha256": "7b0cbfd6231d4c4de7730a60cbf6a72c689637b7bf6dc536698325daa93c4725",
+      "size": 415,
+      "registered": "2026-07-20T19:35:19"
     },
     {
       "file": "notice.md",
-      "sha256": "e598d513c9bd877dc681abdbde3ee04146a562b5f5aa0ae61d07caeee5d3a1f2",
-      "size": 434,
-      "registered": "2026-07-20T19:21:56"
+      "sha256": "804028cb412cecf9515a3b25169295719f8f76ff6bd55cbe047732956ef1bc01",
+      "size": 304,
+      "registered": "2026-07-20T19:35:19"
     },
     {
       "file": "policy.md",
-      "sha256": "a6632f5c12a1f84e7865e4738600819b2cbc24c18c5232edd5c7029c32b7a9b4",
-      "size": 429,
-      "registered": "2026-07-20T19:21:56"
+      "sha256": "2bb0632e8b3eded629c52c99a753fa9545063747e0982c8dc148d746d9bd6852",
+      "size": 341,
+      "registered": "2026-07-20T19:35:19"
     }
   ]
 }
