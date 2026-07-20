@@ -406,6 +406,21 @@ STRATEGY_KO = {"ensemble": "앙상블 (3-AI 각자 추출 → 병합)", "solo": 
                "cross_check": "생성 + 타 AI 교차 검수", "self_check": "생성 + 자가 검수(새 세션)"}
 
 
+def cmd_set_members(a):
+    """AI 투입 선택 — 연결된 AI 중 누구를 쓸지 (원장 기록)"""
+    st = load_state()
+    ps = st["products"].get(a.product)
+    if not ps:
+        sys.exit(f"미등록 제품: {a.product}")
+    use = [r.strip() for r in a.use.split(",") if r.strip()]
+    prev = ps.get("ai_use")
+    ps["ai_use"] = {r: (r in use) for r in ("generator", "judge", "reviewer")}
+    save_state(st)
+    ledger_append(ps["stage"], "AI_MEMBERS_SET", f"사람:{a.actor}",
+                  evidence={"전": prev, "후": ps["ai_use"]}, product=a.product)
+    print(f"AI 투입 변경: {a.product} → {ps['ai_use']}")
+
+
 def cmd_set_strategy(a):
     """생성 전략 변경 — 커버리지맵 추출·골든셋 생성 리뷰 방식 (원장 기록)"""
     st = load_state()
@@ -499,10 +514,12 @@ def main():
     s = sub.add_parser("set-stage"); s.add_argument("--product", required=True); s.add_argument("--stage", required=True); s.add_argument("--reason"); s.add_argument("--calibration-passed", action="store_true", dest="calibration_passed"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희"); s.add_argument("--start", default="full", choices=["full", "scoring"]); s.add_argument("--strategy", default="ensemble", choices=["ensemble", "solo", "cross_check", "self_check"])
     s = sub.add_parser("set-strategy"); s.add_argument("--product", required=True); s.add_argument("--strategy", required=True, choices=["ensemble", "solo", "cross_check", "self_check"]); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("set-members"); s.add_argument("--product", required=True); s.add_argument("--use", required=True, help="쉼표 구분: generator,judge,reviewer"); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
-     "onboard": cmd_onboard, "set-strategy": cmd_set_strategy}[a.cmd](a)
+     "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
+     "set-members": cmd_set_members}[a.cmd](a)
 
 
 if __name__ == "__main__":

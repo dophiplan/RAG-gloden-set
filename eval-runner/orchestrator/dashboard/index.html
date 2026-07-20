@@ -32,6 +32,13 @@
   .track-wrap{padding:26px 24px 10px}
   .track-title{font-size:12px;letter-spacing:.06em;color:var(--tx2);margin-bottom:10px}
   .nextbar{background:rgba(61,214,176,.08);border:1px solid rgba(61,214,176,.35);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;color:var(--tx)}
+  .aiteam{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin:0 0 10px}
+  .aichip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--tx)}
+  .aichip.offline{opacity:.5;cursor:default}
+  .aichip input{accent-color:var(--doneC);margin:0}
+  .airole{color:var(--tx2);font-size:11px}
+  .progline{font-family:var(--mono);font-size:12px;color:var(--tx2);margin-top:6px}
+  .progline .fail{color:var(--haltC,#e5636f)}
   .track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;padding-bottom:14px}
   .stage{position:relative;flex:1;min-width:96px;text-align:center;cursor:pointer;border-radius:8px;padding-top:2px}
   .stage::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
@@ -202,14 +209,15 @@ const PV = () => S.state._products[cur];          // {code, name, gen, legacy[]}
 const PS = () => S.state.products[PV().code];     // 현역 트랙 상태
 
 async function loadAll(){
-  const [st,cat,q,sc,lg] = await Promise.all([
+  const [st,cat,q,sc,lg,ai] = await Promise.all([
     fetch('/api/state').then(r=>r.json()),
     fetch('/api/catalog').then(r=>r.json()),
     fetch('/api/queue').then(r=>r.json()),
     fetch('/api/scores').then(r=>r.json()),
     fetch('/api/ledger').then(r=>r.json()),
+    fetch('/api/ai_status').then(r=>r.json()),
   ]);
-  S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg};
+  S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg, ai};
   const disp = Object.keys(st._products||{});
   if(!cur || !st._products[cur]) cur = disp[0];
   render();
@@ -281,7 +289,8 @@ function render(){
   let html = `
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
-    <div class="nextbar">${na.icon} ${esc(na.text)}</div>
+    ${renderAiTeam()}
+    <div class="nextbar">${na.icon} ${esc(na.text)}<div class="progline" id="progline" style="display:none"></div></div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
@@ -424,12 +433,14 @@ function toast(msg, ms=6000){
 async function act(payload){
   busy = true; render();
   toast('⏳ 처리 중… (실전 모드에서는 AI 작업에 몇 분 걸릴 수 있어요)', 0);
+  if(payload.cmd==='run') startProgressPoll();   // G15: AI 작업 중 진행/막힘 표시
   try{
     const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d = await r.json();
     toast(d.out || (d.ok?'완료':'실패'));
     return d;
   } finally {
+    stopProgressPoll();
     busy = false;
     await loadAll();
   }
@@ -464,6 +475,52 @@ async function doUpload(input, cardId){
 async function setStrategy(v){
   await act({cmd:'set-strategy', product:PV().code, strategy:v});
 }
+
+/* G15: AI 팀 패널 — 누가 연결됐고(🟢/⚪) 이번 제작에 누굴 투입할지(체크) */
+function renderAiTeam(){
+  const ai = S.ai;
+  if(!ai || !ai.engines) return '';
+  const use = (ai.products[cur]||{}).ai_use || {};
+  const chips = ai.engines.map(e=>{
+    const lock = e.role==='generator';                       // 대표(출제)는 항상 참여
+    const checked = e.connected && use[e.role]!==false;
+    return `<label class="aichip ${e.connected?'':'offline'}" title="${esc(e.how)}${lock?' · 대표 AI는 항상 참여':''}">
+      <input type="checkbox" data-role="${e.role}" ${checked?'checked':''} ${(!e.connected||lock)?'disabled':''} onchange="toggleMember()">
+      <span class="dot ${e.connected?'ok':'off'}"></span><b>${esc(e.engine)}</b><span class="airole">${esc(e.role_ko)}</span>
+    </label>`;
+  }).join('');
+  return `<div class="aiteam">AI 팀 ${chips}<span class="hint">🟢 연결됨 · ⚫ 미연결 — 체크된 AI만 이번 제작에 투입돼요</span></div>`;
+}
+async function toggleMember(){
+  const roles=[...document.querySelectorAll('.aichip input[data-role]')]
+    .filter(i=>i.checked).map(i=>i.dataset.role);
+  await act({cmd:'set-members', product:PV().code, use:roles.join(',')||'generator'});
+}
+
+/* G15: 진행/막힘 실시간 — AI 작업(run) 중 4초마다 진행 파일 폴링 */
+let progT = null;
+function engName(role){
+  const e=(S.ai&&S.ai.engines||[]).find(x=>x.role===role);
+  return e? e.engine : role;
+}
+function startProgressPoll(){
+  stopProgressPoll();
+  progT = setInterval(async ()=>{
+    try{
+      const d = await fetch('/api/progress?product='+PV().code).then(r=>r.json());
+      const el = $('progline');
+      if(!d.active || !el) return;
+      const parts = Object.entries(d.roles||{}).map(([r,v])=>{
+        let s = `${engName(r)} ${v.batch}/${v.total} 배치`;
+        if((v.fails||[]).length) s += ` <span class="fail">· 실패 ${v.fails.length}건(원장 기록)</span>`;
+        return s;
+      });
+      el.style.display='block';
+      el.innerHTML = `📡 ${esc(d.phase||'작업 중')}${parts.length?' — '+parts.join(' · '):''} <span class="hint">(${esc(d.ts||'')})</span>`;
+    }catch(e){}
+  }, 4000);
+}
+function stopProgressPoll(){ if(progT){clearInterval(progT); progT=null;} }
 async function doOnboard(){
   const code=$('f-code').value.trim().toUpperCase(), name=$('f-name').value.trim();
   if(!code){$('f-code').focus();return;}

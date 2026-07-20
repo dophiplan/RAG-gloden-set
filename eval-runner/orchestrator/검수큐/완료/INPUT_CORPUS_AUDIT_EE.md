@@ -1,6 +1,6 @@
 # INPUT_CORPUS_AUDIT_EE — 입력 대기
 
-- 발행: 2026-07-21T08:20:27 · WAITING_INPUT 검사기 (자동)
+- 발행: 2026-07-21T08:32:55 · WAITING_INPUT 검사기 (자동)
 - 제품: EE · 단계: ① 코퍼스 실측
 
 ## 무엇을

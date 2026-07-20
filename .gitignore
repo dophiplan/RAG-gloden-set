@@ -11,6 +11,7 @@ eval-runner/orchestrator/키설정.txt
 eval-runner/orchestrator/우체통/
 # 회귀 임시 산출물
 eval-runner/orchestrator/results/_regression_tmp/
+eval-runner/orchestrator/results/_progress_*.json
 # 대용량 중복 아카이브·백업
 eval-runner/아카이브.zip
 eval-runner/eval-runner_old/
