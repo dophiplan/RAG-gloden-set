@@ -50,7 +50,9 @@ def t10():
         repo = Path(td) / "r"
         repo.mkdir()
         sh(["git", "init", "-q"], cwd=str(repo))
-        shutil.copy(Path.home() / ".gitignore", repo / ".gitignore")
+        # [R-1 수리] 검사 대상 = 저장소 루트의 .gitignore (홈 디렉토리 아님 —
+        # 작업 머신에서 홈=저장소라 우연히 통과했던 결함. 회귀도 산출물이다)
+        shutil.copy(ROOT.parent.parent / ".gitignore", repo / ".gitignore")
         d = repo / "eval-runner/orchestrator"
         d.mkdir(parents=True)
         (d / "키설정.txt").write_text("GEN_KEY=비밀", encoding="utf-8")
@@ -215,16 +217,28 @@ def t15():
 
 
 def t16():
+    """[권고① 수용] origin 유무와 무관하게 가드를 항상 실검사 — mock origin 직접 주입"""
     import postbox
-    code_origin = postbox.code_repo_origin()
-    if not code_origin:
-        check("T16", "저장소 분리 (코드 origin 없음 — 스킵)", True, "환경상 원격 없음")
-        return
+    fake = "https://github.com/mock-org/mock-code-repo.git"
+    orig_fn = postbox.code_repo_origin
+    postbox.code_repo_origin = lambda: fake
     try:
-        postbox.guard_separate_repo(code_origin)
-        check("T16", "우체통 원격=코드 저장소 → 거부", False, "거부 안 됨!")
-    except postbox.PostboxError:
-        check("T16", "우체통 원격=코드 저장소 → 거부 (PostboxError)", True)
+        # (a) 동일 origin → 거부돼야
+        try:
+            postbox.guard_separate_repo(fake)
+            same_blocked = False
+        except postbox.PostboxError:
+            same_blocked = True
+        # (b) 다른 origin → 통과돼야
+        try:
+            postbox.guard_separate_repo("https://github.com/mock-org/postbox-repo.git")
+            diff_ok = True
+        except postbox.PostboxError:
+            diff_ok = False
+    finally:
+        postbox.code_repo_origin = orig_fn
+    check("T16", "저장소 분리 가드 — 동일 origin 거부 + 상이 origin 통과 (mock 주입 실검사)",
+          same_blocked and diff_ok, f"동일차단={same_blocked} 상이통과={diff_ok}")
 
 
 def main():
