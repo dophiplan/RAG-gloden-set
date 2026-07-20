@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-20T18:35:06",
+  "updated": "2026-07-20T18:41:57",
   "products": {
     "RV": {
       "stage": "MAINTENANCE",
@@ -490,28 +490,6 @@
       "open_gates": [],
       "halt_reason": null
     },
-    "TT": {
-      "stage": "TERRAIN",
-      "status": "WAITING_HUMAN",
-      "calibration_passed": false,
-      "scorer_version": null,
-      "compare_blocked": false,
-      "stage_history": {
-        "CORPUS_AUDIT": {
-          "done_at": "2026-07-20T15:51:22"
-        }
-      },
-      "open_gates": [
-        {
-          "id": "TERRAIN_TT",
-          "stage": "TERRAIN",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-20T15:51:22"
-        }
-      ],
-      "halt_reason": null
-    },
     "RV2": {
       "stage": "CORPUS_AUDIT",
       "status": "WAITING_INPUT",
@@ -531,6 +509,74 @@
       "stage_history": {},
       "open_gates": [],
       "halt_reason": null
+    },
+    "TT": {
+      "stage": "SCORING",
+      "status": "WAITING_HUMAN",
+      "calibration_passed": true,
+      "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
+      "compare_blocked": false,
+      "stage_history": {
+        "CORPUS_AUDIT": {
+          "done_at": "2026-07-20T18:41:46"
+        },
+        "TERRAIN": {
+          "done_at": "2026-07-20T18:41:47"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-07-20T18:41:48"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-07-20T18:41:51"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-07-20T18:41:51"
+        },
+        "CALIBRATION": {
+          "done_at": "2026-07-20T18:41:53"
+        },
+        "STAGE2": {
+          "done_at": "2026-07-20T18:41:54"
+        }
+      },
+      "open_gates": [
+        {
+          "id": "SCORE_TT_r1",
+          "stage": "SCORING",
+          "flags": [
+            {
+              "type": "E형 환각(원시) 문맥 확인",
+              "id": "TT-E13",
+              "candidates": [
+                "양자암호 전송은 설정 메뉴에서 켤 수 있습니다."
+              ],
+              "ack_required": true
+            }
+          ],
+          "acked": false,
+          "issued": "2026-07-20T18:41:57"
+        }
+      ],
+      "halt_reason": null,
+      "goldenset": {
+        "phase": "DONE",
+        "round": 1,
+        "done_units": [
+          "TT-MANUAL-001",
+          "TT-MANUAL-002",
+          "TT-MANUAL-003",
+          "TT-MANUAL-004",
+          "TT-NOTICE-001",
+          "TT-NOTICE-002",
+          "TT-NOTICE-003",
+          "TT-NOTICE-004",
+          "TT-POLICY-001",
+          "TT-POLICY-002",
+          "TT-POLICY-003",
+          "TT-POLICY-004"
+        ],
+        "batch": "B1"
+      }
     }
   }
 }
