@@ -13,8 +13,21 @@
 
 **핵심**: 코퍼스 export 하나 넣으면 ① 실측 → ③ 커버리지맵 **생성** → ④ 골든셋 **생성**(검수 7종 자동)
 → ⑥ judge 캘리브레이션 **실행** → ⑦ 본판정 **실행** → ⑧ 질문셋 **발행**·채점까지 자동 진행하고,
-사람 판단 지점마다 게이트로 정지한다. 증명: `ORCH_MOCK=1 python3 tools/e2e_fulltrack.py`
-(모의 제품 TT — 코퍼스 12청크 → 성적표 게이트까지 무개입 관통, 성적 top1 9/13·pass 9·E환각 1 검출)
+사람 판단 지점마다 게이트로 정지한다.
+- mock 증명: `ORCH_MOCK=1 python3 tools/e2e_fulltrack.py` (코퍼스 12청크 → 성적표 게이트 무개입 관통)
+- **실모델 증명**: `python3 tools/smoke_cli_real.py` (실제 claude 구독 CLI 로 커버리지맵·골든셋·판정 전 트랙)
+
+## 실모델로 돌리기 (구독 CLI 앙상블)
+
+API 키 없이 로그인된 CLI 구독으로 돌린다. `config.yaml` models 를 아래처럼:
+```yaml
+models:
+  generator: {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}
+  judge:     {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}  # 또는 codex
+```
+- CLI 도 model 명시 고정 필수(FIX-06) · ANTHROPIC_API_KEY 는 자식 env에서 자동 제거(FIX-05)
+- 실전 견고화: 실모델이 단위ID를 흘려 써도 **발췌(원문)로 단위를 역추적해 citation 재기입**(gen_goldenset.ground_citations),
+  judge JSONL/코드펜스 응답도 흡수(llm.extract_json), 본판정 중단 시 배치 resume(FIX-04)
 
 ## 켜는 법 (비개발자용)
 
