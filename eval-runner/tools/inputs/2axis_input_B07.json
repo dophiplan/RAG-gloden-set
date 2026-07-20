@@ -38,7 +38,7 @@
   {
    "id": "RC-C017@G-B1",
    "type": "C",
-   "question": "visual pack에서 파일 전송하고 화면 스크린샷 전송, 각각 되나요 안 되나요?",
+   "question": "visual pack에서 파일 전난희고 화면 스크린샷 전송, 각각 되나요 안 되나요?",
    "gold_answer_required": "파일 전송: 미지원 / 화면 스크린샷 및 전송: 상품 구성으로 제공 / 필수: 상반 판정 2건",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 상반 판정 2건 / Knock-out: 하위 질문 한쪽 누락 시 0점",

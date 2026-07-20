@@ -114,7 +114,7 @@ def main():
             for g in gates():
                 if g.startswith("CALIN_"):
                     e2e.fill_human_judgments()
-                run("approve", g, "--ack-all", "--actor", "송하(시뮬)")
+                run("approve", g, "--ack-all", "--actor", "난희(시뮬)")
                 print(f"  승인: {g}")
 
         # 결과

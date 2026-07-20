@@ -96,7 +96,7 @@ def approve_all(max_rounds=40):
         for g in gs:
             if g.startswith("CALIN_"):
                 fill_human_judgments()
-            sh("approve", g, "--ack-all", "--actor", "송하(시뮬)")
+            sh("approve", g, "--ack-all", "--actor", "난희(시뮬)")
             log.append(f"승인: {g}")
     raise SystemExit("최대 라운드 초과 — 교착 의심")
 
