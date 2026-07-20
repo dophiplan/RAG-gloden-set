@@ -476,7 +476,7 @@ def main():
     s = sub.add_parser("format-gate"); s.add_argument("--product", required=True); s.add_argument("--log", required=True); s.add_argument("--round", default=None)
     s = sub.add_parser("score"); s.add_argument("--product", required=True); s.add_argument("--log", required=True); s.add_argument("--round", required=True)
     s = sub.add_parser("rule-d"); s.add_argument("--product", required=True)
-    s = sub.add_parser("rule-d-clear"); s.add_argument("--product", required=True); s.add_argument("--actor", default="송하")
+    s = sub.add_parser("rule-d-clear"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     sub.add_parser("selftest")
     a = ap.parse_args()
     if a.cmd == "publish-gate":

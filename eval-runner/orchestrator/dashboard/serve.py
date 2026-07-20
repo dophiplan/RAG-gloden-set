@@ -141,22 +141,22 @@ def api_action(payload):
     cmd = payload.get("cmd")
     args = [sys.executable, str(ROOT / "tools" / "pipeline.py")]
     if cmd == "approve":
-        args += ["approve", payload["gate_id"], "--actor", payload.get("actor", "송하")]
+        args += ["approve", payload["gate_id"], "--actor", payload.get("actor", "난희")]
         if payload.get("ack_all"):
             args += ["--ack-all"]
     elif cmd == "reject":
         if not payload.get("reason"):
             return {"ok": False, "out": "반려는 사유 필수"}
         args += ["reject", payload["gate_id"], "--reason", payload["reason"],
-                 "--actor", payload.get("actor", "송하")]
+                 "--actor", payload.get("actor", "난희")]
     elif cmd == "resume":
         if not payload.get("reason"):
             return {"ok": False, "out": "HALT 해제는 사유 필수"}
         args += ["resume", "--after-fix", payload["product"], "--reason", payload["reason"],
-                 "--actor", payload.get("actor", "송하")]
+                 "--actor", payload.get("actor", "난희")]
     elif cmd == "onboard":
         args += ["onboard", "--product", payload["product"], "--name", payload.get("name", ""),
-                 "--base", payload.get("base", "blank"), "--actor", payload.get("actor", "송하")]
+                 "--base", payload.get("base", "blank"), "--actor", payload.get("actor", "난희")]
     elif cmd == "run":
         args += ["run", "--product", payload["product"]]
     else:
