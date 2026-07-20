@@ -31,7 +31,7 @@
    "gold_answer_required": "지원받을 상대방에게 SMS로 접속코드가 포함된 접속 링크와 메시지를 전송(접속코드는 일회성), 서비스 이용 약관 동의 후 \"영상 지원 시작하기\" 클릭 시 시작. 지원 기능(그리기·텍스트)은 좌측, 커뮤니케이션(스크린샷·문서 채팅)은 우측 배치 / 필수: SMS 접속 링크",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: SMS 접속 링크",
-   "evidence_excerpt": "웹뷰어 영상 지원은 지원받을 상대방에게 SMS로 접속코드가 포함된 접속 링크와 메시지를 전송하며(접속코드는 일회성), 서비스 이용 약관 동의 후 '영상 지원 시작하기'를 클릭하면 원격지원이 시작된다. 지원 관련 기능(그리기·텍스트)은 화면 좌측, 커뮤니케이션 기능(스크린샷·문서 채팅)은 우측 메뉴에 배치된다.",
+   "evidence_excerpt": "웹뷰어 영상 지원은 지원받을 상대방에게 SMS로 접속코드가 포함된 접속 링크와 메시지를 전난희며(접속코드는 일회성), 서비스 이용 약관 동의 후 '영상 지원 시작하기'를 클릭하면 원격지원이 시작된다. 지원 관련 기능(그리기·텍스트)은 화면 좌측, 커뮤니케이션 기능(스크린샷·문서 채팅)은 우측 메뉴에 배치된다.",
    "citation": "RC-MANUAL-VSQ-001 ; [RC-MANUAL]안내하기 / SMS 접속 링크 | https://files.rsupport.com/kr/remotecall/documents/user-guides/RemoteCall-SaaS-Visual-Support-Quick-Guide-ko.pdf (안내하기 / SMS 접속 링크)",
    "acl_level": "all"
   },
@@ -119,7 +119,7 @@
    "gold_answer_required": "PlayStore 설치가 기본이나 제한 단말은 [모바일 지원 직접 다운로드] 버튼으로 웹 서버에서 설치파일 직접 다운로드, 일부 단말은 화면 제어 위해 RSAssistant 앱 추가 설치 후 RemoteCall 재실행 / 필수: 직접 다운로드 버튼",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 직접 다운로드 버튼 / Knock-out: 중간 단계 건너뛴 추측 답변 0점",
-   "evidence_excerpt": "상담원은 뷰어 SMS 전송 화면으로 앱 설치 정보를 전송하며, 고객은 PlayStore에서 앱을 설치하되 PlayStore 사용이 제한된 단말은 [모바일 지원 직접 다운로드] 버튼으로 웹 서버에서 설치파일을 직접 받는다. 일부 단말은 화면 제어 기능을 위해 RSAssistant 앱 설치가 추가로 필요하며 이용약관 동의·서비스 사용 옵션 허용 후 'RemoteCall' 앱을 재실행하고, '다른 앱 위에 표시' 권한 허용 후 재실행이 필요하다.",
+   "evidence_excerpt": "상담원은 뷰어 SMS 전송 화면으로 앱 설치 정보를 전난희며, 고객은 PlayStore에서 앱을 설치하되 PlayStore 사용이 제한된 단말은 [모바일 지원 직접 다운로드] 버튼으로 웹 서버에서 설치파일을 직접 받는다. 일부 단말은 화면 제어 기능을 위해 RSAssistant 앱 설치가 추가로 필요하며 이용약관 동의·서비스 사용 옵션 허용 후 'RemoteCall' 앱을 재실행하고, '다른 앱 위에 표시' 권한 허용 후 재실행이 필요하다.",
    "citation": "RC-MANUAL-USAD-006 ; [RC-MANUAL]4. 앱 설치 안내(Android) | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Manual-Mobile-Support-Android-Ko.pdf (4. 앱 설치 안내(Android))",
    "acl_level": "all"
   },
@@ -130,7 +130,7 @@
    "gold_answer_required": "일부 단말은 화면 제어를 위해 RSAssistant 앱 추가 설치 필요, 설치 후 약관 동의·서비스 사용 옵션 허용으로 변경하고 RemoteCall 앱 재실행, \"다른 앱 위에 표시\" 권한 허용 후 재실행 / 필수: RSAssistant 설치",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: RSAssistant 설치 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
-   "evidence_excerpt": "상담원은 뷰어 SMS 전송 화면으로 앱 설치 정보를 전송하며, 고객은 PlayStore에서 앱을 설치하되 PlayStore 사용이 제한된 단말은 [모바일 지원 직접 다운로드] 버튼으로 웹 서버에서 설치파일을 직접 받는다. 일부 단말은 화면 제어 기능을 위해 RSAssistant 앱 설치가 추가로 필요하며 이용약관 동의·서비스 사용 옵션 허용 후 'RemoteCall' 앱을 재실행하고, '다른 앱 위에 표시' 권한 허용 후 재실행이 필요하다.",
+   "evidence_excerpt": "상담원은 뷰어 SMS 전송 화면으로 앱 설치 정보를 전난희며, 고객은 PlayStore에서 앱을 설치하되 PlayStore 사용이 제한된 단말은 [모바일 지원 직접 다운로드] 버튼으로 웹 서버에서 설치파일을 직접 받는다. 일부 단말은 화면 제어 기능을 위해 RSAssistant 앱 설치가 추가로 필요하며 이용약관 동의·서비스 사용 옵션 허용 후 'RemoteCall' 앱을 재실행하고, '다른 앱 위에 표시' 권한 허용 후 재실행이 필요하다.",
    "citation": "RC-MANUAL-USAD-006 ; [RC-MANUAL]4. 앱 설치 안내(Android) | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Manual-Mobile-Support-Android-Ko.pdf (4. 앱 설치 안내(Android))",
    "acl_level": "all"
   },

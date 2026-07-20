@@ -171,10 +171,10 @@
    "id": "RC-A019@G-B6",
    "type": "A",
    "question": "리모트콜 모바일 지원은 어떤 특징이 있나요?",
-   "gold_answer_required": "PC 없이 모바일 기기에서도 지원 가능하고 이동 중 어디서나 사용 가능, 지원 대상에게 SMS로 접속주소를 발송하면 상대방이 바로 원격접속으로 이어짐 / 필수: 모바일에서 지원 + SMS 접속주소",
+   "gold_answer_required": "PC 없이 모바일 기기에서도 지원 가능하고 이동 중 어디서나 사용 가능, 지원 대상에게 SMS로 접속주소를 발난희면 상대방이 바로 원격접속으로 이어짐 / 필수: 모바일에서 지원 + SMS 접속주소",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 모바일에서 지원 + SMS 접속주소",
-   "evidence_excerpt": "[RC-WEB-MOBILE-006] 리모트콜의 모바일 지원은 PC 없이 모바일 기기에서도 지원할 수 있습니다. 이동 중에도 어디에서나 사용할 수 있어야 진짜 원격지원입니다.\n[RC-WEB-MOBILE-007] 지원받을 대상에게 SMS로 접속주소를 발송하면, 상대방이 바로 원격접속으로 이어집니다.",
+   "evidence_excerpt": "[RC-WEB-MOBILE-006] 리모트콜의 모바일 지원은 PC 없이 모바일 기기에서도 지원할 수 있습니다. 이동 중에도 어디에서나 사용할 수 있어야 진짜 원격지원입니다.\n[RC-WEB-MOBILE-007] 지원받을 대상에게 SMS로 접속주소를 발난희면, 상대방이 바로 원격접속으로 이어집니다.",
    "citation": "RC-WEB-MOBILE-006 + RC-WEB-MOBILE-007 ; [RC-MANUAL]모바일 기기에서도 지원 / 본문 06 + [RC-MANUAL]SMS전송으로 빠른 연결 / 본문 07 | https://www.remotecall.com/kr/products/mobile-support/ (모바일 기기에서도 지원 / 본문 06) + https://www.remotecall.com/kr/products/mobile-support/ (SMS전송으로 빠른 연결 / 본문 07)",
    "acl_level": "all"
   },

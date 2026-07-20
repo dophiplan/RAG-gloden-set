@@ -262,7 +262,7 @@
    "gold_answer_required": "E-mail 전송은 그룹 상담 시작·종료 설정의 접속페이지정보 email 전송을 전체사용(기본 메일 클라이언트 없는 상담원은 불가), SMS 전송은 앱 설치 정보 SMS 전송을 전체사용 후 발송 내용 입력 / 필수: email vs SMS 설정",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: email vs SMS 설정 / Knock-out: 하위 질문 한쪽 누락 시 0점",
-   "evidence_excerpt": "원격접속 시 접속 정보를 고객 E-mail로 전송하려면 그룹 상담 시작·종료 설정의 접속페이지정보 email 전송을 전체사용으로 변경하며(기본 메일 클라이언트 미설치 상담원은 사용 불가), 앱 설치 정보 SMS 전송은 URL·안내 메시지를 SMS로 전달하는 기능으로 전체사용 변경 후 발송 내용을 입력한다. m.startsupport.com은 모바일 지원 앱, v.startsupport.com은 영상 지원 앱을 다운로드한다.",
+   "evidence_excerpt": "원격접속 시 접속 정보를 고객 E-mail로 전난희려면 그룹 상담 시작·종료 설정의 접속페이지정보 email 전송을 전체사용으로 변경하며(기본 메일 클라이언트 미설치 상담원은 사용 불가), 앱 설치 정보 SMS 전송은 URL·안내 메시지를 SMS로 전달하는 기능으로 전체사용 변경 후 발송 내용을 입력한다. m.startsupport.com은 모바일 지원 앱, v.startsupport.com은 영상 지원 앱을 다운로드한다.",
    "citation": "RC-MANUAL-ADMIN-019 ; [RC-MANUAL]4.10~4.11 E-mail·SMS 접속 정보 전송 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-User-Admin-Manual-Ko.pdf (4.10~4.11 E-mail·SMS 접속 정보 전송)",
    "acl_level": "all"
   },
