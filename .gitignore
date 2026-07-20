@@ -14,3 +14,4 @@ eval-runner/orchestrator/results/_regression_tmp/
 # 대용량 중복 아카이브·백업
 eval-runner/아카이브.zip
 eval-runner/eval-runner_old/
+config.yaml.apikeys
