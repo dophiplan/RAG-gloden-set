@@ -1,0 +1,11 @@
+# 공통 잡파일
+.DS_Store
+__pycache__/
+*.pyc
+
+# 오케스트레이터 — 커밋 금지 항목
+eval-runner/orchestrator/키설정.txt          # 실제 키가 들어가는 파일 (예시만 커밋)
+eval-runner/orchestrator/우체통/             # 별도 git 저장소 (postbox)
+eval-runner/orchestrator/results/_regression_tmp/
+eval-runner/아카이브.zip
+eval-runner/eval-runner_old/
