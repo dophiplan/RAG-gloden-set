@@ -52,9 +52,16 @@ def detect_mode(cfg=None, env=None):
     have = {}
     for role in ("generator", "judge", "reviewer"):
         m = models.get(role)
-        # [v2] provider "cli" = 구독 로그인 CLI — 키 없이도 가용
-        have[role] = bool(m and (m.get("provider") == "cli"
-                                 or env.get(m.get("api_key_env", ""), "")))
+        if not m:
+            have[role] = False
+        elif m.get("provider") == "cli":
+            # [v2] 구독 CLI — 실제 바이너리가 설치돼 있어야 가용 (미설치 codex 오인 방지)
+            import shutil as _sh
+            cmd = m.get("command") or []
+            cmd0 = cmd[0] if isinstance(cmd, list) and cmd else str(cmd).split()[0] if cmd else ""
+            have[role] = bool(cmd0 and _sh.which(cmd0))
+        else:
+            have[role] = bool(env.get(m.get("api_key_env", ""), ""))
     def _identity(role):
         m = models.get(role) or {}
         cmd = m.get("command") or []

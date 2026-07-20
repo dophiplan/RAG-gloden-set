@@ -23,26 +23,37 @@ if [ -n "$ANTHROPIC_API_KEY" ]; then
   echo "  (오케스트레이터는 자식 실행 시 자동 제거하지만, 가능하면 비워두세요.)"
 fi
 
-# 3) config를 CLI 앙상블로 전환 (원본은 config.yaml.apikeys 로 1회 백업)
-#    코덱스(codex)가 설치·로그인돼 있으면 채점관으로 자동 투입 = 2키 이종 앙상블
+# 3) config를 앙상블로 전환 (원본은 config.yaml.apikeys 로 1회 백업)
+#    편성 원칙 (송하 결정 2026-07-20):
+#      출제 = claude (구독 계정) · 채점 = Kimi (API 키) · 교차검토 = codex (구독 계정, 설치 시)
+#    Kimi 키 없으면 codex → 그것도 없으면 claude 단독(1키·사람 재검 10%)
 if [ ! -f config.yaml.apikeys ]; then cp config.yaml config.yaml.apikeys; fi
-if command -v codex >/dev/null 2>&1; then JUDGE=codex; else JUDGE=claude; fi
-JUDGE=$JUDGE python3 - << 'PY'
+export JUDGE_KEY="${JUDGE_KEY:-$KIMI_API_KEY}"
+if command -v codex >/dev/null 2>&1; then HAVE_CODEX=1; else HAVE_CODEX=0; fi
+HAVE_CODEX=$HAVE_CODEX python3 - << 'PY'
 import os
 from pathlib import Path
 c = Path("config.yaml"); t = c.read_text(encoding="utf-8")
 rest = t[t.index("pipeline:"):] if "pipeline:" in t else t
-if os.environ.get("JUDGE") == "codex":
-    judge = '  judge:     {provider: "cli", command: ["codex", "exec"], prompt_arg: true, model: ""}\n'
-    label = "생성=claude · 채점=codex (이종 2키 앙상블) ★"
+kimi = bool(os.environ.get("JUDGE_KEY"))
+codex = os.environ.get("HAVE_CODEX") == "1"
+lines = ['models:',
+         '  generator: {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}']
+roles = ["출제=claude(구독)"]
+if kimi:
+    lines.append('  judge:     {provider: "moonshot", model: "kimi-k3", temperature: 1, api_key_env: "JUDGE_KEY"}')
+    roles.append("채점=Kimi(API)")
+    if codex:
+        lines.append('  reviewer:  {provider: "cli", command: ["codex", "exec"], prompt_arg: true, model: ""}')
+        roles.append("교차검토=codex(구독) ★3키 완전체")
+elif codex:
+    lines.append('  judge:     {provider: "cli", command: ["codex", "exec"], prompt_arg: true, model: ""}')
+    roles.append("채점=codex(구독)")
 else:
-    judge = '  judge:     {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}\n'
-    label = "claude 단독 (1키 모드 — 사람 재검 10% 강화. codex 설치 시 자동 승격)"
-cli = ('models:\n'
-       '  generator: {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}\n'
-       + judge + '\n')
-c.write_text(cli + rest, encoding="utf-8")
-print(f"config 전환 완료 — {label}")
+    lines.append('  judge:     {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}')
+    roles.append("채점=claude 신규세션(1키 — 사람 재검 10%)")
+c.write_text("\n".join(lines) + "\n\n" + rest, encoding="utf-8")
+print("편성: " + " · ".join(roles))
 PY
 
 # 4) 기존 서버 끄고 실전 모드(ORCH_MOCK 없이)로 재시작

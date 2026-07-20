@@ -49,7 +49,8 @@ def chat(role, system, user, cfg=None, max_tokens=4000):
         return _anthropic(m["model"], key, system, user, max_tokens)
     base = {"moonshot": "https://api.moonshot.ai/v1",
             "openai": "https://api.openai.com/v1"}.get(provider, m.get("base_url", ""))
-    return _openai_compat(base, m["model"], key, system, user, max_tokens)
+    return _openai_compat(base, m["model"], key, system, user, max_tokens,
+                          temperature=m.get("temperature", 0.3))
 
 
 def _cli(m, system, user):
@@ -83,13 +84,21 @@ def _cli(m, system, user):
 def _post(url, headers, payload):
     req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"),
                                  headers={"Content-Type": "application/json", **headers})
-    with urllib.request.urlopen(req, timeout=600) as r:
-        return json.loads(r.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=600) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8")[:400]
+        except Exception:
+            pass
+        raise RuntimeError(f"API {e.code} ({url.split('/')[2]}): {body}") from e
 
 
-def _openai_compat(base, model, key, system, user, max_tokens):
+def _openai_compat(base, model, key, system, user, max_tokens, temperature=0.3):
     d = _post(f"{base}/chat/completions", {"Authorization": f"Bearer {key}"},
-              {"model": model, "temperature": 0.3, "max_tokens": max_tokens,
+              {"model": model, "temperature": temperature, "max_tokens": max_tokens,
                "messages": [{"role": "system", "content": system},
                             {"role": "user", "content": user}]})
     return d["choices"][0]["message"]["content"]
