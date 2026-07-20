@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A120@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'기존 업무 환경 유지하며 원격지원 서비스 연계'와 '서버 솔루션 납품 시 관리 용도 API 적용' 2유형이 모두 RC-SPEC-API-002·003 발췌로 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A121@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'보안 장비 지원 (Firewall, IDS, IPS)'가 RC-SPEC-API-004 발췌와 정확히 일치",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A122@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'엑세스 제어 및 지원' 항목이 '화면 공유'로 RC-SPEC-API-005 발췌와 일치",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C017@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'파일 전송은 visual pack 미지원'과 '화면 스크린샷 및 전송은 상품 구성으로 제공'으로 상반 판정 2건 모두 RC-SPEC-FEAT-004·STVPACK-009에서 각각 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C018@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'모바일 시스템 정보 출력 기능은 mobile pack 지원'과 '모바일 설치 app 정보 출력 기능은 mobile pack 지원'으로 둘 다 가능함이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C019@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'원격 세션 공유는 Enterprise, mobile pack'과 '채팅 세션 공유는 Enterprise, mobile pack'으로 두 기능 모두 동일 에디션 지원이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D020@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'모바일 화면 제어는 mobile pack 전용'과 '화면 녹화 동의는 Enterprise·mobile pack·visual pack'으로 교집합 mobile pack 추론이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D021@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "'SMS 전송은 mobile pack·visual pack'과 'SMS 원클릭 연결은 visual pack 상품 구성'으로 visual pack 연쇄 추론이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E007@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E008@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E009@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E010@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E011@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E012@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E013@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E014@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E015@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E016@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E017@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E018@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E019@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E020@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E021@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E022@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 '자료에 없음' 무응답 처리가 Knock-out 조건과 부재 검증 결과에 부합",
+    "fix_hint": ""
+  }
+]

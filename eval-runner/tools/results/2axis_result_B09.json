@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-D002@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '영어가 아닌 다국어 OS 계정에서 OS 언어를 변경한 후' 정상 사용 불가 및 '제품을 다시 설치'해야 함으로 원인과 해결법을 모두 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'Agent 로그인→뷰어 대기→중계페이지 안내→원격지원→종료' 5단계 순서를 그대로 제시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G004@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '관리자 페이지에 2단계 인증 옵션이 설정된 경우'에만 인증 번호 입력 창이 노출됨을 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '동시 접속 라이선스를 사용하는 상담원'에게만 버튼이 표시되며 구매한 라이선스에 따라 표시되지 않을 수 있음을 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A018@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '접속 수 남으면 수동 Refresh, 없으면 자동 Refresh, 뷰어 대기 시작·종료 시 자동 갱신'을 모두 포함함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D004@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence 두 건이 각각 '에이전트>원격지원 환경설정>보안 옵션' 경로와 '어드민>사용자 관리>그룹>그룹상세>그룹옵션정보>보안설정' 경로를 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 그룹 일괄 적용 시 '원격지원 미 사용 시 자동 로그아웃' 옵션이 비활성화됨을 단언함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A019@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '[시작 하기] 클릭'과 '접속코드 방식·아이콘 방식' 두 가지 대기 방식을 모두 포함함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D005@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 접속 URL 안내→접속코드/아이콘 유도→동의 유도→[실행] 유도 4단계 순서를 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A020@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '원격 지원 종료 후 자동 삭제'로 일회성 실행 파일의 소거 여부를 명확히 함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G007@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '고객이 접속 페이지에서 원격지원 녹화 동의에 체크한 경우'에만 녹화됨을 제한함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D006@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '접속페이지 하단의 접속프로그램'으로 실행파일 설치 후 접속번호 또는 아이콘 방식으로 연결됨을 서술함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A021@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '접속 번호 입력 전 자동 업데이트로 모든 모듈을 미리 받아' 다운로드·설치 시간 없이 바로 접속 가능함을 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A022@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '바탕화면에 Rsupport 접속 프로그램이 생성되어 향후 지원 시 재다운로드 받지 않아도 된다'고 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G008@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'Rsupport Updater' 실행 및 '접속코드/아이콘' 연결 방식을 제시하고, 별도 발췌에서 '고객 녹화 기능을 지원하지 않는다'고 한정함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D007@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 Mac 접속 유도 4단계(URL 안내→접속코드/아이콘→[실행]→동의) 및 'Dock의 다운로드 폴더' 저장 경로를 포함함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'Mac OS 10.14(Mojave) 이상' 조건과 '[시스템 환경설정]-[보안 및 개인정보 보호]' 설정 경로를 모두 제시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A023@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '접속페이지 관리 메뉴'와 '그룹관리·상담원관리 메뉴' 두 설정 위치를 명확히 구분함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '[관리자 페이지>그룹옵션>Linux(64bit) 지원] 옵션을 사용 중인 경우에만' 가능함을 제한함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D009@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'wget http://www.startsupport.com/client/linuxcmd/run.tar.gz → tar xvfz run.tar.gz → ./run.sh' 명령 순서를 그대로 제시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A024@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'Console 창을 닫거나 exit 입력' 종료 방법과 '[어드민 페이지>제품 사용 관리>상담지원이력]' 조회 경로를 모두 포함함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '상담원 Viewer는 이용할 수 없다'고 명시하여 제약을 명확히 함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A025@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '상담원 대기화면에 고객의 브라우저 정보가 표시되어' 브라우저 정보 확인 가능함을 뒷받침함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A026@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 'Ctrl+Alt+Shift' 조작으로 제어권 강제 회수가 가능함을 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A027@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '고객화면 우측 하단에 (Demo) 원격지원 중' 표시가 나타남을 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G011@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '접속페이지 설정에서 개인정보보호 기능 사용 시 상담원 이름을 출력하지 않는다'는 예외를 명확히 함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D010@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '재생 프로그램 미설치 시 재생 버튼 클릭 시 설치 요청 창이 실행되며 rsfxplayer_setup.exe' 다운로드를 안내함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A028@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '네트워크 환경설정의 인증 서버 항목'에서 주소·포트 기입 및 'SSL 인증 사용' 선택을 명시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A029@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 '수동 설정(직접 기입)'과 '자동 설정(자동 검색 연결)' 두 방식을 모두 제시함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A030@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence가 상담원 정보 확인/수정, 로그아웃, 시작하기, 웹뷰어로 시작, 관리자페이지 이동, Admin 유저 어드민, RemoteView, Feedback 작성 등 8개 기능을 명시하여 5개 이상 요건 충족함.",
+    "fix_hint": ""
+  }
+]

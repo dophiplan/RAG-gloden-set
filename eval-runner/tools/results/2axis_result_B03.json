@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A044@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 Professional·Enterprise 모두 'SSL 웹 서버 기반 2차 암호화'를 지원한다고 명시하고 있어 gold_answer가 충분히 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A045@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 상담사와 고객 '모두 별도 설치 없이 지원 시작이 가능하다'고 명시되어 gold_answer의 '양측 무설치'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A046@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'SMS 링크로 원클릭 연결 및 접속을 지원한다'고 명시되어 gold_answer의 'SMS 원클릭'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A047@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '지원받는 상대방의 현재 위치 공유를 지원한다'고 명시되어 gold_answer의 '현재 위치 공유'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A048@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '이미 실행한 직전 작업 취소 및 다시 실행을 지원한다'고 명시되어 gold_answer의 '취소·다시 실행'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A049@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '영업 담당자를 통해 구매한 계약 건에 한해 자동 갱신 안내를 제공한다'고 명시되어 gold_answer의 '영업 담당자 계약 건 한정'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A050@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'Professional 300MB, Enterprise와 모바일팩 1,000MB(1GB)'를 안내한다고 명시되어 gold_answer의 '300MB, 1,000MB'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C004@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 Professional '월 170,000원'과 Enterprise '월 190,000원'(VAT 별도, 1 ID)을 각각 명시하며 차이 20,000원이 수학적으로 도출되어 pass_criteria의 하위 질문 누락 Knock-out 조건을 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C005@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 Professional '최대 300MB', Enterprise '최대 1,000MB' 파일 송수신을 각각 명시하여 양측 용량 비교가 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C006@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 모바일팩 '월 380,000원'(VAT 별도, 1 ID), 'Enterprise의 모든 기능을 포함', '모바일 화면 공유'를 각각 명시하여 가격과 기능 구성이 모두 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C007@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 영상 지원 '월 190,000원', '실시간 촬영 영상 지원', '바코드 및 QR 코드 기능'을 각각 명시하여 가격과 대표 기능 2가지가 모두 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C008@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '기존 결제 방법 그대로 청구서를 받고 비용을 지불'하며 '해지를 원할 경우 2개월 이내에 계약을 해지할 수 있다'고 각각 명시하여 결제 방법과 해지 기한이 모두 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C009@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '현재 위치 공유'와 '직전 작업 취소 및 다시 실행'을 각각 명시하여 두 기능 모두 지원함이 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D007@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 모바일팩이 'Enterprise의 모든 기능을 포함'하고 Enterprise가 '상담일지 기록 기능을 제공'한다고 각각 명시하여 포함 관계 연쇄가 근거로 뒷받침되고 Knock-out(중간 단계 건너뛴 추측 금지) 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D008@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 모바일팩이 'Enterprise의 모든 기능을 포함'하고 Enterprise가 '소리ㆍ프로그램 공유 기능을 제공'한다고 각각 명시하여 포함 관계 연쇄가 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D009@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '상담원 2인 이상이면 라이선스를 추가 구매해야 한다'고 하고 Professional '월 170,000원'을 명시하여 2개 필요 및 월 340,000원(VAT 별도)이 근거 기반 산술 도출되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D010@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '1개월 무약정 구매 기준'이며 '연간 구매 희망 시 연락처를 통해 문의하라'고 각각 명시하여 무약정 기준과 문의 경로가 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D011@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 자동 갱신 안내가 '영업 담당자를 통해 구매한 계약 건에 한해 제공'되며, 온라인 바로 구매(Professional) 건에 대한 자동 갱신 안내는 발췌에 없어 gold_answer의 '근거 없음' 판단이 타당하고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A051@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'RemoteCall Professional 상품 구매 화면을 제공한다'고 명시되어 gold_answer의 '구매 화면 존재'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A052@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '주문 정보에서 라이선스 수량을 선택하는 항목이 제공된다'고 명시되어 gold_answer의 '수량 선택'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A053@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '라이센스 기간 선택 항목을 제공한다'고 명시되어 gold_answer의 '기간 선택'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A054@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'ID 하나당 3개 세션 접속'을 상품 구성으로 안내한다고 명시되어 gold_answer의 '3개 세션'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A055@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '고객 및 상담사 화면 녹화'를 상품 구성으로 안내한다고 명시되어 gold_answer의 '고객·상담사 모두'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A056@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 'ID 하나당 5개 세션 접속'을 상품 구성으로 안내한다고 명시되어 gold_answer의 '5개 세션'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A057@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '월 190,000원(VAT 별도)' 상품으로 안내된다고 명시되어 gold_answer의 '190,000원'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A058@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '상담사 화면 공유'를 상품 구성으로 안내한다고 명시되어 gold_answer의 '상담사 화면 공유'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A059@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '화면 스크린샷 및 전송'을 상품 구성으로 안내한다고 명시되어 gold_answer의 '스크린샷·전송'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A060@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '모바일 디바이스 화면 제어'를 상품 구성으로 안내한다고 명시되어 gold_answer의 '화면 제어'가 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A061@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 '지원ㆍ접속 이력 조회 및 저장'을 상품 구성으로 안내한다고 명시되어 gold_answer의 '이력 조회·저장'이 근거로 뒷받침됨.",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C010@G-B1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt에서 Professional 'ID 하나당 3개 세션', Enterprise 'ID 하나당 5개 세션'을 각각 명시하여 양측 동시 접속 세션 수가 근거로 뒷받침되고 Knock-out 조건 충족함.",
+    "fix_hint": ""
+  }
+]

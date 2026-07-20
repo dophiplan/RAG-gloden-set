@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-A027@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '우측 패널 형태'와 '관리자 페이지 > 제품 사용 관리 > 상담지원이력 > 상세 페이지 > 상담일지에서 확인'으로 gold_answer_required를 완전히 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D011@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 MAC OS 조건 하 '시스템 환경설정 > 키보드 > 손쉬운 사용 키보드 활성화 추가 권한'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A028@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '모바일/영상 지원 도구'와 '지원 모드(모바일/영상) 전환' 및 '웹 브라우저로 지원'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A029@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Android 6(Marshmallow)~15(Unicorn)', 'Chrome 107 이상·SamSung Browser 16 이상', '3G/4G/5G 또는 Wi-Fi'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D012@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원 시작하기'→'SMS·E-mail 전송'→'접속번호 입력'→'화면 캡처 동의(앱 이름: RemoteCall)' 순서로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G005@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '영상 라이선스가 없는 상담원은 영상지원 버튼이 미노출되고 지원모드 전환이 되지 않는다'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D013@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'PlayStore 설치', 'RSAssistant 앱 설치가 추가로 필요', '다른 앱 위에 표시 권한 허용 후 재실행'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 캡처, 상담원 측 화면 녹화는 Chromium 기반 브라우저에서만 지원되어 Safari·Firefox는 지원하지 않는다'와 공통 기능 9가지 나열로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D014@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '영상 지원 모드 전환 요청 화면'→'고객이 [허용하기]를 클릭해야 전환' 및 '라이선스 없는 상담원은 버튼 미노출'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D015@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 고객 단말 '수락 팝업 동의 시 전송'과 '파일 접근 권한 요청 팝업 [허용] 설정'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G007@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '모바일 제어 가능 단말 지원 시 활성화'와 '도구로 고객 단말기 홈·최근 실행 앱·이전 화면(뒤로가기)으로 이동'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'ARCore APP 및 Depth API 지원 단말에서 활성화, 삼성 갤럭시 S10 이상 권장'과 '카메라 이동 시에도 피사체 표시 내역이 유지'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A030@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'AR 스티커는 최대 12개까지 삽입'과 '전체 지우기 시 상담원·고객의 AR 그리기 내역이 모두 삭제'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A031@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Ver. 7.6.3'으로 gold_answer_required를 직접 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A032@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '카메라 전환(전면/후면), 플래쉬(ON/OFF), 카메라 방향 안내'와 'AR 그리기' 제공으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G009@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '동일 접속 코드로는 다중 접속이 불가능하다'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A033@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '앱 설치 없이 모바일 웹 브라우저 환경에서 상담이 가능하다'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C008@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 상담원 'Windows 10·11 또는 Mac OS 12~15에 Google Chrome 107 이상'과 고객 'Android 6~15... 또는 iOS 15.0~18...'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D016@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'https://remotecall.io' 로그인→'뷰어 대기창 실행'→'https://113366.io' 안내→'접속번호 입력 유도'→'접속번호 입력 후 연결' 순서로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D017@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Android는 Chrome, iOS는 Safari'→'접속 URL 입력'→'[영상 지원] 버튼 클릭·접속번호 입력·[접속하기]'→'카메라/마이크 사용 권한 동의 창... 허용' 및 SMS/email 링크 안내로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G010@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '프라이버시 모드 전체사용 시 고객 화면은 일시 정지 상태로 연결되고 고객이 해제하면 공유가 시작'되며 '상단 Bar·상담 도구·고객 단말 제어 영역(마이크 On/Off 제외)이 비활성화'되고 '상담원 이미지·스크린샷·상담일지·채팅은 정상 활성화'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A034@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '상단 Bar, 상담 도구, 상담원 이미지, 스크린샷, 상담일지 작성, 채팅 기능, 고객 단말 제어 영역의 7개 영역'으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A035@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '바코드 읽기(인식 바코드는 채팅 내역 자동 기록)'와 '위치 정보(고객 동의 시 채팅 내역에 고객 위치 맵 표시)'를 상단 Bar에 포함함으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A036@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '선 굵기 3·5·7·9pt(기본 7pt)', '선 색상(기본 빨간색)' 및 '포인터는 마우스·레이저·스팟라이트'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A037@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '1~10 숫자 스티커를 선택해 화면 클릭 시 상담원·고객 화면에 동시 노출'과 '텍스트 넣기·작업 취소·다시 실행·전체 지우기'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A038@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '공유(문서 공유 모드 전환)·다운로드(상담원 PC 저장)·삭제할 수 있다'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A039@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '카메라 비활성 시 관리자 페이지 설정 이미지가 표시'되며 '카메라/마이크 ON/OFF' 기능 위치가 상담원 이미지 영역임으로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A040@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Ver. 7.6.3'으로 gold_answer_required를 직접 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A041@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '포인터는 마우스·레이저·스팟라이트(마우스 클릭 시 커서 중심 스팟라이트, 외곽 어둡게 처리)'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A042@G-B2-2",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'iOS 15.0~18', 'Apple Safari 15.4 이상(최신)', '네트워크 3G/4G/5G 또는 Wi-Fi'로 gold_answer_required를 뒷받침",
+    "fix_hint": ""
+  }
+]

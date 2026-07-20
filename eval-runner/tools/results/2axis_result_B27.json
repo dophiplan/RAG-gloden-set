@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-C006@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 Windows·macOS·Linux·android·apple을 모두 명시하여 gold_answer의 OS 목록을 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A011@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 권한을 관리자가 통제할 수 있도록 하여 관리적 보안을 강화하였습니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A012@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'PC 공유 프로그램 제한적 선택'으로 gold의 제한적 공유 가능을 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "3개 evidence가 각각 '설치 필요 없음'·'하드웨어 필요 없음'·'유지보수 인력이 필요 없음'을 명시하여 gold의 멀티홉 답변을 뒷받침함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A013@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '모바일 단말기 설정 정보 및 App 설치 환경 관리'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A014@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '기능별 on/off 옵션 제공'을 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G006@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원 중 메시지가 항상 표시'와 '원클릭 또는 원터치만으로 화면 공유를 직접 중지'를 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A015@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '5초마다 상담사의 뷰어로 전송됩니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A016@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '로그로 기록되며, 서버로 전송되어 안전하게 관리됩니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G007@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'PC 제어 권한 선택적 허용 및 회수'와 '제어권만 선택하여 허용할 수 있습니다'를 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E001@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E002@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E003@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E004@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E005@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-E006@G-B5",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "pass",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence_excerpt가 null이고 gold가 '자료에 없음'을 요구하며 pass_criteria가 거절 게이트 조건을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'RAG로 연결하고, 언어 모델(LLM)이 질문 의도와 대화 맥락을 파악해 답변을 생성'을 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A002@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '여러 출처의 정보를 종합·요약'·'3줄 요약 기능'·'대화 맥락을 유지하며 일관되게 응답'을 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A003@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '웹 뷰어와 응용 뷰어, PC와 모바일에서 사용할 수 있습니다'와 '플로팅 창 이동·우측 사이드바 전환'을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-F001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '관리자 설정에서 세밀하게 관리할 수 있습니다'와 '엑셀·PDF·DOCX·URL 지식 등록·외부 AI 모델 연동·답변 톤·길이·프롬프트 설정'을 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A004@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '정책·안내 문서를 빠르게 찾아 바로 전달할 수 있는 답변으로 정리합니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A005@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '반복되는 IT 지원 요청에 대해 빠르고 일관된 답변을 제공합니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A006@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '언어 설정을 기반으로 보다 유연한 글로벌 고객 상담을 지원합니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '현재는 구축형 환경에서 우선 제공됩니다'와 'SaaS 환경은 하반기 적용 예정입니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G002@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '단순 키워드 검색이 아니라, 기업 지식을 RAG로 연결한 환경에서 LLM이 대화 맥락을 이해하고 답변을 생성한다는 점이 다릅니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '로컬 LLM(Gemma3, Gemma4), ChatGPT를 비롯해 Claude 등 AI 모델을 연동할 수 있습니다'를 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A007@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '수집항목: 이름, 회사명, 휴대폰 번호, 이메일 주소'·'1년간 보관'·'동의를 거부할 경우 문의 등록을 하실 수 없습니다'를 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A008@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '개인정보처리방침(https://www.rsupport.com/ko-kr/privacy/)'을 직접 인용함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A009@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "3개 evidence에서 'RAG로 연결하고 LLM이 답변을 생성'·'웹 뷰어와 응용 뷰어, PC와 모바일에서 사용'·'관리자 설정에서 지식 소스·AI 모델·답변 방식 관리'를 각각 명시함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D001@G-B6",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "3개 evidence에서 '늘 같은 PC 또는 지정된 공간'·'다운로드하여 전용 에이전트를 설치하고 구동'·'전문적인 지원이 가능하도록 다양한 기능을 추가적으로 제공'을 각각 명시함",
+    "fix_hint": ""
+  }
+]

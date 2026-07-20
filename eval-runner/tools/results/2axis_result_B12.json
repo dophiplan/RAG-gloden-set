@@ -1,0 +1,452 @@
+[
+  {
+    "id": "RC-G027@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'online(고객 지원 대기중)일 때 가능하고, offline(에이전트에 로그인되어 있지 않은 상태)일 때는 불가능하다'로 gold의 'online만 가능'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D022@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '기존 상담원이 종료하지 않으면 다수 상담원이 한 고객을 지원하고 기존 상담원이 종료하면 새 상담원에게 세션이 전달된다'로 gold의 '종료 시 세션 전달'이 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A057@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '미리 설정한 즐겨찾기(URL) 중 원하는 URL을 클릭하고 [보내기]를 클릭하여 고객에게 전송한다'로 gold의 '즐겨찾기 클릭 후 보내기'가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D023@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객 측 채팅 창에 요청 메시지가 표시되며, 관리자 설정에 따라 마우스 키보드 제어 동의 확인 창이 나타날 수 있다. 고객은 [확인] 버튼을 클릭해 상담원과 원격 연결한다'로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A058@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '고객이 지원 요청 시 모니터 우측 하단에 상담 요청 알림 창이 나타나고'로 gold의 '우측 하단 알림'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A059@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '항상 위는 뷰어를 다른 프로그램 창보다 가장 상위에 위치시키며'와 '관리자페이지 > 제품 사용 관리 > 상담지원이력 > 상담지원이력 상세 페이지 > 상담일지에서 확인할 수 있다'로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A060@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '기본 커서 사용 기능으로 뷰어 화면에 표시되는 기본 마우스 커서 형태를 변경할 수 있으며'로 gold의 '커서 형태 변경'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A061@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '받은 파일 폴더 열기'는 저장 폴더를 열고, '받은 파일 보기'는 '파일이름 클릭 시 실행할 수 있다'로 gold의 '폴더 열기 + 보기'가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A062@G-B2-1",
+    "verdict": "의심",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "fail",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "Ctrl+Alt+Del 전송 가능 여부 및 '제한된 계정이나 Guest 계정으로 접속한 경우 메뉴가 활성화되지 않는다'는 경계·예외 조건을 묻는 문항을 A로 분류함",
+    "fix_hint": "type을 G(경계·예외)로 변경 검토"
+  },
+  {
+    "id": "RC-A063@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 내비게이터는 고객 PC 화면이 뷰어보다 클 때 보이지 않는 부분을 쉽게 탐색하는 기능'으로 gold의 '내비게이터'가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A064@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '기본적으로 상담요청 페이지의 접속번호를 입력하여 접속할 수 있다'로 gold의 '접속번호 입력'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A065@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 대기 번호 입력 후 예약된 고객에 대한 원격지원이 가능하며, 상담 종료 시 [종료] 또는 [연결 종료] 버튼을 클릭해 종료한다'로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A066@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '에이전트 메뉴 중 요청내역과 예약목록을 확인하여 대기/예약 고객 존재 여부를 확인할 수 있다'로 gold의 '요청내역·예약목록'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D024@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '채팅창의 아이콘을 클릭하면 상담일지 작성 창이 팝업되며, 현재 고객지원에 관한 내용을 기입하고 [저장]을 클릭한다'로 gold의 '아이콘→기입→저장'이 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A067@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원을 진행할 PC와 원격지원을 받을 대상 PC, 총 2대가 필요합니다'로 gold의 '2대'가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D025@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'rcstartsupport.exe 실행 → 다음 → 제품 사용 동의서 동의함 체크 → 마침'으로 gold의 파일명과 설치 순서가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D026@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '중계 페이지(https://113366.com/)에 접속해 접속코드를 입력'과 '6자리 일회성 접속코드'로 gold가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A068@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격제어는 떨어져 있는 PC를 그곳에 가지 않고도 자신의 PC에서 제어하는 것이다'로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A069@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '접속 페이지는 상담원과 원격지원 연결을 위해 고객이 접근하는 웹사이트다'로 gold가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A070@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '세션(Session)은 상담원과 고객이 연결된 상태이며, 접속 안내 창은 고객 PC에 원격지원 중임을 나타내는 안내 창이다'로 gold의 두 용어 구분이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A071@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '[웹뷰어로 시작] 버튼 클릭 시 웹 브라우저에서 뷰어 대기 창이 생성'됨으로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D027@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '일회성 실행 파일을 실행하면 고객 PC가 상담원이 대기 중인 뷰어에 원격 연결되며, 고객의 동의 하에 상담원이 고객 PC를 원격 제어할 수 있고'로 gold의 '실행→연결→동의 후 제어'가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D028@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '원격지원 종료 후 고객 PC에 녹화 파일 목록이 나타나며, 재생 프로그램이 없으면 설치 실행 여부를 묻는 메시지 창이 나타난다'로 gold가 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A072@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'iOS 기반 모바일 단말기 화면을 공유하여 고객 단말기의 문제를 원격으로 진단·해결하는 모바일 지원 도구'로 gold의 'iOS 화면 공유 원격 진단'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-G028@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'Mobile Support for iOS는 현재 Windows 환경에서만 이용 가능하며, 상담원 PC 권장 환경은 Windows 10 이상'으로 gold의 'Windows 전용'이 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A073@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'iOS 15 이상, 네트워크 3G/4G/5G 또는 Wi-Fi, 지원 모델은 iPhone 6S/iPad 5세대 이상'으로 gold의 'iOS 15, iPhone 6S 이상'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-C010@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '화면 공유가 일회성으로 필요하면 스크린샷 모드, 지속적으로 필요하면 화면 기록 모드 절차를 안내한다'로 gold의 '스크린샷 vs 화면 기록'이 뒷받침됨",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D029@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 'App background 상태에서 스크린 샷을 시도하면 캡처된 모바일 화면이 뷰어에 출력되고'로 gold의 'background 캡처→뷰어 출력'이 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-D030@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '제어 센터를 표시하고 화면 기록 아이콘을 3초간 클릭한 뒤 목록에서 MobileSupport를 선택하고 방송 시작을 클릭하며'로 gold가 수렴함",
+    "fix_hint": ""
+  },
+  {
+    "id": "RC-A074@G-B2-1",
+    "verdict": "타당",
+    "answer_type_seen": "single",
+    "checks": {
+      "근거충실성": "pass",
+      "정답누설": "pass",
+      "Knockout": "pass",
+      "유형적합": "pass",
+      "E형": "na",
+      "정답수렴": "pass"
+    },
+    "reason": "evidence에서 '뷰어에 표시되는 6자리 접속코드를 고객에게 안내하고'로 gold의 '6자리'가 뒷받침됨",
+    "fix_hint": ""
+  }
+]
