@@ -250,8 +250,8 @@ def cmd_watch(a):
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("setup"); s.add_argument("--repo", default=None); s.add_argument("--actor", default="송하")
-    s = sub.add_parser("send"); s.add_argument("--title", required=True); s.add_argument("--files", nargs="+", required=True); s.add_argument("--note"); s.add_argument("--actor", default="송하")
+    s = sub.add_parser("setup"); s.add_argument("--repo", default=None); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("send"); s.add_argument("--title", required=True); s.add_argument("--files", nargs="+", required=True); s.add_argument("--note"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("poll")
     s = sub.add_parser("watch"); s.add_argument("--interval", type=int, default=300)
     a = ap.parse_args()

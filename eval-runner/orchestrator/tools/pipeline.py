@@ -456,12 +456,12 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("status"); s.add_argument("--product")
     s = sub.add_parser("run"); s.add_argument("--product", required=True)
-    s = sub.add_parser("approve"); s.add_argument("gate_id"); s.add_argument("--ack-all", action="store_true"); s.add_argument("--actor", default="송하")
-    s = sub.add_parser("reject"); s.add_argument("gate_id"); s.add_argument("--reason"); s.add_argument("--actor", default="송하")
-    s = sub.add_parser("resume"); s.add_argument("--after-fix", required=True, metavar="제품"); s.add_argument("--reason"); s.add_argument("--actor", default="송하")
+    s = sub.add_parser("approve"); s.add_argument("gate_id"); s.add_argument("--ack-all", action="store_true"); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("reject"); s.add_argument("gate_id"); s.add_argument("--reason"); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("resume"); s.add_argument("--after-fix", required=True, metavar="제품"); s.add_argument("--reason"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("appeal"); s.add_argument("gate_id"); s.add_argument("--evidence"); s.add_argument("--product"); s.add_argument("--actor", default="작업AI")
-    s = sub.add_parser("set-stage"); s.add_argument("--product", required=True); s.add_argument("--stage", required=True); s.add_argument("--reason"); s.add_argument("--calibration-passed", action="store_true", dest="calibration_passed"); s.add_argument("--actor", default="송하")
-    s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="송하")
+    s = sub.add_parser("set-stage"); s.add_argument("--product", required=True); s.add_argument("--stage", required=True); s.add_argument("--reason"); s.add_argument("--calibration-passed", action="store_true", dest="calibration_passed"); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
