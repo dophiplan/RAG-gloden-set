@@ -480,16 +480,24 @@ async function setStrategy(v){
 function renderAiTeam(){
   const ai = S.ai;
   if(!ai || !ai.engines) return '';
-  const use = (ai.products[cur]||{}).ai_use || {};
+  const pv = ai.products[cur]||{};
+  const use = pv.ai_use || {};
+  const strat = pv.strategy || 'ensemble';
   const chips = ai.engines.map(e=>{
     const lock = e.role==='generator';                       // 대표(출제)는 항상 참여
     const checked = e.connected && use[e.role]!==false;
+    // 앙상블: 전원이 '추출'을 겸한다 — 라벨에 명시 (그 외 전략은 본업만)
+    const duty = strat==='ensemble' ? '추출 + '+e.role_ko : e.role_ko;
     return `<label class="aichip ${e.connected?'':'offline'}" title="${esc(e.how)}${lock?' · 대표 AI는 항상 참여':''}">
       <input type="checkbox" data-role="${e.role}" ${checked?'checked':''} ${(!e.connected||lock)?'disabled':''} onchange="toggleMember()">
-      <span class="dot ${e.connected?'ok':'off'}"></span><b>${esc(e.engine)}</b><span class="airole">${esc(e.role_ko)}</span>
+      <span class="dot ${e.connected?'ok':'off'}"></span><b>${esc(e.engine)}</b><span class="airole">${esc(duty)}</span>
     </label>`;
   }).join('');
-  return `<div class="aiteam">AI 팀 ${chips}<span class="hint">🟢 연결됨 · ⚫ 미연결 — 체크된 AI만 이번 제작에 투입돼요</span></div>`;
+  const HOW = {ensemble:'앙상블: 체크된 AI 전원이 각자 추출 → claude가 병합 (합집합이라 촘촘)',
+               cross_check:'claude가 만들고, 다른 AI가 검수',
+               self_check:'claude가 만들고, 새 세션에서 자가 검수',
+               solo:'claude 단독 제작'};
+  return `<div class="aiteam">AI 팀 ${chips}<span class="hint">🟢 연결 · ⚫ 미연결 — ${HOW[strat]||''}</span></div>`;
 }
 async function toggleMember(){
   const roles=[...document.querySelectorAll('.aichip input[data-role]')]

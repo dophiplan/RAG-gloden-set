@@ -194,8 +194,9 @@ def api_ai_status():
         have = detect_mode(cfg, os.environ)["have"]
     except Exception:
         pass
-    ROLE_META = [("generator", "출제·병합 대표", "claude"),
-                 ("judge", "채점·교차 추출", "Kimi"),
+    # role_ko = 본업. 앙상블에선 전원이 '추출'도 겸한다 — 라벨 앞머리는 화면(전략별)에서 붙임
+    ROLE_META = [("generator", "병합·출제 대표", "claude"),
+                 ("judge", "채점", "Kimi"),
                  ("reviewer", "교차 검토", "codex")]
     engines = []
     for role, role_ko, default_eng in ROLE_META:
