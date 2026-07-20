@@ -41,6 +41,7 @@ LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨)
     "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 은퇴(정답키 공개, 참고용)"}],
     "RC": [{"code": "RC", "gen": "골든셋 v1.1 · 891문항 — 은퇴(정답키 공개, 참고용)"}],
 }
+HIDDEN_CODES = {"EE"}   # 자동 테스트 전용 제품 — 화면에서 숨김 (E2E가 쓰고 지나가는 자리)
 
 
 def display_of(code):
@@ -53,6 +54,8 @@ def api_state():
     # 제품 1뎁스 뷰모델: display 제품 → {현역 트랙 코드, 세대 라벨, 이전 세대들}
     st["_products"] = {}
     for code, ps in st["products"].items():
+        if code in HIDDEN_CODES:
+            continue
         meta = PRODUCT_META.get(code, {"display": code, "product_name": code, "gen": "현역"})
         st["_products"][meta["display"]] = {
             "code": code, "name": meta["product_name"], "gen": meta["gen"],
@@ -162,6 +165,8 @@ def api_catalog():
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     out = {"products": {}}
     for code in st["products"]:
+        if code in HIDDEN_CODES:
+            continue
         disp = display_of(code)
         stages = []
         for sm in meta["stages"]:
@@ -175,6 +180,74 @@ def api_catalog():
         out["products"][disp] = {"stages": stages,
                                  "total_files": sum(s["file_count"] for s in stages)}
     return out
+
+
+def api_ai_status():
+    """AI 팀 현황 — 역할별 엔진·연결 상태(🟢/⚪) + 제품별 투입 선택(ai_use 체크박스)"""
+    import os
+    from olib import load_config
+    cfg = load_config()
+    mock = os.environ.get("ORCH_MOCK") == "1"
+    have = {}
+    try:
+        from model_adapter import detect_mode
+        have = detect_mode(cfg, os.environ)["have"]
+    except Exception:
+        pass
+    ROLE_META = [("generator", "출제·병합 대표", "claude"),
+                 ("judge", "채점·교차 추출", "Kimi"),
+                 ("reviewer", "교차 검토", "codex")]
+    engines = []
+    for role, role_ko, default_eng in ROLE_META:
+        m = cfg.get("models", {}).get(role) or {}
+        cmd = m.get("command", [])
+        raw = " ".join([str(m.get("model", "")), m.get("provider", ""),
+                        " ".join(cmd) if isinstance(cmd, list) else str(cmd)]).lower()
+        if "kimi" in raw or "moonshot" in raw:
+            eng = "Kimi"
+        elif "codex" in raw or "gpt" in raw:
+            eng = "codex"
+        elif "claude" in raw or "anthropic" in raw:
+            eng = "claude"
+        else:
+            eng = default_eng
+        connected = bool(mock or have.get(role))
+        if mock:
+            how = "가짜 AI (연습 모드)"
+        elif not m:
+            how = "미설정 — config.yaml 에 없음"
+        elif m.get("provider") == "cli":
+            how = "구독 계정 (CLI)" if connected else "구독 CLI 미설치 — 계정 대기"
+        else:
+            how = "API 키" if connected else f"API 키 없음 ({m.get('api_key_env', '?')})"
+        engines.append({"role": role, "role_ko": role_ko, "engine": eng,
+                        "connected": connected, "how": how})
+    st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
+    use = {}
+    for code, ps in st["products"].items():
+        if code in HIDDEN_CODES:
+            continue
+        use[display_of(code)] = {
+            "code": code,
+            "ai_use": ps.get("ai_use") or {"generator": True, "judge": True, "reviewer": True},
+            "strategy": ps.get("strategy", "ensemble"),
+        }
+    return {"mock": mock, "engines": engines, "products": use}
+
+
+def api_progress(code):
+    """③ 등 장시간 작업의 실시간 진행/막힘 — 엔진이 배치마다 갱신하는 파일을 그대로"""
+    if not re.fullmatch(r"[A-Z0-9]{1,8}", code or ""):
+        return {"active": False}
+    p = ROOT / "results" / f"_progress_{code}.json"
+    if not p.exists():
+        return {"active": False}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {"active": False}
+    d["active"] = True
+    return d
 
 
 def api_action(payload):
@@ -203,6 +276,9 @@ def api_action(payload):
     elif cmd == "set-strategy":
         args += ["set-strategy", "--product", payload["product"],
                  "--strategy", payload["strategy"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "set-members":
+        args += ["set-members", "--product", payload["product"],
+                 "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
     elif cmd == "run":
         args += ["run", "--product", payload["product"]]
     else:
@@ -241,6 +317,12 @@ class H(SimpleHTTPRequestHandler):
             return self._send(200, j(api_scores()))
         if self.path.startswith("/api/catalog"):
             return self._send(200, j(api_catalog()))
+        if self.path.startswith("/api/ai_status"):
+            return self._send(200, j(api_ai_status()))
+        if self.path.startswith("/api/progress"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            return self._send(200, j(api_progress(N(q.get("product", [""])[0]))))
         return super().do_GET()
 
     def do_POST(self):

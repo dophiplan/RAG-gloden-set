@@ -71,6 +71,7 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
     target = [c for c in chunks if retry_ids is None
               or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]
     units = []
+    fails = []
     total = (len(target) + CHUNK_BATCH - 1) // CHUNK_BATCH
     for bi in range(0, len(target), CHUNK_BATCH):
         part = target[bi:bi + CHUNK_BATCH]
@@ -82,9 +83,11 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
             units += got if isinstance(got, list) else [got]
         except Exception as e:
             # 배치 실패는 침묵하지 않는다 — 기록하고 나머지는 계속 (부분 커버리지 > 전체 실패)
+            fails.append({"batch": f"{bno}/{total}", "err": str(e)[:120]})
             ledger_append("COVERAGE_MAP", "COVERAGE_BATCH_FAILED", f"script:{role}",
                           evidence={"batch": f"{bno}/{total}", "chunks": len(part),
                                     "err": str(e)[:200]}, product=prod)
+        _progress(prod, "커버리지 추출", role, bno, total, fails)
         if total > 4 and bno % 5 == 0:
             print(f"  [{role}] 커버리지 추출 {bno}/{total} 배치…")
     return units
@@ -96,16 +99,47 @@ def get_strategy(prod):
     return load_state()["products"].get(prod, {}).get("strategy", "ensemble")
 
 
-def _ensemble_roles(cfg, strategy="ensemble"):
-    """추출기 편성 — 전략에 따라: 앙상블=가용 전원 / 그 외=generator 단독"""
+def _ensemble_roles(cfg, strategy="ensemble", prod=None):
+    """추출기 편성 = 전략 × 연결 상태 × 사람의 투입 선택(ai_use 체크박스)"""
     if strategy != "ensemble":
-        return ["generator"]
-    if llm.is_mock():
-        return ["generator", "judge"]     # mock = 2키 상당
-    import os
-    from model_adapter import detect_mode
-    have = detect_mode(cfg, os.environ)["have"]
-    return [r for r in ("generator", "judge", "reviewer") if have.get(r)] or ["generator"]
+        roles = ["generator"]
+    elif llm.is_mock():
+        roles = ["generator", "judge"]     # mock = 2키 상당
+    else:
+        import os
+        from model_adapter import detect_mode
+        have = detect_mode(cfg, os.environ)["have"]
+        roles = [r for r in ("generator", "judge", "reviewer") if have.get(r)] or ["generator"]
+    if prod:   # 사람이 체크박스로 뺀 AI는 제외 (generator는 최소 1인 보장)
+        from olib import load_state
+        use = load_state()["products"].get(prod, {}).get("ai_use")
+        if use:
+            roles = [r for r in roles if use.get(r, True)] or ["generator"]
+    return roles
+
+
+def _progress_path(prod):
+    return ROOT / "results" / f"_progress_{prod}.json"
+
+
+def _progress(prod, phase, role, batch, total, fails):
+    """진행 상황 파일 — 대시보드가 폴링해서 '지금 어디까지 갔고 어디서 막혔나' 표시"""
+    import datetime
+    p = _progress_path(prod)
+    p.parent.mkdir(exist_ok=True)
+    cur = {}
+    if p.exists():
+        try:
+            cur = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            cur = {}
+    if cur.get("phase") != phase:      # 국면이 바뀌면 이전 국면 카운트는 지운다 (혼선 방지)
+        cur["roles"] = {}
+    cur["phase"] = phase
+    if role and role != "-":
+        cur.setdefault("roles", {})[role] = {"batch": batch, "total": total, "fails": fails}
+    cur["ts"] = datetime.datetime.now().isoformat(timespec="seconds")
+    p.write_text(json.dumps(cur, ensure_ascii=False), encoding="utf-8")
 
 
 REVIEW_SYSTEM = """[TASK:COVERAGE_REVIEW] 너는 커버리지맵 검수자다 — 생성에는 관여하지 않았다.
@@ -138,7 +172,7 @@ MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
 def ensemble_generate(prod, chunks, cfg, strategy=None):
     """전략별 추출 → 기계 dedup → (앙상블이면) 병합 → 검수는 호출측."""
     strategy = strategy or get_strategy(prod)
-    roles = _ensemble_roles(cfg, strategy)
+    roles = _ensemble_roles(cfg, strategy, prod)
     pool, contrib, fails = [], {}, []
     seen = set()
     for role in roles:
@@ -159,6 +193,7 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
                           evidence={"err": str(e)[:200]}, product=prod)
     MERGE_LIMIT = 200   # 이 이상이면 LLM 병합 생략 — 기계 dedup(정확 일치)만으로 충분·안전
     if len(roles) > 1 and pool and len(pool) <= MERGE_LIMIT:
+        _progress(prod, "병합(대표 AI)", "generator", 0, 1, [])
         merged_out = llm.chat("generator", MERGE_SYSTEM,
                               json.dumps({"units": pool}, ensure_ascii=False), cfg)
         merged = llm.extract_json(merged_out)
@@ -240,6 +275,7 @@ def run(prod, cfg):
     merged, contrib, fails = ensemble_generate(prod, chunks, cfg, strategy)
     ok, rej = verify_units(merged, chunks)
     if not ok:
+        _progress(prod, "막힘 — 생성 단위 전건 검수 불합격", "-", 0, 0, fails)
         return "HALTED", {"halt": "생성 단위 전건 검수 불합격 — 카운트 미실측 방지",
                           "기여도": contrib, "추출기 실패": fails}
     path = write_map(prod, ok)
@@ -251,10 +287,12 @@ def run(prod, cfg):
           "1축 문자 대조": "불일치 0 (통과분)", "GAP_AUDIT 누락 문서": len(gaps),
           "산출": N(path.name)}
     if strategy in ("cross_check", "self_check"):
+        _progress(prod, "AI 검수", "judge" if strategy == "cross_check" else "generator", 0, 1, [])
         op = ai_review(prod, chunks, ok, cfg, strategy)
         ev["AI 검수 의견 (참고 — 판정은 사람)"] = op
     if fails:
         ev["추출기 실패"] = fails
+    _progress(prod, "완료 — 사람확인 대기", "-", 0, 0, [])
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
     flags = ([{"type": "GAP_AUDIT 누락 의심", "id": d, "candidates": [],
                "ack_required": True} for d in gaps]

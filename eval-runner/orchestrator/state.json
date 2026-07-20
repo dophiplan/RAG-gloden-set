@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T08:20:52",
+  "updated": "2026-07-21T08:34:40",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -11,7 +11,12 @@
       "open_gates": [],
       "halt_reason": null,
       "key_released": null,
-      "strategy": "ensemble"
+      "strategy": "ensemble",
+      "ai_use": {
+        "generator": true,
+        "judge": true,
+        "reviewer": false
+      }
     },
     "RC2": {
       "stage": "CORPUS_AUDIT",
@@ -32,25 +37,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-21T08:20:27"
+          "done_at": "2026-07-21T08:32:55"
         },
         "TERRAIN": {
-          "done_at": "2026-07-21T08:20:28"
+          "done_at": "2026-07-21T08:32:55"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-21T08:20:29"
+          "done_at": "2026-07-21T08:32:56"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-21T08:20:32"
+          "done_at": "2026-07-21T08:33:00"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-21T08:20:33"
+          "done_at": "2026-07-21T08:33:00"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-21T08:20:35"
+          "done_at": "2026-07-21T08:33:02"
         },
         "STAGE2": {
-          "done_at": "2026-07-21T08:20:35"
+          "done_at": "2026-07-21T08:33:02"
         }
       },
       "open_gates": [
@@ -59,7 +64,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-21T08:20:39"
+          "issued": "2026-07-21T08:33:06"
         }
       ],
       "halt_reason": null,
