@@ -80,7 +80,23 @@ def st_corpus_audit(prod, cfg):
                 "registered": now()} for p in corpus]
     mf_path.write_text(json.dumps({"product": prod, "entries": entries},
                                   ensure_ascii=False, indent=2), encoding="utf-8")
-    return "DONE", {"corpus_files": len(corpus), "manifest": mf_path.name}
+    # 실측: 읽을 수 있는 청크 수 — "받으면 무조건 실측부터"(영역 0). 파일이 있어도 청크 0이면 통과 금지
+    try:
+        import gen_coverage
+        chunks = gen_coverage.load_corpus(prod)
+    except Exception as e:
+        ledger_append("CORPUS_AUDIT", "CORPUS_PARSE_FAILED", "script:pipeline",
+                      evidence={"err": str(e)[:200]}, product=prod)
+        chunks = []
+    if not chunks:
+        issue_input_card(prod, "CORPUS_AUDIT",
+                         what=f"{prod} 코퍼스 — 파일은 있으나 읽을 수 있는 청크 0 (형식 확인 필요)",
+                         where=f"data/{prod}/corpus/",
+                         fmt="json([{doc,chunk_id,text}] · {chunks:[…]} export) · md/txt · zip(내부 chunks-*.json)")
+        return "WAITING_INPUT", {"corpus_files": len(corpus), "청크": 0}
+    docs = len({c["doc"] for c in chunks})
+    return "DONE", {"corpus_files": len(corpus), "청크": len(chunks), "문서": docs,
+                    "manifest": mf_path.name}
 
 
 def st_terrain(prod, cfg):
