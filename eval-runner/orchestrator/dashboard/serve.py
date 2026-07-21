@@ -131,6 +131,17 @@ def api_scores():
             "E거절": sum(1 for r in rep if r.get("E형거절")),
             "n": len(rep), "scorer": "run_score_v11",
         }
+    # 문서 기록 이관 — 로컬 재채점본이 없는 회차를 인수인계 보고서 수치로 병기 (출처 라벨)
+    for f in (ROOT / "results").glob("기록이관_*.json"):
+        prod = f.stem.split("_", 1)[1]
+        try:
+            rec = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for rnd, v in rec.items():
+            if rnd.startswith("_") or rnd in out.get(prod, {}):
+                continue   # 로컬 실측이 항상 우선 — 이관본은 빈 회차만 채움
+            out.setdefault(prod, {})[rnd] = {**v, "scorer": "기록 이관"}
     return out
 
 
