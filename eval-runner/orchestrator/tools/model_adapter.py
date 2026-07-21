@@ -48,6 +48,13 @@ def sha256_file(p):
 def detect_mode(cfg=None, env=None):
     cfg = cfg or load_config()
     env = env if env is not None else os.environ
+    # [R-2] mock 모드 = 기계 독립 — 실 CLI/키 유무와 무관하게 전 역할 가용 (회귀·E2E가
+    # claude CLI 설치 머신에서만 돌던 결함 수리. mock은 어차피 실호출을 안 한다.)
+    # 판정은 실제 프로세스 환경 기준 — 호출측이 env 를 따로 만들어 넘겨도 mock 은 mock 이다.
+    if os.environ.get("ORCH_MOCK") == "1" or env.get("ORCH_MOCK") == "1":
+        return {"mode": 2, "have": {"generator": True, "judge": True, "reviewer": False},
+                "plan": {"생성": "generator", "1축": "스크립트", "2축": "judge",
+                         "3차교차": "생략", "재검율": 0.05}}
     models = cfg.get("models", {})
     have = {}
     for role in ("generator", "judge", "reviewer"):

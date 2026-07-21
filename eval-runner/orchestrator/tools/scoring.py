@@ -377,6 +377,42 @@ def extract_summary(rep):
 
 
 # ── 규칙 D ─────────────────────────────────────────────────
+SRC_MANIFEST = ROOT / "catalog" / "manifest_원문데이터.json"
+TEST_PRODUCTS = {"EE"}   # 자동 테스트 전용 — 원문이 매회 재생성되는 모의 데이터 (등재 비대상)
+
+
+def source_hash_gate(paths, register_new=False):
+    """[T18] 원문 데이터 해시 대조 (규칙 B′의 데이터 확장) — 응답로그·질문셋 원본 변조를 기계가 잡는다.
+    등재된 파일: sha256 불일치 → 위반 목록 반환 (호출측 정지).
+    미등재 파일: register_new=True 일 때만 첫 등재 (업로드 원본용 — 생성 산출물은 등재 금지)."""
+    import datetime
+    man = json.loads(SRC_MANIFEST.read_text(encoding="utf-8")) if SRC_MANIFEST.exists() else {"files": {}}
+    bad, newly = [], []
+    dirty = False
+    for p in paths:
+        p = Path(p)
+        if not p.exists():
+            continue
+        h = hashlib.sha256(p.read_bytes()).hexdigest()
+        try:
+            key = str(p.resolve().relative_to(ROOT.resolve()))
+        except ValueError:
+            key = str(p)
+        ent = man["files"].get(key)
+        if ent is None:
+            if register_new:
+                man["files"][key] = {"sha256": h,
+                                     "등재": datetime.datetime.now().isoformat(timespec="seconds")}
+                newly.append(key)
+                dirty = True
+        elif ent["sha256"] != h:
+            bad.append({"file": key, "등재": ent["sha256"][:16], "현재": h[:16]})
+    if dirty:
+        SRC_MANIFEST.parent.mkdir(exist_ok=True)
+        SRC_MANIFEST.write_text(json.dumps(man, ensure_ascii=False, indent=1), encoding="utf-8")
+    return bad, newly
+
+
 def rule_d_check(prod, actor="script:rule_d"):
     fp = scorer_fingerprint()
     st = load_state()
@@ -439,6 +475,14 @@ def run(prod, cfg):
             qs = [make_question_set(prod)]
         except FileNotFoundError:
             qs = []
+    if qs and prod not in TEST_PRODUCTS:
+        # [T18] 발행 전 원문 대조 — 등재된 질문셋 원본과 불일치 = 정지
+        bad, _ = source_hash_gate([qs[-1]])
+        if bad:
+            ledger_append("SCORING", "SOURCE_HASH_MISMATCH", "script:scoring",
+                          evidence={"위반": bad, "판정": "원문 변조 의심 — 발행·채점 중단 (T18)"},
+                          product=prod)
+            return "HALTED", {"halt": "원문 해시 불일치 (질문셋) — T18 게이트", "위반": bad}
     if qs:
         status, ev = publish_gate(qs[-1], product=prod)
         pub_ev = {"발행 게이트": f"{status} — {N(qs[-1].name)}", **{f"발행.{k}": v for k, v in ev.items()}}
@@ -464,6 +508,17 @@ def run(prod, cfg):
         card.rename(qdir / "완료" / card.name)
     # 3) 형식 게이트 → 채점 — 회차 반복: 가장 최근 올라온 로그를 채점
     log = max(logs, key=lambda p: p.stat().st_mtime)
+    if prod not in TEST_PRODUCTS:
+        # [T18] 채점 전 원문 대조 — 업로드 원본은 첫 인입 시 등재, 이후 변조 = 정지
+        bad, newly = source_hash_gate([log], register_new=True)
+        if newly:
+            ledger_append("SCORING", "SOURCE_DATA_REGISTERED", "script:scoring",
+                          evidence={"등재": newly}, product=prod)
+        if bad:
+            ledger_append("SCORING", "SOURCE_HASH_MISMATCH", "script:scoring",
+                          evidence={"위반": bad, "판정": "원문 변조 의심 — 채점 중단 (T18)"},
+                          product=prod)
+            return "HALTED", {"halt": "원문 해시 불일치 (응답로그) — T18 게이트", "위반": bad}
     rnd_m = re.search(r"r\d+", N(log.name))
     if rnd_m:
         rnd = rnd_m.group()

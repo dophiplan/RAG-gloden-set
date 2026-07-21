@@ -1,0 +1,280 @@
+{
+ "files": {
+  "data/RC/08_scoring/RC_질문셋.json": {
+   "sha256": "1a99a76f852acc24cc3e7d0100554dc37dcdacc0ad1a81cea6e8bcfd86a895ce",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/08_scoring/score_report.json": {
+   "sha256": "7b7d306905cd79b73a82283a262c8d5fd9cb8a8b2b9743753f7f2f84d674def2",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/08_scoring/RC_골든셋_r4_응답로그_2026-07-15.json": {
+   "sha256": "d7c3eee1ddad1d3bc56261c4442df7f37eaa299a55c841ab1dfd08aaf4575a99",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/08_scoring/RC_골든셋_r2_응답로그_2026-07-13.json": {
+   "sha256": "61b80c50e6a9596d53bda34704797366fadb0db61b313da51ac97288171f421e",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/08_scoring/RC_골든셋_r5_응답로그_2026-07-18.json": {
+   "sha256": "1a8376b8f8d0e10945c9e168cde8579ea6701a6979c3bc61c45ac5cca86d916b",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/08_scoring/RC_골든셋_응답로그_2026-07-13.json": {
+   "sha256": "28397e1ec8a01617c44dc4722ccdb672256978d4ab78cd8a75b3fb73fe797547",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RV/08_scoring/RV_응답로그_r1_2026-07-18.json": {
+   "sha256": "a6e929aba036b8e9d78ffcca8ba7448f494a204e8ef3e3893c72133778f767b4",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B15.json": {
+   "sha256": "1dbbb4e32739360d934d49e6d2ce77ce15591f2a6e567fef2a22d9c0c992de94",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B16.json": {
+   "sha256": "d856074ce6778a6093f1374b22e2d3286348318b448927f76b7b1949d3d196df",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B03.json": {
+   "sha256": "656b7a7ba0d7eadd58bdfd8e0c94a808b495cfb4a6a1e6e564bf026b2c6be5ab",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/3rd_input.json": {
+   "sha256": "145a943487236a15e216cda847adc51c17dd2d919136e27d39b30b3cae1037e2",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B20.json": {
+   "sha256": "72d0e4e84857600ca2a7549b33e6aeb0bdb6eac11bfe8b53784bbb2c20d68bcf",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B23.json": {
+   "sha256": "6cfe49605d6bed9f01796f73cc27775f3cd2a843331b74944153e3de43847aad",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B19.json": {
+   "sha256": "b18d6a7f46082efd459f5f6459ee9cb7dc35fa94ab96d1f9ca56a561747da081",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B18.json": {
+   "sha256": "544133499a52ce207674d580b6baf1db6f6a1d2ccf1afb40918d4b6f5205b36e",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B22.json": {
+   "sha256": "7ef721b992ab455d03d3e99d075c90c0777cd122a7f21e822d2caf18a173066f",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B21.json": {
+   "sha256": "09ad04853a7d312ade2b5c3188719d9ef7cc0dc432395eed0514aa1a34321e81",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B01.json": {
+   "sha256": "4809af7c77f304b18b09924ca0c290da7c646b8dec3ba72ba10060e3b7e491b2",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B02.json": {
+   "sha256": "80269884cd97de439467cb889e263820561b69b0fe47e3b8228faf26a51602f8",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B17.json": {
+   "sha256": "9e58ddeb2cc6cdd9625c93e847e9a362087a5be692f25e65af536a2ce39d74d2",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B14.json": {
+   "sha256": "e947328058f10b21d31abc12af266e1534d1ebe840e0a388979eaaab1684f023",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B26.json": {
+   "sha256": "118eef15445d448d97610b3e8484dce1e0b489c94adc5a98b04f86c6673b89a2",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B25.json": {
+   "sha256": "89c0e7bb315a7e2be996e1afe50474a14013d224b8dfc599500eca04a6271ec5",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B30.json": {
+   "sha256": "ebf66c4cd101373b2238f6604bff909714f375d52d514875d281efc156af56ab",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B09.json": {
+   "sha256": "030c0adc7ae420af6da07908ca01c1fb20fb832f473f4b353e716cc7edf3c5e9",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B29.json": {
+   "sha256": "7ff41712e6ee44006be634f54981caae982b78855168bade92a83d8af3c67c3a",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B13.json": {
+   "sha256": "a51f1be420f8412f23a609a88d16b73fba687bc9c51b8b830541e7c75ecab907",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B10.json": {
+   "sha256": "de32890105e67471d8e20d0c202342bd237af14ea5baed52c4cd4926718f6785",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B05.json": {
+   "sha256": "7f957b40a4f1c78e345a85cc65d29974dc9dfbd3e8987b30d4e608aa30edbe84",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B06.json": {
+   "sha256": "2e5949ce8d8b217d7efa363c8f142481bb212d3202a1f774a9df5cf8cf6992b5",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B07.json": {
+   "sha256": "7693ee74714a54a7ac0556868d7cdeed88d9e7a54cb471984a86afb3c35e3705",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B04.json": {
+   "sha256": "cbaef9dbe38a68d74425b75f6056ca6224084964045351638954198a2b58c10c",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B11.json": {
+   "sha256": "b5da281f3b063518609ec8a02decb7c433c0d0b4c4f9d107b47d43af7a024ec0",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B12.json": {
+   "sha256": "8e76bdd7dafe7fe925e1b67bd82ff5269e7c53ab7aa926a35827cbab5cb8f93d",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B28.json": {
+   "sha256": "630d024f8323ef955d9c2be80daaf7a99369c13037a8785fd6f305a24e79d8ee",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B08.json": {
+   "sha256": "73f194728966684b08101872fd6ae33c6efc0a445491d608b060999e91c8ca66",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B24.json": {
+   "sha256": "09ee4684b4de5246d72031fed237eb32daefdd9c76605a74fe8bd6b7726c04f1",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B27.json": {
+   "sha256": "ace4462fea67f4ebbc0899f64dae1ecf393774e39af2cf4d81cc66f8f1e7b313",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B08.json": {
+   "sha256": "6fa121c056c4fb2af2cfa2bd03e5df7524a3a4ec66729e9017414024ade5198b",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B27.json": {
+   "sha256": "f131e5a7fda2e477baf885ed8225309b2d88b5908c8b86b97f8e69abc4fc14b1",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B24.json": {
+   "sha256": "7adb77448fef237406f329715ed0678799065b5179f4ef81de882b6f8a231ffd",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B04.json": {
+   "sha256": "08f0bfa09fbe7df34d976f42aa66bc03d2e2a95fc9996ff412766efbf1f74ce8",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B07.json": {
+   "sha256": "64aff94f467ed33b8b8925d880b20feec0f7171074ea2f24782e3d8d2bcba29a",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B12.json": {
+   "sha256": "09fede44c0dcdf383c4db5a758a8fd6ef12491b5dd0cc294af02136602b86db9",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B11.json": {
+   "sha256": "bcbbf6928aadfe38f69b69ce001fe9f85ea14105d16a35951c480ba7e63bac86",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B28.json": {
+   "sha256": "a10597923864aaa6ec6cc1d625dbdbfbc795a11f6f0895cc735a6635411ced84",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B29.json": {
+   "sha256": "ab96221c1956158a9ba7a5658168201314d5ad4271f435483726ec1083376841",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_CANARY.json": {
+   "sha256": "1499629f802ee3ddb6344600ee061c1f927e9912079e5000fb6514a2139ee7bf",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B10.json": {
+   "sha256": "6d372218e0e320a51b50a7d06725ae74f8b2dee0ef17c60defd78b88526bd82e",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B13.json": {
+   "sha256": "e1655ec9043d87f7ca7cf0333527fef21cfc61256d6d55d32a2aa3aa6bd6aecd",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B06.json": {
+   "sha256": "b4a1bf86d11918f01e1bd16c5ea7ae32bea8cf86060d49251ebe7e0d440eb466",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B05.json": {
+   "sha256": "e84ae5bafbd937446310a17b8a00ec0f38d3c7444b3fd428d76cbb070a569a51",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B25.json": {
+   "sha256": "6baed3ca9e79805467307117651d1ac99ea9ac1aae681586283f40c2efa8f0d4",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B26.json": {
+   "sha256": "849ba6027264f85458add2dee7fb6f744dd2f11f57ba94ee8aaa4bf17eb45da5",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B30.json": {
+   "sha256": "4d5c49aa3dda6d2e2dbc5172d2f150fb883ee6d43342caafed126ad4ce0fc4d7",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B09.json": {
+   "sha256": "7ec8ff5a8aafa7b27f9232e1dc3991ca0860ec4be2a25aaa4c3d29a4286f686a",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B02.json": {
+   "sha256": "c7dc35ad3753ddb22fd262b8c067dbf6cf687e301f8be14d08396b148ca1a3dc",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B01.json": {
+   "sha256": "2b7cf151f3761ae15ca4e68ce7e425913c14acc2f4d1dd6e5dc200909b9add5d",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B14.json": {
+   "sha256": "c2e32629749d548b5732a5442a605e27886fbeee7151688121fe131dd1a6b3e1",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B17.json": {
+   "sha256": "f69dec30a0a6df1bd40443273be7bbc3da4f6dc75fdf4022a94c82e4a2251917",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B18.json": {
+   "sha256": "11dde7664033d9e29e34d17e9030e47916e1dd93b967e69ccf2d9ce51318e6c4",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B21.json": {
+   "sha256": "36ace7f221db709f9896b4328dc4cee0fd2eec17a9d708a2c47476dbfcd12aad",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B22.json": {
+   "sha256": "dbe4cd4c44006a72315cdfb1394e8a9dbe7bbcabc7993a78f31443bd4d3f35ac",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B23.json": {
+   "sha256": "0ee69d2f8c45d8df5e9d43445502bc23c5a4c092020b73ae57757a07f2551efa",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B20.json": {
+   "sha256": "24f936e3527beaee6e10faf835a65a2c4be104920d9c4d95a7e07836df2a1f61",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B19.json": {
+   "sha256": "e5fe2ff09036e257e860eee8f39dcd985d46eeb67c76c226e3455d97f865d3e9",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_input_B16.json": {
+   "sha256": "8336bfef1128b6f92291aa303770887b41414d5efbdd3819e281a79974e34225",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B15.json": {
+   "sha256": "d9e3fb41614174331ac60b11dfea7734ca6040e30e24e5ee9b25b164b042d2f0",
+   "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC/06_calibration/2axis_result_B03.json": {
+   "sha256": "f98210ccd06e3fcfa2960b6d581d276d34549132abd9dac694b8616252438c36",
+   "등재": "2026-07-21T13:15:43"
+  }
+ }
+}
