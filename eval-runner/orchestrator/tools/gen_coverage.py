@@ -142,6 +142,8 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
         print(f"  [{role}] 체크포인트 재개 — {done}/{total} 배치부터 이어서")
         ledger_append("COVERAGE_MAP", "COVERAGE_RESUMED", f"script:{role}",
                       evidence={"재개 지점": f"{done}/{total}", "보존 단위": len(units)}, product=prod)
+        # 재개 즉시 진행 파일 갱신 — 옛 '일시 중단' 잔상 제거 (화면이 바로 살아있게)
+        _progress(prod, "커버리지 추출 (이어서)", role, done, total, fails, chunks=len(target))
     consec = []                            # 연속 실패 배치 번호들
     for bi in range(0, len(target), CHUNK_BATCH):
         part = target[bi:bi + CHUNK_BATCH]
