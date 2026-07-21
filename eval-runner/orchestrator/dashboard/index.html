@@ -73,7 +73,8 @@
   .files{border-top:1px dashed var(--line);padding-top:9px}
   .files .fh{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
   .archbtn{font:inherit;font-size:10px;letter-spacing:0;cursor:pointer;color:var(--tx2);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
-  .archbtn.on,.archbtn:hover{color:var(--tx);border-color:var(--tx2)}
+  .archbtn.on,.archbtn:hover:not(:disabled){color:var(--tx);border-color:var(--tx2)}
+  .archbtn:disabled{opacity:.45;cursor:not-allowed}
   .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
   .frow{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0}
   .frow .star{color:var(--input);width:10px}
@@ -317,7 +318,9 @@ function render(){
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
-    <div class="panel"><div class="p-head">성적 히스토리 — ${cur} ${canNewRound()?`<button class="archbtn" onclick="$('roundFile').click()" title="팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점 → 보고서">⬆ 새 회차 채점</button>`:'<span class="hint">실측</span>'}</div><div class="p-body">
+    <div class="panel"><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
+      ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점 → 보고서'
+      :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 새 회차 채점</button></div><div class="p-body">
       <input type="file" id="roundFile" accept=".json" style="display:none" onchange="uploadRound(this)">
       ${renderScores(ps)}
     </div></div>
