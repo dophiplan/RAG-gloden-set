@@ -24,7 +24,7 @@ if [ -n "$ANTHROPIC_API_KEY" ]; then
 fi
 
 # 3) config를 앙상블로 전환 (원본은 config.yaml.apikeys 로 1회 백업)
-#    편성 원칙 (송하 결정 2026-07-20):
+#    편성 원칙 (난희 결정 2026-07-20):
 #      출제 = claude (구독 계정) · 채점 = Kimi (API 키) · 교차검토 = codex (구독 계정, 설치 시)
 #    Kimi 키 없으면 codex → 그것도 없으면 claude 단독(1키·사람 재검 10%)
 if [ ! -f config.yaml.apikeys ]; then cp config.yaml config.yaml.apikeys; fi
