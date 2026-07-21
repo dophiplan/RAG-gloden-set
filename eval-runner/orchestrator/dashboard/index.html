@@ -670,7 +670,10 @@ function engName(role){
 }
 function startProgressPoll(){
   stopProgressPoll();
-  progT = setInterval(async ()=>{
+  pollOnce();                       // 즉시 1회 — render 직후 진행선이 비는 깜빡임 제거
+  progT = setInterval(pollOnce, 4000);
+}
+async function pollOnce(){
     try{
       // 현재 단계 패널의 실행 로그 — 진행 파일 유무와 무관하게 갱신
       const lg = $('runlog');
@@ -695,7 +698,6 @@ function startProgressPoll(){
       el.style.display='block';
       el.innerHTML = `📡 ${chunks}${esc(d.phase||'작업 중')} 중${parts.length?' — '+parts.join(' · '):''} · <span class="hint">${ageTxt}</span>${stale}`;
     }catch(e){}
-  }, 4000);
 }
 function stopProgressPoll(){ if(progT){clearInterval(progT); progT=null;} }
 async function doOnboard(){
