@@ -427,7 +427,7 @@ function showTip(el,i){
       <div class="fh"><span>보유 자료 ${curF.length}</span>${oldF.length?`<button class="archbtn" onclick="toggleArch(this)">📦 보관함 ${oldF.length} ›</button>`:''}</div>
       ${curF.map(frow).join('') || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>'}</div>
     <div class="archwrap" style="display:none">
-      <div class="fh"><button class="archbtn" onclick="closeArch(this)">‹ 돌아가기</button><span>📦 보관함 — 안 쓰는 자료 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
+      <div class="fh"><span>📦 보관함 — 안 쓰는 자료 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
       ${Object.entries(groups).map(([g,fl]) =>
         `<details class="arch" ${Object.keys(groups).length===1?'open':''}><summary>${esc(g)} — ${fl.length}개</summary>${fl.map(frow).join('')}</details>`).join('')}</div>`;
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
