@@ -418,19 +418,23 @@ function showTip(el,i){
   clearTimeout(hideT);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   if(!cs) return;
-  // 현역 리스트는 깨끗하게 — 은퇴분은 [📦 보관함] 버튼 뒤로 (누르면 세대별 아코디언)
+  // 현역 화면 ↔ 보관함 화면 전환 — [📦 보관함] 누르면 통째로 넘어가고, ‹ 돌아가기/✕로 복귀
   const frow = f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`;
   const curF = cs.files.filter(f=>!f.gen), oldF = cs.files.filter(f=>f.gen);
   const groups = {};
   oldF.forEach(f=>(groups[f.gen]=groups[f.gen]||[]).push(f));
-  const files = (curF.map(frow).join('') || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>')
-    + `<div class="archwrap" style="display:none">${Object.entries(groups).map(([g,fl]) =>
-        `<details class="arch"><summary>${esc(g)} — ${fl.length}개 (안 쓰는 자료 · 참고용)</summary>${fl.map(frow).join('')}</details>`).join('')}</div>`;
+  const files = `<div class="curview">
+      <div class="fh"><span>보유 자료 ${curF.length}</span>${oldF.length?`<button class="archbtn" onclick="toggleArch(this)">📦 보관함 ${oldF.length} ›</button>`:''}</div>
+      ${curF.map(frow).join('') || '<div class="nonef">아직 자료 없음 — 이 단계 미도달</div>'}</div>
+    <div class="archwrap" style="display:none">
+      <div class="fh"><button class="archbtn" onclick="closeArch(this)">‹ 돌아가기</button><span>📦 보관함 — 안 쓰는 자료 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
+      ${Object.entries(groups).map(([g,fl]) =>
+        `<details class="arch" ${Object.keys(groups).length===1?'open':''}><summary>${esc(g)} — ${fl.length}개</summary>${fl.map(frow).join('')}</details>`).join('')}</div>`;
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
       <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
         <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
-      <div class="files"><div class="fh"><span>보유 자료 ${curF.length}</span>${oldF.length?`<button class="archbtn" onclick="toggleArch(this)">📦 보관함 ${oldF.length}</button>`:''}</div>${files}</div></div>`;
+      <div class="files">${files}</div></div>`;
   tip.classList.add('show');
   const r = el.querySelector('.node').getBoundingClientRect();
   const tw=tip.offsetWidth, th=tip.offsetHeight, vw=innerWidth, vh=innerHeight;
@@ -439,11 +443,15 @@ function showTip(el,i){
   tip.style.left=left+'px'; tip.style.top=top+'px';
 }
 function scheduleHide(){hideT=setTimeout(()=>tip.classList.remove('show'),180);}
-function toggleArch(btn){   // 📦 보관함 버튼 — 은퇴 세대 목록을 따로 열고 닫기
-  const w = btn.closest('.files').querySelector('.archwrap');
-  const open = w.style.display==='none';
-  w.style.display = open?'block':'none';
-  btn.classList.toggle('on', open);
+function toggleArch(btn){   // 📦 보관함 — 화면을 통째로 보관함 리스트로 전환
+  const box = btn.closest('.files');
+  box.querySelector('.curview').style.display='none';
+  box.querySelector('.archwrap').style.display='block';
+}
+function closeArch(btn){    // ‹ 돌아가기 / ✕ — 현역 리스트로 복귀
+  const box = btn.closest('.files');
+  box.querySelector('.archwrap').style.display='none';
+  box.querySelector('.curview').style.display='block';
 }
 
 /* 액션 — U5: 처리 중 표시 */
