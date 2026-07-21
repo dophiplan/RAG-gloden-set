@@ -49,7 +49,9 @@ def chat(role, system, user, cfg=None, max_tokens=4000):
         return _anthropic(m["model"], key, system, user, max_tokens)
     base = {"moonshot": "https://api.moonshot.ai/v1",
             "openai": "https://api.openai.com/v1"}.get(provider, m.get("base_url", ""))
-    return _openai_compat(base, m["model"], key, system, user, max_tokens,
+    # K3 같은 추론 모델은 '생각'에도 이 예산을 쓴다 — 기본이 작으면 답이 잘리거나 빈 채로 옴
+    return _openai_compat(base, m["model"], key, system, user,
+                          m.get("max_tokens", max(max_tokens, 16384)),
                           temperature=m.get("temperature", 0.3))
 
 
@@ -101,7 +103,14 @@ def _openai_compat(base, model, key, system, user, max_tokens, temperature=0.3):
               {"model": model, "temperature": temperature, "max_tokens": max_tokens,
                "messages": [{"role": "system", "content": system},
                             {"role": "user", "content": user}]})
-    return d["choices"][0]["message"]["content"]
+    ch = d["choices"][0]
+    content = ch["message"].get("content") or ""
+    if not content.strip():
+        # 빈 응답은 침묵하지 말고 원인을 말한다 (추론 모델이 생각에 예산을 다 쓴 경우 등)
+        fr = ch.get("finish_reason")
+        raise RuntimeError(f"빈 응답 (finish_reason={fr}, max_tokens={max_tokens}) — "
+                           "추론 예산 부족 의심: max_tokens 상향 필요")
+    return content
 
 
 def _anthropic(model, key, system, user, max_tokens):
