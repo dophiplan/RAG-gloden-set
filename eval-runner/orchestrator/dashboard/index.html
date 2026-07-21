@@ -56,6 +56,7 @@
   @media (prefers-reduced-motion: reduce){.stage .node{animation:none!important}}
   .s-name{margin-top:9px;font-size:12px;font-weight:500}
   .s-state{font-size:10px;letter-spacing:.06em;margin-top:2px}
+  .s-ai{font-size:9.5px;font-family:var(--mono);color:var(--tx2);margin-top:3px;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
   .st-done{color:var(--doneC)} .st-run{color:var(--run)} .st-human{color:var(--human)} .st-input{color:var(--input)} .st-halt{color:var(--halt)} .st-none{color:#3a4158}
   .stage:hover .s-name,.stage.tipon .s-name{color:var(--run)}
   .stage:focus-visible{outline:2px solid var(--run);outline-offset:-2px}
@@ -314,6 +315,7 @@ function render(){
         <div class="node"><span>${CIRC[i]}</span></div>
         <div class="s-name">${catStages[i]?catStages[i].name:s.k}</div>
         <div class="s-state ${stCls[s.cls]||'st-none'}">${s.label}</div>
+        <div class="s-ai">${esc(stageAI(s.k).who)}</div>
       </div>`;}).join('')}
     </div>
   </div>
@@ -381,7 +383,7 @@ function renderDetail(ps){
     ["열린 결정", `${ps.open_gates.length}`],
     ["회차 비교", ps.compare_blocked?'차단 <small>재채점 중</small>':'허용'],
   ];
-  const note = cs? `${cs.what}\n\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
+  const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
     ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
     <div class="note">${esc(note)}</div>`;
@@ -480,7 +482,8 @@ function showTip(el,i){
         `<details class="arch" ${Object.keys(groups).length===1?'open':''}><summary>${esc(g)} — ${fl.length}개</summary>${fl.map(frow).join('')}</details>`).join('')}</div>`;
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
-      <div class="io"><span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
+      <div class="io"><span class="k">누가 하나</span><span class="v" style="color:var(--tx)">${esc(stageAI(STAGE_ORDER[i]).how)}</span>
+        <span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
         <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
       <div class="files vswitch">${files}</div></div>`;
   tip.classList.add('show');
@@ -578,6 +581,40 @@ async function uploadRound(input){
     if(!d.ok){ busy=false; await loadAll(); return; }
   } finally { busy = false; }
   await act({cmd:'run', product:PV().code});               // 형식 게이트 → 채점 → 성적표 게이트 발행
+}
+
+/* G18: 단계별 "누가 하나" — 전략×연결×체크 상태에서 실제 투입을 계산해 트랙에 노출 */
+function engFor(role){
+  const e=(S.ai&&S.ai.engines||[]).find(x=>x.role===role);
+  return e? e.engine : role;
+}
+function extractorsNow(){   // ③ 추출 편성 = gen_coverage._ensemble_roles 와 같은 규칙
+  const strat = PS().strategy||'ensemble';
+  if(strat!=='ensemble') return [engFor('generator')];
+  const use = ((S.ai&&S.ai.products[cur])||{}).ai_use||{};
+  const list = (S.ai&&S.ai.engines||[]).filter(e=>e.connected && use[e.role]!==false).map(e=>e.engine);
+  return list.length? list : [engFor('generator')];
+}
+function stageAI(k){
+  const g = engFor('generator'), j = engFor('judge');
+  const strat = PS().strategy||'ensemble';
+  switch(k){
+    case 'CORPUS_AUDIT':  return {who:'스크립트', how:'AI 없음 — 스크립트가 실측 (청크·스코프 카운트, 해시 등재)'};
+    case 'TERRAIN':       return {who:'사람',   how:'AI 없음 — 스크립트가 프로파일 제안, 판정은 사람'};
+    case 'COVERAGE_MAP':
+      if(strat==='ensemble'){ const ex=extractorsNow();
+        return {who:ex.join('+'), how:`앙상블 적용 지점 — 추출: ${ex.join('·')} (체크된 AI 전원이 각자 전체 코퍼스) → 병합: ${g} → 1축 검수: 스크립트(원문 문자 대조)`};}
+      if(strat==='cross_check') return {who:`${g}→${j}`, how:`추출: ${g} → 교차 검수 의견: ${j} (참고 — 판정은 사람) → 1축 검수: 스크립트`};
+      if(strat==='self_check')  return {who:g, how:`추출: ${g} → 자가 검수(새 세션, 참고) → 1축 검수: 스크립트`};
+      return {who:g, how:`단독 추출: ${g} → 1축 검수: 스크립트`};
+    case 'GOLDENSET_BATCH': return {who:g, how:`배분 계획·문항 출제: ${g} → 스크립트 검수 7종 → 반려 루프 → 확정은 사람`};
+    case 'UNIFIED_LEDGER':  return {who:'스크립트', how:'AI 없음 — 스크립트가 배치 병합·중복 검사'};
+    case 'CALIBRATION':     return {who:`${j}×사람`, how:`채점관 면접 — ${j}가 30문항 판정, 사람 판정 30건과 대조 (일치 90% 미만이면 본판정 잠김)`};
+    case 'STAGE2':          return {who:`${j}+사람`, how:`본판정: ${j} (새 세션 · 규칙 B — [문항, 기준서]만 전달) + 사람 무작위 재검`};
+    case 'SCORING':         return {who:'스크립트+사람', how:'AI 없음 — 스크립트가 정답키와 기계 대조 채점, E형 확인은 사람'};
+    case 'MAINTENANCE':     return {who:'사람', how:'AI 없음 — 되먹임 큐 판단은 사람'};
+  }
+  return {who:'', how:''};
 }
 
 /* G15: AI 팀 패널 — 누가 연결됐고(🟢/⚪) 이번 제작에 누굴 투입할지(체크) */
