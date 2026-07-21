@@ -17,7 +17,7 @@ model_adapter.py — 모델 어댑터: 키 개수 자동 판별 + 규칙 A/B/B�
 사용:
   python3 tools/model_adapter.py mode                # 현재 모드 표시
   python3 tools/model_adapter.py guard <파일...>      # 첨부물 매니페스트 대조 (통과/거부)
-  python3 tools/model_adapter.py register <파일...> --actor 난희  # 재료 재등록 (사람 게이트)
+  python3 tools/model_adapter.py register <파일...> --actor 송하  # 재료 재등록 (사람 게이트)
   python3 tools/model_adapter.py selftest
 """
 import argparse

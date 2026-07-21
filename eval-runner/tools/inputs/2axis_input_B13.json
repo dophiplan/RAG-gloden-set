@@ -61,10 +61,10 @@
    "id": "RC-D033@G-B2-1",
    "type": "D",
    "question": "iOS 지원에서 서버에 미리 넣어둔 안내 이미지를 고객에게 보내려면 어디서 등록하고 어떻게 보내나요?",
-   "gold_answer_required": "이미지 보내기(서버)로 전난희며, 이미지 등록은 Admin 페이지>상담 도구 관리>아이폰 안내 이미지에서 함 / 필수: 아이폰 안내 이미지 등록",
+   "gold_answer_required": "이미지 보내기(서버)로 전송하며, 이미지 등록은 Admin 페이지>상담 도구 관리>아이폰 안내 이미지에서 함 / 필수: 아이폰 안내 이미지 등록",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 아이폰 안내 이미지 등록 / Knock-out: 중간 단계 건너뛴 추측 답변 0점",
-   "evidence_excerpt": "이미지 보내기(PC)는 지원 중 상담원 PC의 이미지를 고객에게 전난희는 기능으로 전송 이미지는 채팅에서 확인 가능하며, 이미지 보내기(서버)는 서버에 미리 등록한 이미지를 전난희는 기능으로 이미지 등록은 Admin 페이지 > 상담 도구 관리 > 아이폰 안내 이미지에서 한다.",
+   "evidence_excerpt": "이미지 보내기(PC)는 지원 중 상담원 PC의 이미지를 고객에게 전송하는 기능으로 전송 이미지는 채팅에서 확인 가능하며, 이미지 보내기(서버)는 서버에 미리 등록한 이미지를 전송하는 기능으로 이미지 등록은 Admin 페이지 > 상담 도구 관리 > 아이폰 안내 이미지에서 한다.",
    "citation": "RC-MANUAL-AGIOS-016 ; [RC-MANUAL]3.1.3 도구 / 이미지 보내기(PC·서버) | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-Mobile-Support-iOS-Ko.pdf (3.1.3 도구 / 이미지 보내기(PC·서버))",
    "acl_level": "all"
   },
@@ -185,7 +185,7 @@
    "gold_answer_required": "채팅 기능으로 단말과 채팅·메시지 전송, 모바일 지원 로그 표시, 탭 버튼으로 채팅/알림 전환·메모장 복사 / 필수: 채팅 + 로그 표시",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 채팅 + 로그 표시",
-   "evidence_excerpt": "채팅 기능으로 지원 중인 단말기와 채팅하거나 메시지를 전난희고 모바일 지원 로그가 표시되며, 탭 버튼으로 채팅/알림 창 전환과 메모장 복사가 가능하다.",
+   "evidence_excerpt": "채팅 기능으로 지원 중인 단말기와 채팅하거나 메시지를 전송하고 모바일 지원 로그가 표시되며, 탭 버튼으로 채팅/알림 창 전환과 메모장 복사가 가능하다.",
    "citation": "RC-MANUAL-AGIOS-020 ; [RC-MANUAL]3.2.3 채팅(iOS) | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-Mobile-Support-iOS-Ko.pdf (3.2.3 채팅(iOS))",
    "acl_level": "all"
   },
@@ -218,7 +218,7 @@
    "gold_answer_required": "화면 전송(편집 이미지 전송), 고객화면 보기, 슬라이드 바 숨기기/보이기로 캡처·보낸 이미지 리스트 선택 / 필수: 이미지 리스트 선택",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 이미지 리스트 선택",
-   "evidence_excerpt": "화면 전송은 캡처 또는 보낸 이미지를 편집 후 고객에게 전난희는 기능이고, 고객화면 보기는 캡처 이미지 표시 중 아이콘 클릭으로 단말 화면을 뷰어에서 확인하는 기능이며, 슬라이드 바 숨기기/보이기로 뷰어 하단 슬라이드 바 사용 여부를 설정하고 보이기 상태에서 캡처·보낸 이미지 리스트를 선택할 수 있다.",
+   "evidence_excerpt": "화면 전송은 캡처 또는 보낸 이미지를 편집 후 고객에게 전송하는 기능이고, 고객화면 보기는 캡처 이미지 표시 중 아이콘 클릭으로 단말 화면을 뷰어에서 확인하는 기능이며, 슬라이드 바 숨기기/보이기로 뷰어 하단 슬라이드 바 사용 여부를 설정하고 보이기 상태에서 캡처·보낸 이미지 리스트를 선택할 수 있다.",
    "citation": "RC-MANUAL-AGIOS-024 ; [RC-MANUAL]3.5~3.7 화면 전송·고객화면 보기·슬라이드 바 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-Mobile-Support-iOS-Ko.pdf (3.5~3.7 화면 전송·고객화면 보기·슬라이드 바)",
    "acl_level": "all"
   },

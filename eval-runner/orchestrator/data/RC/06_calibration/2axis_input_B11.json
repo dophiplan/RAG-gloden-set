@@ -75,7 +75,7 @@
    "gold_answer_required": "보내기=상담원 PC 파일을 고객 PC로(Drag&Drop·Copy&Paste), 가져오기=고객 PC 파일을 상담원 PC로(Drag&Drop·Ctrl+C/V), 저장 Received Files / 필수: 방향 구분 + 방식",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 방향 구분 + 방식 / Knock-out: 하위 질문 한쪽 누락 시 0점",
-   "evidence_excerpt": "[RC-MANUAL-AGPC-101] 파일 보내기는 상담원 PC 파일을 고객 PC로 전난희며 Drag&Drop과 Copy&Paste를 지원\n[RC-MANUAL-AGPC-102] 파일 가져오기는 고객 PC 파일을 상담원 PC로 가져오는 기능으로 Drag&Drop·Copy&Paste(Ctrl+C/Ctrl+V)를 지원",
+   "evidence_excerpt": "[RC-MANUAL-AGPC-101] 파일 보내기는 상담원 PC 파일을 고객 PC로 전송하며 Drag&Drop과 Copy&Paste를 지원\n[RC-MANUAL-AGPC-102] 파일 가져오기는 고객 PC 파일을 상담원 PC로 가져오는 기능으로 Drag&Drop·Copy&Paste(Ctrl+C/Ctrl+V)를 지원",
    "citation": "RC-MANUAL-AGPC-101 + RC-MANUAL-AGPC-102 ; [RC-MANUAL]4.3.6 도구 / 파일 보내기 + [RC-MANUAL]4.3.6 도구 / 파일 가져오기 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-PC-Support-Ko.pdf (4.3.6 도구 / 파일 보내기) + https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-PC-Support-Ko.pdf (4.3.6 도구 / 파일 가져오기)",
    "acl_level": "all"
   },

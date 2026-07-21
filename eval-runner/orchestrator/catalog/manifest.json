@@ -430,13 +430,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v1_2",
       "size": 838377,
-      "sha256": "4a39f60335702850c2891993d3bd92fff6dff1ab50eb9edc93a3ba3b80b68ebc",
+      "sha256": "c935f77d6ab0d19b052f10dce16fd8e1cd5c7003b1964b51482a71b0b743029f",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v1_2.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_2.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RV_커버리지맵_코퍼스판_v0_1_2.xlsx",
@@ -445,13 +444,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v0_1",
       "size": 333467,
-      "sha256": "b1ef45943aac85e5814054b282d9357d31da66a66a6c93cd15a1800aedec435a",
+      "sha256": "0a12f320055691914b3c871381e6844b1f7398dfb5fa0e69ec8d3837e5745b5a",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v0_1_2.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v0_1_2.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RV_커버리지맵_코퍼스판_v1_3.xlsx",
@@ -460,13 +458,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v1_3",
       "size": 840361,
-      "sha256": "27053204e3b4e0ded235c7318e59d320141808d38999069177c8df96edf8566b",
+      "sha256": "355ae80d65c9f7ec4b719d69119cb2e2c46a46d29bd5ac028beade75d11be651",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v1_3.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_3.xlsx",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RV_커버리지맵_코퍼스판_B0_사전분류.xlsx",
@@ -503,13 +500,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v1_0",
       "size": 352117,
-      "sha256": "6389662cdef9015d4c756eaf914267f47a1514aec967829310d4b59799943752",
+      "sha256": "9d0c6be86500c38ae4dc9df79b5a44a4fdbaa5690575c6df5e6394270183ce7b",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v1_0.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_0.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RV_커버리지맵_코퍼스판_v0_1_1.xlsx",
@@ -518,13 +514,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v0_1",
       "size": 281709,
-      "sha256": "ae1ab458634ae1e5f5008dd2937057a08b7e85791ec70a21413441077f3d3f60",
+      "sha256": "3aa9f273088d8305ae49fd9d37aba17fe6bd4717d112a97a30b2d022c77357e9",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v0_1_1.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v0_1_1.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RV_커버리지맵_코퍼스판_v1_1.xlsx",
@@ -533,13 +528,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v1_1",
       "size": 472522,
-      "sha256": "432d4bbd0d0560d67b1f842d33b32a2dd15cf044bc41c1882026217cb8077790",
+      "sha256": "6721f1157fd8edd4a4071b14de211079116ad0688879077a3c0c6599df0e4dbc",
       "group": "RV|③COVERAGE_MAP|RV_커버리지맵_코퍼스판",
       "duplicate_of": null,
       "src": "/Users/nanheekim/Downloads/RV 커버리지맵 /RV_커버리지맵_코퍼스판_v1_1.xlsx",
       "dest": "RV/03_coverage_map/RV_커버리지맵_코퍼스판_v1_1.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "3rd_input.json",
@@ -548,13 +542,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 272145,
-      "sha256": "6fd07b4c068fad19479806e22fd776f7fdd32686313f1778cbd881e14b3f3336",
+      "sha256": "145a943487236a15e216cda847adc51c17dd2d919136e27d39b30b3cae1037e2",
       "group": "RC|⑥CALIBRATION|3rd_input",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/3rd_input.json",
       "dest": "RC/06_calibration/3rd_input.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RC_질문셋.json",
@@ -563,13 +556,12 @@
       "stage_dir": "08_scoring",
       "version": "",
       "size": 132813,
-      "sha256": "11907359f613933e7612322e6a094723b8cbaf874760e2f6428a130158ce0a92",
+      "sha256": "1a99a76f852acc24cc3e7d0100554dc37dcdacc0ad1a81cea6e8bcfd86a895ce",
       "group": "RC|⑧SCORING|RC_질문셋",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/RC_질문셋.json",
       "dest": "RC/08_scoring/RC_질문셋.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RC_골든셋_v1_1.xlsx",
@@ -592,13 +584,12 @@
       "stage_dir": "08_scoring",
       "version": "",
       "size": 4313329,
-      "sha256": "4a6e6d28e8e1869075d3b6a29fb117078996c01db130c3fb08df22500bc30010",
+      "sha256": "61b80c50e6a9596d53bda34704797366fadb0db61b313da51ac97288171f421e",
       "group": "RC|⑧SCORING|RC_골든셋_r2_응답로그_2026-07-13",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/RC_골든셋_r2_응답로그_2026-07-13.json",
       "dest": "RC/08_scoring/RC_골든셋_r2_응답로그_2026-07-13.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RC_골든셋_응답로그_2026-07-13.json",
@@ -607,13 +598,12 @@
       "stage_dir": "08_scoring",
       "version": "",
       "size": 4446029,
-      "sha256": "c68617d01ee470d8725b73e9209798324fef1fef12de4c0d4fd532d76b0a20d8",
+      "sha256": "28397e1ec8a01617c44dc4722ccdb672256978d4ab78cd8a75b3fb73fe797547",
       "group": "RC|⑧SCORING|RC_골든셋_응답로그_2026-07-13",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/RC_골든셋_응답로그_2026-07-13.json",
       "dest": "RC/08_scoring/RC_골든셋_응답로그_2026-07-13.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "score_report.json",
@@ -874,13 +864,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 14290,
-      "sha256": "668cecf36125d7c0379edcf2ad22e29b165b53395393cc844d8211c9c2e81c7b",
+      "sha256": "a10597923864aaa6ec6cc1d625dbdbfbc795a11f6f0895cc735a6635411ced84",
       "group": "RC|⑥CALIBRATION|2axis_result_B28",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/results/2axis_result_B28.json",
       "dest": "RC/06_calibration/2axis_result_B28.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_result_B29.json",
@@ -1071,13 +1060,12 @@
       "stage_dir": "08_scoring",
       "version": "",
       "size": 258530,
-      "sha256": "7b7d306905cd79b73a82283a262c8d5fd9cb8a8b2b9743753f7f2f84d674def2",
+      "sha256": "22507dc4ed7ebfe984f6baa802bfd37d458db7f9ee2e2fb6c384032faa7b9c37",
       "group": "RC|⑧SCORING|score_report",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/score_out_2차/score_report.json",
       "dest": "RC/08_scoring/score_report.json",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "score_report.xlsx",
@@ -1086,13 +1074,12 @@
       "stage_dir": "08_scoring",
       "version": "",
       "size": 86496,
-      "sha256": "2876722d6ef1209fadf50c1f4c2bd3c37ba37abaf582b29590f1c332aaf5b01e",
+      "sha256": "01303e492e81f5cb3130e3e464618c8113456e63359d1e71104c176530e7896c",
       "group": "RC|⑧SCORING|score_report",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/score_out_2차/score_report.xlsx",
       "dest": "RC/08_scoring/score_report.xlsx",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RC_골든셋_사람확정큐_32건.xlsx",
@@ -1101,13 +1088,12 @@
       "stage_dir": "04_goldenset_batch",
       "version": "",
       "size": 21799,
-      "sha256": "5ea31699a10bd87afd2b15fbf83fbd422e56dadea6a40e8d9f78500fd28a8a25",
+      "sha256": "5bcc854059921ecf4cd59004e09a7ff7893fc6dbe3ea670e32b4be51b302eb5a",
       "group": "RC|④GOLDENSET_BATCH|RC_골든셋_사람확정큐_32건",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/RC 골든셋에 썼던 작업/RC_골든셋_사람확정큐_32건.xlsx",
       "dest": "RC/04_goldenset_batch/RC_골든셋_사람확정큐_32건.xlsx",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RC_커버리지맵_코퍼스판_최종통합본.xlsx",
@@ -1158,13 +1144,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 14747,
-      "sha256": "4809af7c77f304b18b09924ca0c290da7c646b8dec3ba72ba10060e3b7e491b2",
+      "sha256": "810ab0e4c4707a1f8d74d1c3d49b5800bbaccbcceaf43eaac6c3d921ef1bb4b6",
       "group": "RC|⑥CALIBRATION|2axis_result_B01",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/RC 골든셋에 썼던 작업/RC_2축 /RC_STAGE2_2axis_결과 패키지/2axis_result_B01.json",
       "dest": "RC/06_calibration/2axis_result_B01.json",
-      "canonical": false,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": false
     },
     {
       "file": "RC_골든셋_G-B3_TERMS.xlsx",
@@ -1313,13 +1298,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 34389,
-      "sha256": "41cdec152a6496b721de109b0ab319128aae38f7aaf614bc44493a4a90239206",
+      "sha256": "1dbbb4e32739360d934d49e6d2ce77ce15591f2a6e567fef2a22d9c0c992de94",
       "group": "RC|⑥CALIBRATION|2axis_input_B15",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B15.json",
       "dest": "RC/06_calibration/2axis_input_B15.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B03.json",
@@ -1342,13 +1326,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 37066,
-      "sha256": "74a119f6f7f28418e6b290bd36ad1aac4770d925d7cf8fd32b55f77d912b97c9",
+      "sha256": "6cfe49605d6bed9f01796f73cc27775f3cd2a843331b74944153e3de43847aad",
       "group": "RC|⑥CALIBRATION|2axis_input_B23",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B23.json",
       "dest": "RC/06_calibration/2axis_input_B23.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B19.json",
@@ -1357,13 +1340,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 37288,
-      "sha256": "6f5bc880142131e53b3e34d35d9345a846654c85b19acb6348f6bf49f1209f7a",
+      "sha256": "b18d6a7f46082efd459f5f6459ee9cb7dc35fa94ab96d1f9ca56a561747da081",
       "group": "RC|⑥CALIBRATION|2axis_input_B19",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B19.json",
       "dest": "RC/06_calibration/2axis_input_B19.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B18.json",
@@ -1414,13 +1396,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 35059,
-      "sha256": "39729f93ee2c187d4c2a73547de0e1c8b0b18baba4d22740bbaaf4493fc7f0bf",
+      "sha256": "e947328058f10b21d31abc12af266e1534d1ebe840e0a388979eaaab1684f023",
       "group": "RC|⑥CALIBRATION|2axis_input_B14",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B14.json",
       "dest": "RC/06_calibration/2axis_input_B14.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B25.json",
@@ -1471,13 +1452,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 33666,
-      "sha256": "98297817c1ed335fbdb127b56c8ecb75969d62499de18b5e69aee88b6db1707c",
+      "sha256": "a51f1be420f8412f23a609a88d16b73fba687bc9c51b8b830541e7c75ecab907",
       "group": "RC|⑥CALIBRATION|2axis_input_B13",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B13.json",
       "dest": "RC/06_calibration/2axis_input_B13.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B05.json",
@@ -1514,13 +1494,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 32668,
-      "sha256": "7a9a0494ed68b550c8e61c3e148a4320144b574d2158e4dd082a7ac6242688c9",
+      "sha256": "8e76bdd7dafe7fe925e1b67bd82ff5269e7c53ab7aa926a35827cbab5cb8f93d",
       "group": "RC|⑥CALIBRATION|2axis_input_B12",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B12.json",
       "dest": "RC/06_calibration/2axis_input_B12.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B28.json",
@@ -1529,13 +1508,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 44952,
-      "sha256": "72fb9c7a7fa35cf8d056fdc65377e544bdcf8e3759113518a3a8ad8612c9c53a",
+      "sha256": "630d024f8323ef955d9c2be80daaf7a99369c13037a8785fd6f305a24e79d8ee",
       "group": "RC|⑥CALIBRATION|2axis_input_B28",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B28.json",
       "dest": "RC/06_calibration/2axis_input_B28.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B08.json",
@@ -1586,13 +1564,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 23224,
-      "sha256": "f487591a384c12b9cae111f018f0f1de7f62ddd7f450c3f3cd777b04ae375618",
+      "sha256": "64aff94f467ed33b8b8925d880b20feec0f7171074ea2f24782e3d8d2bcba29a",
       "group": "RC|⑥CALIBRATION|2axis_input_B07",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B07.json",
       "dest": "RC/06_calibration/2axis_input_B07.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B11.json",
@@ -1601,13 +1578,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 32540,
-      "sha256": "657a6e5b162b0ee62f597614dcd47f23ed325262ffb015b184357432227bff44",
+      "sha256": "bcbbf6928aadfe38f69b69ce001fe9f85ea14105d16a35951c480ba7e63bac86",
       "group": "RC|⑥CALIBRATION|2axis_input_B11",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B11.json",
       "dest": "RC/06_calibration/2axis_input_B11.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B10.json",
@@ -1686,13 +1662,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 37898,
-      "sha256": "1ba323f60add0f96cc862478f07f2de67de55948dd190eacd05a1230892fc94b",
+      "sha256": "f69dec30a0a6df1bd40443273be7bbc3da4f6dc75fdf4022a94c82e4a2251917",
       "group": "RC|⑥CALIBRATION|2axis_input_B17",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B17.json",
       "dest": "RC/06_calibration/2axis_input_B17.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B21.json",
@@ -1701,13 +1676,12 @@
       "stage_dir": "06_calibration",
       "version": "",
       "size": 39309,
-      "sha256": "9f5460fb88046cd76c01ae7a8f35d3517acf379af829c44fcfc68a3447f24936",
+      "sha256": "36ace7f221db709f9896b4328dc4cee0fd2eec17a9d708a2c47476dbfcd12aad",
       "group": "RC|⑥CALIBRATION|2axis_input_B21",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/tools/inputs/2axis_input_B21.json",
       "dest": "RC/06_calibration/2axis_input_B21.json",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "2axis_input_B20.json",
@@ -1758,13 +1732,12 @@
       "stage_dir": "03_coverage_map",
       "version": "v0_4",
       "size": 332493,
-      "sha256": "bc9829ede8cf6c95edd4b5257d7e955432adf0ae391ce586212d288009695372",
+      "sha256": "d723385d33de6ff24c2c284ee93c948b82c49d784c7f93217447429d042ce2d0",
       "group": "RC|③COVERAGE_MAP|RC_커버리지맵_통합정본",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/products/RC/RC_커버리지맵_통합정본_v0_4_1367행.xlsx",
       "dest": "RC/03_coverage_map/RC_커버리지맵_통합정본_v0_4_1367행.xlsx",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RC_골든셋_STAGE1_v2.xlsx",
@@ -1773,13 +1746,12 @@
       "stage_dir": "05_unified_ledger",
       "version": "",
       "size": 253327,
-      "sha256": "58b0125045841fd9afc34b40597c2dae669ae85fccf690c85422c91ca436a64e",
+      "sha256": "ce132596e7433e89e2995c1889ec4de6a079d79bc68f82085cf8275c2f7f2d50",
       "group": "RC|⑤UNIFIED_LEDGER|RC_골든셋_STAGE1_v2",
       "duplicate_of": null,
       "src": "/Users/nanheekim/eval-runner/products/RC/RC_골든셋_STAGE1_v2.xlsx",
       "dest": "RC/05_unified_ledger/RC_골든셋_STAGE1_v2.xlsx",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RM_골든셋_v1_4.xlsx",
@@ -1858,13 +1830,12 @@
       "stage_dir": "07_stage2",
       "version": "v1_0",
       "size": 7959,
-      "sha256": "2578f92e5e45676b81c9c91f182c6a10f78b09a3216fbb4bf8e14f35ae5355f6",
+      "sha256": "d1ef34da75b677744d376af423cad608fc32fadc6a4e019c965e473020dd6805",
       "group": "RV|⑦STAGE2|RV_본판정_judge_프롬프트_diff_v2_to_vFinal",
       "duplicate_of": null,
       "src": "/tmp/rv_zip_ex/RV_본판정_judge_프롬프트_diff_v2_to_vFinal_v1_0.md",
       "dest": "RV/07_stage2/RV_본판정_judge_프롬프트_diff_v2_to_vFinal_v1_0.md",
-      "canonical": true,
-      "rehashed": "2026-07-20 명의 교정"
+      "canonical": true
     },
     {
       "file": "RV_골든셋_B6_5차_비교가이드_15문항_v1_2.xlsx",

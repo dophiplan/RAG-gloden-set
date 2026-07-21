@@ -196,7 +196,7 @@
    "gold_answer_required": "파일/폴더를 가져오거나 전송·삭제 가능하나 Android 보안 정책으로 OS 11 이상은 일부 폴더·파일에 제한이 있을 수 있음 / 필수: OS 11↑ 제한",
    "answer_type": "single",
    "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: OS 11↑ 제한 / Knock-out: 경계·예외 조건을 반대로 답하면 0점",
-   "evidence_excerpt": "파일전송은 지원 중인 단말기의 파일 목록을 확인하고 고객 동의 하에 파일/폴더를 상담원 PC로 가져오거나 단말기로 전난희는 기능으로, 폴더 이동·새로고침, 파일 삭제(고객 동의 필요), 파일 실행, 파일 보내기/받기를 지원한다. 다중 파일 전송 시 개별 동의 메시지가 나타나며 '다음 O개 파일/폴더 포함' 체크로 일괄 동의가 가능하다. Android 보안 정책으로 OS 11 이상 단말은 전송·삭제 시 일부 폴더·파일에 제한이 있을 수 있다.",
+   "evidence_excerpt": "파일전송은 지원 중인 단말기의 파일 목록을 확인하고 고객 동의 하에 파일/폴더를 상담원 PC로 가져오거나 단말기로 전송하는 기능으로, 폴더 이동·새로고침, 파일 삭제(고객 동의 필요), 파일 실행, 파일 보내기/받기를 지원한다. 다중 파일 전송 시 개별 동의 메시지가 나타나며 '다음 O개 파일/폴더 포함' 체크로 일괄 동의가 가능하다. Android 보안 정책으로 OS 11 이상 단말은 전송·삭제 시 일부 폴더·파일에 제한이 있을 수 있다.",
    "citation": "RC-MANUAL-AGAD-040 ; [RC-MANUAL]5.2.10 파일전송(모바일) | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-Mobile-Support-Android-Ko.pdf (5.2.10 파일전송(모바일))",
    "acl_level": "all"
   },

@@ -237,7 +237,7 @@
       "gold_answer_required": "Ctrl+Alt+Del 전송(Windows 전용) 가능하나 제한된 계정·Guest 계정 접속 시 메뉴 비활성 / 필수: 제한/Guest 시 비활성",
       "answer_type": "single",
       "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 제한/Guest 시 비활성",
-      "evidence_excerpt": "Ctrl+Alt+Del 전송(Windows 전용)은 고객 PC에 윈도우 시스템 키 Ctrl+Alt+Del을 전난희는 기능으로, 제한된 계정이나 Guest 계정으로 접속한 경우 메뉴가 활성화되지 않는다.",
+      "evidence_excerpt": "Ctrl+Alt+Del 전송(Windows 전용)은 고객 PC에 윈도우 시스템 키 Ctrl+Alt+Del을 전송하는 기능으로, 제한된 계정이나 Guest 계정으로 접속한 경우 메뉴가 활성화되지 않는다.",
       "citation": "RC-MANUAL-AGPC-091 ; [RC-MANUAL]4.3.3 Ctrl+Alt+Del 전송 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-PC-Support-Ko.pdf (4.3.3 Ctrl+Alt+Del 전송)"
     },
     {
@@ -363,7 +363,7 @@
       "gold_answer_required": "보내기=상담원 PC 파일을 고객 PC로(Drag&Drop·Copy&Paste), 가져오기=고객 PC 파일을 상담원 PC로(Drag&Drop·Ctrl+C/V), 저장 Received Files / 필수: 방향 구분 + 방식",
       "answer_type": "single",
       "pass_criteria": "근거 top-5 내 AND Faithfulness≥4 AND Correctness≥4 / 필수: 방향 구분 + 방식 / Knock-out: 하위 질문 한쪽 누락 시 0점",
-      "evidence_excerpt": "[RC-MANUAL-AGPC-101] 파일 보내기는 상담원 PC 파일을 고객 PC로 전난희며 Drag&Drop과 Copy&Paste를 지원\n[RC-MANUAL-AGPC-102] 파일 가져오기는 고객 PC 파일을 상담원 PC로 가져오는 기능으로 Drag&Drop·Copy&Paste(Ctrl+C/Ctrl+V)를 지원",
+      "evidence_excerpt": "[RC-MANUAL-AGPC-101] 파일 보내기는 상담원 PC 파일을 고객 PC로 전송하며 Drag&Drop과 Copy&Paste를 지원\n[RC-MANUAL-AGPC-102] 파일 가져오기는 고객 PC 파일을 상담원 PC로 가져오는 기능으로 Drag&Drop·Copy&Paste(Ctrl+C/Ctrl+V)를 지원",
       "citation": "RC-MANUAL-AGPC-101 + RC-MANUAL-AGPC-102 ; [RC-MANUAL]4.3.6 도구 / 파일 보내기 + [RC-MANUAL]4.3.6 도구 / 파일 가져오기 | https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-PC-Support-Ko.pdf (4.3.6 도구 / 파일 보내기) + https://files.rsupport.com/ko/remotecall/guides/RemoteCall-SaaS-Agent-Manual-PC-Support-Ko.pdf (4.3.6 도구 / 파일 가져오기)"
     },
     {
@@ -1321,7 +1321,7 @@
     {
       "id": "RC-A019@G-B6",
       "type": "A",
-      "reason": "evidence_excerpt에서 'PC 없이 모바일 기기에서도 지원할 수 있습니다'와 'SMS로 접속주소를 발난희면'을 명시"
+      "reason": "evidence_excerpt에서 'PC 없이 모바일 기기에서도 지원할 수 있습니다'와 'SMS로 접속주소를 발송하면'을 명시"
     },
     {
       "id": "RC-A020@G-B1",
