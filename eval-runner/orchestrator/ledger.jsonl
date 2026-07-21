@@ -889,3 +889,5 @@
 {"ts": "2026-07-21T18:15:10", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "사람:난희", "action": "RESUME_AFTER_FIX", "evidence": {"halt_was": "{\"halt\": \"AI 호출 연속 실패로 일시 중단 (generator 3/142 배치에서 중단) — 구독 한도/네트워크 의심. 지금까지 진행분은 체크포인트에 저장됨: 한도 회복 후 [▶ 이어서 재개]를 누르면 이어서 진행\"}"}, "reason": "한도/일시 중단 회복 — 체크포인트 재개"}
 {"ts": "2026-07-21T18:15:10", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-07-21T18:15:11", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "3/142", "보존 단위": 251}, "reason": null}
+{"ts": "2026-07-21T18:25:58", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-21T18:25:59", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "3/142", "보존 단위": 251}, "reason": null}
