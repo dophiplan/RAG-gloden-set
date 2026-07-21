@@ -263,7 +263,12 @@ function nextAction(){
   const ps = PS(), code = PV().code;
   const myCards = S.queue.filter(c=>c.product===code);
   if(busy) return {icon:'⏳', text:'AI 작업 중… 실전 모드에서는 몇 분 걸릴 수 있어요. 이 화면 그대로 두세요.'};
-  if(ps.status==='HALTED') return {icon:'⛔', text:'사고 정지 상태예요 — 원인: '+(ps.halt_reason||'원장 확인')+'. 저(Claude)를 불러주세요.'};
+  if(ps.status==='HALTED'){
+    const r = ps.halt_reason||'원장 확인';
+    if(r.includes('한도') || r.includes('일시 중단'))
+      return {icon:'⏸', text:'AI 호출이 연속 실패해서 잠시 멈췄어요 (구독 한도 의심). 진행분은 저장돼 있어요 — 한도가 회복되면 [▶ 이어서 재개]를 누르세요.', resume:true};
+    return {icon:'⛔', text:'사고 정지 상태예요 — 원인: '+r+'. 저(Claude)를 불러주세요.'};
+  }
   if(ps.status==='WAITING_INPUT'){
     const c = myCards.find(c=>c.kind==='INPUT');
     return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
@@ -310,7 +315,7 @@ function render(){
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
     ${renderAiTeam()}
-    <div class="nextbar">${na.icon} ${esc(na.text)}<div class="progline" id="progline" style="display:none"></div></div>
+    <div class="nextbar">${na.icon} ${esc(na.text)}${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}<div class="progline" id="progline" style="display:none"></div></div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
@@ -563,6 +568,10 @@ async function doUpload(input, cardId){
 }
 async function setStrategy(v){
   await act({cmd:'set-strategy', product:PV().code, strategy:v});
+}
+async function resumeRun(){   // 한도 회복 후 이어서 — 체크포인트에서 재개
+  const d = await act({cmd:'resume', product:PV().code, reason:'한도/일시 중단 회복 — 체크포인트 재개'});
+  if(d.ok) await act({cmd:'run', product:PV().code});
 }
 
 /* G16: 회차 반복 채점 — 응답로그는 팀장님이 계속 준다: 올리면 ⑧ 복귀→채점→보고서 */

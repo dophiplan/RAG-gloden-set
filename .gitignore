@@ -13,6 +13,7 @@ eval-runner/orchestrator/우체통/
 eval-runner/orchestrator/results/_regression_tmp/
 eval-runner/orchestrator/results/_progress_*.json
 eval-runner/orchestrator/results/_run_*.log
+eval-runner/orchestrator/results/_ckpt_*.json
 # 대용량 중복 아카이브·백업
 eval-runner/아카이브.zip
 eval-runner/eval-runner_old/
