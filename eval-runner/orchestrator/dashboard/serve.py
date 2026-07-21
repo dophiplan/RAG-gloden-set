@@ -321,12 +321,13 @@ def api_action(payload):
                 return {"ok": True, "out": "이미 실행 중이에요 — 진행선에서 상태를 확인하세요 (중복 실행 안 함)."}
             except (ValueError, ProcessLookupError, PermissionError):
                 pass                      # 죽은 pid — 무시하고 새로 시작
-        args += ["run", "--product", prod]
+        # 무인 자동 진행 워커 — 한도로 멈춰도 스스로 재개 (사람이 밤새 버튼 누를 필요 없음)
+        worker = [sys.executable, str(ROOT / "tools" / "auto_run.py"), "--product", prod]
         logf = ROOT / "results" / f"_run_{prod}.log"
-        p = subprocess.Popen(args, cwd=str(ROOT), env={**os.environ},
+        p = subprocess.Popen(worker, cwd=str(ROOT), env={**os.environ},
                              stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
         pidf.write_text(str(p.pid))
-        return {"ok": True, "out": "⏳ 실행 시작 — 진행은 트랙 아래 진행선에서. 끝나면 카드·상태가 자동 갱신돼요."}
+        return {"ok": True, "out": "⏳ 실행 시작 — 한도로 멈춰도 자동으로 이어가요(사람 개입 불필요). 진행은 트랙 아래 진행선에서."}
     else:
         return {"ok": False, "out": f"미지원: {cmd}"}
     import os

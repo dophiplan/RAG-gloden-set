@@ -891,3 +891,5 @@
 {"ts": "2026-07-21T18:15:11", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "3/142", "보존 단위": 251}, "reason": null}
 {"ts": "2026-07-21T18:25:58", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-07-21T18:25:59", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "3/142", "보존 단위": 251}, "reason": null}
+{"ts": "2026-07-21T18:49:51", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-21T18:49:52", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "4/142", "보존 단위": 300}, "reason": null}

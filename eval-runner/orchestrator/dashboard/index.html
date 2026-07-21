@@ -267,7 +267,7 @@ function nextAction(){
   if(ps.status==='HALTED'){
     const r = ps.halt_reason||'원장 확인';
     if(r.includes('한도') || r.includes('일시 중단'))
-      return {icon:'⏸', text:'AI 호출이 연속 실패해서 잠시 멈췄어요 (구독 한도 의심). 진행분은 저장돼 있어요 — 한도가 회복되면 [▶ 이어서 재개]를 누르세요.', resume:true};
+      return {icon:'⏸', text:'한도로 잠시 멈췄어요 — 진행분은 저장돼 있고, 한도가 회복되면 자동으로 이어갑니다(기다리면 돼요). 지금 바로 시도하려면 [▶ 이어서 재개].', resume:true};
     return {icon:'⛔', text:'사고 정지 상태예요 — 원인: '+r+'. 저(Claude)를 불러주세요.'};
   }
   if(ps.status==='WAITING_INPUT'){
