@@ -10,6 +10,8 @@ T13 본판정 중단→재개: 3번째 배치 강제 예외 → 재실행 → �
 T14 과금 차단: 자식 프로세스 env에 ANTHROPIC_API_KEY 부재
 T15 지문 CLI 버전: 버전 문자열 변경 → 지문 변화 (규칙 C 트리거)
 T16 저장소 분리: 우체통 원격 = 코드 저장소 → 거부
+T17 앙상블 병합 변조: 병합자가 fact 변조 → 최종 1축 재검수가 차단
+T18 원문 해시 게이트: 등재 후 원본 변조 → 대조 불일치 검출 (채점·발행 정지 근거)
 """
 import json
 import os
@@ -241,6 +243,58 @@ def t16():
           same_blocked and diff_ok, f"동일차단={same_blocked} 상이통과={diff_ok}")
 
 
+def t17():
+    """[3차 합의] 병합자(LLM)가 병합 중 fact를 변조 → 최종 1축 재검수(verify_units)가 잡는지"""
+    import llm
+    import gen_coverage
+    chunks = [{"doc": "D", "chunk_id": 1, "source": "d.md",
+               "text": "알파 기능은 베타 모드를 지원한다. 감마 설정은 델타 값을 요구한다."}]
+    orig = llm.chat
+
+    def tampered(role, system, user, cfg=None, **kw):
+        out = orig(role, system, user, cfg, **kw)
+        if "[TASK:COVERAGE_MERGE]" in system:
+            d = json.loads(out)
+            if isinstance(d, list) and d:
+                d[0]["fact"] = "코퍼스에 존재하지 않는 변조된 사실이다."
+            return json.dumps(d, ensure_ascii=False)
+        return out
+
+    llm.chat = tampered
+    try:
+        merged, _c, _f = gen_coverage.ensemble_generate("EE", chunks, None, "ensemble")
+        ok_units, rej = gen_coverage.verify_units(merged, chunks)
+    finally:
+        llm.chat = orig
+    leaked = any("변조" in u.get("fact", "") for u in ok_units)
+    caught = any("변조" in u.get("fact", "") for u, _r in rej)
+    check("T17", "앙상블 병합 변조 주입 → 최종 1축 재검수가 차단",
+          (not leaked) and caught, f"통과누출={leaked} 반려검출={caught}")
+
+
+def t18():
+    """[사고 재발 방지] 원문 해시 게이트 — 첫 등재 → 변조 → 대조 불일치 검출"""
+    import tempfile
+    import scoring
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "TT_응답로그_tmp.json"
+        f.write_text('{"responses": [1]}', encoding="utf-8")
+        orig_manifest = scoring.SRC_MANIFEST
+        scoring.SRC_MANIFEST = Path(td) / "manifest_원문데이터.json"
+        try:
+            bad0, new0 = scoring.source_hash_gate([f], register_new=True)
+            first = (not bad0) and len(new0) == 1
+            bad1, _ = scoring.source_hash_gate([f])          # 무변조 재대조 → 통과
+            clean = not bad1
+            f.write_text('{"responses": [1, "변조"]}', encoding="utf-8")
+            bad2, _ = scoring.source_hash_gate([f])          # 변조 → 검출
+            caught = len(bad2) == 1
+        finally:
+            scoring.SRC_MANIFEST = orig_manifest
+    check("T18", "원문 해시 게이트 — 등재→무변조 통과→변조 검출",
+          first and clean and caught, f"등재={first} 통과={clean} 검출={caught}")
+
+
 def main():
     t10()
     t11_t12()
@@ -248,6 +302,8 @@ def main():
     t14()
     t15()
     t16()
+    t17()
+    t18()
     npass = sum(1 for _, ok in results if ok)
     print(f"\n{'='*54}\nG8 회귀: {npass}/{len(results)} 통과")
     sys.exit(0 if npass == len(results) else 1)
