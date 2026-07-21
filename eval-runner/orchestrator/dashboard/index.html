@@ -387,26 +387,32 @@ function renderScores(ps){
   const gens = [{label: pv.gen.split(' — ')[0], code: pv.code, retired: false}];
   for(const lg of (pv.legacy||[])) gens.push({label: lg.gen.split(' — ')[0].split(' · ')[0], code: lg.code, retired: true});
   // ── 상단: 버전별 데이터 누적 현황 (몇 회차가 쌓였고 마지막이 언제 어느 회차인지)
+  let hasImported = false;
   const summary = `<div style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">버전별 누적 현황</div>`
     + gens.map(g=>{
       const sc = S.scores[g.code]||{};
       const rounds = Object.keys(sc).sort();
       const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
+      const flow = rounds.map(r=>{
+        if(sc[r].scorer==='기록 이관'){ hasImported = true; return r+'*'; }
+        return r;
+      }).join(' → ');
       return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>'}</span>
-        <span class="trend">${rounds.length?rounds.join(' → '):'회차 없음'}</span>
+        <span class="trend">${rounds.length?flow:'회차 없음'}</span>
         <span class="num">${rounds.length?`${rounds.length}회차${n?` · ${n}문항`:''}`:'—'}</span></div>`;
     }).join('')
+    + (hasImported?'<div class="hint" style="margin-top:4px">* 문서 기록 이관 — 로컬 재채점 아님 (인수인계 보고서 수치)</div>':'')
     + `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
   // ── 하단: 세대별 상세 (회차 추이)
   const mk = (label, sc, retired) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
     const last = sc[rounds[rounds.length-1]];
-    const trend = k => rounds.map(r=>sc[r][k]).join('→');
+    const trend = k => rounds.map(r=>sc[r][k]??'·').join('→');   // 이관 회차에 없는 지표는 ·
     return `<div class="score-row"><span><b>${esc(label)}</b></span><span class="trend">${rounds.join(' · ')}</span>
         <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>`
       + [["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']]
-        .map(([nm,k])=>`<div class="score-row"><span style="padding-left:10px">${nm}</span><span class="trend">${trend(k)}</span><span class="num">${last[k]}</span></div>`).join('');
+        .map(([nm,k])=>`<div class="score-row"><span style="padding-left:10px">${nm}</span><span class="trend">${trend(k)}</span><span class="num">${last[k]??'—'}</span></div>`).join('');
   };
   const sections = gens.map(g=>mk(g.label, S.scores[g.code], g.retired));
   const body = sections.filter(Boolean).join('<div style="height:10px"></div>')
