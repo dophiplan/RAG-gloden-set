@@ -268,7 +268,7 @@ function nextAction(){
     return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
   }
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
-  if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중 — 잠시 후 자동으로 갱신됩니다.'};
+  if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중 — 아래 진행선에서 누가 어디까지 갔는지 보여요. 이 화면을 닫아도 작업은 계속 돌아요.'};
   if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 실물 채점 추가로 돌리기]로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
   return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
 }
@@ -280,7 +280,9 @@ function render(){
     const q = S.queue.filter(c=>c.product===pv.code);
     const human = q.some(c=>c.kind==='GATE');
     const badge = q.length?`<span class="tabbadge ${human?'':'inp'}">${q.length}</span>`:'';
-    return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';render()">${disp} ${esc(pv.name)}${badge}</button>`;
+    // 다른 탭에서도 "돌아가는 중"이 보이게 — AI 작업 진행 중인 제품은 ⚙ 표시
+    const spin = st.products[pv.code].status==='RUNNING' ? '⚙ ' : '';
+    return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';render()">${spin}${disp} ${esc(pv.name)}${badge}</button>`;
   }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
   // U2: 모드 배지 — 지금 가짜인지 진짜인지 크게
   const md = st._mode||{};
@@ -662,12 +664,18 @@ function startProgressPoll(){
       const el = $('progline');
       if(!d.active || !el) return;
       const parts = Object.entries(d.roles||{}).map(([r,v])=>{
-        let s = `${engName(r)} ${v.batch}/${v.total} 배치`;
-        if((v.fails||[]).length) s += ` <span class="fail">· 실패 ${v.fails.length}건(원장 기록)</span>`;
+        const pct = v.total? Math.round(v.batch/v.total*100) : 0;
+        let s = `<b>${engName(r)}</b> ${v.batch}/${v.total} 배치(${pct}%)`;
+        if((v.fails||[]).length) s += ` <span class="fail">실패 ${v.fails.length}건(원장 기록)</span>`;
         return s;
       });
+      // 멈췄는지 판별 — 마지막 갱신 경과 시간 (배치 하나에 몇 분씩 걸리는 게 정상)
+      const age = d.ts ? Math.max(0, Math.round((Date.now()-new Date(d.ts).getTime())/60000)) : null;
+      const ageTxt = age===null ? '' : (age<1 ? '방금 갱신' : `갱신 ${age}분 전`);
+      const stale = (age!==null && age>=12) ? ` <span class="fail">⚠ ${age}분째 갱신 없음 — 멈췄을 수 있어요 (운영 기록 확인)</span>` : '';
+      const chunks = d.청크 ? `${Number(d.청크).toLocaleString()}청크를 읽으며 ` : '';
       el.style.display='block';
-      el.innerHTML = `📡 ${esc(d.phase||'작업 중')}${parts.length?' — '+parts.join(' · '):''} <span class="hint">(${esc(d.ts||'')})</span>`;
+      el.innerHTML = `📡 ${chunks}${esc(d.phase||'작업 중')} 중${parts.length?' — '+parts.join(' · '):''} · <span class="hint">${ageTxt}</span>${stale}`;
     }catch(e){}
   }, 4000);
 }
