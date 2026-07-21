@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T09:20:28",
+  "updated": "2026-07-21T09:24:37",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -11,7 +11,7 @@
       "open_gates": [],
       "halt_reason": null,
       "key_released": null,
-      "strategy": "ensemble",
+      "strategy": "self_check",
       "ai_use": {
         "generator": true,
         "judge": true,
@@ -27,7 +27,12 @@
       "stage_history": {},
       "open_gates": [],
       "halt_reason": null,
-      "key_released": null
+      "key_released": null,
+      "ai_use": {
+        "generator": true,
+        "judge": true,
+        "reviewer": false
+      }
     },
     "EE": {
       "stage": "SCORING",
