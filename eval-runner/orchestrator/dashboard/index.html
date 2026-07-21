@@ -90,7 +90,7 @@
   .arch[open] summary::before{transform:rotate(90deg)}
   .arch .frow{opacity:.75}
 
-  main{display:grid;grid-template-columns:1fr 320px 300px;gap:16px;padding:8px 24px 20px}
+  main{display:grid;grid-template-columns:320px 1fr 450px;gap:16px;padding:8px 24px 20px}
   @media(max-width:1100px){main{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .p-head{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;color:var(--tx2);display:flex;justify-content:space-between;align-items:center}
@@ -262,7 +262,7 @@ function nextAction(){
   }
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
   if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중 — 잠시 후 자동으로 갱신됩니다.'};
-  if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 응답로그 채점]으로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
+  if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 실물 채점 추가로 돌리기]로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
   return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
 }
 
@@ -312,15 +312,15 @@ function render(){
     </div>
   </div>
   <main>
-    <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code).length}건</span></div><div class="p-body" id="queuebody">
-      ${renderQueue()}
-    </div></div>
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
+    <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code).length}건</span></div><div class="p-body" id="queuebody">
+      ${renderQueue()}
+    </div></div>
     <div class="panel"><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
-      ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점 → 보고서'
-      :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 응답로그 채점</button></div><div class="p-body">
+      ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점(⑧) → 보고서'
+      :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 실물 채점 추가로 돌리기</button></div><div class="p-body">
       <input type="file" id="roundFile" accept=".json" style="display:none" onchange="uploadRound(this)">
       ${renderScores(ps)}
     </div></div>
@@ -381,10 +381,23 @@ function renderDetail(ps){
     <div class="note">${esc(note)}</div>`;
 }
 
-// U6: 성적 히스토리 — 현역 + 이전 세대를 한 탭에서
+// U6: 성적 히스토리 — 상단: 세대(버전)별 회차 누적 현황 / 하단: 세대별 상세 추이
 function renderScores(ps){
   const pv = PV();
-  const sections = [];
+  const gens = [{label: pv.gen.split(' — ')[0], code: pv.code, retired: false}];
+  for(const lg of (pv.legacy||[])) gens.push({label: lg.gen.split(' — ')[0].split(' · ')[0], code: lg.code, retired: true});
+  // ── 상단: 버전별 데이터 누적 현황 (몇 회차가 쌓였고 마지막이 언제 어느 회차인지)
+  const summary = `<div style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">버전별 누적 현황</div>`
+    + gens.map(g=>{
+      const sc = S.scores[g.code]||{};
+      const rounds = Object.keys(sc).sort();
+      const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
+      return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>'}</span>
+        <span class="trend">${rounds.length?rounds.join(' → '):'회차 없음'}</span>
+        <span class="num">${rounds.length?`${rounds.length}회차${n?` · ${n}문항`:''}`:'—'}</span></div>`;
+    }).join('')
+    + `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
+  // ── 하단: 세대별 상세 (회차 추이)
   const mk = (label, sc, retired) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
@@ -395,10 +408,10 @@ function renderScores(ps){
       + [["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']]
         .map(([nm,k])=>`<div class="score-row"><span style="padding-left:10px">${nm}</span><span class="trend">${trend(k)}</span><span class="num">${last[k]}</span></div>`).join('');
   };
-  sections.push(mk(pv.gen.split(' — ')[0], S.scores[pv.code], false));
-  for(const lg of (pv.legacy||[])) sections.push(mk(lg.gen.split(' — ')[0].split(' · ')[0], S.scores[lg.code], true));
-  const body = sections.filter(Boolean).join('<div style="height:10px"></div>');
-  return body || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`;
+  const sections = gens.map(g=>mk(g.label, S.scores[g.code], g.retired));
+  const body = sections.filter(Boolean).join('<div style="height:10px"></div>')
+    || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`;
+  return summary + body;
 }
 
 function renderLedger(){
