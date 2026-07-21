@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T13:19:06",
+  "updated": "2026-07-21T14:27:53",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -11,7 +11,7 @@
       "open_gates": [],
       "halt_reason": null,
       "key_released": null,
-      "strategy": "self_check",
+      "strategy": "ensemble",
       "ai_use": {
         "generator": true,
         "judge": true,
