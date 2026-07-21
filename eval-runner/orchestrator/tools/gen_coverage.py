@@ -119,7 +119,7 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
             ledger_append("COVERAGE_MAP", "COVERAGE_BATCH_FAILED", f"script:{role}",
                           evidence={"batch": f"{bno}/{total}", "chunks": len(part),
                                     "err": str(e)[:200]}, product=prod)
-        _progress(prod, "커버리지 추출", role, bno, total, fails)
+        _progress(prod, "커버리지 추출", role, bno, total, fails, chunks=len(target))
         if total > 4 and bno % 5 == 0:
             print(f"  [{role}] 커버리지 추출 {bno}/{total} 배치…")
     return units
@@ -154,7 +154,7 @@ def _progress_path(prod):
     return ROOT / "results" / f"_progress_{prod}.json"
 
 
-def _progress(prod, phase, role, batch, total, fails):
+def _progress(prod, phase, role, batch, total, fails, chunks=None):
     """진행 상황 파일 — 대시보드가 폴링해서 '지금 어디까지 갔고 어디서 막혔나' 표시"""
     import datetime
     p = _progress_path(prod)
@@ -168,6 +168,8 @@ def _progress(prod, phase, role, batch, total, fails):
     if cur.get("phase") != phase:      # 국면이 바뀌면 이전 국면 카운트는 지운다 (혼선 방지)
         cur["roles"] = {}
     cur["phase"] = phase
+    if chunks:
+        cur["청크"] = chunks           # "3,526청크를 읽으며 추출 중" 표시용
     if role and role != "-":
         cur.setdefault("roles", {})[role] = {"batch": batch, "total": total, "fails": fails}
     cur["ts"] = datetime.datetime.now().isoformat(timespec="seconds")
