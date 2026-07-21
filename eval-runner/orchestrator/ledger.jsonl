@@ -799,3 +799,7 @@
 {"ts": "2026-07-21T14:37:33", "product": "RC2", "stage": "TERRAIN", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-07-21T14:37:33", "product": "RC2", "stage": "TERRAIN", "gate_id": "TERRAIN_RC2", "actor": "script:orchestrator", "action": "ISSUE_GATE_CARD", "evidence": {"프로파일": "초안(복제/빈)", "확정 항목": "citation_pattern·anchor_patterns·appendix_switches"}, "reason": null}
 {"ts": "2026-07-21T14:37:33", "product": "RC2", "stage": "TERRAIN", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→WAITING_HUMAN", "evidence": {"profile": "onboarding"}, "reason": null}
+{"ts": "2026-07-21T14:40:52", "product": "RC2", "stage": "TERRAIN", "gate_id": "TERRAIN_RC2", "actor": "사람:난희", "action": "approve", "evidence": {"flags_acked": 0}, "reason": null}
+{"ts": "2026-07-21T14:40:53", "product": "RC2", "stage": "TERRAIN", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-21T14:40:53", "product": "RC2", "stage": "TERRAIN", "gate_id": null, "actor": "script:pipeline", "action": "STAGE_DONE", "evidence": {"profile": "확정", "citation_pattern": "RC2-[A-Z]+(?:-[A-Z0-9]+)*-\\d+"}, "reason": null}
+{"ts": "2026-07-21T14:40:53", "product": "RC2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
