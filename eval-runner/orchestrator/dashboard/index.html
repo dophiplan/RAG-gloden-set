@@ -394,7 +394,7 @@ function renderDetail(ps){
     ["열린 결정", `${ps.open_gates.length}`],
     ["회차 비교", ps.compare_blocked?'차단 <small>재채점 중</small>':'허용'],
   ];
-  const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
+  const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n세션 정책: ${stageAI(ps.stage).session}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
     ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
     ${ps.status==='RUNNING'?`<div class="fh" style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin:10px 0 4px">실행 로그 (실시간)</div><div class="runlog" id="runlog">로그 불러오는 중…</div>`:''}
@@ -495,6 +495,7 @@ function showTip(el,i){
   tip.innerHTML = `<div class="th"><span>${CIRC[i]} ${esc(cs.name)}</span>${cs.gate?`<span class="gatechip">${esc(cs.gate)} 게이트</span>`:''}</div>
     <div class="tb"><div class="what">${esc(cs.what)}</div>
       <div class="io"><span class="k">누가 하나</span><span class="v" style="color:var(--tx)">${esc(stageAI(STAGE_ORDER[i]).how)}</span>
+        <span class="k">세션 정책</span><span class="v">${esc(stageAI(STAGE_ORDER[i]).session)}</span>
         <span class="k">쓰는 파일</span><span class="v">${cs.consumes.map(esc).join(' · ')}</span>
         <span class="k">만드는 파일</span><span class="v">${cs.produces.map(esc).join(' · ')}</span></div>
       <div class="files vswitch">${files}</div></div>`;
@@ -611,26 +612,30 @@ function extractorsNow(){   // ③ 추출 편성 = gen_coverage._ensemble_roles 
   const list = (S.ai&&S.ai.engines||[]).filter(e=>e.connected && use[e.role]!==false).map(e=>e.engine);
   return list.length? list : [engFor('generator')];
 }
+// 세션 정책 — 이 파이프라인은 모든 호출이 독립(무맥락)이 기본. 채점은 거기에 출제맥락 차단까지.
+const S_INDEP = '🔓 독립 호출 — 매 호출 맥락 없음 (재현성 보장)';
+const S_ISOLATED = '🔒 새 세션 필수 + 출제 맥락 완전 차단 — 문항·기준서만 전달 (규칙 B, 공정성)';
+const S_NONE = '— AI 미사용';
 function stageAI(k){
   const g = engFor('generator'), j = engFor('judge');
   const strat = PS().strategy||'ensemble';
   switch(k){
-    case 'CORPUS_AUDIT':  return {who:'스크립트', how:'AI 없음 — 스크립트가 실측 (청크·스코프 카운트, 해시 등재)'};
-    case 'TERRAIN':       return {who:'사람',   how:'AI 없음 — 스크립트가 프로파일 제안, 판정은 사람'};
+    case 'CORPUS_AUDIT':  return {who:'스크립트', session:S_NONE, how:'AI 없음 — 스크립트가 실측 (청크·스코프 카운트, 해시 등재)'};
+    case 'TERRAIN':       return {who:'사람',   session:S_NONE, how:'AI 없음 — 스크립트가 프로파일 제안, 판정은 사람'};
     case 'COVERAGE_MAP':
       if(strat==='ensemble'){ const ex=extractorsNow();
-        return {who:ex.join('+'), how:`앙상블 적용 지점 — 추출: ${ex.join('·')} (체크된 AI 전원이 각자 전체 코퍼스) → 병합: ${g} → 1축 검수: 스크립트(원문 문자 대조)`};}
-      if(strat==='cross_check') return {who:`${g}→${j}`, how:`추출: ${g} → 교차 검수 의견: ${j} (참고 — 판정은 사람) → 1축 검수: 스크립트`};
-      if(strat==='self_check')  return {who:g, how:`추출: ${g} → 자가 검수(새 세션, 참고) → 1축 검수: 스크립트`};
-      return {who:g, how:`단독 추출: ${g} → 1축 검수: 스크립트`};
-    case 'GOLDENSET_BATCH': return {who:g, how:`배분 계획·문항 출제: ${g} → 스크립트 검수 7종 → 반려 루프 → 확정은 사람`};
-    case 'UNIFIED_LEDGER':  return {who:'스크립트', how:'AI 없음 — 스크립트가 배치 병합·중복 검사'};
-    case 'CALIBRATION':     return {who:`${j}×사람`, how:`채점관 면접 — ${j}가 30문항 판정, 사람 판정 30건과 대조 (일치 90% 미만이면 본판정 잠김)`};
-    case 'STAGE2':          return {who:`${j}+사람`, how:`본판정: ${j} (새 세션 · 규칙 B — [문항, 기준서]만 전달) + 사람 무작위 재검`};
-    case 'SCORING':         return {who:'스크립트+사람', how:'AI 없음 — 스크립트가 정답키와 기계 대조 채점, E형 확인은 사람'};
-    case 'MAINTENANCE':     return {who:'사람', how:'AI 없음 — 되먹임 큐 판단은 사람'};
+        return {who:ex.join('+'), session:S_INDEP+' · 추출자끼리도 서로 안 봄', how:`앙상블 적용 지점 — 추출: ${ex.join('·')} (체크된 AI 전원이 각자 전체 코퍼스) → 병합: ${g} → 1축 검수: 스크립트(원문 문자 대조)`};}
+      if(strat==='cross_check') return {who:`${g}→${j}`, session:S_INDEP, how:`추출: ${g} → 교차 검수 의견: ${j} (참고 — 판정은 사람) → 1축 검수: 스크립트`};
+      if(strat==='self_check')  return {who:g, session:S_INDEP+' · 검수는 새 세션', how:`추출: ${g} → 자가 검수(새 세션, 참고) → 1축 검수: 스크립트`};
+      return {who:g, session:S_INDEP, how:`단독 추출: ${g} → 1축 검수: 스크립트`};
+    case 'GOLDENSET_BATCH': return {who:g, session:S_INDEP+' · 배치 독립', how:`배분 계획·문항 출제: ${g} → 스크립트 검수 7종 → 반려 루프 → 확정은 사람`};
+    case 'UNIFIED_LEDGER':  return {who:'스크립트', session:S_NONE, how:'AI 없음 — 스크립트가 배치 병합·중복 검사'};
+    case 'CALIBRATION':     return {who:`${j}×사람`, session:S_ISOLATED, how:`채점관 면접 — ${j}가 30문항 판정, 사람 판정 30건과 대조 (일치 90% 미만이면 본판정 잠김)`};
+    case 'STAGE2':          return {who:`${j}+사람`, session:S_ISOLATED, how:`본판정: ${j} (새 세션 · 규칙 B — [문항, 기준서]만 전달) + 사람 무작위 재검`};
+    case 'SCORING':         return {who:'스크립트+사람', session:S_NONE, how:'AI 없음 — 스크립트가 정답키와 기계 대조 채점, E형 확인은 사람'};
+    case 'MAINTENANCE':     return {who:'사람', session:S_NONE, how:'AI 없음 — 되먹임 큐 판단은 사람'};
   }
-  return {who:'', how:''};
+  return {who:'', session:'', how:''};
 }
 
 /* G15: AI 팀 패널 — 누가 연결됐고(🟢/⚪) 이번 제작에 누굴 투입할지(체크) */

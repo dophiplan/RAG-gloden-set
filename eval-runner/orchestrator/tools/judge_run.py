@@ -69,8 +69,9 @@ SYSTEM_J = """[TASK:JUDGE_VERDICTS] 너는 골든셋 2축 판정관이다. 입�
 RUBRIC_LIMIT = 4000
 
 
-def judge_batch(items, rubric, cfg, batch=20):
-    """규칙 B: build_judge_request 로 오염 키 제거 후 호출. 배치 단위 독립 호출(새 세션)."""
+def judge_batch(items, rubric, cfg, batch=20, role="judge"):
+    """규칙 B: build_judge_request 로 오염 키 제거 후 호출. 배치 단위 독립 호출(새 세션).
+    role — 채점관 대결용: 'judge'(Kimi) 외에 'generator'(claude 새 세션)로도 판정 가능."""
     # FLAG-01: 기준서 절단 금지 — 초과 시 명시 정지 (조항이 잘린 채 판정되는 사고 방지)
     if len(rubric) > RUBRIC_LIMIT:
         raise RuntimeError(f"기준서 {len(rubric):,}자 — {RUBRIC_LIMIT:,}자 한도 초과. "
@@ -83,7 +84,7 @@ def judge_batch(items, rubric, cfg, batch=20):
         part = items[i:i + batch]
         reqs = [build_judge_request(it, rubric, cfg, env=env)["inputs"]["문항"]
                 for it in part]
-        resp = llm.chat("judge", SYSTEM_J,
+        resp = llm.chat(role, SYSTEM_J,
                         json.dumps({"items": reqs, "rubric": rubric}, ensure_ascii=False), cfg)
         out += llm.extract_json(resp)
     return out
@@ -130,6 +131,49 @@ def run_calibration_judging(prod, cfg):
           "기준서": rname, "판정문 보존": "전건", "산출": N(out.name),
           "다음": "사람 블라인드 판정 30건 기입 → calibration measure"}
     ledger_append("CALIBRATION", "JUDGE30_EXECUTED", "script:judge_run", evidence=ev, product=prod)
+    return "DONE", ev
+
+
+def run_calibration_compare(prod, cfg, roles=("judge", "generator")):
+    """채점관 대결 — 같은 30문항을 여러 후보(Kimi=judge / claude=generator)로 각각 판정해
+    한 대조표에 나란히. 사람이 블라인드 판정 30건을 채우면 calibration 이 후보별 일치율을
+    실측 → 높은 쪽을 채점관으로 (감이 아니라 우리 문제로 시험쳐서 결정)."""
+    from model_adapter import detect_mode
+    import os
+    items, src = load_items(prod)
+    if not items:
+        return "WAITING_INPUT", {"통합 대장": "없음"}
+    rubric, rname = load_rubric(prod)
+    cal = pick_calibration_set(items, 30)
+    have = detect_mode(cfg, os.environ)["have"]
+    # 연결된 후보만 (mock 은 judge·generator 둘 다 가용으로 간주)
+    cand = [r for r in roles if llm.is_mock() or have.get(r)]
+    if len(cand) < 2:
+        return "HALTED", {"halt": f"대결 불가 — 판정 후보 {len(cand)}명뿐 (2명 이상 필요). "
+                                  "config에 judge(Kimi)·generator(claude) 둘 다 연결 필요"}
+    eng = {"judge": "Kimi", "generator": "claude", "reviewer": "codex"}
+    cols = {}
+    for r in cand:
+        cols[r] = {N(v["ID"]): v for v in judge_batch(cal, rubric, cfg, role=r)}
+        ledger_append("CALIBRATION", "COMPARE_JUDGED", f"script:{r}",
+                      evidence={"후보": eng.get(r, r), "문항": len(cal)}, product=prod)
+    out = DATA / prod / "06_calibration" / f"{prod}_채점관대결_대조표_v1_0.xlsx"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "채점관대결_대조표"
+    head = ["문항ID", "유형", "질문"] + [f"{eng.get(r, r)} 판정" for r in cand] + ["사람 판정(블라인드 기입)"]
+    ws.append(head)
+    for it in cal:
+        row = [it["ID"], it.get("유형", ""), it["질문"]]
+        row += [N(cols[r].get(it["ID"], {}).get("판정", "미판정")) for r in cand]
+        row.append("")   # 사람 판정 블라인드
+        ws.append(row)
+    wb.save(out)
+    ev = {"후보": [eng.get(r, r) for r in cand], "문항": len(cal), "기준서": rname,
+          "산출": N(out.name),
+          "다음": "사람 30건 블라인드 판정 기입 → 후보별 일치율 실측 → 높은 쪽을 채점관으로"}
+    ledger_append("CALIBRATION", "COMPARE_TABLE_BUILT", "script:judge_run", evidence=ev, product=prod)
     return "DONE", ev
 
 
@@ -227,8 +271,11 @@ def run_stage2(prod, cfg, batch_size=20):
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["calibrate", "stage2"])
+    ap.add_argument("cmd", choices=["calibrate", "stage2", "compare"])
     ap.add_argument("--product", required=True)
     a = ap.parse_args()
-    fn = run_calibration_judging if a.cmd == "calibrate" else run_stage2
-    print(fn(a.product, load_config()))
+    if a.cmd == "compare":
+        print(run_calibration_compare(a.product, load_config()))
+    else:
+        fn = run_calibration_judging if a.cmd == "calibrate" else run_stage2
+        print(fn(a.product, load_config()))
