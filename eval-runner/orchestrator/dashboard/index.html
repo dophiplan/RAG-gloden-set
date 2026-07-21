@@ -76,6 +76,12 @@
   .archbtn.on,.archbtn:hover:not(:disabled){color:var(--tx);border-color:var(--tx2)}
   .archbtn:disabled{opacity:.45;cursor:not-allowed}
   .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+  .scoreTbl{width:100%;border-collapse:collapse;font-size:11.5px;font-family:var(--mono);margin:6px 0 4px}
+  .scoreTbl th,.scoreTbl td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  .scoreTbl th{color:var(--tx2);font-weight:600;font-size:10.5px}
+  .scoreTbl .m{text-align:left;color:var(--tx2);font-family:inherit}
+  .scoreTbl td{color:var(--tx)}
+  .scoreTbl .cur{background:rgba(61,214,176,.07);color:var(--tx);font-weight:700}
   .frow{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0}
   .frow .star{color:var(--input);width:10px}
   .frow .fn{flex:1;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -403,16 +409,19 @@ function renderScores(ps){
     }).join('')
     + (hasImported?'<div class="hint" style="margin-top:4px">* 문서 기록 이관 — 로컬 재채점 아님 (인수인계 보고서 수치)</div>':'')
     + `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
-  // ── 하단: 세대별 상세 (회차 추이)
+  // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
-    const last = sc[rounds[rounds.length-1]];
-    const trend = k => rounds.map(r=>sc[r][k]??'·').join('→');   // 이관 회차에 없는 지표는 ·
-    return `<div class="score-row"><span><b>${esc(label)}</b></span><span class="trend">${rounds.join(' · ')}</span>
-        <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>`
-      + [["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']]
-        .map(([nm,k])=>`<div class="score-row"><span style="padding-left:10px">${nm}</span><span class="trend">${trend(k)}</span><span class="num">${last[k]??'—'}</span></div>`).join('');
+    const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}</th>`).join('');
+    const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
+      `<td class="${i===rounds.length-1?'cur':''}">${sc[r][k]??'·'}</td>`).join('')}</tr>`;
+    return `<div class="score-row"><span><b>${esc(label)}</b></span><span></span>
+        <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
+      <div style="overflow-x:auto"><table class="scoreTbl">
+        <thead><tr><th class="m">지표</th>${head}</tr></thead>
+        <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}</tbody>
+      </table></div>`;
   };
   const sections = gens.map(g=>mk(g.label, S.scores[g.code], g.retired));
   const body = sections.filter(Boolean).join('<div style="height:10px"></div>')
