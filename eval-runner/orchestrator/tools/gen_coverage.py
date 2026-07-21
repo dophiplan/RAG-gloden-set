@@ -21,7 +21,7 @@ import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
 import llm
-from olib import ROOT, N, ledger_append, issue_gate_card
+from olib import ROOT, N, ledger_append, issue_gate_card, load_config
 
 DATA = ROOT / "data"
 
@@ -151,8 +151,11 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
         if bno <= done:
             continue                       # 이미 처리한 배치 (재개)
         try:
-            out = llm.chat(role, SYSTEM,
-                           json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), cfg)
+            # 추출 전용 모델이 설정돼 있으면 그걸로 (예: K3 대신 v1-128k — 판정 아님, 규칙 C 무관)
+            _c = cfg or load_config()
+            call_role = f"{role}_extract" if _c.get("models", {}).get(f"{role}_extract") else role
+            out = llm.chat(call_role, SYSTEM,
+                           json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), _c)
             got = llm.extract_json(out)
             units += got if isinstance(got, list) else [got]
             consec = []
