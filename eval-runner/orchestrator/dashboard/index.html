@@ -237,6 +237,7 @@ async function loadAll(){
   ]);
   S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg, ai};
   const disp = Object.keys(st._products||{});
+  if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
   if(!cur || !st._products[cur]) cur = disp[0];
   render();
 }
@@ -288,7 +289,7 @@ function render(){
     const badge = q.length?`<span class="tabbadge ${human?'':'inp'}">${q.length}</span>`:'';
     // 다른 탭에서도 "돌아가는 중"이 보이게 — AI 작업 진행 중인 제품은 ⚙ 표시
     const spin = st.products[pv.code].status==='RUNNING' ? '⚙ ' : '';
-    return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';render()">${spin}${disp} ${esc(pv.name)}${badge}</button>`;
+    return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';localStorage.setItem('보던탭',cur);render()">${spin}${disp} ${esc(pv.name)}${badge}</button>`;
   }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
   // U2: 모드 배지 — 지금 가짜인지 진짜인지 크게
   const md = st._mode||{};
