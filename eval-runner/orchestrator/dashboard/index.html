@@ -38,6 +38,7 @@
   .aichip input{accent-color:var(--doneC);margin:0}
   .airole{color:var(--tx2);font-size:11px}
   .progline{font-family:var(--mono);font-size:12px;color:var(--tx2);margin-top:6px}
+  .runlog{font-family:var(--mono);font-size:10.5px;line-height:1.6;color:var(--tx2);background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
   .progline .fail{color:var(--haltC,#e5636f)}
   .track{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;padding-bottom:14px}
   .stage{position:relative;flex:1;min-width:96px;text-align:center;cursor:pointer;border-radius:8px;padding-top:2px}
@@ -390,6 +391,7 @@ function renderDetail(ps){
   const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
     ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
+    ${ps.status==='RUNNING'?`<div class="fh" style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin:10px 0 4px">실행 로그 (실시간)</div><div class="runlog" id="runlog">로그 불러오는 중…</div>`:''}
     <div class="note">${esc(note)}</div>`;
 }
 
@@ -660,6 +662,12 @@ function startProgressPoll(){
   stopProgressPoll();
   progT = setInterval(async ()=>{
     try{
+      // 현재 단계 패널의 실행 로그 — 진행 파일 유무와 무관하게 갱신
+      const lg = $('runlog');
+      if(lg){
+        const rl = await fetch('/api/runlog?product='+PV().code).then(r=>r.json()).catch(()=>null);
+        if(rl && rl.lines.length){ lg.textContent = rl.lines.join('\n'); lg.scrollTop = lg.scrollHeight; }
+      }
       const d = await fetch('/api/progress?product='+PV().code).then(r=>r.json());
       const el = $('progline');
       if(!d.active || !el) return;
