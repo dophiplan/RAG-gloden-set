@@ -405,18 +405,18 @@ function renderScores(ps){
   const hasImp = arr=>arr.some(g=>Object.values(S.scores[g.code]||{}).some(v=>v.scorer==='기록 이관'));
   const impNote = arr=>hasImp(arr)?'<div class="hint" style="margin-top:4px">* 문서 기록 이관 — 로컬 재채점 아님 (인수인계 보고서 수치)</div>':'';
   const divider = `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
-  // 들어오자마자 성적표가 보여야 한다 — 기본 화면 = 현역 + (현역이 빈손이면) 가장 최근 성적 보유 세대.
-  // 그보다 오래된 세대만 보관함으로. 현역에 성적이 생기는 순간 이전 세대는 자동으로 보관함행.
+  // 구조: 누적 현황 = 현역 줄만 / 그 아래 = 최신 성적표(현역이 빈손이면 최근 성적 보유 세대)
+  //       보관함 = 은퇴한 골든셋 리스트 전체 (현황 줄 + 성적표, 참고용)
   const scored = g=>Object.keys(S.scores[g.code]||{}).length;
   const curGens = gens.filter(g=>!g.retired);
   const retiredScored = gens.filter(g=>g.retired && scored(g));
   const fallback = (!curGens.some(scored) && retiredScored.length) ? [retiredScored[0]] : [];
-  const mainGens = [...curGens, ...fallback];
-  const archGens = retiredScored.filter(g=>!fallback.includes(g));
+  const displayGens = [...curGens, ...fallback];
+  const archGens = retiredScored;
   const summary = `<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
       <span>버전별 누적 현황</span>
-      ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="이전 은퇴 세대의 누적 현황과 성적표 — 참고용">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
-    + mainGens.map(genRow).join('') + impNote(mainGens) + divider;
+      ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴한 골든셋 리스트 — 누적 현황·성적표 (참고용)">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
+    + curGens.map(genRow).join('') + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired) => {
     if(!sc || !Object.keys(sc).length) return '';
@@ -431,9 +431,10 @@ function renderScores(ps){
         <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}</tbody>
       </table></div>`;
   };
-  const curBody = mainGens.map(g=>mk(g.label, S.scores[g.code], g.retired)).filter(Boolean).join('<div style="height:10px"></div>')
-    || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`;
-  // 보관함 화면 = 더 오래된 은퇴 세대의 누적 현황 줄 + 성적표 (참고용)
+  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired)).filter(Boolean).join('<div style="height:10px"></div>')
+    || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
+    + impNote(displayGens);
+  // 보관함 화면 = 은퇴한 골든셋 리스트 (누적 현황 줄 + 성적표, 참고용)
   const archBody = archGens.map(genRow).join('') + impNote(archGens) + divider
     + archGens.map(g=>mk(g.label, S.scores[g.code], true)).join('<div style="height:10px"></div>');
   const open = !!VSTATE['scores:'+cur];   // 자동 갱신 후에도 보고 있던 화면 유지
