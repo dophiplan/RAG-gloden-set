@@ -247,6 +247,20 @@ def api_ai_status():
     return {"mock": mock, "engines": engines, "products": use}
 
 
+def api_runlog(code, n=15):
+    """실행 로그 꼬리 — RUNNING 중 '현재 단계' 패널에 무슨 일이 벌어지는지 그대로 보여준다"""
+    if not re.fullmatch(r"[A-Z0-9]{1,8}", code or ""):
+        return {"lines": []}
+    p = ROOT / "results" / f"_run_{code}.log"
+    if not p.exists():
+        return {"lines": []}
+    try:
+        lines = p.read_text(encoding="utf-8", errors="replace").strip().splitlines()
+    except Exception:
+        return {"lines": []}
+    return {"lines": lines[-n:]}
+
+
 def api_progress(code):
     """③ 등 장시간 작업의 실시간 진행/막힘 — 엔진이 배치마다 갱신하는 파일을 그대로"""
     if not re.fullmatch(r"[A-Z0-9]{1,8}", code or ""):
@@ -325,9 +339,10 @@ class H(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path == "/" or self.path.startswith("/?"):
-            self.path = "/dashboard/index.html"
-            return super().do_GET()
+        if self.path == "/" or self.path.startswith("/?") or self.path.startswith("/dashboard/index.html"):
+            # 대시보드 HTML은 항상 최신으로 — 브라우저 캐시가 옛 화면을 보여주는 사고 방지
+            body = (ROOT / "dashboard" / "index.html").read_bytes()
+            return self._send(200, body, "text/html; charset=utf-8")
         if self.path.startswith("/api/state"):
             return self._send(200, j(api_state()))
         if self.path.startswith("/api/ledger"):
@@ -344,6 +359,10 @@ class H(SimpleHTTPRequestHandler):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
             return self._send(200, j(api_progress(N(q.get("product", [""])[0]))))
+        if self.path.startswith("/api/runlog"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            return self._send(200, j(api_runlog(N(q.get("product", [""])[0]))))
         return super().do_GET()
 
     def do_POST(self):
