@@ -392,27 +392,26 @@ function renderScores(ps){
   const pv = PV();
   const gens = [{label: pv.gen.split(' — ')[0], code: pv.code, retired: false}];
   for(const lg of (pv.legacy||[])) gens.push({label: lg.gen.split(' — ')[0].split(' · ')[0], code: lg.code, retired: true});
-  // ── 상단: 버전별 데이터 누적 현황 (몇 회차가 쌓였고 마지막이 언제 어느 회차인지)
-  let hasImported = false;
+  // ── 버전별 누적 현황 줄 (몇 회차가 쌓였고 마지막이 어느 회차인지) — 세대별
   const genRow = g=>{
     const sc = S.scores[g.code]||{};
     const rounds = Object.keys(sc).sort();
     const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
-    const flow = rounds.map(r=>{
-      if(sc[r].scorer==='기록 이관'){ hasImported = true; return r+'*'; }
-      return r;
-    }).join(' → ');
+    const flow = rounds.map(r=>sc[r].scorer==='기록 이관'?r+'*':r).join(' → ');
     return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>'}</span>
       <span class="trend">${rounds.length?flow:'회차 없음'}</span>
       <span class="num">${rounds.length?`${rounds.length}회차${n?` · ${n}문항`:''}`:'—'}</span></div>`;
   };
+  const hasImp = arr=>arr.some(g=>Object.values(S.scores[g.code]||{}).some(v=>v.scorer==='기록 이관'));
+  const impNote = arr=>hasImp(arr)?'<div class="hint" style="margin-top:4px">* 문서 기록 이관 — 로컬 재채점 아님 (인수인계 보고서 수치)</div>':'';
+  const divider = `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
+  const curGens = gens.filter(g=>!g.retired);
   const retiredWithData = gens.filter(g=>g.retired && Object.keys(S.scores[g.code]||{}).length);
+  // 기본 화면 = 현역만 (누적 현황 줄 + 상세 표). 은퇴 세대는 요약 줄·성적표 통째로 보관함에.
   const summary = `<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
       <span>버전별 누적 현황</span>
-      ${retiredWithData.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴 세대 성적표 — 참고용">📦 성적 보관함 ${retiredWithData.length} ›</button>`:''}</div>`
-    + gens.map(genRow).join('')
-    + (hasImported?'<div class="hint" style="margin-top:4px">* 문서 기록 이관 — 로컬 재채점 아님 (인수인계 보고서 수치)</div>':'')
-    + `<div style="height:12px;border-bottom:1px dashed var(--line);margin-bottom:12px"></div>`;
+      ${retiredWithData.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴 세대(골든셋 v1 등)의 누적 현황과 성적표 — 참고용">📦 보관함 ${retiredWithData.length} ›</button>`:''}</div>`
+    + curGens.map(genRow).join('') + impNote(curGens) + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired) => {
     if(!sc || !Object.keys(sc).length) return '';
@@ -427,14 +426,17 @@ function renderScores(ps){
         <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}</tbody>
       </table></div>`;
   };
-  // 현역이 맨 위 — 은퇴 세대 표는 [📦 성적 보관함] 화면으로 (자료실 보관함과 같은 동작)
-  const curBody = gens.filter(g=>!g.retired).map(g=>mk(g.label, S.scores[g.code], false)).filter(Boolean).join('')
+  const curBody = curGens.map(g=>mk(g.label, S.scores[g.code], false)).filter(Boolean).join('')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`;
-  const archBody = retiredWithData.map(g=>mk(g.label, S.scores[g.code], true)).join('<div style="height:10px"></div>');
-  return `<div class="vswitch"><div class="curview">${summary}${curBody}</div>
-    <div class="archwrap" style="display:none">
+  // 보관함 화면 = 은퇴 세대의 누적 현황 줄 + 성적표 (참고용)
+  const archBody = retiredWithData.map(genRow).join('') + impNote(retiredWithData) + divider
+    + retiredWithData.map(g=>mk(g.label, S.scores[g.code], true)).join('<div style="height:10px"></div>');
+  const open = !!VSTATE['scores:'+cur];   // 자동 갱신 후에도 보고 있던 화면 유지
+  return `<div class="vswitch" data-vskey="scores:${esc(cur)}">
+    <div class="curview" style="display:${open?'none':'block'}">${summary}${curBody}</div>
+    <div class="archwrap" style="display:${open?'block':'none'}">
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
-        <span>📦 성적 보관함 — 은퇴 세대 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
+        <span>📦 보관함 — 은퇴한 골든셋 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
       ${archBody}</div></div>`;
 }
 
@@ -484,15 +486,18 @@ function showTip(el,i){
   tip.style.left=left+'px'; tip.style.top=top+'px';
 }
 function scheduleHide(){hideT=setTimeout(()=>tip.classList.remove('show'),180);}
+const VSTATE = {};          // 보관함 열림 상태 — 15초 자동 갱신에도 열어둔 채 유지
 function toggleArch(btn){   // 📦 보관함 — 화면을 통째로 보관함으로 전환 (자료실·성적 공용)
   const box = btn.closest('.vswitch');
   box.querySelector('.curview').style.display='none';
   box.querySelector('.archwrap').style.display='block';
+  if(box.dataset.vskey) VSTATE[box.dataset.vskey] = true;
 }
 function closeArch(btn){    // ✕ — 현역 화면으로 복귀
   const box = btn.closest('.vswitch');
   box.querySelector('.archwrap').style.display='none';
   box.querySelector('.curview').style.display='block';
+  if(box.dataset.vskey) VSTATE[box.dataset.vskey] = false;
 }
 
 /* 액션 — U5: 처리 중 표시 */
