@@ -294,7 +294,14 @@ def api_action(payload):
     elif cmd == "new-round":
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "run":
+        # 장시간 AI 작업(③ 등) — 백그라운드 실행. 서버(단일 스레드)와 화면이 얼지 않게.
+        import os
         args += ["run", "--product", payload["product"]]
+        logf = ROOT / "results" / f"_run_{payload['product']}.log"
+        logf.parent.mkdir(exist_ok=True)
+        subprocess.Popen(args, cwd=str(ROOT), env={**os.environ},
+                         stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
+        return {"ok": True, "out": "⏳ 실행 시작 — 진행은 트랙 아래 진행선에서. 끝나면 카드·상태가 자동 갱신돼요."}
     else:
         return {"ok": False, "out": f"미지원: {cmd}"}
     import os

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T14:27:53",
+  "updated": "2026-07-21T14:37:33",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -19,13 +19,25 @@
       }
     },
     "RC2": {
-      "stage": "CORPUS_AUDIT",
-      "status": "WAITING_INPUT",
+      "stage": "TERRAIN",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
-      "stage_history": {},
-      "open_gates": [],
+      "stage_history": {
+        "CORPUS_AUDIT": {
+          "done_at": "2026-07-21T14:37:33"
+        }
+      },
+      "open_gates": [
+        {
+          "id": "TERRAIN_RC2",
+          "stage": "TERRAIN",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-21T14:33:37"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {

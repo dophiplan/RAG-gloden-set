@@ -30,25 +30,57 @@ def norm(s):
     return re.sub(r"\s+", "", N(s)).lower()
 
 
+def _rows_from_json(d):
+    """지원 형식 3종 → [{doc, chunk_id, text, source}]
+    ① [{doc, chunk_id, text}]  ② {docs:[{doc, chunks:[...]}]}
+    ③ 팀장님 export: {chunks:[{title, chunk_index, text, source_url, ...}]}"""
+    if isinstance(d, list):
+        return d
+    if "docs" in d:
+        return [{"doc": doc["doc"], "chunk_id": i, "text": t, "source": doc.get("source", doc["doc"])}
+                for doc in d["docs"] for i, t in enumerate(doc["chunks"], 1)]
+    if "chunks" in d:
+        return [{"doc": c.get("title") or c.get("doc_key") or c.get("doc", "?"),
+                 "chunk_id": int(c.get("chunk_index", c.get("chunk_id", 0))) + (1 if "chunk_index" in c else 0),
+                 "text": c.get("text", ""),
+                 "source": c.get("source_url") or c.get("title") or ""}
+                for c in d["chunks"]]
+    return []
+
+
 def load_corpus(prod):
-    """→ [{doc, chunk_id, text, source}]"""
+    """→ [{doc, chunk_id, text, source}] — json/md/txt/zip(내부 chunks-*.json) 지원"""
     cdir = DATA / prod / "corpus"
     chunks = []
+
+    def add(rows):
+        for r in rows:
+            if not N(r.get("text", "")).strip():
+                continue
+            chunks.append({"doc": N(r["doc"]), "chunk_id": int(r.get("chunk_id", 0)),
+                           "text": N(r["text"]), "source": N(r.get("source", r["doc"]))})
+
     for f in sorted(cdir.glob("*")):
         if f.name.startswith("."):
             continue
         if f.suffix == ".json":
-            d = json.loads(f.read_text(encoding="utf-8"))
-            rows = d if isinstance(d, list) else [
-                {"doc": doc["doc"], "chunk_id": i, "text": t, "source": doc.get("source", doc["doc"])}
-                for doc in d.get("docs", []) for i, t in enumerate(doc["chunks"], 1)]
-            for r in rows:
-                chunks.append({"doc": N(r["doc"]), "chunk_id": int(r.get("chunk_id", 0)),
-                               "text": N(r["text"]), "source": N(r.get("source", r["doc"]))})
+            add(_rows_from_json(json.loads(f.read_text(encoding="utf-8"))))
         elif f.suffix in (".md", ".txt"):
             parts = [p.strip() for p in re.split(r"\n\s*\n\s*\n?", f.read_text(encoding="utf-8")) if p.strip()]
-            for i, p in enumerate(parts, 1):
-                chunks.append({"doc": N(f.stem), "chunk_id": i, "text": N(p), "source": N(f.name)})
+            add([{"doc": f.stem, "chunk_id": i, "text": p, "source": f.name} for i, p in enumerate(parts, 1)])
+        elif f.suffix == ".zip" or f.name.endswith(".zip_"):
+            # 팀장님 export zip — 내부의 chunks json만 읽는다 (docs 메타 파일은 건너뜀)
+            import zipfile
+            with zipfile.ZipFile(f) as z:
+                inner = [n for n in z.namelist() if n.endswith(".json") and "chunk" in Path(n).name.lower()] \
+                    or [n for n in z.namelist() if n.endswith(".json")]
+                for n in inner:
+                    try:
+                        rows = _rows_from_json(json.loads(z.read(n).decode("utf-8")))
+                    except Exception:
+                        continue
+                    if rows:
+                        add(rows)
     return chunks
 
 
