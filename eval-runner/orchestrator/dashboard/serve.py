@@ -310,11 +310,22 @@ def api_action(payload):
     elif cmd == "run":
         # 장시간 AI 작업(③ 등) — 백그라운드 실행. 서버(단일 스레드)와 화면이 얼지 않게.
         import os
-        args += ["run", "--product", payload["product"]]
-        logf = ROOT / "results" / f"_run_{payload['product']}.log"
-        logf.parent.mkdir(exist_ok=True)
-        subprocess.Popen(args, cwd=str(ROOT), env={**os.environ},
-                         stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
+        prod = payload["product"]
+        pidf = ROOT / "results" / f"_run_{prod}.pid"
+        pidf.parent.mkdir(exist_ok=True)
+        # 중복 실행 방지 — 이미 도는 프로세스가 있으면 새로 안 띄운다 (재개 버튼 연타 등)
+        if pidf.exists():
+            try:
+                old = int(pidf.read_text())
+                os.kill(old, 0)          # 살아있으면 예외 없이 통과
+                return {"ok": True, "out": "이미 실행 중이에요 — 진행선에서 상태를 확인하세요 (중복 실행 안 함)."}
+            except (ValueError, ProcessLookupError, PermissionError):
+                pass                      # 죽은 pid — 무시하고 새로 시작
+        args += ["run", "--product", prod]
+        logf = ROOT / "results" / f"_run_{prod}.log"
+        p = subprocess.Popen(args, cwd=str(ROOT), env={**os.environ},
+                             stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
+        pidf.write_text(str(p.pid))
         return {"ok": True, "out": "⏳ 실행 시작 — 진행은 트랙 아래 진행선에서. 끝나면 카드·상태가 자동 갱신돼요."}
     else:
         return {"ok": False, "out": f"미지원: {cmd}"}
