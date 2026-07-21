@@ -96,30 +96,91 @@ SYSTEM = """[TASK:COVERAGE_UNITS] 너는 RAG 평가용 커버리지맵 추출기
 
 
 CHUNK_BATCH = 25   # 호출당 청크 수 — 실코퍼스(수천 청크)는 한 번에 못 넣는다 (컨텍스트·타임아웃)
+PAUSE_AFTER = 3    # 연속 실패 허용 — 이 이상이면 구독 한도/네트워크 의심, 중단하고 재개 대기
+
+
+class CoveragePaused(Exception):
+    """AI 호출 연속 실패 — 체크포인트 저장 후 일시 중단 (한도 회복 후 재개 가능)"""
+
+
+def _ckpt_path(prod):
+    return ROOT / "results" / f"_ckpt_coverage_{prod}.json"
+
+
+def _ckpt_load(prod):
+    p = _ckpt_path(prod)
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _ckpt_save(prod, ck):
+    p = _ckpt_path(prod)
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps(ck, ensure_ascii=False), encoding="utf-8")
 
 
 def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
-    """청크를 배치로 나눠 호출 — 대형 코퍼스 대응. 배치 단위 실패는 기록 후 계속."""
+    """청크를 배치로 나눠 호출 — 대형 코퍼스 대응. 배치 단위 실패는 기록 후 계속.
+    [재개] 성공 배치마다 체크포인트 저장 — 한도 소진·중단 후 재실행하면 이어서 진행.
+    연속 PAUSE_AFTER회 실패 = 한도/네트워크 의심 → 실패분 되감고 CoveragePaused."""
     target = [c for c in chunks if retry_ids is None
               or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]
-    units = []
-    fails = []
     total = (len(target) + CHUNK_BATCH - 1) // CHUNK_BATCH
+    use_ckpt = retry_ids is None          # 반려 재생성 루프는 체크포인트 미사용 (소규모)
+    ck = _ckpt_load(prod) if use_ckpt else {}
+    rk = ck.get(role) or {}
+    if rk.get("n_chunks") != len(target):  # 코퍼스가 달라졌으면 옛 체크포인트 무시 (오염 방지)
+        rk = {}
+    units = list(rk.get("units", []))
+    fails = list(rk.get("fails", []))
+    done = int(rk.get("done", 0))
+    if use_ckpt and done:
+        print(f"  [{role}] 체크포인트 재개 — {done}/{total} 배치부터 이어서")
+        ledger_append("COVERAGE_MAP", "COVERAGE_RESUMED", f"script:{role}",
+                      evidence={"재개 지점": f"{done}/{total}", "보존 단위": len(units)}, product=prod)
+    consec = []                            # 연속 실패 배치 번호들
     for bi in range(0, len(target), CHUNK_BATCH):
         part = target[bi:bi + CHUNK_BATCH]
         bno = bi // CHUNK_BATCH + 1
+        if bno <= done:
+            continue                       # 이미 처리한 배치 (재개)
         try:
             out = llm.chat(role, SYSTEM,
                            json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), cfg)
             got = llm.extract_json(out)
             units += got if isinstance(got, list) else [got]
+            consec = []
         except Exception as e:
             # 배치 실패는 침묵하지 않는다 — 기록하고 나머지는 계속 (부분 커버리지 > 전체 실패)
             fails.append({"batch": f"{bno}/{total}", "err": str(e)[:120]})
             ledger_append("COVERAGE_MAP", "COVERAGE_BATCH_FAILED", f"script:{role}",
                           evidence={"batch": f"{bno}/{total}", "chunks": len(part),
                                     "err": str(e)[:200]}, product=prod)
+            consec.append(bno)
+        done = bno
+        if use_ckpt:
+            ck[role] = {"done": done, "units": units, "fails": fails, "n_chunks": len(target)}
+            _ckpt_save(prod, ck)
         _progress(prod, "커버리지 추출", role, bno, total, fails, chunks=len(target))
+        if len(consec) >= PAUSE_AFTER:
+            # 한도/네트워크 의심 — 실패한 연속 배치는 되감아서 재개 때 다시 시도
+            fails = [f for f in fails if int(f["batch"].split("/")[0]) not in consec]
+            done = consec[0] - 1
+            if use_ckpt:
+                ck[role] = {"done": done, "units": units, "fails": fails, "n_chunks": len(target)}
+                _ckpt_save(prod, ck)
+            _progress(prod, f"일시 중단 — {role} 연속 {len(consec)}회 실패 (한도 의심, 재개 가능)",
+                      role, done, total, fails, chunks=len(target))
+            ledger_append("COVERAGE_MAP", "COVERAGE_PAUSED", f"script:{role}",
+                          evidence={"중단 지점": f"{done}/{total}", "보존 단위": len(units),
+                                    "사유": "연속 실패 — 구독 한도/네트워크 의심",
+                                    "재개": "한도 회복 후 [이어서 재개] — 체크포인트에서 계속"},
+                          product=prod)
+            raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
         if total > 4 and bno % 5 == 0:
             print(f"  [{role}] 커버리지 추출 {bno}/{total} 배치…")
     return units
@@ -221,6 +282,8 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
                     pool.append(u)
                     new += 1
             contrib[role] = {"추출(검수통과)": len(ok), "신규 기여": new}
+        except CoveragePaused:
+            raise                                       # 일시 중단은 삼키지 않는다 — run()이 HALT 처리
         except Exception as e:
             fails.append({"role": role, "err": str(e)[:150]})
             ledger_append("COVERAGE_MAP", "ENSEMBLE_EXTRACTOR_FAILED", f"script:{role}",
@@ -306,7 +369,11 @@ def run(prod, cfg):
         return "WAITING_INPUT", {"코퍼스 청크": 0}
     # 전략별 추출 (셀렉트박스 설정) → 최종 1축 재검수 (병합/생성 변형도 걸러짐)
     strategy = get_strategy(prod)
-    merged, contrib, fails = ensemble_generate(prod, chunks, cfg, strategy)
+    try:
+        merged, contrib, fails = ensemble_generate(prod, chunks, cfg, strategy)
+    except CoveragePaused as e:
+        return "HALTED", {"halt": f"AI 호출 연속 실패로 일시 중단 ({e}) — 구독 한도/네트워크 의심. "
+                                  "지금까지 진행분은 체크포인트에 저장됨: 한도 회복 후 [▶ 이어서 재개]를 누르면 이어서 진행"}
     ok, rej = verify_units(merged, chunks)
     if not ok:
         _progress(prod, "막힘 — 생성 단위 전건 검수 불합격", "-", 0, 0, fails)
@@ -328,6 +395,7 @@ def run(prod, cfg):
         ev["추출기 실패"] = fails
     _progress(prod, "완료 — 사람확인 대기", "-", 0, 0, [])
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
+    _ckpt_path(prod).unlink(missing_ok=True)   # 완주 — 체크포인트 정리
     flags = ([{"type": "GAP_AUDIT 누락 의심", "id": d, "candidates": [],
                "ack_required": True} for d in gaps]
              + [{"type": "생성 반려 잔존", "id": N(u.get("unit_id", "?")), "candidates": [r]}
