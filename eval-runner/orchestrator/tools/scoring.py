@@ -462,10 +462,16 @@ def run(prod, cfg):
     for card in qdir.glob(f"INPUT_SCORING_{prod}.md"):
         (qdir / "완료").mkdir(exist_ok=True)
         card.rename(qdir / "완료" / card.name)
-    # 3) 형식 게이트 → 채점
-    log = logs[-1]
+    # 3) 형식 게이트 → 채점 — 회차 반복: 가장 최근 올라온 로그를 채점
+    log = max(logs, key=lambda p: p.stat().st_mtime)
     rnd_m = re.search(r"r\d+", N(log.name))
-    rnd = rnd_m.group() if rnd_m else "r?"
+    if rnd_m:
+        rnd = rnd_m.group()
+    else:
+        # 파일명에 회차가 없으면 자동 부여 — 기존 성적 폴더의 다음 번호
+        used = [int(m.group(1)) for d in (ROOT / "results").glob(f"score_{prod}_r*")
+                for m in [re.fullmatch(rf"score_{re.escape(prod)}_r(\d+)", d.name)] if m]
+        rnd = f"r{max(used) + 1 if used else 1}"
     fstatus, checks, warns = format_gate(log, prod, round_label=rnd)
     if fstatus == "HALTED":
         return "HALTED", {"형식 게이트": [f"{n}:{'OK' if g else 'FAIL'}" for n, g, _ in checks]}

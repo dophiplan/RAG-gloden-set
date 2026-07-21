@@ -280,6 +280,8 @@ def api_action(payload):
     elif cmd == "set-members":
         args += ["set-members", "--product", payload["product"],
                  "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
+    elif cmd == "new-round":
+        args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "run":
         args += ["run", "--product", payload["product"]]
     else:

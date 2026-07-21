@@ -421,6 +421,23 @@ def cmd_set_members(a):
     print(f"AI 투입 변경: {a.product} → {ps['ai_use']}")
 
 
+def cmd_new_round(a):
+    """새 회차 채점 — 팀장님 응답로그는 반복해서 온다: ⑨/완료 상태에서 ⑧로 복귀 (원장 기록)"""
+    st = load_state()
+    ps = st["products"].get(a.product)
+    if not ps:
+        sys.exit(f"미등록 제품: {a.product}")
+    if ps["stage"] not in ("SCORING", "MAINTENANCE"):
+        sys.exit("새 회차는 ⑧ 실물 채점 도달 후부터 — 골든셋·질문셋 발행이 먼저다")
+    prev = {"stage": ps["stage"], "status": ps["status"]}
+    ps["stage"] = "SCORING"
+    ps["status"] = "PENDING"
+    save_state(st)
+    ledger_append("SCORING", "NEW_ROUND_STARTED", f"사람:{a.actor}",
+                  evidence={"전": prev}, product=a.product)
+    print(f"🔁 새 회차 채점 — {a.product} ⑧ 복귀. 응답로그(json)를 data/{a.product}/08_scoring/ 에 올리고 run")
+
+
 def cmd_set_strategy(a):
     """생성 전략 변경 — 커버리지맵 추출·골든셋 생성 리뷰 방식 (원장 기록)"""
     st = load_state()
@@ -515,11 +532,12 @@ def main():
     s = sub.add_parser("onboard"); s.add_argument("--product", required=True); s.add_argument("--name"); s.add_argument("--base", default="blank"); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희"); s.add_argument("--start", default="full", choices=["full", "scoring"]); s.add_argument("--strategy", default="ensemble", choices=["ensemble", "solo", "cross_check", "self_check"])
     s = sub.add_parser("set-strategy"); s.add_argument("--product", required=True); s.add_argument("--strategy", required=True, choices=["ensemble", "solo", "cross_check", "self_check"]); s.add_argument("--actor", default="난희")
     s = sub.add_parser("set-members"); s.add_argument("--product", required=True); s.add_argument("--use", required=True, help="쉼표 구분: generator,judge,reviewer"); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("new-round"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
      "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
-     "set-members": cmd_set_members}[a.cmd](a)
+     "set-members": cmd_set_members, "new-round": cmd_new_round}[a.cmd](a)
 
 
 if __name__ == "__main__":
