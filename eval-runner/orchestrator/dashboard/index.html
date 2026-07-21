@@ -262,7 +262,7 @@ function nextAction(){
   }
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
   if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중 — 잠시 후 자동으로 갱신됩니다.'};
-  if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 새 회차 채점]으로 올리세요 — 채점부터 보고서까지 자동이에요.'};
+  if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 응답로그 채점]으로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
   return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
 }
 
@@ -320,7 +320,7 @@ function render(){
     </div></div>
     <div class="panel"><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
       ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점 → 보고서'
-      :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 새 회차 채점</button></div><div class="p-body">
+      :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 응답로그 채점</button></div><div class="p-body">
       <input type="file" id="roundFile" accept=".json" style="display:none" onchange="uploadRound(this)">
       ${renderScores(ps)}
     </div></div>
