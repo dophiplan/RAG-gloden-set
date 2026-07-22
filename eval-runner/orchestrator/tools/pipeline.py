@@ -280,7 +280,15 @@ def cmd_run(a):
             return
         stage = ps["stage"]
         set_status(prod, "RUNNING", stage=stage)
-        outcome, ev = RUNNERS[stage](prod, cfg)
+        try:
+            outcome, ev = RUNNERS[stage](prod, cfg)
+        except Exception as e:
+            # 단계 예외 = RUNNING 잔존 금지 — HALT로 명시 정지 (무인 워커 무한 재시도 방지)
+            ledger_append(stage, "STAGE_CRASHED", "script:pipeline",
+                          evidence={"err": f"{type(e).__name__}: {str(e)[:200]}"}, product=prod)
+            set_status(prod, "HALTED", reason=f"단계 실행 예외 ({stage}): {str(e)[:150]}")
+            print(f"⛔ {stage} 실행 예외 → HALT: {e}")
+            return
         print(f"  {dict(STAGES)[stage]} → {outcome} {ev}")
         if outcome == "DONE":
             ledger_append(stage, "STAGE_DONE", "script:pipeline", evidence=ev, product=prod)
