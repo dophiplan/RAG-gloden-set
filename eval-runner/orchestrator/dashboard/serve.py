@@ -196,6 +196,33 @@ def api_catalog():
     return out
 
 
+_MODEL_CACHE = {"ts": 0, "ids": None}
+
+
+def _moonshot_models():
+    """Kimi 가용 모델 목록 (1시간 캐시) — 단종·신모델 감지용. 실패 시 None(판단 보류)"""
+    import time
+    import urllib.request
+    if time.time() - _MODEL_CACHE["ts"] < 3600:
+        return _MODEL_CACHE["ids"]
+    try:
+        import os
+        key = os.environ.get("JUDGE_KEY", "")
+        req = urllib.request.Request("https://api.moonshot.ai/v1/models",
+                                     headers={"Authorization": f"Bearer {key}"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            ids = [m["id"] for m in json.loads(r.read().decode()).get("data", [])]
+        _MODEL_CACHE.update(ts=time.time(), ids=ids)
+    except Exception:
+        _MODEL_CACHE.update(ts=time.time(), ids=None)
+    return _MODEL_CACHE["ids"]
+
+
+def _kimi_ver(mid):
+    m = re.search(r"kimi-k([\d.]+)$", mid or "")
+    return float(m.group(1)) if m else None
+
+
 def api_ai_status():
     """AI 팀 현황 — 역할별 엔진·연결 상태(🟢/⚪) + 제품별 투입 선택(ai_use 체크박스)"""
     import os
@@ -235,8 +262,20 @@ def api_ai_status():
             how = "구독 계정 (CLI)" if connected else "구독 CLI 미설치 — 계정 대기"
         else:
             how = "API 키" if connected else f"API 키 없음 ({m.get('api_key_env', '?')})"
-        engines.append({"role": role, "role_ko": role_ko, "engine": eng,
-                        "connected": connected, "how": how})
+        entry = {"role": role, "role_ko": role_ko, "engine": eng,
+                 "connected": connected, "how": how, "model": m.get("model", "")}
+        # 최신성 감시 (Kimi) — 자동 교체는 안 함: 채점 모델 교체 = 규칙 C(캘리브 재시험), 사람 결정
+        if m.get("provider") == "moonshot" and connected and not mock:
+            ids = _moonshot_models()
+            if ids is not None:
+                if m.get("model") not in ids:
+                    entry["alert"] = f"⚠ {m.get('model')} 단종 — 목록에 없음, 교체 필요"
+                else:
+                    cur_v = _kimi_ver(m.get("model"))
+                    top = max((v for v in (_kimi_ver(i) for i in ids) if v), default=None)
+                    if cur_v and top and top > cur_v:
+                        entry["alert"] = f"✨ kimi-k{top:g} 출시 — 교체는 사람 결정 (규칙 C: 교체 시 캘리브레이션 재시험)"
+        engines.append(entry)
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     use = {}
     for code, ps in st["products"].items():
