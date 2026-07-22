@@ -650,9 +650,10 @@ function renderAiTeam(){
     const checked = e.connected && use[e.role]!==false;
     // 앙상블: 전원이 '추출'을 겸한다 — 라벨에 명시 (그 외 전략은 본업만)
     const duty = strat==='ensemble' ? '추출 + '+e.role_ko : e.role_ko;
-    return `<label class="aichip ${e.connected?'':'offline'}" title="${esc(e.how)}${lock?' · 대표 AI는 항상 참여':''}">
+    const alert = e.alert?`<span title="${esc(e.alert)}" style="cursor:help">${e.alert.startsWith('⚠')?'⚠':'✨'}</span>`:'';
+    return `<label class="aichip ${e.connected?'':'offline'}" title="${esc(e.how)}${e.model?' · '+esc(e.model):''}${lock?' · 대표 AI는 항상 참여':''}${e.alert?'\n'+esc(e.alert):''}">
       <input type="checkbox" data-role="${e.role}" ${checked?'checked':''} ${(!e.connected||lock)?'disabled':''} onchange="toggleMember()">
-      <span class="dot ${e.connected?'ok':'off'}"></span><b>${esc(e.engine)}</b><span class="airole">${esc(duty)}</span>
+      <span class="dot ${e.connected?'ok':'off'}"></span><b>${esc(e.engine)}</b><span class="airole">${esc(duty)}</span>${alert}
     </label>`;
   }).join('');
   const HOW = {ensemble:'앙상블: 체크된 AI 전원이 각자 추출 → claude가 병합 (합집합이라 촘촘)',
