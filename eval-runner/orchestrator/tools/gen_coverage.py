@@ -344,6 +344,15 @@ def verify_units(units, chunks):
     return ok, rej
 
 
+# xlsx가 거부하는 제어문자(NULL 등) — PDF 추출 코퍼스에 섞여 옴. 저장용으로만 제거
+# (1축 검수는 이미 통과 — norm()이 공백만 보므로 이 정제가 검수를 무효화하지 않음)
+_ILLEGAL_XLSX = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def _xclean(v):
+    return _ILLEGAL_XLSX.sub("", v) if isinstance(v, str) else v
+
+
 def write_map(prod, units, version="v1_0"):
     out = DATA / prod / "03_coverage_map" / f"{prod}_커버리지맵_코퍼스판_{version}.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -353,9 +362,10 @@ def write_map(prod, units, version="v1_0"):
     ws.append(["#", "Unit ID", "type", "title", "이 단위가 말하는 사실",
                "답변 가능한 질문", "source/resource", "citation_id", "상태"])
     for i, u in enumerate(units, 1):
-        ws.append([i, u["unit_id"], u.get("type", "Doc"), u.get("title", ""),
-                   u["fact"], u.get("question_hint", ""), u.get("source", ""),
-                   u["unit_id"], "생성-검수통과"])
+        ws.append([_xclean(x) for x in
+                   [i, u["unit_id"], u.get("type", "Doc"), u.get("title", ""),
+                    u["fact"], u.get("question_hint", ""), u.get("source", ""),
+                    u["unit_id"], "생성-검수통과"]])
     wb.save(out)
     return out
 
