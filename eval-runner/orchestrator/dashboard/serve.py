@@ -392,12 +392,18 @@ def api_action(payload):
                 pass                      # 죽은 pid — 무시하고 새로 시작
         # 무인 자동 진행 워커 — 한도로 멈춰도 스스로 재개 (사람이 밤새 버튼 누를 필요 없음)
         worker = [sys.executable, str(ROOT / "tools" / "auto_run.py"), "--product", prod]
-        logf = ROOT / "results" / f"_run_{prod}.log"
-        # 로그 교대 — 무한히 자라지 않게: 새 실행마다 직전 로그를 .prev 로 (현재+직전만 보관)
-        if logf.exists() and logf.stat().st_size > 0:
-            prev = logf.with_suffix(".log.prev")
-            prev.unlink(missing_ok=True)
-            logf.rename(prev)
+        # 원문 로그 보관 체계: 제품별 폴더 + 날짜_시각_시작파트 파일명 — 나중에 찾을 수 있게
+        import datetime
+        try:
+            stage = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"][prod]["stage"]
+        except Exception:
+            stage = "run"
+        ldir = ROOT / "results" / "logs" / prod
+        ldir.mkdir(parents=True, exist_ok=True)
+        logf = ldir / f"{datetime.datetime.now():%Y-%m-%d_%H%M}_{stage}.log"
+        cur = ROOT / "results" / f"_run_{prod}.log"
+        cur.unlink(missing_ok=True)
+        cur.symlink_to(logf)          # '_run_<제품>.log' = 항상 최신 로그를 가리키는 별칭
         p = subprocess.Popen(worker, cwd=str(ROOT), env={**os.environ},
                              stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
         pidf.write_text(str(p.pid))

@@ -397,7 +397,7 @@ function renderDetail(ps){
   const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n세션 정책: ${stageAI(ps.stage).session}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
     ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
-    ${ps.status==='RUNNING'?`<div class="fh" style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin:10px 0 4px;display:flex;justify-content:space-between"><span>진행 요약 (챕터 전환만)</span><a href="/results/_run_${esc(PV().code)}.log" target="_blank" style="color:var(--run);text-decoration:none">원문 로그 ↗</a></div><div class="runlog" id="runlog">요약 불러오는 중…</div>`:''}
+    ${ps.status==='RUNNING'?`<div class="fh" style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin:10px 0 4px;display:flex;justify-content:space-between"><span>진행 요약 (챕터 전환만)</span><span><a href="/results/_run_${esc(PV().code)}.log" target="_blank" style="color:var(--run);text-decoration:none">원문 로그 ↗</a> · <a href="/results/logs/${esc(PV().code)}/" target="_blank" style="color:var(--tx2);text-decoration:none">지난 로그 📂</a></span></div><div class="runlog" id="runlog">요약 불러오는 중…</div>`:''}
     <div class="note">${esc(note)}</div>`;
 }
 
