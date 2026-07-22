@@ -313,8 +313,9 @@ def api_ai_status():
     return {"mock": mock, "engines": engines, "products": use}
 
 
-def api_runlog(code, n=15):
-    """실행 로그 꼬리 — RUNNING 중 '현재 단계' 패널에 무슨 일이 벌어지는지 그대로 보여준다"""
+def api_runlog(code, n=8):
+    """실행 기록 요약 — 원문은 파일(results/_run_*.log)에 저장, 화면엔 '챕터 전환'급만.
+    이정표: 단계 결과(→)·재개·중단·완료·사고. 배치 카운트 잡음은 제외(진행선이 담당)."""
     if not re.fullmatch(r"[A-Z0-9]{1,8}", code or ""):
         return {"lines": []}
     p = ROOT / "results" / f"_run_{code}.log"
@@ -324,7 +325,9 @@ def api_runlog(code, n=15):
         lines = p.read_text(encoding="utf-8", errors="replace").strip().splitlines()
     except Exception:
         return {"lines": []}
-    return {"lines": lines[-n:]}
+    KEEP = ("→", "체크포인트", "⏸", "⛔", "✅", "🤖", "🔁", "재개", "중단", "완료", "HALT")
+    marks = [l for l in lines if any(k in l for k in KEEP) and "배치…" not in l]
+    return {"lines": marks[-n:]}
 
 
 def api_progress(code):
