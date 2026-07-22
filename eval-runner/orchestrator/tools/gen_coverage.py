@@ -498,14 +498,77 @@ def reaudit(prod):
     print(f"재점검 완료 — 누락 {len(gaps)}건 (플래그 {len(flags)}묶음), 카드 재발행")
 
 
+def gapfill(prod):
+    """GAP 보완 추출 — 누락 문서의 청크만 앙상블 재추출 → 기존 맵에 합쳐 v+1 저장 → 재점검.
+    전체 재추출 아님: 누락분(수백 청크)만. 결과는 새 버전 맵 파일 (기존 맵 보존)."""
+    from olib import load_config
+    cfg = load_config()
+    chunks = load_corpus(prod)
+    maps = sorted((DATA / prod / "03_coverage_map").glob(f"{prod}_커버리지맵_*.xlsx"))
+    wb = openpyxl.load_workbook(maps[-1])
+    ws = wb.active
+    old_units = [{"unit_id": r[1], "type": r[2], "title": r[3], "fact": r[4],
+                  "question_hint": r[5], "source": r[6]}
+                 for r in list(ws.iter_rows(values_only=True))[1:]]
+    gaps = set(_gkey(g) for g in gap_audit(prod, chunks, old_units))
+    target = [c for c in chunks if _gkey(c["source"]) in gaps]
+    print(f"보완 대상: 문서 {len(gaps)} · 청크 {len(target)}")
+    if not target:
+        print("보완할 청크 없음")
+        return
+    # 앙상블 추출 (누락 청크만) — 역할별 독립, 체크포인트는 이 대상 크기 기준
+    roles = _ensemble_roles(cfg, get_strategy(prod), prod)
+    pool, seen = [], {norm(u.get("fact", "")) for u in old_units}
+    fails = []
+    for role in roles:
+        try:
+            units = generate_units(prod, target, cfg, role=role)
+            ok, _rej = verify_units(units, target)
+            for u in ok:
+                k = norm(u.get("fact", ""))
+                if k not in seen:
+                    seen.add(k)
+                    pool.append(u)
+        except CoveragePaused:
+            raise
+        except Exception as e:
+            fails.append({"role": role, "err": str(e)[:150]})
+    # ID 재부여 — 기존 맵과 충돌 없이 이어서
+    from collections import defaultdict
+    seq = defaultdict(int)
+    for u in old_units:
+        m = re.match(rf"{re.escape(prod)}-([A-Z0-9]+)-(\d+)", N(u["unit_id"] or ""))
+        if m:
+            seq[m.group(1)] = max(seq[m.group(1)], int(m.group(2)))
+    for u in pool:
+        doc = re.sub(r"[^A-Z0-9]", "", N(u.get("source", "DOC")).upper())[:6] or "DOC"
+        seq[doc] += 1
+        u["unit_id"] = f"{prod}-{doc}-{seq[doc]:03d}"
+    merged = old_units + pool
+    # 다음 버전 번호
+    vm = re.search(r"_v(\d+)_(\d+)\.xlsx$", maps[-1].name)
+    nxt = f"v{vm.group(1)}_{int(vm.group(2)) + 1}" if vm else "v1_1"
+    out = write_map(prod, merged, version=nxt)
+    _ckpt_path(prod).unlink(missing_ok=True)
+    ledger_append("COVERAGE_MAP", "GAPFILL_EXTRACTED", "script:gen_coverage",
+                  evidence={"대상 문서": len(gaps), "대상 청크": len(target),
+                            "신규 단위": len(pool), "실패": fails,
+                            "산출": N(out.name), "기존 맵": N(maps[-1].name)}, product=prod)
+    print(f"보완 완료 — 신규 단위 {len(pool)} → {out.name}. 재점검 실행…")
+    reaudit(prod)
+
+
 if __name__ == "__main__":
     import argparse
     from olib import load_config
     ap = argparse.ArgumentParser()
     ap.add_argument("--product", required=True)
     ap.add_argument("--reaudit", action="store_true", help="기존 맵으로 GAP 재점검 + 카드 재발행")
+    ap.add_argument("--gapfill", action="store_true", help="누락 문서만 보완 추출 → 맵 v+1 + 재점검")
     a = ap.parse_args()
-    if a.reaudit:
+    if a.gapfill:
+        gapfill(a.product)
+    elif a.reaudit:
         reaudit(a.product)
     else:
         print(run(a.product, load_config()))
