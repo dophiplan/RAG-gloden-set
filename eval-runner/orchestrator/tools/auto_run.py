@@ -70,8 +70,14 @@ def main():
                 continue
             print(f"⛔ {a.product} HALTED (비한도 — 진짜 사고) — 사람 필요: {hr[:80]}")
             return
-        # PENDING 등 중간 상태 — 곧바로 한 번 더 run
-        time.sleep(1)
+        # PENDING/RUNNING 잔존 등 중간 상태 — 재시도하되 무한 루프 방지 (연속 5회 무진전이면 정지)
+        tries += 1
+        if tries >= 12:
+            print(f"⛔ 무진전 반복 {tries}회 — 자동 진행 중단 (사람 확인 필요)")
+            ledger_append(stage, "AUTO_RUN_STOPPED", "script:auto_run",
+                          evidence={"사유": f"무진전 반복 {tries}회 — 사람 확인 필요"}, product=a.product)
+            return
+        time.sleep(30)
 
 
 if __name__ == "__main__":
