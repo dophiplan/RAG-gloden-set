@@ -370,12 +370,60 @@ def write_map(prod, units, version="v1_0"):
     return out
 
 
+def _gkey(s):
+    """GAP 대조 키 — 공백·대소문자·꼬리 슬래시 무시 (('/kr'과 '/kr/'은 같은 문서)"""
+    return norm(s).rstrip("/")
+
+
 def gap_audit(prod, chunks, units):
-    """③′ 인입 누락 대조 — 별도 세션(생성 맥락 미공유): 문서별 커버 단위 유무"""
-    docs = {N(c["doc"]) for c in chunks}
-    covered = {N(u["unit_id"]).split("-")[1] if "-" in N(u["unit_id"]) else "" for u in units}
-    gaps = [d for d in sorted(docs) if d.upper()[:6] not in covered]
-    return gaps
+    """③′ 인입 누락 대조 — source(URL/파일명) 기준: 커버 단위가 0개인 코퍼스 문서.
+    [수리 2026-07-22] 종전에는 doc 제목 약칭 vs unit_id 를 대조해 281건 오탐 (369→실측 88)."""
+    covered = {_gkey(u.get("source", "")) for u in units}
+    gaps, seen = [], set()
+    for c in chunks:
+        k = _gkey(c["source"])
+        if k and k not in covered and k not in seen:
+            seen.add(k)
+            gaps.append(N(c["source"]))
+    return sorted(gaps)
+
+
+def classify_gaps(gaps, chunks):
+    """누락을 성격별로 — 사람이 판단할 것(내용 페이지)과 무해 추정(목록·넘김)을 분리"""
+    from collections import Counter
+    by_src = Counter()
+    for c in chunks:
+        by_src[N(c["source"])] += 1
+    nav = [g for g in gaps if re.search(r"/page/\d+/?$|/feed/?$", g)]
+    SECTION_ROOTS = ("blog", "notices", "use-cases", "success-stories", "products",
+                     "pricing", "support", "library", "videos", "trial", "info", "contact")
+    listing = [g for g in gaps if g not in nav
+               and (g.rstrip("/").count("/") <= 4 or g.rstrip("/").endswith(SECTION_ROOTS))]
+    content = [g for g in gaps if g not in nav and g not in listing]
+
+    def section_of(u):
+        m = re.search(r"remotecall\.com/kr/([a-z-]+)", u)
+        return m.group(1) if m else ("파일" if not u.startswith("http") else "기타")
+    groups = {}
+    for g in content:
+        groups.setdefault(section_of(g), []).append(g)
+    return {"nav": nav, "listing": listing, "content_groups": groups, "chunks_of": by_src}
+
+
+def gap_flags(gaps, chunks):
+    """게이트 카드용 플래그 — 무해 추정은 묶음 1건, 내용 페이지는 섹션별 묶음 (ack 부담 축소)"""
+    cl = classify_gaps(gaps, chunks)
+    flags = []
+    harmless = cl["nav"] + cl["listing"]
+    if harmless:
+        flags.append({"type": "GAP-목록·넘김 페이지 (내용 없음 추정)", "id": f"{len(harmless)}건",
+                      "candidates": [], "ack_required": True,
+                      "note": "페이지네이션·피드·카테고리 목록 — 예: " + " · ".join(harmless[:3])})
+    for sec, urls in sorted(cl["content_groups"].items(), key=lambda x: -len(x[1])):
+        total_chunks = sum(cl["chunks_of"][u] for u in urls)
+        flags.append({"type": f"GAP-내용 페이지 누락 · {sec}", "id": f"{len(urls)}건 ({total_chunks}청크)",
+                      "candidates": urls, "ack_required": True})
+    return flags
 
 
 def run(prod, cfg):
@@ -411,8 +459,7 @@ def run(prod, cfg):
     _progress(prod, "완료 — 사람확인 대기", "-", 0, 0, [])
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
     _ckpt_path(prod).unlink(missing_ok=True)   # 완주 — 체크포인트 정리
-    flags = ([{"type": "GAP_AUDIT 누락 의심", "id": d, "candidates": [],
-               "ack_required": True} for d in gaps]
+    flags = (gap_flags(gaps, chunks)
              + [{"type": "생성 반려 잔존", "id": N(u.get("unit_id", "?")), "candidates": [r]}
                 for u, r in rej])
     issue_gate_card(prod, "COVERAGE_MAP", f"COVMAP_{prod}",
@@ -422,10 +469,43 @@ def run(prod, cfg):
     return "WAITING_HUMAN", ev
 
 
+def reaudit(prod):
+    """GAP 재점검 — 기존 커버리지맵으로 소급 재산출 (도구 수리 후, 재추출 없음).
+    감독관 규칙 §3 노화 감시: 도구를 고치면 과거 결과를 같은 자로 다시 잰다."""
+    from olib import close_gate
+    chunks = load_corpus(prod)
+    maps = sorted((DATA / prod / "03_coverage_map").glob(f"{prod}_커버리지맵_*.xlsx"))
+    if not maps:
+        sys.exit("커버리지맵 없음")
+    wb = openpyxl.load_workbook(maps[-1])
+    ws = wb.active
+    units = [{"unit_id": r[1], "fact": r[4], "source": r[6]}
+             for r in list(ws.iter_rows(values_only=True))[1:]]
+    gaps = gap_audit(prod, chunks, units)
+    flags = gap_flags(gaps, chunks)
+    ledger_append("COVERAGE_MAP", "GAP_AUDIT_CORRECTED", "script:gen_coverage",
+                  evidence={"구(오탐 포함)": 369, "신(실측)": len(gaps),
+                            "원인": "doc 제목 약칭 vs unit_id 대조 — source(URL) 기준으로 수리",
+                            "맵": N(maps[-1].name), "커버 단위": len(units)}, product=prod)
+    close_gate(prod, f"COVMAP_{prod}")   # 옛 플래그(오탐 369건) 제거 후 재발행
+    ev = {"실행 전략": get_strategy(prod), "커버 단위(검수 통과)": len(units),
+          "GAP 누락 (재점검·source 기준)": len(gaps),
+          "산출": N(maps[-1].name), "재점검": "GAP 도구 수리 후 소급 재산출 (재추출 없음)"}
+    issue_gate_card(prod, "COVERAGE_MAP", f"COVMAP_{prod}",
+                    what_stopped="커버리지맵 확정 대기 — GAP 재점검 완료 (도구 수리 반영)",
+                    evidence=ev, flags=flags,
+                    recommendation="무해 추정(목록·넘김)은 묶음 ack, 내용 페이지 누락은 섹션별 검토 후 승인 → ④ 진입")
+    print(f"재점검 완료 — 누락 {len(gaps)}건 (플래그 {len(flags)}묶음), 카드 재발행")
+
+
 if __name__ == "__main__":
     import argparse
     from olib import load_config
     ap = argparse.ArgumentParser()
     ap.add_argument("--product", required=True)
+    ap.add_argument("--reaudit", action="store_true", help="기존 맵으로 GAP 재점검 + 카드 재발행")
     a = ap.parse_args()
-    print(run(a.product, load_config()))
+    if a.reaudit:
+        reaudit(a.product)
+    else:
+        print(run(a.product, load_config()))
