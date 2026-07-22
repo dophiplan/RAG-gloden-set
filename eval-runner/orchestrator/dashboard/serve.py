@@ -223,6 +223,28 @@ def _kimi_ver(mid):
     return float(m.group(1)) if m else None
 
 
+def _model_alert_card(engine, alert):
+    """모델 단종·신모델 감지 → 검수큐 카드 발행 (같은 내용이면 중복 발행 안 함)"""
+    import datetime
+    qdir = ROOT / "검수큐"
+    f = qdir / f"MODELALERT_{engine}.md"
+    if f.exists() and alert in f.read_text(encoding="utf-8"):
+        return
+    qdir.mkdir(exist_ok=True)
+    f.write_text(
+        f"# MODELALERT_{engine} — 모델 교체 검토 필요\n"
+        f"- 발행: {datetime.datetime.now().isoformat(timespec='seconds')} · 제품: 공통 · 단계: 운영\n\n"
+        f"## 무엇을\n{alert}\n\n"
+        f"## 처리 방법\n"
+        f"- 교체하기로 하면: 저(Claude)에게 말하면 config 변경 + 규칙 C(캘리브레이션 재시험) 자동 처리\n"
+        f"- 유지하기로 하면: 이 카드를 검수큐/완료 로 옮기면 끝 (성적 비교 보전)\n",
+        encoding="utf-8")
+    sys.path.insert(0, str(ROOT / "tools"))
+    from olib import ledger_append
+    ledger_append("MAINTENANCE", "MODEL_ALERT", "script:serve",
+                  evidence={"engine": engine, "알림": alert})
+
+
 def api_ai_status():
     """AI 팀 현황 — 역할별 엔진·연결 상태(🟢/⚪) + 제품별 투입 선택(ai_use 체크박스)"""
     import os
@@ -275,6 +297,8 @@ def api_ai_status():
                     top = max((v for v in (_kimi_ver(i) for i in ids) if v), default=None)
                     if cur_v and top and top > cur_v:
                         entry["alert"] = f"✨ kimi-k{top:g} 출시 — 교체는 사람 결정 (규칙 C: 교체 시 캘리브레이션 재시험)"
+            if entry.get("alert"):
+                _model_alert_card(eng, entry["alert"])   # 검수큐 카드로 사람 호출
         engines.append(entry)
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     use = {}
