@@ -481,7 +481,7 @@ function showTip(el,i){
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
   if(!cs) return;
   // 현역 화면 ↔ 보관함 화면 전환 — [📦 보관함] 누르면 통째로 넘어가고, ‹ 돌아가기/✕로 복귀
-  const frow = f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`;
+  const frow = f=>`<div class="frow"><span class="star">${f.canonical&&!f.gen?'★':''}</span><span class="fn" title="${esc(f.file)}">${esc(f.file)}</span><span class="sz">${esc(f.mtime||'')}</span><span class="sz">${kb(f.size)}</span><a class="dl" href="/data/${encodeURI(f.path||'')}" download>받기</a></div>`;
   const curF = cs.files.filter(f=>!f.gen), oldF = cs.files.filter(f=>f.gen);
   const groups = {};
   oldF.forEach(f=>(groups[f.gen]=groups[f.gen]||[]).push(f));

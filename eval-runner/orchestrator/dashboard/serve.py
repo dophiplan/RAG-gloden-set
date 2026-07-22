@@ -37,9 +37,9 @@ PRODUCT_META = {
     "RV2": {"display": "RV", "product_name": "리모트뷰", "gen": "골든셋 v2.0 — 현역(구축 중)"},
     "RC2": {"display": "RC", "product_name": "리모트콜", "gen": "골든셋 v2.0 — 현역(구축 중)"},
 }
-LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨)
-    "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 은퇴(정답키 공개, 참고용)"}],
-    "RC": [{"code": "RC", "gen": "골든셋 v1.1 · 891문항 — 은퇴(정답키 공개, 참고용)"}],
+LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨) — 은퇴일: 원장 GOLDENSET_RETIRED
+    "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 2026-07-20 은퇴(정답키 공개, 참고용)"}],
+    "RC": [{"code": "RC", "gen": "골든셋 v1.1 · 891문항 — 2026-07-20 은퇴(정답키 공개, 참고용)"}],
 }
 HIDDEN_CODES = {"EE"}   # 자동 테스트 전용 제품 — 화면에서 숨김 (E2E가 쓰고 지나가는 자리)
 
@@ -156,10 +156,13 @@ def _scan_stage_files(code, sm, canon, gen_label=None):
             m = re.search(r"_v(\d+(?:_\d+)+)", p.name)
             return tuple(int(x) for x in m.group(1).split("_")) if m else (0,)
         best = max(fl, key=vkey).name if fl else None
+        import datetime
         for p in fl:
+            st_ = p.stat()
             files.append({"file": N(p.name), "version": "",
                           "canonical": canon.get(N(p.name), p.name == best),
-                          "size": p.stat().st_size, "gen": gen_label,
+                          "size": st_.st_size, "gen": gen_label,
+                          "mtime": datetime.datetime.fromtimestamp(st_.st_mtime).strftime("%m-%d %H:%M"),
                           "path": f"{code}/{sm['dir']}/{p.name}"})
     return files
 
