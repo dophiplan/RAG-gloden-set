@@ -390,6 +390,11 @@ def api_action(payload):
         # 무인 자동 진행 워커 — 한도로 멈춰도 스스로 재개 (사람이 밤새 버튼 누를 필요 없음)
         worker = [sys.executable, str(ROOT / "tools" / "auto_run.py"), "--product", prod]
         logf = ROOT / "results" / f"_run_{prod}.log"
+        # 로그 교대 — 무한히 자라지 않게: 새 실행마다 직전 로그를 .prev 로 (현재+직전만 보관)
+        if logf.exists() and logf.stat().st_size > 0:
+            prev = logf.with_suffix(".log.prev")
+            prev.unlink(missing_ok=True)
+            logf.rename(prev)
         p = subprocess.Popen(worker, cwd=str(ROOT), env={**os.environ},
                              stdout=open(logf, "ab"), stderr=subprocess.STDOUT)
         pidf.write_text(str(p.pid))
