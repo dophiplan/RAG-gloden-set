@@ -262,7 +262,7 @@ function stageView(code){
 // U4: "지금 할 일" 한 줄 — 화면이 먼저 말해준다
 function nextAction(){
   const ps = PS(), code = PV().code;
-  const myCards = S.queue.filter(c=>c.product===code);
+  const myCards = S.queue.filter(c=>c.product===code||c.product==='공통');
   if(busy) return {icon:'⏳', text:'AI 작업 중… 실전 모드에서는 몇 분 걸릴 수 있어요. 이 화면 그대로 두세요.'};
   if(ps.status==='HALTED'){
     const r = ps.halt_reason||'원장 확인';
@@ -284,7 +284,7 @@ function render(){
   const st = S.state;
   // U1: 탭 = 제품 (RV·RC) — 내부 코드 숨김
   $('tabs').innerHTML = Object.entries(st._products).map(([disp,pv])=>{
-    const q = S.queue.filter(c=>c.product===pv.code);
+    const q = S.queue.filter(c=>c.product===pv.code||c.product==='공통');
     const human = q.some(c=>c.kind==='GATE');
     const badge = q.length?`<span class="tabbadge ${human?'':'inp'}">${q.length}</span>`:'';
     // 다른 탭에서도 "돌아가는 중"이 보이게 — AI 작업 진행 중인 제품은 ⚙ 표시
@@ -332,7 +332,7 @@ function render(){
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
-    <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code).length}건</span></div><div class="p-body" id="queuebody">
+    <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">
       ${renderQueue()}
     </div></div>
     <div class="panel"><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
@@ -357,7 +357,7 @@ function render(){
 
 function renderQueue(){
   const code = PV().code;
-  const cards = S.queue.filter(c=>c.product===code);
+  const cards = S.queue.filter(c=>c.product===code||c.product==='공통');
   if(!cards.length) return `<div class="note">할 일 없음 — 시스템이 알아서 진행하거나 외부 재료를 기다리는 중이에요.</div>`;
   return cards.map((c,ci)=>{
     const bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
