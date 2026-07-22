@@ -1,16 +1,16 @@
 # INPUT_CORPUS_AUDIT_RV2 — 입력 대기
 
-- 발행: 2026-07-20T19:41:08 · WAITING_INPUT 검사기 (자동)
+- 발행: 2026-07-22T11:21:07 · WAITING_INPUT 검사기 (자동)
 - 제품: RV2 · 단계: ① 코퍼스 실측
 
 ## 무엇을
-RV 갱신 코퍼스 export (팀장님 회신분)
+RV2 코퍼스 export (RAG 시스템 인입분 전량)
 
 ## 어느 경로에
 `data/RV2/corpus/`
 
 ## 어떤 형식으로
-json([{doc,chunk_id,text}]) 또는 md/txt — 대시보드 📎 업로드 버튼 사용 가능
+export 파일(xlsx/json/zip). 투입 시: 청크 실측 + match_corpus 중첩 검사 + 해시 매니페스트 등록 후 ① 시작
 
 
 > 투입된 입력물은 입구 검사(실측/형식 게이트/해시 매니페스트 등록)를 통과해야 RUNNING 전이.
