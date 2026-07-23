@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T11:31:40",
+  "updated": "2026-07-23T11:32:37",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSPLAN_RC2",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T11:32:04"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -44,7 +52,7 @@
         "reviewer": false
       },
       "goldenset": {
-        "phase": "MATERIAL",
+        "phase": "PLAN_GATE",
         "round": 0,
         "done_units": [],
         "batch": "B1"
@@ -58,25 +66,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T10:39:00"
+          "done_at": "2026-07-23T11:32:25"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T10:39:00"
+          "done_at": "2026-07-23T11:32:25"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T10:39:01"
+          "done_at": "2026-07-23T11:32:26"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T10:39:04"
+          "done_at": "2026-07-23T11:32:30"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T10:39:04"
+          "done_at": "2026-07-23T11:32:30"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T10:39:06"
+          "done_at": "2026-07-23T11:32:33"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T10:39:06"
+          "done_at": "2026-07-23T11:32:33"
         }
       },
       "open_gates": [
@@ -85,7 +93,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T10:39:12"
+          "issued": "2026-07-23T11:32:37"
         }
       ],
       "halt_reason": null,
