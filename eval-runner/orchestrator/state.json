@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T08:15:55",
+  "updated": "2026-07-24T08:21:04",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,15 +35,7 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_RC2_17차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-24T08:15:55"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -53,7 +45,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 17,
+        "round": 16,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -993,24 +985,7 @@
           "RC2-REMOTE-1700",
           "RC2-REMOTE-1707",
           "RC2-REMOTE-1718",
-          "RC2-REMOTE-1769",
-          "RC2-HTTPSF-1402",
-          "RC2-HTTPSF-1418",
-          "RC2-HTTPSF-1421",
-          "RC2-HTTPSF-1431",
-          "RC2-HTTPSF-1469",
-          "RC2-HTTPSW-4273",
-          "RC2-HTTPSW-4275",
-          "RC2-HTTPSW-4276",
-          "RC2-HTTPSW-4298",
-          "RC2-HTTPSW-4332",
-          "RC2-HTTPSW-4443",
-          "RC2-HTTPSW-4505",
-          "RC2-HTTPSW-4516",
-          "RC2-HTTPSW-4542",
-          "RC2-HTTPSW-4562",
-          "RC2-HTTPSW-4564",
-          "RC2-HTTPSW-4565"
+          "RC2-REMOTE-1769"
         ],
         "batch": "B1",
         "last_batch": {
@@ -1035,7 +1010,8 @@
             "RC2-HTTPSW-4564",
             "RC2-HTTPSW-4565"
           ]
-        }
+        },
+        "reject_feedback": "RC2-943 공지에 대한 날짜 묻는건 필요 없음 RC2-945 AI 어시스턴트 내용 없는데? RC2-953 홍보문구에 대한 내용은 필요 없음 \n여기에 없는건 승인"
       }
     },
     "EE": {
