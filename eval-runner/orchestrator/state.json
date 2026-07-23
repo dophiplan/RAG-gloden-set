@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T08:42:40",
+  "updated": "2026-07-24T08:45:11",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_20차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-24T08:45:02"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 19,
+        "round": 20,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -1006,19 +1014,16 @@
           "RC2-HTTPSW-4564",
           "RC2-REMOTE-1738",
           "RC2-HTTPSW-4332",
-          "RC2-HTTPSW-4439",
           "RC2-HTTPSW-4449",
-          "RC2-REMOTE-1748"
+          "RC2-REMOTE-1748",
+          "RC2-HTTPSW-3229"
         ],
         "batch": "B1",
         "last_batch": {
-          "label": "19차",
-          "file": "RC2_골든셋_19차_4문항_v1_0.xlsx",
+          "label": "20차",
+          "file": "RC2_골든셋_20차_1문항_v1_0.xlsx",
           "units": [
-            "RC2-HTTPSW-4332",
-            "RC2-HTTPSW-4439",
-            "RC2-HTTPSW-4449",
-            "RC2-REMOTE-1748"
+            "RC2-HTTPSW-3229"
           ]
         }
       }
