@@ -362,7 +362,11 @@ function renderQueue(){
   return cards.map((c,ci)=>{
     const bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
     const acks = c.acks.map((a,ai)=>`<div class="ackrow"><input type="checkbox" id="ack_${ci}_${ai}" onchange="ackCheck(${ci})"><label for="ack_${ci}_${ai}">${esc(a)}</label></div>`).join('');
-    const btns = c.kind==='GATE' ? `<div class="btns">
+    const isNotice = c.id.startsWith('MODELALERT');   // 알림형 카드 — 확인하고 닫으면 끝
+    const btns = isNotice ? `<div class="btns">
+        <button class="btn reject" onclick="dismissCard('${esc(c.file)}')">✕ 확인했어요 (닫기)</button>
+      </div><div class="hint">닫으면 같은 내용으로는 다시 안 떠요 — 새 모델이 또 나오면 그때 새 카드가 옵니다</div>` :
+      c.kind==='GATE' ? `<div class="btns">
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
       </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
@@ -574,6 +578,9 @@ async function setStrategy(v){
 async function resumeRun(){   // 한도 회복 후 이어서 — 체크포인트에서 재개
   const d = await act({cmd:'resume', product:PV().code, reason:'한도/일시 중단 회복 — 체크포인트 재개'});
   if(d.ok) await act({cmd:'run', product:PV().code});
+}
+async function dismissCard(file){   // 알림형 카드 닫기 — 완료로 이동 (같은 내용 재발행 억제)
+  await act({cmd:'dismiss-card', file});
 }
 
 /* G16: 회차 반복 채점 — 응답로그는 팀장님이 계속 준다: 올리면 ⑧ 복귀→채점→보고서 */

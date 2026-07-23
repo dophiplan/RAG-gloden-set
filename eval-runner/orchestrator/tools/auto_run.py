@@ -51,12 +51,14 @@ def main():
         s, stage = ps["status"], ps["stage"]
         if s in ("WAITING_HUMAN", "WAITING_INPUT", "DONE"):
             if s == "WAITING_HUMAN" and os.environ.get("ORCH_MOCK") != "1":
-                # 3권 분립: 사람 게이트 도달 → 설계본부(독립 세션) 자동 소환, 소견을 카드에 첨부
-                print("🏛 설계본부 소환 — 독립 세션 검수 소견 첨부 중…")
-                _pipeline_raw = subprocess.run(
+                # 3권 분립: 설계본부(독립 세션) 소환 — 백그라운드로 (워커는 즉시 퇴근해야
+                # 사람 승인의 다음 실행이 pidfile 가드에 안 막힘 — 8차 정체 사고)
+                print("🏛 설계본부 소환 (백그라운드) — 소견은 완성되는 대로 카드에 첨부")
+                sbb_log = ROOT / "results" / "logs" / a.product / "sbb_review.log"
+                sbb_log.parent.mkdir(parents=True, exist_ok=True)
+                subprocess.Popen(
                     [sys.executable, str(ROOT / "tools" / "sbb_review.py"), "--product", a.product],
-                    cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=1800)
-                print(_pipeline_raw.stdout.strip() or _pipeline_raw.stderr.strip()[:200])
+                    cwd=str(ROOT), env=env, stdout=open(sbb_log, "ab"), stderr=subprocess.STDOUT)
             print(f"⏹ {a.product} {stage} · {s} — 사람 차례거나 완료. 자동 진행 종료.")
             ledger_append(stage, "AUTO_RUN_STOPPED", "script:auto_run",
                           evidence={"사유": f"{s} 도달 — 사람 차례거나 완료"}, product=a.product)
