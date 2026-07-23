@@ -236,6 +236,17 @@ def main():
     checks.append(("④ 질문 중복", "FAIL" if dups else "PASS",
                    f"중복 {len(dups)}" + (f" — 예: {list(dups)[:2]}" if dups else " · 0")))
 
+    # ⑧ 제품명 내부코드 검사 [2026-07-23 설계본부 지적: 결함본도 7종 PASS — 제품명 결함을
+    #    구조적으로 못 잡았음. 질문·정답에 내부 트랙 코드(RC2 등)가 노출되면 응시 불가 시험지]
+    prod_name = terrain.get("product_name")
+    if prod_name and prod_name != a.product:
+        leak = [r["ID"] for r in rows
+                if re.search(rf"(?<![A-Za-z0-9]){re.escape(a.product)}(?![A-Za-z0-9-])", f"{r.get('질문','')} {r.get('정답','')}")]
+        checks.append(("⑧ 제품명 내부코드", "FAIL" if leak else "PASS",
+                       f"질문·정답에 '{a.product}' 노출 {len(leak)}건" + (f" — 예: {leak[:3]}" if leak else f" · 0 (제품명={prod_name})")))
+    else:
+        checks.append(("⑧ 제품명 내부코드", "SKIP", "terrain product_name 미설정 — 등록 권장"))
+
     # ⑤ 커버 등식
     if eq_rows:
         nums = {}
