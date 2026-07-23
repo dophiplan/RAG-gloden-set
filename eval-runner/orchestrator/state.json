@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T12:06:19",
+  "updated": "2026-07-23T12:14:42",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -97,25 +97,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T11:32:25"
+          "done_at": "2026-07-23T12:14:30"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T11:32:25"
+          "done_at": "2026-07-23T12:14:31"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T11:32:26"
+          "done_at": "2026-07-23T12:14:32"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T11:32:30"
+          "done_at": "2026-07-23T12:14:35"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T11:32:30"
+          "done_at": "2026-07-23T12:14:35"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T11:32:33"
+          "done_at": "2026-07-23T12:14:38"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T11:32:33"
+          "done_at": "2026-07-23T12:14:38"
         }
       },
       "open_gates": [
@@ -124,7 +124,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T11:32:37"
+          "issued": "2026-07-23T12:14:42"
         }
       ],
       "halt_reason": null,
