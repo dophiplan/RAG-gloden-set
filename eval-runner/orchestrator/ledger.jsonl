@@ -2077,3 +2077,6 @@
 {"ts": "2026-07-24T08:45:02", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:auto_run", "action": "AUTO_RUN_STOPPED", "evidence": {"사유": "WAITING_HUMAN 도달 — 사람 차례거나 완료"}, "reason": null}
 {"ts": "2026-07-24T08:45:11", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:claude(사후 반려 이행)", "action": "ITEM_REMOVED", "evidence": {"문항": "RC2-960", "배치": "19차 → 3문항 v1_1", "사유": "사람: 반려인데 승인 오클릭 — 사후 삭제 지시", "반환 단위": "RC2-HTTPSW-4439"}, "reason": null}
 {"ts": "2026-07-24T08:45:11", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:claude(사후 반려 이행)", "action": "UNITS_RETURNED", "evidence": {"반환": 1, "사유": "삭제 문항 단독 인용 단위"}, "reason": null}
+{"ts": "2026-07-24T08:45:42", "product": "RC2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "GSBATCH_RC2_18차", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
+{"ts": "2026-07-24T08:45:55", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": "GSBATCH_RC2_20차", "actor": "사람:난희", "action": "approve", "evidence": {"flags_acked": 0}, "reason": null}
+{"ts": "2026-07-24T08:45:56", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
