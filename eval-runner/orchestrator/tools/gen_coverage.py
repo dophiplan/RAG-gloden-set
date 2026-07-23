@@ -236,6 +236,7 @@ def _progress(prod, phase, role, batch, total, fails, chunks=None):
     if cur.get("phase") != phase:      # 국면이 바뀌면 이전 국면 카운트는 지운다 (혼선 방지)
         cur["roles"] = {}
     cur["phase"] = phase
+    cur["stage"] = "COVERAGE_MAP"
     if chunks:
         cur["청크"] = chunks           # "3,526청크를 읽으며 추출 중" 표시용
     if role and role != "-":

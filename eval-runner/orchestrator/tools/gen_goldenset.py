@@ -181,6 +181,17 @@ def verify(prod, batch_path, union_paths):
     return p.returncode, p.stdout
 
 
+def _gs_progress(prod, phase):
+    """④ 진행판 — 대시보드 진행선용 (한 차수 = 대형 호출 1건이라 배치 카운트 대신 국면만)"""
+    import datetime
+    p = ROOT / "results" / f"_progress_{prod}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps({"stage": "GOLDENSET_BATCH", "phase": phase, "roles": {},
+                             "stale_after": 50,   # 호출 1건이 20~40분 — 50분까진 경고 안 함
+                             "ts": datetime.datetime.now().isoformat(timespec="seconds")},
+                            ensure_ascii=False), encoding="utf-8")
+
+
 def human_guide(items, label, path, lost=None):
     """사람 확인 가이드 — 무지성 승인 방지: 기계가 못 보는 것만 사람이 보게 표본+포인트 제시"""
     from collections import defaultdict
@@ -261,6 +272,8 @@ def run(prod, cfg):
             gs["phase"] = "CLOSING"
         else:
             batch_units = remaining[:take]
+            label_pre = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
+            _gs_progress(prod, f"{label_pre} 출제 중 — claude 대형 호출 1건 (20~40분이 정상)")
             items = generate_items(prod, batch_units, start_no=len(gs["done_units"]) + 1,
                                    want_e=is_pilot, cfg=cfg)
             ground_citations(items, batch_units)   # 발췌→단위 역추적 authoritative 재기입

@@ -699,7 +699,8 @@ async function pollOnce(){
       // 멈췄는지 판별 — 마지막 갱신 경과 시간 (배치 하나에 몇 분씩 걸리는 게 정상)
       const age = d.ts ? Math.max(0, Math.round((Date.now()-new Date(d.ts).getTime())/60000)) : null;
       const ageTxt = age===null ? '' : (age<1 ? '방금 갱신' : `갱신 ${age}분 전`);
-      const stale = (age!==null && age>=12) ? ` <span class="fail">⚠ ${age}분째 갱신 없음 — 멈췄을 수 있어요 (운영 기록 확인)</span>` : '';
+      const staleAfter = d.stale_after || 12;   // 단계별 정상 소요가 다름 (④ 대형 호출은 50분)
+      const stale = (age!==null && age>=staleAfter) ? ` <span class="fail">⚠ ${age}분째 갱신 없음 — 멈췄을 수 있어요 (운영 기록 확인)</span>` : '';
       const chunks = d.청크 ? `${Number(d.청크).toLocaleString()}청크를 읽으며 ` : '';
       el.style.display='inline';
       el.innerHTML = ` | ${chunks}${esc(d.phase||'작업 중')} 중${parts.length?' — '+parts.join(' · '):''} · <span class="hint">${ageTxt}</span>${stale}`;
