@@ -430,7 +430,7 @@ def _gsbatch_reject_rollback(prod, gate_id, reason):
     if lb.get("label") != label:
         print(f"(자동 반환 생략 — 마지막 배치 장부와 불일치: {lb.get('label')} ≠ {label} — 사람 확인 필요)")
         return None
-    ids = re.findall(rf"{re.escape(prod)}-\d+", reason)
+    ids = re.findall(rf"{re.escape(prod)}-[A-Za-z]{{0,2}}\d+\b", reason)   # RC2-539 · EE-A01 형식
     if ids:
         mode = _gsbatch_partial_remove(prod, gs, lb, ids, reason, st)
         if mode:
