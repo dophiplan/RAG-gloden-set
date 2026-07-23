@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T10:39:16",
+  "updated": "2026-07-23T11:21:51",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -39,10 +39,10 @@
           "flags": [
             {
               "type": "GAP-목록·넘김 페이지 (내용 없음 추정)",
-              "id": "8건",
+              "id": "6건",
               "candidates": [],
               "ack_required": true,
-              "note": "페이지네이션·피드·카테고리 목록 — 예: https://www.remotecall.com/kr/support/notices/company/feed/ · https://www.remotecall.com/kr/support/notices/service/feed/ · https://www.remotecall.com/kr/use-cases/success-stories/manufacturing/page/2/"
+              "note": "페이지네이션·피드·카테고리 목록 — 예: https://www.remotecall.com/kr/support/notices/service/feed/ · https://www.remotecall.com/kr/use-cases/success-stories/manufacturing/page/2/ · https://www.remotecall.com/kr/use-cases/success-stories/technology/page/3/"
             },
             {
               "type": "GAP-내용 페이지 누락 · success-stories",
@@ -59,19 +59,9 @@
             },
             {
               "type": "GAP-내용 페이지 누락 · 기타",
-              "id": "2건 (6청크)",
+              "id": "1건 (2청크)",
               "candidates": [
-                "https://files.rsupport.com/kr/remotecall/documents/features/RemoteCall-product-specification-ko.pdf",
                 "https://files.rsupport.com/kr/remotecall/documents/leaflets/RemoteCall-visual-support-leaflet-ko.pdf"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · products",
-              "id": "2건 (18청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/products/remotecall-face/",
-                "https://www.remotecall.com/kr/products/remotecall/"
               ],
               "ack_required": true
             },
@@ -93,7 +83,7 @@
             }
           ],
           "acked": false,
-          "issued": "2026-07-23T10:35:08"
+          "issued": "2026-07-23T11:21:51"
         }
       ],
       "halt_reason": null,
