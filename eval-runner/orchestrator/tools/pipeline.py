@@ -369,16 +369,46 @@ def cmd_approve(a):
     print(f"✅ 승인 — {a.gate_id} (ack {len(flags)}건 원장 기록). 다음: run --product {prod}")
 
 
+def _gsbatch_reject_rollback(prod, gate_id, reason):
+    """골든셋 배치 반려의 자동 원상복구 — 카드의 '피드백대로 재출제됩니다' 약속의 배관.
+    ① 배치가 소진한 단위를 재료 풀로 반환 ② 배치 파일 반려_ 표시(기록 보존)
+    ③ 사유를 다음 출제 프롬프트에 전달 ④ 차수 번호 되돌림 — 사람은 반려 버튼 하나로 끝."""
+    st = load_state()
+    gs = st["products"][prod].get("goldenset") or {}
+    lb = gs.get("last_batch") or {}
+    label = gate_id.rsplit("_", 1)[-1]
+    if lb.get("label") != label:
+        print(f"(자동 반환 생략 — 마지막 배치 장부와 불일치: {lb.get('label')} ≠ {label} — 사람 확인 필요)")
+        return
+    returned = set(lb.get("units") or [])
+    gs["done_units"] = [u for u in gs["done_units"] if u not in returned]
+    gs["reject_feedback"] = reason          # 재출제 프롬프트에 그대로 주입 (1회 반영 후 소거)
+    gs["round"] = max(0, int(gs.get("round", 1)) - 1)   # 파일럿 반려면 다시 파일럿부터
+    f = ROOT / "data" / prod / "04_goldenset_batch" / lb.get("file", "")
+    if f.exists():
+        f.rename(f.parent / f"반려_{f.name}")   # 접두로 마감 집계에서 제외 + 기록은 보존
+    save_state(st)
+    ledger_append("GOLDENSET_BATCH", "UNITS_RETURNED", "script:pipeline",
+                  evidence={"반환": len(returned), "배치": lb.get("file"),
+                            "사유": "사람 반려 — 피드백 반영해 재출제 예정"}, product=prod)
+    print(f"↩ 배치 반환 — {len(returned)}단위 재료 풀 복귀 · 파일 반려_ 표시 · 피드백은 재출제에 반영")
+
+
 def cmd_reject(a):
     if not a.reason:
         sys.exit("반려는 사유 필수 — --reason")
     prod, ps, g = find_gate(a.gate_id)
     if not g:
-        sys.exit(f"열린 게이트 없음: {a.gate_id}")
+        sys.exit(f"이미 처리됐거나 닫힌 게이트예요: {a.gate_id} — 반려는 대기 중인 카드에서만 가능해요. "
+                 f"입력한 사유는 반영되지 않았으니, 반려할 게 있으면 지금 열려 있는 카드에서 다시 눌러 주세요.")
     ledger_append(g["stage"], "reject", f"사람:{a.actor}", gate_id=a.gate_id,
                   reason=a.reason, product=prod)
     close_gate(prod, a.gate_id)
     set_status(prod, "REJECTED", reason=a.reason)
+    if a.gate_id.startswith("GSBATCH_"):
+        _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
+        print(f"↩ 반려 접수 — {a.gate_id} · 피드백을 반영해 재출제합니다 (승인·실행 추가로 누를 필요 없음)")
+        return
     print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
 
 

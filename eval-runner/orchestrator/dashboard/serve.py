@@ -93,11 +93,32 @@ def api_ledger(n=60):
 
 
 def api_queue():
+    import time
     q = ROOT / "검수큐"
     cards = []
+    # 열린 게이트 명세 — 이미 닫힌(승인/반려 완료) 게이트의 유령 카드를 청소하기 위해
+    try:
+        _st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
+        open_ids = {g["id"] for ps in _st["products"].values() for g in ps.get("open_gates", [])}
+    except Exception:
+        open_ids = None
     if q.is_dir():
         for f in sorted(q.glob("*.md")):
             body = f.read_text(encoding="utf-8")
+            # 유령 카드 청소 — 게이트는 닫혔는데 카드만 남으면(늦은 소견 재생성 등) 사람이
+            # 죽은 카드에 반려를 눌러 사유가 소실되는 사고. 발행 직후 레이스 방지: 2분 유예.
+            if (open_ids is not None and f.name.startswith("GATE_")
+                    and f.stem.replace("GATE_", "") not in open_ids
+                    and time.time() - f.stat().st_mtime > 120):
+                done = q / "완료" / f.name
+                done.parent.mkdir(exist_ok=True)
+                if done.exists() and "## 설계본부 소견" in body and "## 설계본부 소견" not in done.read_text(encoding="utf-8"):
+                    idx = body.index("## 설계본부 소견")
+                    done.write_text(done.read_text(encoding="utf-8").rstrip() + "\n\n" + body[idx:], encoding="utf-8")
+                elif not done.exists():
+                    done.write_text(body, encoding="utf-8")
+                f.unlink()
+                continue
             kind = "GATE" if f.name.startswith("GATE_") else "INPUT"
             gate_id = f.stem.replace("GATE_", "")
             m = re.search(r"제품: (\w+)", body)
