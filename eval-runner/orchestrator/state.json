@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T11:21:51",
+  "updated": "2026-07-23T11:25:22",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -19,8 +19,8 @@
       }
     },
     "RC2": {
-      "stage": "COVERAGE_MAP",
-      "status": "WAITING_HUMAN",
+      "stage": "GOLDENSET_BATCH",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -30,62 +30,12 @@
         },
         "TERRAIN": {
           "done_at": "2026-07-21T14:40:53"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "COVMAP_RC2",
-          "stage": "COVERAGE_MAP",
-          "flags": [
-            {
-              "type": "GAP-목록·넘김 페이지 (내용 없음 추정)",
-              "id": "6건",
-              "candidates": [],
-              "ack_required": true,
-              "note": "페이지네이션·피드·카테고리 목록 — 예: https://www.remotecall.com/kr/support/notices/service/feed/ · https://www.remotecall.com/kr/use-cases/success-stories/manufacturing/page/2/ · https://www.remotecall.com/kr/use-cases/success-stories/technology/page/3/"
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · success-stories",
-              "id": "6건 (48청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/success-stories/customer-support/jwonit/",
-                "https://www.remotecall.com/kr/success-stories/customer-support/lg-electronics-smartphone/",
-                "https://www.remotecall.com/kr/success-stories/customer-support/woori-bank/",
-                "https://www.remotecall.com/kr/success-stories/maintenance/initech/",
-                "https://www.remotecall.com/kr/success-stories/mobile-device/lg-electronics-home/",
-                "https://www.remotecall.com/kr/success-stories/standard-chartered-bank-korea/"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · 기타",
-              "id": "1건 (2청크)",
-              "candidates": [
-                "https://files.rsupport.com/kr/remotecall/documents/leaflets/RemoteCall-visual-support-leaflet-ko.pdf"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · blog",
-              "id": "1건 (4청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/blog/rainyseason-damand/"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · notices",
-              "id": "1건 (5청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/notices/promotion/free-remotecall-and-free-coffee/"
-              ],
-              "ack_required": true
-            }
-          ],
-          "acked": false,
-          "issued": "2026-07-23T11:21:51"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
