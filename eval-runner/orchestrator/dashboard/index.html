@@ -283,6 +283,14 @@ function nextAction(){
 }
 
 function render(){
+  // 15초 자동 갱신이 읽던 자리를 날리지 않게 — 카드별 스크롤·체크 상태를 저장해 두고 복원
+  const keep = {};
+  document.querySelectorAll('#queuebody .card').forEach(el=>{
+    const key = el.dataset.file; if(!key) return;
+    keep[key] = {evs:[...el.querySelectorAll('.evidence')].map(e=>e.scrollTop),
+                 acks:[...el.querySelectorAll('input[type=checkbox]')].map(b=>b.checked)};
+  });
+  const winY = window.scrollY;
   const st = S.state;
   // U1: 탭 = 제품 (RV·RC) — 내부 코드 숨김
   $('tabs').innerHTML = Object.entries(st._products).map(([disp,pv])=>{
@@ -345,6 +353,17 @@ function render(){
     </div></div>
   </main>`;
   $('view').innerHTML = html;
+  // 읽던 자리 복원 — 카드 스크롤·체크박스·승인 버튼 상태 (자동 갱신에도 그대로)
+  document.querySelectorAll('#queuebody .card').forEach(el=>{
+    const k = keep[el.dataset.file]; if(!k) return;
+    [...el.querySelectorAll('.evidence')].forEach((e,i)=>{ if(k.evs[i]) e.scrollTop = k.evs[i]; });
+    const boxes = [...el.querySelectorAll('input[type=checkbox]')];
+    boxes.forEach((b,i)=>{ b.checked = !!k.acks[i]; });
+    if(boxes.length && boxes.every(b=>b.checked)){
+      const btn = el.querySelector('.btn.approve'); if(btn) btn.disabled = false;
+    }
+  });
+  window.scrollTo(0, winY);
   // 백그라운드 실행 중이면 진행선 폴링 유지 (act 종료와 무관하게 상태 기준)
   if(ps.status==='RUNNING') startProgressPoll(); else stopProgressPoll();
   document.querySelectorAll('.stage').forEach(el=>{
@@ -362,7 +381,11 @@ function renderQueue(){
   const cards = S.queue.filter(c=>c.product===code||c.product==='공통');
   if(!cards.length) return `<div class="note">할 일 없음 — 시스템이 알아서 진행하거나 외부 재료를 기다리는 중이에요.</div>`;
   return cards.map((c,ci)=>{
-    const bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
+    let bodyMain = c.body.split('## 재개')[0].split('\n').slice(2).join('\n').trim();
+    // 사람이 검수할 부분(👀 가이드 + 표본 문항)을 맨 위로 — 실측 수치 등 참고 정보는 실선 아래로
+    let review = '';
+    const gi = bodyMain.indexOf('### 👀');
+    if(gi >= 0){ review = bodyMain.slice(gi).trim(); bodyMain = bodyMain.slice(0, gi).trim(); }
     const acks = c.acks.map((a,ai)=>`<div class="ackrow"><input type="checkbox" id="ack_${ci}_${ai}" onchange="ackCheck(${ci})"><label for="ack_${ci}_${ai}">${esc(a)}</label></div>`).join('');
     const isNotice = c.id.startsWith('MODELALERT');   // 알림형 카드 — 확인하고 닫으면 끝
     const btns = isNotice ? `<div class="btns">
@@ -374,9 +397,12 @@ function renderQueue(){
       </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
         <label class="btn approve" style="cursor:pointer">📎 파일 업로드<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}')"></label>
       </div><div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`;
-    return `<div class="card ${c.kind==='GATE'?'human-card':''}">
+    return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}">
       <h4>${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
+      ${review?`<div class="evidence" style="max-height:420px">${esc(review)}</div>
+      <div style="border-top:2px solid var(--line);margin:10px 0"></div>
+      <div class="hint" style="margin-bottom:6px">아래는 참고용 상세(실측 수치·소견)</div>`:''}
       <div class="evidence">${esc(bodyMain.slice(0,900))}</div>
       ${acks}${btns}</div>`;
   }).join('');
