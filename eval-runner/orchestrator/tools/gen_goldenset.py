@@ -249,11 +249,21 @@ def run(prod, cfg):
                 return "HALTED", {"halt": f"검수 실행 오류/HALT (exit {rc})", "log": out[-300:]}
             gs["round"] += 1
             gs["phase"] = "ROUNDS"
-            gs["done_units"] += [u["unit_id"] for u in batch_units]
+            # [수리 2026-07-23] 실제 문항이 인용한 단위만 '완료' — 응답 절단 등으로 미커버된
+            # 단위는 remaining 에 남겨 다음 차수가 자연 회수 (2차에서 75소비/40커버 사고)
+            batch_ids = {u["unit_id"] for u in batch_units}
+            cited = covered_units(items) & batch_ids
+            lost = sorted(batch_ids - cited)
+            gs["done_units"] += sorted(cited)
             save_state(st)
             verdict = "PASS" if rc == 0 else "REJECTED(재생성 후에도)"
             ev = {"배치": N(path.name), "문항": len(items), "검수 7종": verdict,
                   "직접 커버 누계": len(gs["done_units"]), "잔여": len(units) - len(gs["done_units"])}
+            if lost:
+                ev["미커버 반환"] = f"{len(lost)}단위 — 응답 절단 추정, 다음 차수 재출제 (예: {lost[:3]})"
+                ledger_append("GOLDENSET_BATCH", "UNITS_RETURNED", "script:gen_goldenset",
+                              evidence={"반환": len(lost), "사유": "문항 미인용 — 완료 처리 안 함"},
+                              product=prod)
             ledger_append("GOLDENSET_BATCH", "BATCH_GENERATED", "script:gen_goldenset",
                           evidence=ev, product=prod)
             issue_gate_card(prod, "GOLDENSET_BATCH", f"GSBATCH_{prod}_{label}",
