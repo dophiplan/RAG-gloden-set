@@ -50,6 +50,13 @@ def main():
         ps = _state(a.product)
         s, stage = ps["status"], ps["stage"]
         if s in ("WAITING_HUMAN", "WAITING_INPUT", "DONE"):
+            if s == "WAITING_HUMAN" and os.environ.get("ORCH_MOCK") != "1":
+                # 3권 분립: 사람 게이트 도달 → 설계본부(독립 세션) 자동 소환, 소견을 카드에 첨부
+                print("🏛 설계본부 소환 — 독립 세션 검수 소견 첨부 중…")
+                _pipeline_raw = subprocess.run(
+                    [sys.executable, str(ROOT / "tools" / "sbb_review.py"), "--product", a.product],
+                    cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=1800)
+                print(_pipeline_raw.stdout.strip() or _pipeline_raw.stderr.strip()[:200])
             print(f"⏹ {a.product} {stage} · {s} — 사람 차례거나 완료. 자동 진행 종료.")
             ledger_append(stage, "AUTO_RUN_STOPPED", "script:auto_run",
                           evidence={"사유": f"{s} 도달 — 사람 차례거나 완료"}, product=a.product)
