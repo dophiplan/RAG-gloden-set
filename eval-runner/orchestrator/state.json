@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T07:40:39",
+  "updated": "2026-07-24T07:46:07",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_16차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-24T07:46:07"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 15,
+        "round": 16,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -954,17 +962,43 @@
           "RC2-REMOTE-1665",
           "RC2-REMOTE-1679",
           "RC2-REMOTE-1684",
-          "RC2-REMOTE-1699"
+          "RC2-REMOTE-1699",
+          "RC2-HTTPFI-001",
+          "RC2-HTTPSF-1383",
+          "RC2-HTTPSF-1393",
+          "RC2-HTTPSF-1409",
+          "RC2-HTTPSF-1410",
+          "RC2-HTTPSF-1412",
+          "RC2-HTTPSF-1415",
+          "RC2-HTTPSF-1416",
+          "RC2-HTTPSF-1442",
+          "RC2-HTTPSF-1445",
+          "RC2-HTTPSF-1448",
+          "RC2-HTTPSF-1458",
+          "RC2-HTTPSW-4287",
+          "RC2-HTTPSW-4298",
+          "RC2-HTTPSW-4342",
+          "RC2-HTTPSW-4362",
+          "RC2-HTTPSW-4388",
+          "RC2-HTTPSW-4408",
+          "RC2-HTTPSW-4417",
+          "RC2-HTTPSW-4426",
+          "RC2-HTTPSW-4459",
+          "RC2-HTTPSW-4467",
+          "RC2-HTTPSW-4481",
+          "RC2-REMOTE-1700",
+          "RC2-REMOTE-1707",
+          "RC2-REMOTE-1718",
+          "RC2-REMOTE-1769"
         ],
         "batch": "B1",
         "last_batch": {
           "label": "16차",
-          "file": "RC2_골든셋_16차_49문항_v1_0.xlsx",
+          "file": "RC2_골든셋_16차_27문항_v1_0.xlsx",
           "units": [
             "RC2-HTTPFI-001",
             "RC2-HTTPSF-1383",
             "RC2-HTTPSF-1393",
-            "RC2-HTTPSF-1402",
             "RC2-HTTPSF-1409",
             "RC2-HTTPSF-1410",
             "RC2-HTTPSF-1412",
@@ -974,45 +1008,23 @@
             "RC2-HTTPSF-1445",
             "RC2-HTTPSF-1448",
             "RC2-HTTPSF-1458",
-            "RC2-HTTPSF-1469",
-            "RC2-HTTPSW-3229",
             "RC2-HTTPSW-4287",
             "RC2-HTTPSW-4298",
-            "RC2-HTTPSW-4307",
-            "RC2-HTTPSW-4322",
-            "RC2-HTTPSW-4332",
             "RC2-HTTPSW-4342",
             "RC2-HTTPSW-4362",
-            "RC2-HTTPSW-4375",
             "RC2-HTTPSW-4388",
-            "RC2-HTTPSW-4397",
             "RC2-HTTPSW-4408",
             "RC2-HTTPSW-4417",
             "RC2-HTTPSW-4426",
-            "RC2-HTTPSW-4435",
-            "RC2-HTTPSW-4439",
-            "RC2-HTTPSW-4443",
-            "RC2-HTTPSW-4445",
-            "RC2-HTTPSW-4446",
-            "RC2-HTTPSW-4448",
-            "RC2-HTTPSW-4449",
             "RC2-HTTPSW-4459",
             "RC2-HTTPSW-4467",
-            "RC2-HTTPSW-4470",
             "RC2-HTTPSW-4481",
-            "RC2-HTTPSW-4512",
-            "RC2-HTTPSW-4516",
-            "RC2-HTTPSW-4532",
-            "RC2-HTTPSW-4542",
-            "RC2-HTTPSW-4553",
-            "RC2-HTTPSW-4565",
             "RC2-REMOTE-1700",
             "RC2-REMOTE-1707",
             "RC2-REMOTE-1718",
             "RC2-REMOTE-1769"
           ]
-        },
-        "reject_feedback": "홍보문구는 필요 없음"
+        }
       }
     },
     "EE": {
