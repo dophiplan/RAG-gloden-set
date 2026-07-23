@@ -341,6 +341,13 @@ def api_progress(code):
         d = json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return {"active": False}
+    # 단계 불일치 = 낡은 진행판 — 표시 안 함 (③ 진행판이 ④ 중에 남아 '멈춤' 오인 유발했던 사고)
+    try:
+        cur_stage = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"][code]["stage"]
+        if d.get("stage", "COVERAGE_MAP") != cur_stage:
+            return {"active": False}
+    except Exception:
+        pass
     d["active"] = True
     return d
 
