@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T13:50:02",
+  "updated": "2026-07-23T13:53:08",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_6차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T13:53:08"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 5,
+        "round": 6,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -321,7 +329,49 @@
           "RC2-REMOTE-840",
           "RC2-REMOTE-849",
           "RC2-REMOTE-857",
-          "RC2-REMOTE-866"
+          "RC2-REMOTE-866",
+          "RC2-HTTPSF-1002",
+          "RC2-HTTPSF-1011",
+          "RC2-HTTPSF-1019",
+          "RC2-HTTPSF-1028",
+          "RC2-HTTPSF-1037",
+          "RC2-HTTPSF-1047",
+          "RC2-HTTPSF-1055",
+          "RC2-HTTPSF-1063",
+          "RC2-HTTPSF-1072",
+          "RC2-HTTPSF-1080",
+          "RC2-HTTPSF-1088",
+          "RC2-HTTPSF-1096",
+          "RC2-HTTPSF-1105",
+          "RC2-HTTPSF-1115",
+          "RC2-HTTPSF-1125",
+          "RC2-HTTPSF-228",
+          "RC2-HTTPSF-236",
+          "RC2-HTTPSF-244",
+          "RC2-HTTPSF-247",
+          "RC2-HTTPSF-248",
+          "RC2-HTTPSF-258",
+          "RC2-HTTPSF-268",
+          "RC2-HTTPSF-278",
+          "RC2-HTTPSF-289",
+          "RC2-HTTPSF-297",
+          "RC2-HTTPSF-306",
+          "RC2-HTTPSF-315",
+          "RC2-HTTPSF-323",
+          "RC2-HTTPSF-332",
+          "RC2-HTTPSF-341",
+          "RC2-HTTPSF-344",
+          "RC2-HTTPSF-352",
+          "RC2-HTTPSF-360",
+          "RC2-HTTPSF-368",
+          "RC2-HTTPSF-377",
+          "RC2-HTTPSF-384",
+          "RC2-HTTPSF-394",
+          "RC2-HTTPSF-395",
+          "RC2-HTTPSF-405",
+          "RC2-HTTPSF-415",
+          "RC2-HTTPSF-984",
+          "RC2-HTTPSF-993"
         ],
         "batch": "B1"
       }
@@ -334,25 +384,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T13:49:50"
+          "done_at": "2026-07-23T13:28:21"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T13:49:51"
+          "done_at": "2026-07-23T13:28:22"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T13:49:52"
+          "done_at": "2026-07-23T13:28:23"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T13:49:55"
+          "done_at": "2026-07-23T13:28:26"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T13:49:55"
+          "done_at": "2026-07-23T13:28:26"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T13:49:58"
+          "done_at": "2026-07-23T13:28:29"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T13:49:58"
+          "done_at": "2026-07-23T13:28:29"
         }
       },
       "open_gates": [
@@ -361,7 +411,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T13:50:02"
+          "issued": "2026-07-23T13:28:32"
         }
       ],
       "halt_reason": null,
