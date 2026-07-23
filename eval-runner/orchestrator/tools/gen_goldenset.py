@@ -216,6 +216,11 @@ def run(prod, cfg):
     all_units, map_path = read_map_units(prod, cfg)
     if not all_units:
         return "WAITING_INPUT", {"커버리지맵": "없음 — ③ 미완"}
+    # 출제 제외 소스 (예: Known Issue — 내부 결함 목록은 고객 질문이 아님, 난희 결정)
+    excl = cfg["pipeline"].get("goldenset_exclude_sources", [])
+    if excl:
+        all_units = [u for u in all_units
+                     if not any(x in u.get("source", "") for x in excl)]
     # 목표 규모 대표 추출 (결정적 — 재진입 때마다 같은 선정)
     target = cfg["pipeline"].get("goldenset_target")
     units = select_representative(all_units, target) if target else all_units
