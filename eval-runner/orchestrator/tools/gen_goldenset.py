@@ -107,13 +107,16 @@ SYSTEM_GEN = """[TASK:GOLDENSET_ITEMS] 너는 RAG 평가 골든셋 출제기다(
 ④ 질문에 제품명 명시 ⑤ want_e=true면 코퍼스 부재 소재 E형 1문항 추가 ⑥ 질문 중복 금지."""
 
 
-def generate_items(prod, units, start_no, want_e, cfg):
+def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
     prof = cfg["terrain"]["profiles"][prod]
     name = prof.get("product_name", prod)
     payload = {"product": prod, "product_name": name, "prefix": prod,
                "start_no": start_no, "want_e": want_e,
                "units": [{"unit_id": u["unit_id"], "title": u["title"], "fact": u["fact"],
                           "source": u.get("source", "")} for u in units]}
+    if feedback:   # 사람 반려 사유를 재출제 프롬프트에 직결 — 카드의 '피드백대로 재출제' 약속의 배관
+        payload["사람_반려_피드백"] = ("직전 배치가 사람 검수에서 반려되었다. "
+                                 "아래 피드백을 이번 출제에 반드시 반영하라: " + N(feedback))
     out = llm.chat("generator", SYSTEM_GEN, json.dumps(payload, ensure_ascii=False), cfg)
     return llm.extract_json(out)
 
@@ -181,7 +184,7 @@ def verify(prod, batch_path, union_paths):
     return p.returncode, p.stdout
 
 
-def generate_items_chunked(prod, batch_units, start_no, want_e, cfg, chunk=25):
+def generate_items_chunked(prod, batch_units, start_no, want_e, cfg, chunk=25, feedback=None):
     """[수리 2026-07-23] 75단위 단발 호출은 응답 절단 반복(75요청→40·42·13 생산) —
     25단위씩 소분할 호출로 차수 생산량을 밴드에 안정화. E형은 마지막 조각에만."""
     items = []
@@ -189,7 +192,7 @@ def generate_items_chunked(prod, batch_units, start_no, want_e, cfg, chunk=25):
         part = batch_units[off:off + chunk]
         last = off + chunk >= len(batch_units)
         got = generate_items(prod, part, start_no=start_no + len(items),
-                             want_e=(want_e and last), cfg=cfg)
+                             want_e=(want_e and last), cfg=cfg, feedback=feedback)
         items += got
     return items
 
@@ -285,10 +288,11 @@ def run(prod, cfg):
             gs["phase"] = "CLOSING"
         else:
             batch_units = remaining[:take]
+            fb = gs.get("reject_feedback")   # 직전 배치 사람 반려 사유 — 이번 출제에 반영
             label_pre = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             _gs_progress(prod, f"{label_pre} 출제 중 — claude 대형 호출 1건 (20~40분이 정상)")
             items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
-                                           want_e=is_pilot, cfg=cfg)
+                                           want_e=is_pilot, cfg=cfg, feedback=fb)
             ground_citations(items, batch_units)   # 발췌→단위 역추적 authoritative 재기입
             label = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             path = write_batch(prod, items, label)
@@ -299,7 +303,7 @@ def run(prod, cfg):
                               evidence={"batch": N(path.name), "log": out[-400:]}, product=prod)
                 path.unlink()
                 items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
-                                               want_e=is_pilot, cfg=cfg)
+                                               want_e=is_pilot, cfg=cfg, feedback=fb)
                 ground_citations(items, batch_units)
                 path = write_batch(prod, items, label)
                 rc, out = verify(prod, path, [p for p in union if p.exists() and p != path])
