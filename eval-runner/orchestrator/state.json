@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T11:33:19",
+  "updated": "2026-07-23T11:35:58",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_파일럿",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T11:35:58"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -44,9 +52,40 @@
         "reviewer": false
       },
       "goldenset": {
-        "phase": "PLAN_GATE",
-        "round": 0,
-        "done_units": [],
+        "phase": "ROUNDS",
+        "round": 1,
+        "done_units": [
+          "RC2-REMOTE-001",
+          "RC2-REMOTE-009",
+          "RC2-REMOTE-017",
+          "RC2-REMOTE-025",
+          "RC2-REMOTE-033",
+          "RC2-REMOTE-042",
+          "RC2-REMOTE-050",
+          "RC2-REMOTE-058",
+          "RC2-REMOTE-066",
+          "RC2-REMOTE-074",
+          "RC2-REMOTE-083",
+          "RC2-REMOTE-097",
+          "RC2-REMOTE-105",
+          "RC2-REMOTE-114",
+          "RC2-REMOTE-122",
+          "RC2-REMOTE-131",
+          "RC2-REMOTE-140",
+          "RC2-REMOTE-148",
+          "RC2-REMOTE-157",
+          "RC2-REMOTE-166",
+          "RC2-REMOTE-174",
+          "RC2-REMOTE-183",
+          "RC2-REMOTE-192",
+          "RC2-REMOTE-200",
+          "RC2-REMOTE-209",
+          "RC2-REMOTE-218",
+          "RC2-REMOTE-226",
+          "RC2-REMOTE-235",
+          "RC2-REMOTE-1050",
+          "RC2-REMOTE-1058"
+        ],
         "batch": "B1"
       }
     },
