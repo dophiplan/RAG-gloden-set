@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T19:52:48",
+  "updated": "2026-07-24T07:33:04",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,15 +35,7 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_RC2_15차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-23T19:52:48"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
