@@ -181,6 +181,31 @@ def verify(prod, batch_path, union_paths):
     return p.returncode, p.stdout
 
 
+def human_guide(items, label, path, lost=None):
+    """사람 확인 가이드 — 무지성 승인 방지: 기계가 못 보는 것만 사람이 보게 표본+포인트 제시"""
+    from collections import defaultdict
+    by_type = defaultdict(list)
+    for it in items:
+        by_type[N(it.get("유형", "?"))].append(it)
+    samples = []
+    for t, arr in sorted(by_type.items()):
+        it = arr[len(arr) // 2]           # 유형별 가운데 1문항 (결정적)
+        samples.append(f"**[{it.get('ID')}] ({t})**\n"
+                       f"- 질문: {N(it.get('질문',''))[:100]}\n"
+                       f"- 정답: {N(it.get('정답',''))[:140]}\n"
+                       f"- 출처: {N(it.get('근거 출처',''))[:70]}")
+    guide = (
+        "### 👀 사람 확인 가이드 — 기계가 못 보는 것만 보면 됩니다 (표본 검사, 전건 검토 불필요)\n"
+        "1. 아래 표본의 **질문이 실제 고객이 물어볼 법한 말**인가요? (내부 용어·번역투면 반려)\n"
+        "2. **정답이 질문에 대한 답**인가요? (동문서답·과잉 서술 확인)\n"
+        "3. 정답의 **'필수:' 요소가 합리적**인가요? (너무 많으면 채점이 가혹, 너무 적으면 무의미)\n"
+        f"4. 전체 문항은 ④ 자료실에서 `{N(path.name)}` [받기]\n"
+        + (f"\n⚠ 이 배치 특이사항: 미커버 {len(lost)}단위는 다음 차수가 자동 재출제 — 승인에 영향 없음\n" if lost else "")
+        + "\n어색한 문항이 있으면 [반려] + 사유에 문항 ID를 적어주세요 — 그 피드백대로 재출제됩니다.\n\n"
+        "### 표본 문항 (유형별 1개, 자동 발췌)\n" + "\n\n".join(samples))
+    return guide
+
+
 def covered_units(items):
     # [수리 2026-07-23] 접두에 숫자 포함(RC2·RV2) 지원 — 종전 [A-Z]{2,}는 'RC2-…'에서
     # 'REMOTE-1067'만 잡아 교집합 0 → 3차 75단위 전량 오반환 사고. EE(무숫자)만 통과해 회귀가 못 잡았음
@@ -271,7 +296,8 @@ def run(prod, cfg):
             issue_gate_card(prod, "GOLDENSET_BATCH", f"GSBATCH_{prod}_{label}",
                             what_stopped=f"{label} 생성·검수 완료 — 사람 게이트",
                             evidence=ev,
-                            recommendation="승인 시 다음 차수 / 잔여 0이면 배치 마감으로")
+                            recommendation="승인 시 다음 차수 / 잔여 0이면 배치 마감으로\n\n"
+                                           + human_guide(items, label, path, lost))
             return "WAITING_HUMAN", ev
 
     # 3) 배치 마감 (잔여 0)
