@@ -27,7 +27,9 @@ DATA = ROOT / "data"
 
 
 def norm(s):
-    return re.sub(r"\s+", "", N(s)).lower()
+    """대조용 정규화 — 공백 + 제어문자(PDF 추출 NULL 등) 무시.
+    [수리 2026-07-23] 스펙 PDF의 'PC\\x00지원' 류 제어문자 때문에 정상 추출이 1축에서 전건 반려되던 사고."""
+    return re.sub(r"[\s\x00-\x1f]+", "", N(s)).lower()
 
 
 def _rows_from_json(d):
