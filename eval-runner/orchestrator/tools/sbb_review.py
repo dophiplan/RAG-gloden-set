@@ -67,8 +67,19 @@ def review(prod, gate_id):
         opinion = llm.chat("generator", system, user, cfg)   # 새 세션 (llm은 무상태 — 규칙 B와 동일 구조)
     except Exception as e:
         opinion = f"(설계본부 소환 실패: {str(e)[:150]} — 사람이 직접 판단 필요)"
-    stamped = body.rstrip() + f"\n\n{MARK} (독립 세션 · 참고 — 확정은 사람)\n{N(opinion).strip()}\n"
-    card.write_text(stamped, encoding="utf-8")
+    section = f"\n\n{MARK} (독립 세션 · 참고 — 확정은 사람)\n{N(opinion).strip()}\n"
+    if not card.exists():
+        # 소환하는 동안 사람이 이미 승인 → 카드가 완료로 이동됨. 유령 카드 재생성 금지 —
+        # 소견은 완료 사본에 기록으로만 남긴다 (레이스: 7차 카드 부활 사고)
+        done = card.parent / "완료" / card.name
+        if done.exists():
+            done.write_text(done.read_text(encoding="utf-8").rstrip() + section, encoding="utf-8")
+        ledger_append("GOVERNANCE", "SBB_REVIEW_LATE", "설계본부:독립세션",
+                      evidence={"gate": gate_id, "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"},
+                      product=prod)
+        print(f"소환 중 승인됨 — 완료 카드에 소견 보존: {card.name}")
+        return
+    card.write_text(body.rstrip() + section, encoding="utf-8")
     ledger_append("GOVERNANCE", "SBB_REVIEWED", "설계본부:독립세션",
                   evidence={"gate": gate_id, "소견 길이": len(opinion),
                             "주입": "프롬프트 v1.2 + 판례집 + 카드 + 산출물 표본 (작업 맥락 없음)"},
