@@ -275,6 +275,8 @@ function nextAction(){
     return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
   }
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
+  if(ps.status==='REJECTED')
+    return {icon:'↩', text:'반려 접수됨 — 사유는 기록됐고 재출제 준비가 끝났어요. 자동으로 이어지지 않았다면 [▶ 이어서 진행]을 눌러주세요.', run:true};
   if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중'};
   if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 실물 채점 추가로 돌리기]로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
   return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
@@ -316,7 +318,7 @@ function render(){
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
     ${renderAiTeam()}
-    <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}</div>
+    <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
