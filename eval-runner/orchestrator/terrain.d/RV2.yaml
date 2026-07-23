@@ -10,3 +10,4 @@ RV2:
   map_fact_column: 이 단위가 말하는 사실
   map_unit_column: Unit ID
   onboarding: true
+  product_name: 리모트뷰

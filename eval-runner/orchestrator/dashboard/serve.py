@@ -386,10 +386,12 @@ def api_action(payload):
         if pidf.exists():
             try:
                 old = int(pidf.read_text())
-                os.kill(old, 0)          # 살아있으면 예외 없이 통과
-                return {"ok": True, "out": "이미 실행 중이에요 — 진행선에서 상태를 확인하세요 (중복 실행 안 함)."}
-            except (ValueError, ProcessLookupError, PermissionError):
-                pass                      # 죽은 pid — 무시하고 새로 시작
+                stat = subprocess.run(["ps", "-o", "stat=", "-p", str(old)],
+                                      capture_output=True, text=True).stdout.strip()
+                if stat and not stat.startswith("Z"):   # 좀비(Z)는 죽은 것 — 실행 중 오인 금지
+                    return {"ok": True, "out": "이미 실행 중이에요 — 진행선에서 상태를 확인하세요 (중복 실행 안 함)."}
+            except ValueError:
+                pass                      # 깨진 pid 파일 — 무시하고 새로 시작
         # 무인 자동 진행 워커 — 한도로 멈춰도 스스로 재개 (사람이 밤새 버튼 누를 필요 없음)
         worker = [sys.executable, str(ROOT / "tools" / "auto_run.py"), "--product", prod]
         # 원문 로그 보관 체계: 제품별 폴더 + 날짜_시각_시작파트 파일명 — 나중에 찾을 수 있게
