@@ -230,6 +230,10 @@ def _model_alert_card(engine, alert):
     f = qdir / f"MODELALERT_{engine}.md"
     if f.exists() and alert in f.read_text(encoding="utf-8"):
         return
+    # 사람이 닫은(완료로 이동) 알림은 같은 내용으로 재발행 안 함 — 새 모델이 나오면 내용이 달라져 다시 뜸
+    done = qdir / "완료" / f"MODELALERT_{engine}.md"
+    if done.exists() and alert in done.read_text(encoding="utf-8"):
+        return
     qdir.mkdir(exist_ok=True)
     f.write_text(
         f"# MODELALERT_{engine} — 모델 교체 검토 필요\n"
@@ -383,6 +387,23 @@ def api_action(payload):
                  "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
     elif cmd == "new-round":
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "dismiss-card":
+        # 알림형 카드 닫기 — 완료로 이동 (MODELALERT 전용, 경로 이탈 차단)
+        name = N(payload.get("file", "")).replace("/", "").replace("..", "")
+        if not name.startswith("MODELALERT_") or not name.endswith(".md"):
+            return {"ok": False, "out": "닫기는 알림형(MODELALERT) 카드만 가능"}
+        src = ROOT / "검수큐" / name
+        if not src.exists():
+            return {"ok": False, "out": "카드 없음"}
+        dst = ROOT / "검수큐" / "완료"
+        dst.mkdir(exist_ok=True)
+        (dst / name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+        src.unlink()
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append("MAINTENANCE", "ALERT_DISMISSED", "사람:난희",
+                      evidence={"card": name, "처리": "확인 후 닫음 — 같은 내용 재발행 억제"})
+        return {"ok": True, "out": "알림 닫음 — 같은 내용으로는 다시 안 떠요"}
     elif cmd == "run":
         # 장시간 AI 작업(③ 등) — 백그라운드 실행. 서버(단일 스레드)와 화면이 얼지 않게.
         import os
