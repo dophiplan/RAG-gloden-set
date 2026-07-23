@@ -1943,3 +1943,4 @@
 {"ts": "2026-07-23T18:02:54", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "WAITING_HUMAN→REJECTED", "evidence": {}, "reason": "말장난 처럼 답한것 같은데? 뭘 할수 있냐고 하면 공유 해서 서로 볼수 있다고 해야지"}
 {"ts": "2026-07-23T18:02:54", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:pipeline", "action": "UNITS_RETURNED", "evidence": {"반환": 74, "배치": "RC2_골든셋_11차_75문항_v1_0.xlsx", "사유": "사람 반려 — 피드백 반영해 재출제 예정"}, "reason": null}
 {"ts": "2026-07-23T18:04:19", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "REJECTED→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-23T18:05:21", "product": "RC2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "GSBATCH_RC2_11차", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
