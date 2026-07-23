@@ -369,17 +369,76 @@ def cmd_approve(a):
     print(f"✅ 승인 — {a.gate_id} (ack {len(flags)}건 원장 기록). 다음: run --product {prod}")
 
 
+_UNIT_RE = re.compile(r"[A-Z][A-Z0-9]+(?:-[A-Z0-9가-힣]+)+")
+
+
+def _gsbatch_partial_remove(prod, gs, lb, ids, reason, st):
+    """부분 반려 — 사유에 문항 코드가 있으면 그 문항만 도려내고 나머지는 승인으로 처리.
+    2문항 빼자고 75문항 전체를 재출제하는 낭비 방지 (13차 사고에서 학습)."""
+    import openpyxl
+    d = ROOT / "data" / prod / "04_goldenset_batch"
+    f = d / lb["file"]
+    if not f.exists():
+        return None                      # 실물 없음 — 전체 반려 경로로
+    wb = openpyxl.load_workbook(f)
+    ws = wb.active
+    hdr = [str(c.value) for c in ws[1]]
+    cid, csrc = hdr.index("ID") + 1, hdr.index("근거 출처") + 1
+    hit = [r for r in range(2, ws.max_row + 1) if str(ws.cell(r, cid).value) in set(ids)]
+    if not hit:
+        return None                      # 코드가 이 배치에 없음 — 전체 반려 경로로
+    for r in reversed(hit):
+        ws.delete_rows(r)
+    n = ws.max_row - 1
+    kept_units = set()
+    for r in range(2, ws.max_row + 1):
+        kept_units |= set(_UNIT_RE.findall(str(ws.cell(r, csrc).value or "")))
+    m = re.match(r"(.+?)(\d+)문항_v(\d+)_(\d+)\.xlsx$", lb["file"])
+    new_name = (f"{m.group(1)}{n}문항_v{m.group(3)}_{int(m.group(4)) + 1}.xlsx"
+                if m else f"{f.stem}_수리{f.suffix}")
+    f.rename(d / f"반려_{f.stem}_부분{f.suffix}")   # 원본 보존 (마감 집계 제외)
+    wb.save(d / new_name)
+    # 삭제 문항만 인용하던 단위는 재료 풀로 반환 — 이후 차수가 자연 재커버
+    returned = set(lb.get("units") or []) - kept_units
+    gs["done_units"] = [u for u in gs["done_units"] if u not in returned]
+    gs["last_batch"] = {"label": lb["label"], "file": N(new_name),
+                        "units": sorted(set(lb.get("units") or []) & kept_units)}
+    # 코드 말고도 이유가 적혀 있으면 다음 차수 출제에 피드백으로 반영
+    text = _UNIT_RE.sub("", reason).strip(" ,.·-—은는이가도의를:;\n\t")
+    if len(text) >= 8:
+        gs["reject_feedback"] = reason
+    save_state(st)
+    ledger_append("GOLDENSET_BATCH", "ITEM_REMOVED", "script:pipeline(부분 반려)",
+                  evidence={"삭제 문항": sorted(set(ids)), "잔존": n, "배치": N(new_name),
+                            "반환 단위": len(returned), "사유": reason[:150]}, product=prod)
+    if returned:
+        ledger_append("GOLDENSET_BATCH", "UNITS_RETURNED", "script:pipeline(부분 반려)",
+                      evidence={"반환": len(returned), "사유": "삭제 문항 단독 인용 단위"}, product=prod)
+    print(f"✂ 부분 반려 — {len(hit)}문항 삭제({', '.join(sorted(set(ids)))}) · 잔존 {n}문항 승인 처리 · "
+          f"{len(returned)}단위 반환. 다음 차수로 진행합니다.")
+    return "partial"
+
+
 def _gsbatch_reject_rollback(prod, gate_id, reason):
     """골든셋 배치 반려의 자동 원상복구 — 카드의 '피드백대로 재출제됩니다' 약속의 배관.
-    ① 배치가 소진한 단위를 재료 풀로 반환 ② 배치 파일 반려_ 표시(기록 보존)
-    ③ 사유를 다음 출제 프롬프트에 전달 ④ 차수 번호 되돌림 — 사람은 반려 버튼 하나로 끝."""
+    사유에 문항 코드(예: RC2-539)가 있으면 부분 반려(그 문항만 삭제·나머지 승인),
+    없으면 전체 반려: ① 단위 반환 ② 파일 반려_ 표시 ③ 피드백 전달 ④ 차수 되돌림."""
     st = load_state()
     gs = st["products"][prod].get("goldenset") or {}
     lb = gs.get("last_batch") or {}
     label = gate_id.rsplit("_", 1)[-1]
     if lb.get("label") != label:
         print(f"(자동 반환 생략 — 마지막 배치 장부와 불일치: {lb.get('label')} ≠ {label} — 사람 확인 필요)")
-        return
+        return None
+    ids = re.findall(rf"{re.escape(prod)}-\d+", reason)
+    if ids:
+        mode = _gsbatch_partial_remove(prod, gs, lb, ids, reason, st)
+        if mode:
+            return mode
+        print(f"(사유의 문항 코드 {ids} 가 이 배치에 없음 — 전체 반려로 처리)")
+        st = load_state()                # partial 시도가 손댄 적 없지만 명시 재로드
+        gs = st["products"][prod].get("goldenset") or {}
+        lb = gs.get("last_batch") or {}
     returned = set(lb.get("units") or [])
     gs["done_units"] = [u for u in gs["done_units"] if u not in returned]
     gs["reject_feedback"] = reason          # 재출제 프롬프트에 그대로 주입 (1회 반영 후 소거)
@@ -392,6 +451,7 @@ def _gsbatch_reject_rollback(prod, gate_id, reason):
                   evidence={"반환": len(returned), "배치": lb.get("file"),
                             "사유": "사람 반려 — 피드백 반영해 재출제 예정"}, product=prod)
     print(f"↩ 배치 반환 — {len(returned)}단위 재료 풀 복귀 · 파일 반려_ 표시 · 피드백은 재출제에 반영")
+    return "full"
 
 
 def cmd_reject(a):
@@ -404,11 +464,17 @@ def cmd_reject(a):
     ledger_append(g["stage"], "reject", f"사람:{a.actor}", gate_id=a.gate_id,
                   reason=a.reason, product=prod)
     close_gate(prod, a.gate_id)
-    set_status(prod, "REJECTED", reason=a.reason)
     if a.gate_id.startswith("GSBATCH_"):
-        _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
+        mode = _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
+        if mode == "partial":
+            # 부분 반려 = 지목 문항만 삭제 + 나머지 승인 — 다음 차수로 바로 진행
+            set_status(prod, "PENDING")
+            print(f"✂ 부분 반려 접수 — {a.gate_id} · 지목 문항만 빠지고 나머지는 승인 처리됐어요")
+            return
+        set_status(prod, "REJECTED", reason=a.reason)
         print(f"↩ 반려 접수 — {a.gate_id} · 피드백을 반영해 재출제합니다 (승인·실행 추가로 누를 필요 없음)")
         return
+    set_status(prod, "REJECTED", reason=a.reason)
     print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
 
 
