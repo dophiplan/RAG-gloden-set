@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T18:55:28",
+  "updated": "2026-07-23T19:06:54",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -754,7 +754,7 @@
         "batch": "B1",
         "last_batch": {
           "label": "13차",
-          "file": "RC2_골든셋_13차_75문항_v1_0.xlsx",
+          "file": "RC2_골든셋_13차_67문항_v1_0.xlsx",
           "units": [
             "RC2-HTTPSW-2082",
             "RC2-HTTPSW-2094",
@@ -765,10 +765,8 @@
             "RC2-HTTPSW-2137",
             "RC2-HTTPSW-2149",
             "RC2-HTTPSW-2159",
-            "RC2-HTTPSW-2162",
             "RC2-HTTPSW-2170",
             "RC2-HTTPSW-2176",
-            "RC2-HTTPSW-2182",
             "RC2-HTTPSW-2187",
             "RC2-HTTPSW-2197",
             "RC2-HTTPSW-2201",
@@ -781,18 +779,12 @@
             "RC2-HTTPSW-2247",
             "RC2-HTTPSW-2251",
             "RC2-HTTPSW-2255",
-            "RC2-HTTPSW-2266",
-            "RC2-HTTPSW-2272",
             "RC2-HTTPSW-2278",
             "RC2-HTTPSW-2283",
             "RC2-HTTPSW-2292",
             "RC2-HTTPSW-2297",
             "RC2-HTTPSW-2305",
             "RC2-HTTPSW-2310",
-            "RC2-HTTPSW-2315",
-            "RC2-HTTPSW-2319",
-            "RC2-HTTPSW-2322",
-            "RC2-HTTPSW-2326",
             "RC2-HTTPSW-2330",
             "RC2-HTTPSW-2332",
             "RC2-HTTPSW-2345",
@@ -833,7 +825,7 @@
             "RC2-HTTPSW-3973"
           ]
         },
-        "reject_feedback": "공지 제목이다, 공지 날짜는 물어보지 않는다. 해당 2건은 반려한다"
+        "reject_feedback": "이런 회사 이름 같은건 안물어봐서 필요가 없음"
       }
     },
     "EE": {
