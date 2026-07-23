@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T13:12:03",
+  "updated": "2026-07-23T13:19:52",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,15 +35,7 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_RC2_3차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-23T13:09:38"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -212,25 +204,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T13:11:49"
+          "done_at": "2026-07-23T13:19:40"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T13:11:50"
+          "done_at": "2026-07-23T13:19:40"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T13:11:51"
+          "done_at": "2026-07-23T13:19:41"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T13:11:54"
+          "done_at": "2026-07-23T13:19:45"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T13:11:55"
+          "done_at": "2026-07-23T13:19:45"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T13:11:57"
+          "done_at": "2026-07-23T13:19:48"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T13:11:57"
+          "done_at": "2026-07-23T13:19:48"
         }
       },
       "open_gates": [
@@ -239,7 +231,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T13:12:03"
+          "issued": "2026-07-23T13:19:52"
         }
       ],
       "halt_reason": null,
