@@ -317,10 +317,16 @@ def run(prod, cfg):
             cited = covered_units(items) & batch_ids
             lost = sorted(batch_ids - cited)
             gs["done_units"] += sorted(cited)
+            # 반려 대비 장부: 이 배치가 소진한 단위 명세 — 사람이 반려하면 이 명세로 자동 반환
+            gs["last_batch"] = {"label": label, "file": N(path.name), "units": sorted(cited)}
+            if fb:
+                gs.pop("reject_feedback", None)   # 피드백은 1회 반영 후 소거 (영구 편향 방지)
             save_state(st)
             verdict = "PASS" if rc == 0 else "REJECTED(재생성 후에도)"
             ev = {"배치": N(path.name), "문항": len(items), "검수 7종": verdict,
                   "직접 커버 누계": len(gs["done_units"]), "잔여": len(units) - len(gs["done_units"])}
+            if fb:
+                ev["반려 피드백 반영"] = N(fb)[:100]
             if lost:
                 ev["미커버 반환"] = f"{len(lost)}단위 — 응답 절단 추정, 다음 차수 재출제 (예: {lost[:3]})"
                 ledger_append("GOLDENSET_BATCH", "UNITS_RETURNED", "script:gen_goldenset",

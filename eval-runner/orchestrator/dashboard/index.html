@@ -554,7 +554,11 @@ async function doReject(){
   const reason = $('r-reason').value.trim();
   if(!reason){ $('r-reason').focus(); return; }
   rdlg.close();
-  await act({cmd:'reject', gate_id:rejectTarget, reason});
+  const d = await act({cmd:'reject', gate_id:rejectTarget, reason});
+  if(d && d.ok){   // 반려 = 끝. 피드백 반영 재출제가 자동 시작 — 승인/실행 또 누를 필요 없음
+    toast('↩ 반려 접수 — 피드백 반영해서 재출제를 자동 시작합니다');
+    await act({cmd:'run', product:PV().code});
+  }
 }
 async function doUpload(input, cardId){
   const files=[...input.files];
