@@ -182,7 +182,9 @@ def verify(prod, batch_path, union_paths):
 
 
 def covered_units(items):
-    return {c for it in items for c in re.findall(r"[A-Z]{2,}(?:-[A-Z0-9가-힣]+)+", N(it.get("근거 출처", "")))}
+    # [수리 2026-07-23] 접두에 숫자 포함(RC2·RV2) 지원 — 종전 [A-Z]{2,}는 'RC2-…'에서
+    # 'REMOTE-1067'만 잡아 교집합 0 → 3차 75단위 전량 오반환 사고. EE(무숫자)만 통과해 회귀가 못 잡았음
+    return {c for it in items for c in re.findall(r"[A-Z][A-Z0-9]+(?:-[A-Z0-9가-힣]+)+", N(it.get("근거 출처", "")))}
 
 
 def run(prod, cfg):

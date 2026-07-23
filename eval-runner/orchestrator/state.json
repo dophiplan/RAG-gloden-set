@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T13:01:56",
+  "updated": "2026-07-23T13:12:03",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_3차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T13:09:38"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 2,
+        "round": 3,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -62,11 +70,31 @@
           "RC2-REMOTE-105",
           "RC2-REMOTE-1050",
           "RC2-REMOTE-1058",
+          "RC2-REMOTE-1067",
+          "RC2-REMOTE-1076",
+          "RC2-REMOTE-1084",
+          "RC2-REMOTE-1093",
+          "RC2-REMOTE-1102",
+          "RC2-REMOTE-1110",
+          "RC2-REMOTE-1119",
+          "RC2-REMOTE-1128",
+          "RC2-REMOTE-1137",
           "RC2-REMOTE-114",
+          "RC2-REMOTE-1146",
+          "RC2-REMOTE-1154",
+          "RC2-REMOTE-1163",
+          "RC2-REMOTE-1172",
+          "RC2-REMOTE-1181",
+          "RC2-REMOTE-1190",
+          "RC2-REMOTE-1198",
+          "RC2-REMOTE-1207",
+          "RC2-REMOTE-1216",
           "RC2-REMOTE-122",
+          "RC2-REMOTE-1225",
           "RC2-REMOTE-1237",
           "RC2-REMOTE-1246",
           "RC2-REMOTE-1254",
+          "RC2-REMOTE-1263",
           "RC2-REMOTE-1272",
           "RC2-REMOTE-1281",
           "RC2-REMOTE-1290",
@@ -80,7 +108,14 @@
           "RC2-REMOTE-1351",
           "RC2-REMOTE-1360",
           "RC2-REMOTE-1369",
+          "RC2-REMOTE-1379",
           "RC2-REMOTE-140",
+          "RC2-REMOTE-1401",
+          "RC2-REMOTE-1410",
+          "RC2-REMOTE-1419",
+          "RC2-REMOTE-1428",
+          "RC2-REMOTE-1436",
+          "RC2-REMOTE-1445",
           "RC2-REMOTE-148",
           "RC2-REMOTE-157",
           "RC2-REMOTE-166",
@@ -92,7 +127,22 @@
           "RC2-REMOTE-218",
           "RC2-REMOTE-226",
           "RC2-REMOTE-235",
+          "RC2-REMOTE-243",
+          "RC2-REMOTE-251",
+          "RC2-REMOTE-260",
+          "RC2-REMOTE-269",
+          "RC2-REMOTE-278",
+          "RC2-REMOTE-287",
+          "RC2-REMOTE-295",
+          "RC2-REMOTE-304",
+          "RC2-REMOTE-313",
+          "RC2-REMOTE-321",
+          "RC2-REMOTE-330",
+          "RC2-REMOTE-339",
+          "RC2-REMOTE-348",
           "RC2-REMOTE-356",
+          "RC2-REMOTE-365",
+          "RC2-REMOTE-374",
           "RC2-REMOTE-383",
           "RC2-REMOTE-392",
           "RC2-REMOTE-400",
@@ -116,7 +166,40 @@
           "RC2-REMOTE-553",
           "RC2-REMOTE-561",
           "RC2-REMOTE-570",
-          "RC2-REMOTE-578"
+          "RC2-REMOTE-578",
+          "RC2-REMOTE-587",
+          "RC2-REMOTE-595",
+          "RC2-REMOTE-604",
+          "RC2-REMOTE-613",
+          "RC2-REMOTE-622",
+          "RC2-REMOTE-630",
+          "RC2-REMOTE-639",
+          "RC2-REMOTE-648",
+          "RC2-REMOTE-657",
+          "RC2-REMOTE-660",
+          "RC2-REMOTE-668",
+          "RC2-REMOTE-677",
+          "RC2-REMOTE-686",
+          "RC2-REMOTE-694",
+          "RC2-REMOTE-703",
+          "RC2-REMOTE-712",
+          "RC2-REMOTE-721",
+          "RC2-REMOTE-729",
+          "RC2-REMOTE-738",
+          "RC2-REMOTE-746",
+          "RC2-REMOTE-754",
+          "RC2-REMOTE-763",
+          "RC2-REMOTE-772",
+          "RC2-REMOTE-781",
+          "RC2-REMOTE-790",
+          "RC2-REMOTE-798",
+          "RC2-REMOTE-807",
+          "RC2-REMOTE-816",
+          "RC2-REMOTE-825",
+          "RC2-REMOTE-834",
+          "RC2-REMOTE-843",
+          "RC2-REMOTE-851",
+          "RC2-REMOTE-860"
         ],
         "batch": "B1"
       }
@@ -129,25 +212,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T12:58:18"
+          "done_at": "2026-07-23T13:11:49"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T12:58:18"
+          "done_at": "2026-07-23T13:11:50"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T12:58:19"
+          "done_at": "2026-07-23T13:11:51"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T12:58:22"
+          "done_at": "2026-07-23T13:11:54"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T12:58:23"
+          "done_at": "2026-07-23T13:11:55"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T12:58:25"
+          "done_at": "2026-07-23T13:11:57"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T12:58:26"
+          "done_at": "2026-07-23T13:11:57"
         }
       },
       "open_gates": [
@@ -156,7 +239,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T12:58:30"
+          "issued": "2026-07-23T13:12:03"
         }
       ],
       "halt_reason": null,
