@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T08:30:04",
+  "updated": "2026-07-24T08:39:20",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -45,7 +45,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 17,
+        "round": 18,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -992,23 +992,39 @@
           "RC2-HTTPSF-1469",
           "RC2-HTTPSW-4298",
           "RC2-HTTPSW-4516",
-          "RC2-HTTPSW-4565"
+          "RC2-HTTPSW-4565",
+          "RC2-HTTPSF-1402",
+          "RC2-HTTPSW-4273",
+          "RC2-HTTPSW-4275",
+          "RC2-HTTPSW-4276",
+          "RC2-HTTPSW-4435",
+          "RC2-HTTPSW-4443",
+          "RC2-HTTPSW-4446",
+          "RC2-HTTPSW-4470",
+          "RC2-HTTPSW-4542",
+          "RC2-HTTPSW-4562",
+          "RC2-HTTPSW-4564",
+          "RC2-REMOTE-1738"
         ],
         "batch": "B1",
         "last_batch": {
-          "label": "17차",
-          "file": "RC2_골든셋_17차_7문항_v1_1.xlsx",
+          "label": "18차",
+          "file": "RC2_골든셋_18차_12문항_v1_0.xlsx",
           "units": [
-            "RC2-HTTPSF-1418",
-            "RC2-HTTPSF-1421",
-            "RC2-HTTPSF-1431",
-            "RC2-HTTPSF-1469",
-            "RC2-HTTPSW-4298",
-            "RC2-HTTPSW-4516",
-            "RC2-HTTPSW-4565"
+            "RC2-HTTPSF-1402",
+            "RC2-HTTPSW-4273",
+            "RC2-HTTPSW-4275",
+            "RC2-HTTPSW-4276",
+            "RC2-HTTPSW-4435",
+            "RC2-HTTPSW-4443",
+            "RC2-HTTPSW-4446",
+            "RC2-HTTPSW-4470",
+            "RC2-HTTPSW-4542",
+            "RC2-HTTPSW-4562",
+            "RC2-HTTPSW-4564",
+            "RC2-REMOTE-1738"
           ]
-        },
-        "reject_feedback": "RC2-941 사실확인형 중에, 고객사와의 관계에 대해서는 필요가 없다"
+        }
       }
     },
     "EE": {
