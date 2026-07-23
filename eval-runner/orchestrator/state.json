@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T13:19:52",
+  "updated": "2026-07-23T13:23:19",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_4차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T13:23:19"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 3,
+        "round": 4,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -191,7 +199,82 @@
           "RC2-REMOTE-834",
           "RC2-REMOTE-843",
           "RC2-REMOTE-851",
-          "RC2-REMOTE-860"
+          "RC2-REMOTE-860",
+          "RC2-HTTPSF-001",
+          "RC2-HTTPSF-010",
+          "RC2-HTTPSF-020",
+          "RC2-HTTPSF-029",
+          "RC2-HTTPSF-039",
+          "RC2-HTTPSF-048",
+          "RC2-HTTPSF-058",
+          "RC2-HTTPSF-061",
+          "RC2-HTTPSF-069",
+          "RC2-HTTPSF-078",
+          "RC2-HTTPSF-087",
+          "RC2-HTTPSF-095",
+          "RC2-HTTPSF-104",
+          "RC2-HTTPSF-113",
+          "RC2-HTTPSF-121",
+          "RC2-HTTPSF-125",
+          "RC2-HTTPSF-133",
+          "RC2-HTTPSF-142",
+          "RC2-HTTPSF-151",
+          "RC2-HTTPSF-160",
+          "RC2-HTTPSF-850",
+          "RC2-HTTPSF-859",
+          "RC2-HTTPSF-868",
+          "RC2-HTTPSF-876",
+          "RC2-HTTPSF-885",
+          "RC2-HTTPSF-894",
+          "RC2-HTTPSF-902",
+          "RC2-HTTPSF-911",
+          "RC2-HTTPSF-920",
+          "RC2-REMOTE-1002",
+          "RC2-REMOTE-1010",
+          "RC2-REMOTE-1019",
+          "RC2-REMOTE-1027",
+          "RC2-REMOTE-1035",
+          "RC2-REMOTE-1043",
+          "RC2-REMOTE-1454",
+          "RC2-REMOTE-1463",
+          "RC2-REMOTE-1472",
+          "RC2-REMOTE-1480",
+          "RC2-REMOTE-1489",
+          "RC2-REMOTE-1498",
+          "RC2-REMOTE-1507",
+          "RC2-REMOTE-1516",
+          "RC2-REMOTE-1525",
+          "RC2-REMOTE-1533",
+          "RC2-REMOTE-1542",
+          "RC2-REMOTE-1551",
+          "RC2-REMOTE-1560",
+          "RC2-REMOTE-1569",
+          "RC2-REMOTE-1578",
+          "RC2-REMOTE-1586",
+          "RC2-REMOTE-1595",
+          "RC2-REMOTE-1604",
+          "RC2-REMOTE-1613",
+          "RC2-REMOTE-1622",
+          "RC2-REMOTE-1639",
+          "RC2-REMOTE-1647",
+          "RC2-REMOTE-1656",
+          "RC2-REMOTE-867",
+          "RC2-REMOTE-875",
+          "RC2-REMOTE-884",
+          "RC2-REMOTE-892",
+          "RC2-REMOTE-901",
+          "RC2-REMOTE-909",
+          "RC2-REMOTE-918",
+          "RC2-REMOTE-927",
+          "RC2-REMOTE-935",
+          "RC2-REMOTE-944",
+          "RC2-REMOTE-952",
+          "RC2-REMOTE-953",
+          "RC2-REMOTE-961",
+          "RC2-REMOTE-969",
+          "RC2-REMOTE-977",
+          "RC2-REMOTE-986",
+          "RC2-REMOTE-994"
         ],
         "batch": "B1"
       }
@@ -204,25 +287,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T13:19:40"
+          "done_at": "2026-07-23T13:11:49"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T13:19:40"
+          "done_at": "2026-07-23T13:11:50"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T13:19:41"
+          "done_at": "2026-07-23T13:11:51"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T13:19:45"
+          "done_at": "2026-07-23T13:11:54"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T13:19:45"
+          "done_at": "2026-07-23T13:11:55"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T13:19:48"
+          "done_at": "2026-07-23T13:11:57"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T13:19:48"
+          "done_at": "2026-07-23T13:11:57"
         }
       },
       "open_gates": [
@@ -231,7 +314,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T13:19:52"
+          "issued": "2026-07-23T13:12:03"
         }
       ],
       "halt_reason": null,
