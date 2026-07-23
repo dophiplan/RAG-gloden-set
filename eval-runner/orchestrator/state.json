@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T18:04:19",
+  "updated": "2026-07-23T18:12:59",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,7 +35,15 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RC2_11차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-23T18:12:59"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -45,7 +53,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 10,
+        "round": 11,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -600,7 +608,81 @@
           "RC2-HTTPSW-951",
           "RC2-HTTPSW-963",
           "RC2-HTTPSW-977",
-          "RC2-HTTPSW-989"
+          "RC2-HTTPSW-989",
+          "RC2-HTTPSW-1041",
+          "RC2-HTTPSW-1054",
+          "RC2-HTTPSW-1066",
+          "RC2-HTTPSW-1079",
+          "RC2-HTTPSW-1088",
+          "RC2-HTTPSW-1097",
+          "RC2-HTTPSW-1107",
+          "RC2-HTTPSW-1112",
+          "RC2-HTTPSW-1113",
+          "RC2-HTTPSW-1116",
+          "RC2-HTTPSW-1122",
+          "RC2-HTTPSW-1133",
+          "RC2-HTTPSW-1143",
+          "RC2-HTTPSW-1156",
+          "RC2-HTTPSW-1169",
+          "RC2-HTTPSW-1179",
+          "RC2-HTTPSW-1190",
+          "RC2-HTTPSW-1201",
+          "RC2-HTTPSW-1212",
+          "RC2-HTTPSW-1223",
+          "RC2-HTTPSW-1235",
+          "RC2-HTTPSW-1241",
+          "RC2-HTTPSW-1255",
+          "RC2-HTTPSW-1262",
+          "RC2-HTTPSW-1272",
+          "RC2-HTTPSW-1282",
+          "RC2-HTTPSW-1290",
+          "RC2-HTTPSW-1299",
+          "RC2-HTTPSW-1308",
+          "RC2-HTTPSW-1316",
+          "RC2-HTTPSW-1323",
+          "RC2-HTTPSW-1324",
+          "RC2-HTTPSW-1335",
+          "RC2-HTTPSW-1337",
+          "RC2-HTTPSW-1344",
+          "RC2-HTTPSW-1352",
+          "RC2-HTTPSW-1360",
+          "RC2-HTTPSW-1367",
+          "RC2-HTTPSW-1368",
+          "RC2-HTTPSW-1377",
+          "RC2-HTTPSW-1387",
+          "RC2-HTTPSW-1397",
+          "RC2-HTTPSW-1407",
+          "RC2-HTTPSW-1417",
+          "RC2-HTTPSW-1428",
+          "RC2-HTTPSW-1429",
+          "RC2-HTTPSW-1438",
+          "RC2-HTTPSW-1447",
+          "RC2-HTTPSW-1457",
+          "RC2-HTTPSW-1469",
+          "RC2-HTTPSW-1478",
+          "RC2-HTTPSW-1487",
+          "RC2-HTTPSW-1496",
+          "RC2-HTTPSW-1505",
+          "RC2-HTTPSW-1514",
+          "RC2-HTTPSW-1524",
+          "RC2-HTTPSW-1531",
+          "RC2-HTTPSW-1539",
+          "RC2-HTTPSW-1547",
+          "RC2-HTTPSW-1554",
+          "RC2-HTTPSW-1563",
+          "RC2-HTTPSW-1573",
+          "RC2-HTTPSW-1582",
+          "RC2-HTTPSW-1586",
+          "RC2-HTTPSW-1587",
+          "RC2-HTTPSW-1596",
+          "RC2-HTTPSW-3722",
+          "RC2-HTTPSW-3730",
+          "RC2-HTTPSW-3754",
+          "RC2-HTTPSW-3768",
+          "RC2-HTTPSW-3776",
+          "RC2-HTTPSW-3784",
+          "RC2-HTTPSW-3792",
+          "RC2-HTTPSW-877"
         ],
         "batch": "B1",
         "last_batch": {
@@ -682,8 +764,7 @@
             "RC2-HTTPSW-3792",
             "RC2-HTTPSW-877"
           ]
-        },
-        "reject_feedback": "말장난 처럼 답한것 같은데? 뭘 할수 있냐고 하면 공유 해서 서로 볼수 있다고 해야지"
+        }
       }
     },
     "EE": {
