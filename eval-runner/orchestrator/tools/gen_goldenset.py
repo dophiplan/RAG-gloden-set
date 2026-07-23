@@ -60,6 +60,38 @@ def read_map_units(prod, cfg):
     return units, path
 
 
+def select_representative(units, target):
+    """문서(source)별 비례 대표 추출 — 결정적(등간격·난수 없음, 같은 맵이면 항상 같은 선정).
+    7,848단위 전량 소진(≈105차수) 대신 v1급 규모로 출제하기 위한 표본 — 문서마다 최소 1단위 보장,
+    문서 안에서는 등간격으로 뽑아 문서 전체에 고르게 분포."""
+    from collections import defaultdict
+    if len(units) <= target:
+        return units
+    by_doc = defaultdict(list)
+    for u in units:
+        by_doc[u.get("source") or u["unit_id"]].append(u)
+    total = len(units)
+    quota = {d: max(1, int(target * len(v) / total)) for d, v in by_doc.items()}
+    docs_sorted = sorted(by_doc, key=lambda d: -len(by_doc[d]))
+    s = sum(quota.values())
+    i = 0
+    while s != target and i < 20 * len(docs_sorted) + target:
+        d = docs_sorted[i % len(docs_sorted)]
+        if s < target and quota[d] < len(by_doc[d]):
+            quota[d] += 1
+            s += 1
+        elif s > target and quota[d] > 1:
+            quota[d] -= 1
+            s -= 1
+        i += 1
+    sel = []
+    for d, v in by_doc.items():
+        k = min(quota[d], len(v))
+        stride = len(v) / k
+        sel += [v[int(j * stride)] for j in range(k)]
+    return sel
+
+
 def gs_state(prod):
     st = load_state()
     return st, st["products"][prod].setdefault(
@@ -154,22 +186,37 @@ def covered_units(items):
 
 
 def run(prod, cfg):
-    units, map_path = read_map_units(prod, cfg)
-    if not units:
+    all_units, map_path = read_map_units(prod, cfg)
+    if not all_units:
         return "WAITING_INPUT", {"커버리지맵": "없음 — ③ 미완"}
+    # 목표 규모 대표 추출 (결정적 — 재진입 때마다 같은 선정)
+    target = cfg["pipeline"].get("goldenset_target")
+    units = select_representative(all_units, target) if target else all_units
     st, gs = gs_state(prod)
     band_lo, band_hi = cfg["pipeline"].get("band", [60, 75])
     remaining = [u for u in units if u["unit_id"] not in set(gs["done_units"])]
 
     # 1) 배분계획 게이트 (최초 1회)
     if gs["phase"] == "MATERIAL":
+        import math
+        n_rounds = 1 + max(0, math.ceil((len(units) - 30) / band_hi))
+        if len(units) < len(all_units):
+            from collections import Counter
+            docs = Counter(u.get("source", "?") for u in units)
+            ledger_append("GOLDENSET_BATCH", "UNITS_SELECTED", "script:gen_goldenset",
+                          evidence={"선정": f"{len(units)}/{len(all_units)}",
+                                    "방식": "문서별 비례·등간격 대표 추출 (결정적)",
+                                    "문서 수": len(docs), "목표": target}, product=prod)
         plan = llm.chat("generator", "[TASK:ALLOCATION_PLAN] 커버 단위를 배치로 배분하는 계획을 JSON으로.",
                         json.dumps({"units": len(units)}, ensure_ascii=False), cfg)
         gs["phase"] = "PLAN_GATE"
         save_state(st)
         issue_gate_card(prod, "GOLDENSET_BATCH", f"GSPLAN_{prod}",
                         what_stopped="배분계획 승인 — 재료실측 완료, 배치 배분안 확인",
-                        evidence={"재료 풀(맵 단위)": len(units), "밴드": f"{band_lo}~{band_hi}",
+                        evidence={"재료 풀(맵 단위)": len(all_units),
+                                  "출제 대상(대표 추출)": f"{len(units)}" + (f" (목표 {target} · 문서별 비례)" if target and len(units) < len(all_units) else ""),
+                                  "밴드": f"{band_lo}~{band_hi}",
+                                  "예상 차수": f"파일럿 30 + 약 {n_rounds - 1}차수",
                                   "계획": plan[:200]},
                         recommendation="승인 시 파일럿 30문항 생성 시작")
         return "WAITING_HUMAN", {"phase": "배분계획 게이트"}
