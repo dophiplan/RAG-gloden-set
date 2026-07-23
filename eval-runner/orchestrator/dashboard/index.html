@@ -226,7 +226,7 @@ const kb = n => n>=1048576?(n/1048576).toFixed(1)+'MB':(n/1024).toFixed(1)+'KB';
 const PV = () => S.state._products[cur];          // {code, name, gen, legacy[]}
 const PS = () => S.state.products[PV().code];     // 현역 트랙 상태
 
-async function loadAll(){
+async function loadAll(fromPoll){
   const [st,cat,q,sc,lg,ai] = await Promise.all([
     fetch('/api/state').then(r=>r.json()),
     fetch('/api/catalog').then(r=>r.json()),
@@ -239,6 +239,10 @@ async function loadAll(){
   const disp = Object.keys(st._products||{});
   if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
   if(!cur || !st._products[cur]) cur = disp[0];
+  // 자동 갱신(15초)인데 데이터가 그대로면 다시 그리지 않는다 — 읽던 화면 안 튐
+  const fp = JSON.stringify(S);
+  if(fromPoll && fp === window._fp) return;
+  window._fp = fp;
   render();
 }
 
@@ -756,7 +760,7 @@ async function doOnboard(){
 const dlg=$('dlg'), rdlg=$('rdlg');
 
 loadAll();
-setInterval(()=>{ if(!busy) loadAll(); }, 15000);
+setInterval(()=>{ if(!busy) loadAll(true); }, 15000);
 </script>
 </body>
 </html>
