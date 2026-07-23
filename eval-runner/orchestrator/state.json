@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T15:27:25",
+  "updated": "2026-07-23T15:34:21",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "PENDING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -45,7 +45,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 7,
+        "round": 8,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -438,7 +438,20 @@
           "RC2-REMOTE-1579",
           "RC2-REMOTE-1587",
           "RC2-REMOTE-1596",
-          "RC2-REMOTE-1605"
+          "RC2-REMOTE-1605",
+          "RC2-HTTPSW-296",
+          "RC2-HTTPSW-303",
+          "RC2-HTTPSW-311",
+          "RC2-HTTPSW-318",
+          "RC2-HTTPSW-325",
+          "RC2-HTTPSW-330",
+          "RC2-HTTPSW-340",
+          "RC2-HTTPSW-357",
+          "RC2-HTTPSW-368",
+          "RC2-HTTPSW-370",
+          "RC2-HTTPSW-379",
+          "RC2-HTTPSW-388",
+          "RC2-HTTPSW-397"
         ],
         "batch": "B1"
       }
