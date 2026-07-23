@@ -357,11 +357,17 @@ def run(prod, cfg):
             wb.close()
         direct = len(all_items)
         pool = len(units)
-        eq = [["재료 풀", str(pool), "커버리지맵 단위 실측"],
-              ["직접 커버(전 차수)", str(len(gs["done_units"])), "파일 실측 합산"],
-              ["흡수", "0", "—"], ["부적격", str(max(0, pool - len(gs["done_units"]))), "미출제 단위"],
+        # 회계 주의: 제외소스(Known Issue) 도입으로 대표 추출 명단이 중간에 갱신됨 —
+        # 그 이전 차수가 확보한 '선외' 단위는 소실이 아니라 추가 확보분으로 따로 계상한다
+        sel_ids = {u["unit_id"] for u in units}
+        done_set = set(gs["done_units"])
+        in_pool, extra = len(done_set & sel_ids), len(done_set - sel_ids)
+        eq = [["재료 풀(대표 추출)", str(pool), "커버리지맵 단위 실측"],
+              ["직접 커버(풀 내)", str(in_pool), "파일 실측 합산"],
+              ["선외 추가 커버", str(extra), "명단 갱신 이전 차수 확보분 — 소실 아님(추가 확보)"],
+              ["흡수", "0", "—"], ["부적격", str(max(0, pool - in_pool)), "미출제 단위"],
               ["잔여", "0", "마감"],
-              [f"등식: {len(gs['done_units'])}+0+{max(0, pool - len(gs['done_units']))}+0={pool}", str(pool), "소실 0(assert)"]]
+              [f"등식: {in_pool}+0+{max(0, pool - in_pool)}+0={pool} (+선외 {extra})", str(pool), "소실 0(assert)"]]
         out = DATA / prod / "05_unified_ledger" / f"{prod}_골든셋_통합대장_{direct}문항_v1_0.xlsx"
         out.parent.mkdir(parents=True, exist_ok=True)
         wb = openpyxl.Workbook()
