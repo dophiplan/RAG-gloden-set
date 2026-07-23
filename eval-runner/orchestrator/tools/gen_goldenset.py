@@ -181,6 +181,19 @@ def verify(prod, batch_path, union_paths):
     return p.returncode, p.stdout
 
 
+def generate_items_chunked(prod, batch_units, start_no, want_e, cfg, chunk=25):
+    """[수리 2026-07-23] 75단위 단발 호출은 응답 절단 반복(75요청→40·42·13 생산) —
+    25단위씩 소분할 호출로 차수 생산량을 밴드에 안정화. E형은 마지막 조각에만."""
+    items = []
+    for off in range(0, len(batch_units), chunk):
+        part = batch_units[off:off + chunk]
+        last = off + chunk >= len(batch_units)
+        got = generate_items(prod, part, start_no=start_no + len(items),
+                             want_e=(want_e and last), cfg=cfg)
+        items += got
+    return items
+
+
 def _gs_progress(prod, phase):
     """④ 진행판 — 대시보드 진행선용 (한 차수 = 대형 호출 1건이라 배치 카운트 대신 국면만)"""
     import datetime
@@ -274,8 +287,8 @@ def run(prod, cfg):
             batch_units = remaining[:take]
             label_pre = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             _gs_progress(prod, f"{label_pre} 출제 중 — claude 대형 호출 1건 (20~40분이 정상)")
-            items = generate_items(prod, batch_units, start_no=len(gs["done_units"]) + 1,
-                                   want_e=is_pilot, cfg=cfg)
+            items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
+                                           want_e=is_pilot, cfg=cfg)
             ground_citations(items, batch_units)   # 발췌→단위 역추적 authoritative 재기입
             label = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             path = write_batch(prod, items, label)
@@ -285,8 +298,8 @@ def run(prod, cfg):
                 ledger_append("GOLDENSET_BATCH", "BATCH_REJECTED", "script:verify_batch",
                               evidence={"batch": N(path.name), "log": out[-400:]}, product=prod)
                 path.unlink()
-                items = generate_items(prod, batch_units, start_no=len(gs["done_units"]) + 1,
-                                       want_e=is_pilot, cfg=cfg)
+                items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
+                                               want_e=is_pilot, cfg=cfg)
                 ground_citations(items, batch_units)
                 path = write_batch(prod, items, label)
                 rc, out = verify(prod, path, [p for p in union if p.exists() and p != path])
