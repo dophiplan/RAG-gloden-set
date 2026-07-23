@@ -2011,3 +2011,4 @@
 {"ts": "2026-07-24T07:40:39", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "WAITING_HUMAN→REJECTED", "evidence": {}, "reason": "홍보문구는 필요 없음"}
 {"ts": "2026-07-24T07:40:39", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:pipeline", "action": "UNITS_RETURNED", "evidence": {"반환": 49, "배치": "RC2_골든셋_16차_49문항_v1_0.xlsx", "사유": "사람 반려 — 피드백 반영해 재출제 예정"}, "reason": null}
 {"ts": "2026-07-24T07:40:39", "product": "RC2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "REJECTED→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-24T07:43:41", "product": "RC2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "GSBATCH_RC2_16차", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
