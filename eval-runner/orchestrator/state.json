@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T15:23:44",
+  "updated": "2026-07-23T15:27:25",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "PENDING",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
