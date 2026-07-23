@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T08:02:51",
+  "updated": "2026-07-23T10:39:16",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -39,31 +39,10 @@
           "flags": [
             {
               "type": "GAP-목록·넘김 페이지 (내용 없음 추정)",
-              "id": "23건",
+              "id": "8건",
               "candidates": [],
               "ack_required": true,
-              "note": "페이지네이션·피드·카테고리 목록 — 예: https://www.remotecall.com/kr/blog/page/2/ · https://www.remotecall.com/kr/blog/page/3/ · https://www.remotecall.com/kr/support/notices/company/feed/"
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · 기타",
-              "id": "14건 (49청크)",
-              "candidates": [
-                "http://files.rsupport.com/kr/remotecall/documents/features/remotecall6.0-new-features-kr.pdf",
-                "https://files.rsupport.com/ko/company/brochures/RemoteCall-Product-Brochure-8P2025-Ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/brochures/remotecall6.0-brochure-1p-kr.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/brochures/remotecall6.0-mobilepack-brochure-1p-kr.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/brochures/remotecall6.0-visualpack-brochure-1p-kr.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/features/RemoteCall-product-specification-ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/leaflets/RemoteCall-SaaS-leaflet-ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/leaflets/RemoteCall-visual-support-leaflet-ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/leaflets/remotecall6.0-leaflet-cloud-kr.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/leaflets/remotecall6.0-leaflet-solution-kr.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/user-guides/RemoteCall-SaaS-Mobile-Support-Android-Quick-Guide-ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/user-guides/RemoteCall-SaaS-Mobile-Support-iOS-Quick-Guide-ko.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/whitepapers/RemoteCall-Usage-Tips-2022.pdf",
-                "https://files.rsupport.com/kr/remotecall/documents/whitepapers/remotecall-keep-the-infrastructure-kr.pdf"
-              ],
-              "ack_required": true
+              "note": "페이지네이션·피드·카테고리 목록 — 예: https://www.remotecall.com/kr/support/notices/company/feed/ · https://www.remotecall.com/kr/support/notices/service/feed/ · https://www.remotecall.com/kr/use-cases/success-stories/manufacturing/page/2/"
             },
             {
               "type": "GAP-내용 페이지 누락 · success-stories",
@@ -79,27 +58,11 @@
               "ack_required": true
             },
             {
-              "type": "GAP-내용 페이지 누락 · support",
-              "id": "6건 (35청크)",
+              "type": "GAP-내용 페이지 누락 · 기타",
+              "id": "2건 (6청크)",
               "candidates": [
-                "https://www.remotecall.com/kr/support/notices/company/office-holiday-notice-202102/",
-                "https://www.remotecall.com/kr/support/notices/company/office-holiday-notice-202109/",
-                "https://www.remotecall.com/kr/support/notices/promotion/notice-event-winner-20221129/",
-                "https://www.remotecall.com/kr/support/notices_renew/promotion/free-remotecall-and-free-coffee/",
-                "https://www.remotecall.com/kr/support/tutorials/",
-                "https://www.remotecall.com/kr/support/update-history_renew/"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · blog",
-              "id": "5건 (36청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/blog/rainyseason-damand/",
-                "https://www.remotecall.com/kr/blog/remotecall-it-kakao/",
-                "https://www.remotecall.com/kr/blog/remotecall-maintenance-sbank-case-study/",
-                "https://www.remotecall.com/kr/blog/remotecall-visualpack-innovation/",
-                "https://www.remotecall.com/kr/blog/sdk-update-remotecall/"
+                "https://files.rsupport.com/kr/remotecall/documents/features/RemoteCall-product-specification-ko.pdf",
+                "https://files.rsupport.com/kr/remotecall/documents/leaflets/RemoteCall-visual-support-leaflet-ko.pdf"
               ],
               "ack_required": true
             },
@@ -113,10 +76,10 @@
               "ack_required": true
             },
             {
-              "type": "GAP-내용 페이지 누락 · footer",
-              "id": "1건 (6청크)",
+              "type": "GAP-내용 페이지 누락 · blog",
+              "id": "1건 (4청크)",
               "candidates": [
-                "https://www.remotecall.com/kr/footer/contact-us/"
+                "https://www.remotecall.com/kr/blog/rainyseason-damand/"
               ],
               "ack_required": true
             },
@@ -127,34 +90,10 @@
                 "https://www.remotecall.com/kr/notices/promotion/free-remotecall-and-free-coffee/"
               ],
               "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · store",
-              "id": "1건 (4청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/store/product/?prd=mpack"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · update-history",
-              "id": "1건 (6청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/update-history/update-20231116/"
-              ],
-              "ack_required": true
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · use-cases",
-              "id": "1건 (7청크)",
-              "candidates": [
-                "https://www.remotecall.com/kr/use-cases/success-stories/finance/yuanta-securities"
-              ],
-              "ack_required": true
             }
           ],
           "acked": false,
-          "issued": "2026-07-23T08:01:35"
+          "issued": "2026-07-23T10:35:08"
         }
       ],
       "halt_reason": null,
@@ -173,25 +112,25 @@
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T08:02:15"
+          "done_at": "2026-07-23T10:39:00"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T08:02:15"
+          "done_at": "2026-07-23T10:39:00"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T08:02:16"
+          "done_at": "2026-07-23T10:39:01"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T08:02:20"
+          "done_at": "2026-07-23T10:39:04"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T08:02:20"
+          "done_at": "2026-07-23T10:39:04"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T08:02:23"
+          "done_at": "2026-07-23T10:39:06"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T08:02:23"
+          "done_at": "2026-07-23T10:39:06"
         }
       },
       "open_gates": [
@@ -200,7 +139,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T08:02:29"
+          "issued": "2026-07-23T10:39:12"
         }
       ],
       "halt_reason": null,
