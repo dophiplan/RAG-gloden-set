@@ -459,6 +459,8 @@ function renderQueue(){
       c.kind==='GATE' ? `<div class="btns">
         ${c.id.startsWith('CAL_')&&S.calin&&S.calin.rows&&S.calin.rows.length?`<button class="btn" onclick="openCalin('${c.id}')">📝 답안지 다시 열기 (판정 수정)</button>`:''}
         ${c.id.startsWith('S2DIFF_')&&S.s2diff&&S.s2diff.rows&&S.s2diff.rows.length?`<button class="btn" onclick="openS2('${c.id}')">⚖ 불일치 검토 (팝업)</button>`:''}
+        ${(()=>{const m=!c.id.startsWith('CAL_')&&!c.id.startsWith('S2DIFF_')&&(c.body.match(/[\w가-힣_.\-]+\.xlsx/)||[])[0];
+          return m?`<button class="btn" onclick="openGateX('${esc(m)}','${c.id}',${c.acks.length})">👁 실물 보고 결정 (팝업)</button>`:''})()}
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
       </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
@@ -648,16 +650,26 @@ function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal
 
 /* 👁 xlsx 미리보기 — 엑셀 안 열고 툴에서 (숨김=봉인 시트는 서버가 비노출) */
 let XD = null;
-async function openXlsx(path){
-  $('x-title').textContent = path.split('/').pop();
+async function openXlsx(path, byName){
+  $('x-title').textContent = byName? byName.name : path.split('/').pop();
   $('x-note').textContent = '불러오는 중…';
   $('x-tabs').innerHTML = ''; $('x-body').innerHTML = '';
+  $('x-foot').innerHTML = `<button class="btn" onclick="xdlg.close()">닫기</button>`;
   xdlg.showModal();
-  XD = await fetch('/api/xlsx?path='+encodeURIComponent(path)).then(r=>r.json()).catch(()=>({error:'로드 실패'}));
+  const url = byName? `/api/xlsx?name=${encodeURIComponent(byName.name)}&product=${encodeURIComponent(byName.product)}`
+                    : '/api/xlsx?path='+encodeURIComponent(path);
+  XD = await fetch(url).then(r=>r.json()).catch(()=>({error:'로드 실패'}));
   if(XD.error){ $('x-note').textContent = XD.error; return; }
   const names = Object.keys(XD.sheets);
   $('x-tabs').innerHTML = names.length>1 ? names.map((n,i)=>`<button class="xtab ${i?'':'on'}" onclick="showSheet('${esc(n)}',this)">${esc(n)}</button>`).join('') : '';
   showSheet(names[0]);
+}
+/* 게이트 카드 → 실물을 팝업으로 보고 그 자리에서 승인/반려 */
+async function openGateX(name, gateId, nAcks){
+  await openXlsx(null, {name, product: PV().code});
+  $('x-foot').innerHTML = `<button class="btn" onclick="xdlg.close()">닫기 (나중에 결정)</button>
+    <button class="btn reject" onclick="xdlg.close();openReject('${gateId}')">반려 (사유 필수)</button>
+    <button class="btn approve" ${nAcks?'disabled title="체크리스트는 카드에서 확인 후 승인"':''} onclick="xdlg.close();doApprove('${gateId}',0)">승인</button>`;
 }
 function showSheet(name, btn){
   document.querySelectorAll('.xtab').forEach(b=>b.classList.remove('on'));
