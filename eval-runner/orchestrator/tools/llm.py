@@ -124,6 +124,12 @@ def _anthropic(model, key, system, user, max_tokens):
 def extract_json(text):
     """응답에서 JSON 추출 — 배열/객체/JSONL(줄당 객체)/코드펜스/전후 설명 모두 허용.
     실모델은 형식이 흔들린다: 배열 대신 JSONL, 코드펜스, 앞뒤 설명. 전부 흡수한다."""
+    # 0) 코드펜스 안 내용부터 시도 — 설명문 사이의 ```json [] ``` (빈 배열 포함) 정확 인식
+    for m in re.finditer(r"```(?:json)?\s*(.+?)```", text, re.S):
+        try:
+            return json.loads(m.group(1).strip())
+        except json.JSONDecodeError:
+            continue
     raw = re.sub(r"```(?:json)?", "", text).strip()
     # 1) 정석: 첫 '[' ~ 마지막 ']' (배열)
     a, b = raw.find("["), raw.rfind("]")
