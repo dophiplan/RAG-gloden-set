@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T09:32:53",
+  "updated": "2026-07-24T09:53:25",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -43,11 +43,11 @@
       },
       "open_gates": [
         {
-          "id": "CALIN_RC2",
+          "id": "CAL_RC2",
           "stage": "CALIBRATION",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-24T09:32:53"
+          "issued": "2026-07-24T09:53:25"
         }
       ],
       "halt_reason": null,
