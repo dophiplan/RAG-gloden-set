@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T09:02:27",
+  "updated": "2026-07-24T09:06:48",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -35,15 +35,7 @@
           "done_at": "2026-07-23T11:25:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_RC2_21차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-24T09:02:27"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
@@ -53,7 +45,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 21,
+        "round": 20,
         "done_units": [
           "RC2-REMOTE-001",
           "RC2-REMOTE-009",
@@ -1016,10 +1008,7 @@
           "RC2-HTTPSW-4332",
           "RC2-HTTPSW-4449",
           "RC2-REMOTE-1748",
-          "RC2-HTTPSW-3229",
-          "RC2-HTTPSW-4239",
-          "RC2-HTTPSW-4352",
-          "RC2-HTTPSW-4481"
+          "RC2-HTTPSW-3229"
         ],
         "batch": "B1",
         "last_batch": {
@@ -1030,7 +1019,8 @@
             "RC2-HTTPSW-4352",
             "RC2-HTTPSW-4481"
           ]
-        }
+        },
+        "reject_feedback": "홍보 문구라 필요 없음"
       }
     },
     "EE": {
