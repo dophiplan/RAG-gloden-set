@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-24T14:14:57",
+  "updated": "2026-07-24T14:16:47",
   "products": {
     "RV2": {
-      "stage": "TERRAIN",
-      "status": "WAITING_HUMAN",
+      "stage": "CORPUS_AUDIT",
+      "status": "WAITING_INPUT",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -12,15 +12,7 @@
           "done_at": "2026-07-24T14:14:56"
         }
       },
-      "open_gates": [
-        {
-          "id": "TERRAIN_RV2",
-          "stage": "TERRAIN",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-24T14:14:56"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
