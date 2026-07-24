@@ -265,7 +265,8 @@ def run(prod, cfg):
     units = select_representative(all_units, target) if target else all_units
     st, gs = gs_state(prod)
     band_lo, band_hi = cfg["pipeline"].get("band", [60, 75])
-    remaining = [u for u in units if u["unit_id"] not in set(gs["done_units"])]
+    skip = set(gs["done_units"]) | set(gs.get("unfit_units", []))
+    remaining = [u for u in units if u["unit_id"] not in skip]
 
     # 1) 배분계획 게이트 (최초 1회)
     if gs["phase"] == "MATERIAL":
