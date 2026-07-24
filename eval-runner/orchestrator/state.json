@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T13:55:59",
+  "updated": "2026-07-24T14:05:53",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -19,10 +19,10 @@
       }
     },
     "RC2": {
-      "stage": "STAGE2",
-      "status": "WAITING_HUMAN",
+      "stage": "SCORING",
+      "status": "WAITING_INPUT",
       "calibration_passed": true,
-      "scorer_version": null,
+      "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
@@ -42,17 +42,12 @@
         },
         "CALIBRATION": {
           "done_at": "2026-07-24T10:05:34"
+        },
+        "STAGE2": {
+          "done_at": "2026-07-24T14:05:51"
         }
       },
-      "open_gates": [
-        {
-          "id": "S2DIFF_RC2",
-          "stage": "STAGE2",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-24T13:55:58"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
