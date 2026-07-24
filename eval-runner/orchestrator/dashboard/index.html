@@ -260,7 +260,7 @@ async function loadAll(fromPoll){
   if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
   if(!cur || !st._products[cur]) cur = disp[0];
   // ⑥ 채점관 면접 카드가 있으면 답안지(30문항)도 함께 로드 — 카드 안에서 바로 판정
-  const calCard = q.find(c=>c.id.startsWith('CALIN_'));
+  const calCard = q.find(c=>c.id.startsWith('CALIN_')||c.id.startsWith('CAL_'));
   S.calin = calCard ? await fetch('/api/calin?product='+encodeURIComponent(calCard.product)).then(r=>r.json()).catch(()=>({rows:[]})) : null;
   // 자동 갱신(15초)인데 데이터가 그대로면 다시 그리지 않는다 — 읽던 화면 안 튐
   const fp = JSON.stringify(S);
@@ -433,6 +433,7 @@ function renderQueue(){
         <button class="btn reject" onclick="dismissCard('${esc(c.file)}')">✕ 확인했어요 (닫기)</button>
       </div><div class="hint">닫으면 같은 내용으로는 다시 안 떠요 — 새 모델이 또 나오면 그때 새 카드가 옵니다</div>` :
       c.kind==='GATE' ? `<div class="btns">
+        ${c.id.startsWith('CAL_')&&S.calin&&S.calin.rows&&S.calin.rows.length?`<button class="btn" onclick="openCalin('${c.id}')">📝 답안지 다시 열기 (판정 수정)</button>`:''}
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
       </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">

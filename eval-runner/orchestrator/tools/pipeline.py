@@ -348,6 +348,15 @@ def cmd_approve(a):
                     tf.write_text(_yaml.safe_dump(d, allow_unicode=True, sort_keys=False),
                                   encoding="utf-8")
         if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
+            # 임계 미달 상태의 승인 오클릭이 본판정을 열어버리는 사고 방지 — 실측 재확인 후에만
+            import calibration as _cal
+            _t = _cal.find_table(prod)
+            _m = _cal.measure_agreement(_t) if _t else {"total": 0}
+            _thr = load_config()["pipeline"].get("calibration_threshold", 0.90)
+            if not _m["total"] or _m["agreement"] < _thr:
+                sys.exit(f"승인 불가 — 일치율 실측 {_m.get('measured_match','?')}/{_m.get('total','?')} 가 "
+                         f"임계(≥{_thr:.0%}) 미달이에요. 판정 수정 또는 기준서 개정 후 [반려]로 재측정하세요. "
+                         f"(미달 상태 승인은 채점관 검증을 건너뛰는 사고가 됩니다)")
             ps["calibration_passed"] = True     # 임계 통과 게이트 승인 시에만
         if g["stage"] == "SCORING" and a.gate_id.startswith("SCORE_"):
             # 성적표 확정 = ⑧ 완료 → ⑨ 유지보수로 전진 (재채점 루프 방지)
