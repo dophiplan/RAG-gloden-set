@@ -5,13 +5,19 @@
       "file": "RAG_RV_data.zip",
       "sha256": "083c38539a8fa79c6a9e2409392073b605ab72ae8c073445d88d5159f6be273e",
       "size": 5131023,
-      "registered": "2026-07-24T14:17:10"
+      "registered": "2026-07-24T14:18:44"
+    },
+    {
+      "file": "RV_RAG_AI_file.zip",
+      "sha256": "73b5a862df71542193678308c9fa643f61b2584602966542703a55d6e4a8162b",
+      "size": 36870395,
+      "registered": "2026-07-24T14:18:44"
     },
     {
       "file": "content.rview.com_ko.zip_",
       "sha256": "083c38539a8fa79c6a9e2409392073b605ab72ae8c073445d88d5159f6be273e",
       "size": 5131023,
-      "registered": "2026-07-24T14:17:10"
+      "registered": "2026-07-24T14:18:44"
     }
   ]
 }
