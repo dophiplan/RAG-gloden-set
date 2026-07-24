@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T13:46:25",
+  "updated": "2026-07-24T13:55:59",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "STAGE2",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": true,
       "scorer_version": null,
       "compare_blocked": false,
@@ -44,7 +44,15 @@
           "done_at": "2026-07-24T10:05:34"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "S2DIFF_RC2",
+          "stage": "STAGE2",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-24T13:55:58"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
