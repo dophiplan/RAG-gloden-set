@@ -322,7 +322,8 @@ def run_stage2(prod, cfg, batch_size=20):
     ws = wb.active
     ws.title = "판정대장"
     ws.append(["문항ID", "유형", "판정(채점관 Kimi)", "판정문(전건 보존)",
-               "검토 판정(claude 새 세션)", "검토 판정문", "불일치", "재검 대상"])
+               "검토 판정(claude 새 세션)", "검토 판정문", "불일치", "재검 대상",
+               "최종 판정", "사람 개입"])
     cnt = Counter()
     diffs = []
     for it in items:
@@ -335,7 +336,8 @@ def run_stage2(prod, cfg, batch_size=20):
         ws.append([it["ID"], it.get("유형", ""), v["판정"], v["판정문"],
                    N(v2.get("판정", "")) or ("(미검토)" if done2 or cfg["pipeline"].get("stage2_dual", True) else ""),
                    N(v2.get("판정문", "")), "✚" if diff else "",
-                   "○" if it["ID"] in set(recheck_ids) else ""])
+                   "○" if it["ID"] in set(recheck_ids) else "",
+                   v["판정"], ""])   # 최종 판정 기본 = 채용 채점관(Kimi) — 사람이 팝업에서 뒤집으면 갱신
     wb.save(out)
     # progress 봉인 — 삭제 금지(증적), 판정문 원본으로 개명 보존
     sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건.jsonl")
