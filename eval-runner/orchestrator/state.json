@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T10:03:37",
+  "updated": "2026-07-24T10:05:34",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -19,9 +19,9 @@
       }
     },
     "RC2": {
-      "stage": "CALIBRATION",
-      "status": "WAITING_HUMAN",
-      "calibration_passed": false,
+      "stage": "STAGE2",
+      "status": "RUNNING",
+      "calibration_passed": true,
       "scorer_version": null,
       "compare_blocked": false,
       "stage_history": {
@@ -39,17 +39,12 @@
         },
         "UNIFIED_LEDGER": {
           "done_at": "2026-07-24T09:13:55"
+        },
+        "CALIBRATION": {
+          "done_at": "2026-07-24T10:05:34"
         }
       },
-      "open_gates": [
-        {
-          "id": "CAL_RC2",
-          "stage": "CALIBRATION",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-24T10:03:37"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
