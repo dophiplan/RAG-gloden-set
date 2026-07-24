@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T08:47:36",
+  "updated": "2026-07-24T09:00:38",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "HALTED",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -36,7 +36,7 @@
         }
       },
       "open_gates": [],
-      "halt_reason": "단계 실행 예외 (GOLDENSET_BATCH): 'str' object has no attribute 'get'",
+      "halt_reason": null,
       "key_released": null,
       "ai_use": {
         "generator": true,
