@@ -36,7 +36,7 @@ def send(text, buttons=None):
         req = urllib.request.Request(
             f"https://api.telegram.org/bot{c['token']}/sendMessage",
             data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
-        urllib.request.urlopen(req, timeout=6).read()
+        urllib.request.urlopen(req, timeout=12).read()
         return True
     except Exception as e:
         print(f"(텔레그램 알림 실패 — 무시: {str(e)[:80]})")
