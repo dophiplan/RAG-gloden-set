@@ -108,7 +108,12 @@
   .card h4{font-size:13px;margin-bottom:4px}
   .card .meta{font-size:11px;color:var(--tx2);margin-bottom:8px}
   .card .evidence{font-family:var(--mono);font-size:11.5px;background:var(--ink);border-radius:6px;padding:8px 10px;margin-bottom:9px;white-space:pre-wrap;max-height:320px;overflow-y:auto}
-  #caldlg[open]{display:flex;flex-direction:column}   /* 전체화면 팝업 — 본문만 스크롤 */
+  #caldlg[open],#xdlg[open],#sdlg[open]{display:flex;flex-direction:column}   /* 전체화면 팝업 — 본문만 스크롤 */
+  .xtbl{border-collapse:collapse;font-family:var(--mono);font-size:11px}
+  .xtbl th{position:sticky;top:0;background:var(--panel2);border:1px solid var(--line);padding:4px 7px;text-align:left;white-space:nowrap}
+  .xtbl td{border:1px solid var(--line);padding:3px 7px;vertical-align:top;max-width:360px;white-space:pre-wrap;word-break:break-word}
+  .xtab{font-size:11px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--tx);padding:3px 9px;margin-right:5px;cursor:pointer}
+  .xtab.on{border-color:var(--run);color:var(--run)}
   .calrow{border-bottom:1px dashed var(--line);padding:9px 2px}
   .calrow.done{opacity:.72}
   .calq{font-size:12.5px;line-height:1.5}
@@ -201,6 +206,22 @@
   </div>
 </dialog>
 
+<dialog id="xdlg" style="max-width:none;width:96vw;height:94vh;box-sizing:border-box">
+  <div class="dlg-head" style="flex:0 0 auto">👁 <span id="x-title"></span> <span class="hint" id="x-note"></span></div>
+  <div class="dlg-body" id="x-tabs" style="flex:0 0 auto;padding:4px 0"></div>
+  <div class="dlg-body" id="x-body" style="flex:1 1 auto;overflow:auto;max-height:none"></div>
+  <div class="dlg-foot"><button class="btn" onclick="xdlg.close()">닫기</button></div>
+</dialog>
+
+<dialog id="sdlg" style="max-width:none;width:96vw;height:94vh;box-sizing:border-box">
+  <div class="dlg-head" style="flex:0 0 auto">⚖ 이중 판정 불일치 검토 — <span id="s2-prog"></span> <span class="hint">(클릭 즉시 저장 · 기본값은 채점관 Kimi)</span></div>
+  <div class="dlg-body" id="s2-body" style="flex:1 1 auto;overflow-y:auto;max-height:none"></div>
+  <div class="dlg-foot">
+    <button class="btn" onclick="sdlg.close()">닫기 (이어서 나중에)</button>
+    <button class="btn approve" onclick="sdlg.close();doApprove(S2ID,0)">검토 완료 — 대장 확정</button>
+  </div>
+</dialog>
+
 <dialog id="caldlg" style="max-width:none;width:96vw;height:94vh;box-sizing:border-box">
   <div class="dlg-head" style="flex:0 0 auto">🧑‍⚖️ 채점관 면접 답안지 — <span id="cal-prog"></span> <span class="hint">(클릭 즉시 저장 · 중간에 닫아도 안전)</span></div>
   <div class="dlg-body" id="cal-body" style="flex:1 1 auto;overflow-y:auto;max-height:none"></div>
@@ -262,6 +283,9 @@ async function loadAll(fromPoll){
   // ⑥ 채점관 면접 카드가 있으면 답안지(30문항)도 함께 로드 — 카드 안에서 바로 판정
   const calCard = q.find(c=>c.id.startsWith('CALIN_')||c.id.startsWith('CAL_'));
   S.calin = calCard ? await fetch('/api/calin?product='+encodeURIComponent(calCard.product)).then(r=>r.json()).catch(()=>({rows:[]})) : null;
+  // ⑦ 불일치 검토 카드가 있으면 갈린 문항도 함께 로드
+  const s2Card = q.find(c=>c.id.startsWith('S2DIFF_'));
+  S.s2diff = s2Card ? await fetch('/api/s2diff?product='+encodeURIComponent(s2Card.product)).then(r=>r.json()).catch(()=>({rows:[]})) : null;
   // 자동 갱신(15초)인데 데이터가 그대로면 다시 그리지 않는다 — 읽던 화면 안 튐
   const fp = JSON.stringify(S);
   if(fromPoll && fp === window._fp) return;
@@ -434,6 +458,7 @@ function renderQueue(){
       </div><div class="hint">닫으면 같은 내용으로는 다시 안 떠요 — 새 모델이 또 나오면 그때 새 카드가 옵니다</div>` :
       c.kind==='GATE' ? `<div class="btns">
         ${c.id.startsWith('CAL_')&&S.calin&&S.calin.rows&&S.calin.rows.length?`<button class="btn" onclick="openCalin('${c.id}')">📝 답안지 다시 열기 (판정 수정)</button>`:''}
+        ${c.id.startsWith('S2DIFF_')&&S.s2diff&&S.s2diff.rows&&S.s2diff.rows.length?`<button class="btn" onclick="openS2('${c.id}')">⚖ 불일치 검토 (팝업)</button>`:''}
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
       </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
@@ -620,6 +645,56 @@ async function doApprove(id, nAcks){
   await act({cmd:'run', product:PV().code});
 }
 function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
+
+/* 👁 xlsx 미리보기 — 엑셀 안 열고 툴에서 (숨김=봉인 시트는 서버가 비노출) */
+let XD = null;
+async function openXlsx(path){
+  $('x-title').textContent = path.split('/').pop();
+  $('x-note').textContent = '불러오는 중…';
+  $('x-tabs').innerHTML = ''; $('x-body').innerHTML = '';
+  xdlg.showModal();
+  XD = await fetch('/api/xlsx?path='+encodeURIComponent(path)).then(r=>r.json()).catch(()=>({error:'로드 실패'}));
+  if(XD.error){ $('x-note').textContent = XD.error; return; }
+  const names = Object.keys(XD.sheets);
+  $('x-tabs').innerHTML = names.length>1 ? names.map((n,i)=>`<button class="xtab ${i?'':'on'}" onclick="showSheet('${esc(n)}',this)">${esc(n)}</button>`).join('') : '';
+  showSheet(names[0]);
+}
+function showSheet(name, btn){
+  document.querySelectorAll('.xtab').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  const s = XD.sheets[name];
+  $('x-note').textContent = `${s.total.toLocaleString()}행` + (s.truncated? ` (앞 ${s.rows.length-1}행 표시 — 전체는 [받기])` : '');
+  const [h, ...rows] = s.rows;
+  $('x-body').innerHTML = `<table class="xtbl"><thead><tr>${(h||[]).map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+/* ⚖ ⑦ 불일치 검토 팝업 — 갈린 문항만, 클릭으로 최종 확정 (판정대장에 즉시 기록) */
+let S2ID = null;
+function openS2(id){ S2ID = id; renderS2Dlg(); sdlg.showModal(); }
+function renderS2Dlg(){
+  const rows = (S.s2diff&&S.s2diff.rows)||[];
+  const decided = rows.filter(r=>r.final).length;
+  $('s2-prog').textContent = `${rows.length}건 중 ${decided}건 확정`;
+  const keep = $('s2-body').scrollTop;
+  $('s2-body').innerHTML = rows.map((r,i)=>`<div class="calrow">
+      <div class="calq"><b>${i+1}. [${esc(r.id)}]</b> ${esc(r.q)}</div>
+      <div class="cala">답: ${esc(r.a)}</div>
+      <div class="cala">🤖 Kimi <b>${esc(r.kimi)}</b> — ${esc(r.kimi_why.slice(0,160))}</div>
+      <div class="cala">🔍 claude <b>${esc(r.claude)}</b> — ${esc(r.claude_why.slice(0,160))}</div>
+      <div class="btns" style="margin:5px 0 0">
+        <button class="btn ${(r.final||r.kimi)===r.kimi&&r.final!==r.claude?'approve':''}" onclick="setS2('${esc(r.id)}','${esc(r.kimi)}')">Kimi 판정 (${esc(r.kimi)})</button>
+        <button class="btn ${r.final===r.claude&&r.claude!==r.kimi?'approve':''}" onclick="setS2('${esc(r.id)}','${esc(r.claude)}')">claude 판정 (${esc(r.claude)})</button>
+      </div></div>`).join('') || '<div class="note">불일치 없음</div>';
+  $('s2-body').scrollTop = keep;
+}
+async function setS2(id, final){
+  const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({cmd:'s2diff-set', product:PV().code, id, final})});
+  const d = await r.json();
+  if(d.ok){ (S.s2diff.rows||[]).forEach(row=>{ if(row.id===id) row.final=final; }); renderS2Dlg(); }
+  else toast(d.out||'저장 실패');
+}
 
 /* ⑥ 채점관 면접 팝업 — 문항별 판정, 클릭 즉시 엑셀 기록 (파일이 단일 원장) */
 let CALID = null;
