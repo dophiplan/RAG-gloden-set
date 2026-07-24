@@ -377,6 +377,34 @@ def api_progress(code):
     return d
 
 
+def _calin_file(prod):
+    d = ROOT / "data" / prod / "06_calibration"
+    c = sorted(d.glob("*판정30*.xlsx")) if d.is_dir() else []
+    return c[-1] if c else None
+
+
+def api_calin(prod):
+    """⑥ 채점관 면접 답안지 — 카드 안에서 바로 판정하도록 기입 시트를 화면에 노출.
+    블라인드: judge 판정(숨김 시트)은 절대 내보내지 않는다."""
+    import openpyxl
+    f = _calin_file(prod)
+    if not f:
+        return {"rows": []}
+    wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+    sn = next((s for s in wb.sheetnames if "기입" in N(s)), None)
+    if not sn:
+        wb.close()
+        return {"rows": []}
+    rows = []
+    for r in wb[sn].iter_rows(min_row=2, values_only=True):
+        if not r or r[0] is None:
+            continue
+        rows.append({"id": N(r[0]), "type": N(r[1]), "q": N(r[2]), "a": N(r[3]),
+                     "crit": N(r[4]), "v": N(r[5]) if len(r) > 5 and r[5] else ""})
+    wb.close()
+    return {"rows": rows, "file": N(f.name)}
+
+
 def api_action(payload):
     """approve / reject / onboard / resume / run — pipeline CLI 경유 (원장 기록 보장)"""
     cmd = payload.get("cmd")
@@ -408,6 +436,31 @@ def api_action(payload):
                  "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
     elif cmd == "new-round":
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "calin-set":
+        # 카드 안 판정 클릭 → 기입 시트에 즉시 기록 (엑셀 파일이 단일 원장 — 채점기와 동일 소스)
+        import openpyxl
+        prod, iid, v = payload["product"], N(payload.get("id", "")), N(payload.get("verdict", ""))
+        if v not in ("합격", "불합격", ""):
+            return {"ok": False, "out": "판정 값 오류"}
+        f = _calin_file(prod)
+        if not f:
+            return {"ok": False, "out": "판정지 없음"}
+        wb = openpyxl.load_workbook(f)
+        sn = next((s for s in wb.sheetnames if "기입" in N(s)), None)
+        ws = wb[sn]
+        hit, done, total = False, 0, 0
+        for row in ws.iter_rows(min_row=2):
+            if row[0].value is None:
+                continue
+            if N(row[0].value) == iid:
+                row[5].value = v
+                hit = True
+            total += 1
+            done += 1 if N(row[5].value or "") else 0
+        if not hit:
+            return {"ok": False, "out": f"문항 없음: {iid}"}
+        wb.save(f)
+        return {"ok": True, "filled": done, "total": total, "out": f"기록됨 · {done}/{total}"}
     elif cmd == "dismiss-card":
         # 알림형 카드 닫기 — 완료로 이동 (MODELALERT 전용, 경로 이탈 차단)
         name = N(payload.get("file", "")).replace("/", "").replace("..", "")
@@ -502,6 +555,10 @@ class H(SimpleHTTPRequestHandler):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
             return self._send(200, j(api_progress(N(q.get("product", [""])[0]))))
+        if self.path.startswith("/api/calin"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            return self._send(200, j(api_calin(N(q.get("product", [""])[0]))))
         if self.path.startswith("/api/runlog"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
