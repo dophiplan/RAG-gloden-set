@@ -115,8 +115,22 @@ def run_calibration_judging(prod, cfg):
     out = DATA / prod / "06_calibration" / f"{prod}_judge_캘리브레이션_판정30_v1_0.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
     wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "1_judge_판정_전건"
+    # 사람용 기입 시트가 첫 화면 — 질문·정답·기준만 보이고 judge 판정은 숨김(블라인드 실체화)
+    from openpyxl.worksheet.datavalidation import DataValidation
+    ws0 = wb.active
+    ws0.title = "판정_기입(여기만 채우세요)"
+    ws0.append(["문항ID", "유형", "질문", "시스템 정답", "합격 기준", "사람 판정(합격/불합격)", "메모(선택)"])
+    for it in cal:
+        ws0.append([it["ID"], it.get("유형", ""), it["질문"],
+                    N(it.get("정답 (필수 포함 요소)") or it.get("정답", "")),
+                    N(it.get("합격 기준", "")), "", ""])
+    dv = DataValidation(type="list", formula1='"합격,불합격"', allow_blank=True)
+    ws0.add_data_validation(dv)
+    dv.add(f"F2:F{len(cal) + 1}")
+    for col, w in zip("ABCDEFG", (10, 5, 46, 46, 34, 16, 20)):
+        ws0.column_dimensions[col].width = w
+    ws0.freeze_panes = "A2"
+    ws = wb.create_sheet("1_judge_판정_전건")
     ws.append(["문항ID", "유형", "질문", "judge 판정", "judge 판정문(전건 보존)"])
     for it in cal:
         v = vmap.get(it["ID"], {})
@@ -125,7 +139,8 @@ def run_calibration_judging(prod, cfg):
     ws2.append(["문항ID", "judge 판정", "사람 판정(설계본부 기입)", "일치 여부", "불일치 사유 분류"])
     for it in cal:
         v = vmap.get(it["ID"], {})
-        ws2.append([it["ID"], N(v.get("판정", "")), "", "", ""])   # 사람 판정은 블라인드 기입
+        ws2.append([it["ID"], N(v.get("판정", "")), "", "", ""])   # 사람 판정은 기입 시트에서 취득
+    ws.sheet_state = ws2.sheet_state = "hidden"   # 사람이 열면 기입 시트만 보인다
     wb.save(out)
     ev = {"세트": f"{len(cal)}문항 (유형 {dict(Counter(i.get('유형','?') for i in cal))})",
           "기준서": rname, "판정문 보존": "전건", "산출": N(out.name),
