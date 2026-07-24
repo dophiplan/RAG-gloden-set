@@ -2140,3 +2140,4 @@
 {"ts": "2026-07-24T09:53:25", "product": "RC2", "stage": "CALIBRATION", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→WAITING_HUMAN", "evidence": {"대조표": "RC2_judge_캘리브레이션_판정30_v1_0.xlsx", "일치율(실측)": "25/29 = 86.2%", "임계": "≥90%", "불일치 분류": "—"}, "reason": null}
 {"ts": "2026-07-24T09:53:25", "product": "RC2", "stage": "CALIBRATION", "gate_id": null, "actor": "script:auto_run", "action": "AUTO_RUN_STOPPED", "evidence": {"사유": "WAITING_HUMAN 도달 — 사람 차례거나 완료"}, "reason": null}
 {"ts": "2026-07-24T09:53:27", "product": "RC2", "stage": "CALIBRATION", "gate_id": null, "actor": "script:auto_run", "action": "AUTO_RUN_STOPPED", "evidence": {"사유": "WAITING_HUMAN 도달 — 사람 차례거나 완료"}, "reason": null}
+{"ts": "2026-07-24T09:55:09", "product": "RC2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEWED", "evidence": {"gate": "CAL_RC2", "소견 길이": 1280, "주입": "프롬프트 v1.2 + 판례집 + 카드 + 산출물 표본 (작업 맥락 없음)"}, "reason": null}
