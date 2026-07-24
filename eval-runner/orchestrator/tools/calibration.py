@@ -53,10 +53,22 @@ def measure_agreement(path):
     if ji is None or hi is None:
         wb.close()
         raise ValueError(f"대조표 컬럼 인식 실패: {hdr}")
+    # 사람 판정은 '판정_기입' 시트(사람용 — judge 판정 비노출)에서 우선 취득 (블라인드 설계)
+    human = {}
+    fill = next((s for s in wb.sheetnames if "기입" in N(s)), None)
+    if fill:
+        fs = wb[fill]
+        fh = [N(c) for c in next(fs.iter_rows(min_row=1, max_row=1, values_only=True))]
+        fid = next((i for i, h in enumerate(fh) if "문항ID" in h or h == "ID"), 0)
+        fhp = next((i for i, h in enumerate(fh) if "사람" in h and "판정" in h), None)
+        if fhp is not None:
+            for r in fs.iter_rows(min_row=2, values_only=True):
+                if fhp < len(r) and N(r[fhp]):
+                    human[N(r[fid])] = N(r[fhp])
     pairs, recorded_match, causes = [], 0, {}
     for r in ws.iter_rows(min_row=2, values_only=True):
         j = N(r[ji]) if ji < len(r) else ""
-        h = N(r[hi]) if hi < len(r) else ""
+        h = human.get(N(r[0]), "") or (N(r[hi]) if hi < len(r) else "")
         if not j or not h:
             continue
         pairs.append((j, h))
