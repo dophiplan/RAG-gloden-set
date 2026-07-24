@@ -468,7 +468,7 @@ function renderQueue(){
         const up = c.uploaded||[];
         return `<div class="btns">
         <label class="btn ${isCorpus?'':'approve'}" style="cursor:pointer">📎 파일 올리기 (여러 개 선택 가능)<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}',${isCorpus})"></label>
-        ${isCorpus?`<button class="btn approve" ${up.length?'':'disabled'} onclick="act({cmd:'run',product:PV().code})">✅ 다 올렸어요 — 검사 시작</button>`:''}
+        ${isCorpus?`<button class="btn approve" ${up.length?'':'disabled'} onclick="if(confirm('지금까지 올린 ${up.length}개로 검사를 시작할까요?\\n(더 올릴 파일이 있으면 취소)')) act({cmd:'run',product:PV().code})">✅ 다 올렸어요 — 검사 시작</button>`:''}
       </div>${isCorpus
         ?`<div class="hint">올라간 파일 <b>${up.length}개</b>${up.length?` — ${esc(up.slice(0,4).join(', '))}${up.length>4?` 외 ${up.length-4}개`:''}`:''}<br>여러 번 나눠 올려도 돼요 — 전부 올린 뒤 [다 올렸어요]를 누르면 검사가 시작돼요. (선택창에서 Cmd 클릭 = 한번에 여러 개)</div>`
         :`<div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`}`})();
