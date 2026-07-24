@@ -2242,3 +2242,4 @@
 {"ts": "2026-07-24T14:21:58", "product": "RV2", "stage": "TERRAIN", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-07-24T14:21:58", "product": "RV2", "stage": "TERRAIN", "gate_id": null, "actor": "script:pipeline", "action": "STAGE_DONE", "evidence": {"profile": "확정", "citation_pattern": "RV2-[A-Z]+(?:-[A-Z0-9]+)*-\\d+"}, "reason": null}
 {"ts": "2026-07-24T14:21:58", "product": "RV2", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-24T14:24:06", "product": "RV2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "TERRAIN_RV2", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
