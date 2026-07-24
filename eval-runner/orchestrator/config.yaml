@@ -12,6 +12,7 @@ pipeline:
   recheck_rate: 0.05          # 본판정 무작위 재검 (1키 모드면 코드가 0.10으로 강제 상향)
   recheck_seed: null          # null이면 실행 시 생성 — 원장에 시드+추출 목록 기록 의무
   calibration_threshold: 0.90
+  stage2_dual: true           # ⑦ 이중 판정 — Kimi(정) + claude 새 세션(검토), 불일치만 사람 게이트
 
 terrain:                      # 제품별 프로파일 — 다제품 충돌 방지 [v1.2]
   profiles:

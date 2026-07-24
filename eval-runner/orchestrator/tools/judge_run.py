@@ -192,6 +192,17 @@ def run_calibration_compare(prod, cfg, roles=("judge", "generator")):
     return "DONE", ev
 
 
+def _s2_progress(prod, phase):
+    """⑦ 진행판 — 대시보드 진행선용 (배치 단위 실측 갱신)"""
+    import datetime
+    p = ROOT / "results" / f"_progress_{prod}.json"
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps({"stage": "STAGE2", "phase": phase, "roles": {},
+                             "stale_after": 30,
+                             "ts": datetime.datetime.now().isoformat(timespec="seconds")},
+                            ensure_ascii=False), encoding="utf-8")
+
+
 def run_stage2(prod, cfg, batch_size=20):
     """[FIX-04] 배치 영속화 + resume (불변 단서 ②) — 사용량 한도·중단에도 기왕 판정 보존."""
     import os
@@ -224,6 +235,7 @@ def run_stage2(prod, cfg, batch_size=20):
             if fail_at and bno == int(fail_at):
                 raise RuntimeError(f"[T13 주입] 배치 {bno} 강제 예외 (구독 한도 모의)")
             part = todo[bi:bi + batch_size]
+            _s2_progress(prod, f"본판정(채점관 Kimi) {len(done)}/{len(items)}문항")
             verdicts = judge_batch(part, rubric, cfg, batch=batch_size)
             vmap = {N(v.get("ID", "")): v for v in verdicts}
             if drop_id and drop_id in vmap:
@@ -255,6 +267,42 @@ def run_stage2(prod, cfg, batch_size=20):
                         recommendation="재실행(resume)으로 재시도하거나, 반복 누락 시 문항/프롬프트 점검")
         return "WAITING_HUMAN", {"미판정": len(missing), "완료": len(done)}
 
+    # ── 2차 전건 검토: claude 새 세션 (이중 판정 — 사람 요청 2026-07-24)
+    # 채용 채점관은 Kimi(면접 통과·정판정). claude는 독립 검토자 — 전건 재판정 후
+    # 둘이 갈리는 문항만 사람 게이트에 올린다 (전건 사람 검토를 불일치 검토로 압축).
+    done2 = {}
+    if cfg["pipeline"].get("stage2_dual", True):
+        prog2 = DATA / prod / "07_stage2" / "_stage2_review_claude.jsonl"
+        if prog2.exists():
+            for line in prog2.read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    r = json.loads(line)
+                    done2[N(r["ID"])] = r
+        todo2 = [it for it in items if it["ID"] not in done2]
+        if done2 and todo2:
+            print(f"  ↻ 검토 resume: 기완료 {len(done2)} — 잔여 {len(todo2)}부터")
+        try:
+            for bi in range(0, len(todo2), batch_size):
+                part = todo2[bi:bi + batch_size]
+                _s2_progress(prod, f"검토 판정(claude 새 세션) {len(done2)}/{len(items)}문항")
+                verdicts = judge_batch(part, rubric, cfg, batch=batch_size, role="generator")
+                vmap = {N(v.get("ID", "")): v for v in verdicts}
+                with open(prog2, "a", encoding="utf-8") as f:
+                    for it in part:
+                        v = vmap.get(it["ID"])
+                        if v:
+                            row = {"ID": it["ID"], "판정": N(v.get("판정", "")),
+                                   "판정문": N(v.get("판정문", ""))}
+                            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                            done2[it["ID"]] = row
+        except Exception as e:
+            ledger_append("STAGE2", "STAGE2_PARTIAL", "script:judge_run",
+                          evidence={"구간": "claude 검토", "완료": len(done2), "전체": len(items),
+                                    "오류": str(e)[:200]},
+                          reason="중단 — 검토 progress 보존됨", product=prod)
+            print(f"⛔ claude 검토 중단: {e}\n   진행 {len(done2)}/{len(items)} 보존 — 재실행 시 이어서.")
+            raise
+
     # 무작위 재검 — 시드+추출 목록 원장 기록 의무 [v1.1]
     seed = cfg["pipeline"].get("recheck_seed") or int.from_bytes(
         __import__("hashlib").sha256(f"{prod}{len(items)}{rname}".encode()).digest()[:4], "big")
@@ -265,21 +313,38 @@ def run_stage2(prod, cfg, batch_size=20):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "판정대장"
-    ws.append(["문항ID", "유형", "판정", "판정문(전건 보존)", "재검 대상"])
+    ws.append(["문항ID", "유형", "판정(채점관 Kimi)", "판정문(전건 보존)",
+               "검토 판정(claude 새 세션)", "검토 판정문", "불일치", "재검 대상"])
     cnt = Counter()
+    diffs = []
     for it in items:
         v = done[it["ID"]]
         cnt[v["판정"]] += 1
+        v2 = done2.get(it["ID"], {})
+        diff = bool(v2) and N(v2.get("판정", "")) not in ("", N(v["판정"]))
+        if diff:
+            diffs.append(it["ID"])
         ws.append([it["ID"], it.get("유형", ""), v["판정"], v["판정문"],
+                   N(v2.get("판정", "")) or ("(미검토)" if done2 or cfg["pipeline"].get("stage2_dual", True) else ""),
+                   N(v2.get("판정문", "")), "✚" if diff else "",
                    "○" if it["ID"] in set(recheck_ids) else ""])
     wb.save(out)
     # progress 봉인 — 삭제 금지(증적), 판정문 원본으로 개명 보존
     sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건.jsonl")
     prog.rename(sealed)
-    ev = {"판정": dict(cnt), "재검": f"{len(recheck_ids)}건 (rate {rate})",
+    ev = {"판정(Kimi)": dict(cnt), "claude 검토": f"{len(done2)}/{len(items)}",
+          "불일치": len(diffs), "재검": f"{len(recheck_ids)}건 (rate {rate})",
           "seed": seed, "기준서": rname, "산출": N(out.name), "판정문 봉인": N(sealed.name)}
     ledger_append("STAGE2", "STAGE2_JUDGED", "script:judge_run",
-                  evidence={**ev, "recheck_ids": recheck_ids}, product=prod)
+                  evidence={**ev, "recheck_ids": recheck_ids, "불일치_ID": diffs[:50]}, product=prod)
+    if diffs:
+        issue_gate_card(prod, "STAGE2", f"S2DIFF_{prod}",
+                        what_stopped=f"이중 판정 불일치 {len(diffs)}건 — 채점관(Kimi)과 검토자(claude)의 판정이 갈린 문항만 사람 확인",
+                        evidence={"불일치": f"{len(diffs)}/{len(items)}", "목록(앞 15)": diffs[:15],
+                                  "대장": N(out.name)},
+                        recommendation="자료실에서 판정대장의 '불일치 ✚' 행만 보면 됩니다.\n"
+                                       "승인 = 채용 채점관(Kimi) 판정 유지 / 특정 문항을 뒤집으려면 반려 사유에 문항 코드+방향을 적어주세요.")
+        return "WAITING_HUMAN", ev
     return "DONE", ev
 
 
