@@ -259,12 +259,20 @@ def run_stage2(prod, cfg, batch_size=20):
     # 전건 응답 확인 — 미판정 > 0 이면 DONE 금지, 사람 게이트 (FIX-04-4)
     missing = [it["ID"] for it in items if it["ID"] not in done]
     if missing:
+        qmap = {it["ID"]: N(it.get("질문", ""))[:55] for it in items}
+        ev = {"누락": f"{len(missing)}건 (판정이 '불합격'인 게 아니라 응답 자체 미수신)",
+              "완료": len(done), "전체": len(items)}
+        for i in missing[:10]:
+            ev[i] = qmap.get(i, "")
         issue_gate_card(prod, "STAGE2", f"S2MISS_{prod}",
-                        what_stopped=f"본판정 응답 ID 누락 {len(missing)}건 — judge 응답에서 미수신, 침묵 집계 금지",
-                        evidence={"누락": missing[:20], "완료": len(done), "전체": len(items)},
-                        flags=[{"type": "미판정", "id": i, "candidates": [], "ack_required": True}
+                        what_stopped=f"본판정 응답 누락 {len(missing)}건 — 채점관 답장 미수신 (침묵 집계 금지). "
+                                     f"보통 일시 오류라 재시도로 해소됩니다.",
+                        evidence=ev,
+                        flags=[{"type": "미판정", "id": i, "candidates": [],
+                                "note": qmap.get(i, ""), "ack_required": True}
                                for i in missing[:20]],
-                        recommendation="재실행(resume)으로 재시도하거나, 반복 누락 시 문항/프롬프트 점검")
+                        recommendation="[반려]+사유 '재시도' → 누락분만 다시 판정합니다 (재시도가 기본). "
+                                       "반복 누락 시에만 문항/프롬프트 점검이 필요합니다.")
         return "WAITING_HUMAN", {"미판정": len(missing), "완료": len(done)}
 
     # ── 2차 전건 검토: claude 새 세션 (이중 판정 — 사람 요청 2026-07-24)
@@ -338,10 +346,13 @@ def run_stage2(prod, cfg, batch_size=20):
     ledger_append("STAGE2", "STAGE2_JUDGED", "script:judge_run",
                   evidence={**ev, "recheck_ids": recheck_ids, "불일치_ID": diffs[:50]}, product=prod)
     if diffs:
+        qmap = {it["ID"]: N(it.get("질문", ""))[:50] for it in items}
+        dev = {"불일치": f"{len(diffs)}/{len(items)}", "대장": N(out.name)}
+        for i in diffs[:15]:
+            dev[i] = f"Kimi {done[i]['판정']} / claude {N(done2.get(i, {}).get('판정', '?'))} · {qmap.get(i, '')}"
         issue_gate_card(prod, "STAGE2", f"S2DIFF_{prod}",
                         what_stopped=f"이중 판정 불일치 {len(diffs)}건 — 채점관(Kimi)과 검토자(claude)의 판정이 갈린 문항만 사람 확인",
-                        evidence={"불일치": f"{len(diffs)}/{len(items)}", "목록(앞 15)": diffs[:15],
-                                  "대장": N(out.name)},
+                        evidence=dev,
                         recommendation="자료실에서 판정대장의 '불일치 ✚' 행만 보면 됩니다.\n"
                                        "승인 = 채용 채점관(Kimi) 판정 유지 / 특정 문항을 뒤집으려면 반려 사유에 문항 코드+방향을 적어주세요.")
         return "WAITING_HUMAN", ev
