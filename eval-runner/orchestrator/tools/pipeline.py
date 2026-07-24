@@ -327,6 +327,16 @@ def cmd_approve(a):
         for f in flags:
             print(f"  · {f.get('type')} {f.get('id')} {f.get('candidates')}")
         sys.exit(1)
+    if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
+        # 임계 미달 승인 차단 — 반드시 게이트를 닫기 '전에' 검사 (닫고 나서 거부하면 카드 증발 사고)
+        import calibration as _cal
+        _t = _cal.find_table(prod)
+        _m = _cal.measure_agreement(_t) if _t else {"total": 0}
+        _thr = load_config()["pipeline"].get("calibration_threshold", 0.90)
+        if not _m["total"] or _m["agreement"] < _thr:
+            sys.exit(f"승인 불가 — 일치율 실측 {_m.get('measured_match','?')}/{_m.get('total','?')} 가 "
+                     f"임계(≥{_thr:.0%}) 미달이에요. 답안지에서 판정 수정/보완 후 다시 시도하세요. "
+                     f"(카드는 그대로 유지됩니다)")
     for f in flags:
         ledger_append(g["stage"], "FLAG_ACK", f"사람:{a.actor}", gate_id=a.gate_id,
                       evidence=f, product=prod)
@@ -348,16 +358,7 @@ def cmd_approve(a):
                     tf.write_text(_yaml.safe_dump(d, allow_unicode=True, sort_keys=False),
                                   encoding="utf-8")
         if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
-            # 임계 미달 상태의 승인 오클릭이 본판정을 열어버리는 사고 방지 — 실측 재확인 후에만
-            import calibration as _cal
-            _t = _cal.find_table(prod)
-            _m = _cal.measure_agreement(_t) if _t else {"total": 0}
-            _thr = load_config()["pipeline"].get("calibration_threshold", 0.90)
-            if not _m["total"] or _m["agreement"] < _thr:
-                sys.exit(f"승인 불가 — 일치율 실측 {_m.get('measured_match','?')}/{_m.get('total','?')} 가 "
-                         f"임계(≥{_thr:.0%}) 미달이에요. 판정 수정 또는 기준서 개정 후 [반려]로 재측정하세요. "
-                         f"(미달 상태 승인은 채점관 검증을 건너뛰는 사고가 됩니다)")
-            ps["calibration_passed"] = True     # 임계 통과 게이트 승인 시에만
+            ps["calibration_passed"] = True     # 임계 통과 게이트 승인 시에만 (입구에서 실측 검사 통과)
         if g["stage"] == "SCORING" and a.gate_id.startswith("SCORE_"):
             # 성적표 확정 = ⑧ 완료 → ⑨ 유지보수로 전진 (재채점 루프 방지)
             save_state(st)
