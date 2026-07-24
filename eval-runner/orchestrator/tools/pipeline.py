@@ -102,10 +102,21 @@ def st_corpus_audit(prod, cfg):
 def st_terrain(prod, cfg):
     prof = cfg["terrain"]["profiles"].get(prod, {})
     if prof.get("onboarding"):
+        # 초안이 이미 완비면(제품명+citation 패턴) 형식 확인 게이트 — [계속 진행] 단일 버튼
+        complete = bool(prof.get("product_name")) and bool(prof.get("citation_pattern"))
+        ev = ({"프로파일": "완비된 초안", "제품명": prof.get("product_name"),
+               "citation": prof.get("citation_pattern"), "앵커": len(prof.get("anchor_patterns") or [])}
+              if complete else
+              {"프로파일": "초안(복제/빈)", "확정 항목": "citation_pattern·anchor_patterns·appendix_switches"})
         issue_gate_card(prod, "TERRAIN", f"TERRAIN_{prod}",
-                        what_stopped=f"{prod} terrain 프로파일 확정 필요 — citation/앵커 패턴·부록 스위치를 사람이 판정",
-                        evidence={"프로파일": "초안(복제/빈)", "확정 항목": "citation_pattern·anchor_patterns·appendix_switches"},
-                        recommendation="기존 제품(RV/RC) 프로파일과 코퍼스 실측 결과를 대조해 결정")
+                        what_stopped=(f"{prod} 전용 설정 확인 — 제품명·근거 ID 규칙이 이미 등록돼 있어 확인만 하면 됩니다"
+                                      if complete else
+                                      f"{prod} terrain 프로파일 확정 필요 — citation/앵커 패턴·부록 스위치를 사람이 판정"),
+                        evidence=ev,
+                        recommendation=("설정 완비 — 계속 진행하면 ③ 앙상블 추출이 시작됩니다"
+                                        if complete else
+                                        "기존 제품(RV/RC) 프로파일과 코퍼스 실측 결과를 대조해 결정"),
+                        simple=complete)
         return "WAITING_HUMAN", {"profile": "onboarding"}
     return "DONE", {"profile": "확정", "citation_pattern": prof.get("citation_pattern", "")}
 
