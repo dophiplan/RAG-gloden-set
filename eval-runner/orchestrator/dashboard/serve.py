@@ -377,6 +377,70 @@ def api_progress(code):
     return d
 
 
+def api_xlsx(relpath, max_rows=400):
+    """xlsx 미리보기 — 엑셀 안 열고 툴에서 본다 (data/ 하위만, 숨김 시트=봉인은 비노출)"""
+    import openpyxl
+    base = (ROOT / "data").resolve()
+    p = (base / relpath).resolve()
+    if not str(p).startswith(str(base)) or not p.exists() or p.suffix != ".xlsx":
+        return {"error": "미리보기 불가 (data 하위 xlsx만)"}
+    wb = openpyxl.load_workbook(p, read_only=True, data_only=True)
+    sheets = {}
+    for sn in wb.sheetnames:
+        ws = wb[sn]
+        if getattr(ws, "sheet_state", "visible") != "visible":
+            continue   # 숨김 시트 = 봉인(블라인드) — 노출 금지
+        rows = []
+        for r in ws.iter_rows(max_row=max_rows + 1, values_only=True):
+            rows.append([("" if c is None else str(c))[:400] for c in (r or [])[:14]])
+        sheets[N(sn)] = {"rows": rows, "truncated": (ws.max_row or 0) > max_rows + 1,
+                         "total": ws.max_row or 0}
+    wb.close()
+    return {"file": N(p.name), "sheets": sheets}
+
+
+def _s2_ledger_file(prod):
+    d = ROOT / "data" / prod / "07_stage2"
+    c = sorted(d.glob(f"{prod}_본판정_판정대장_*.xlsx")) if d.is_dir() else []
+    return c[-1] if c else None
+
+
+def api_s2diff(prod):
+    """⑦ 이중 판정 불일치 검토 — 갈린 문항만 팝업에서 클릭으로 확정 (엑셀 왕복 금지)"""
+    import openpyxl
+    f = _s2_ledger_file(prod)
+    if not f:
+        return {"rows": []}
+    # 질문·정답은 통합 대장에서 조인
+    led = sorted((ROOT / "data" / prod / "05_unified_ledger").glob("*통합대장*.xlsx"))
+    qmap = {}
+    if led:
+        lw = openpyxl.load_workbook(led[-1], read_only=True, data_only=True).active
+        lh = [N(c) for c in next(lw.iter_rows(max_row=1, values_only=True))]
+        qi = lh.index("질문") if "질문" in lh else 3
+        ai = next((i for i, h in enumerate(lh) if h.startswith("정답")), 4)
+        for r in lw.iter_rows(min_row=2, values_only=True):
+            qmap[N(r[0])] = (N(r[qi]), N(r[ai]))
+    wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+    ws = wb.active
+    hdr = [N(c) for c in next(ws.iter_rows(max_row=1, values_only=True))]
+    col = {h: i for i, h in enumerate(hdr)}
+    rows = []
+    for r in ws.iter_rows(min_row=2, values_only=True):
+        if N(r[col.get("불일치", 6)]) != "✚":
+            continue
+        iid = N(r[0])
+        q, a = qmap.get(iid, ("", ""))
+        rows.append({"id": iid, "q": q, "a": a,
+                     "kimi": N(r[col.get("판정(채점관 Kimi)", 2)]),
+                     "kimi_why": N(r[col.get("판정문(전건 보존)", 3)])[:400],
+                     "claude": N(r[col.get("검토 판정(claude 새 세션)", 4)]),
+                     "claude_why": N(r[col.get("검토 판정문", 5)])[:400],
+                     "final": N(r[col["최종 판정"]]) if "최종 판정" in col and col["최종 판정"] < len(r) else ""})
+    wb.close()
+    return {"rows": rows, "file": N(f.name)}
+
+
 def _calin_file(prod):
     d = ROOT / "data" / prod / "06_calibration"
     c = sorted(d.glob("*판정30*.xlsx")) if d.is_dir() else []
@@ -436,6 +500,36 @@ def api_action(payload):
                  "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
     elif cmd == "new-round":
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "s2diff-set":
+        # 불일치 문항 확정 클릭 → 판정대장 '최종 판정' 컬럼에 즉시 기록
+        import openpyxl
+        prod, iid, final = payload["product"], N(payload.get("id", "")), N(payload.get("final", ""))
+        f = _s2_ledger_file(prod)
+        if not f:
+            return {"ok": False, "out": "판정대장 없음"}
+        wb = openpyxl.load_workbook(f)
+        ws = wb.active
+        hdr = [N(c.value) for c in ws[1]]
+        if "최종 판정" not in hdr:
+            ws.cell(1, len(hdr) + 1).value = "최종 판정"
+            ws.cell(1, len(hdr) + 2).value = "사람 개입"
+            hdr += ["최종 판정", "사람 개입"]
+        fc, hc = hdr.index("최종 판정") + 1, hdr.index("사람 개입") + 1
+        hit = False
+        for r in range(2, ws.max_row + 1):
+            if N(ws.cell(r, 1).value) == iid:
+                ws.cell(r, fc).value = final
+                ws.cell(r, hc).value = "○"
+                hit = True
+                break
+        if not hit:
+            return {"ok": False, "out": f"문항 없음: {iid}"}
+        wb.save(f)
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append("STAGE2", "S2DIFF_HUMAN_FINAL", "사람:난희",
+                      evidence={"문항": iid, "최종": final}, product=prod)
+        return {"ok": True, "out": f"{iid} → 최종 {final}"}
     elif cmd == "calin-set":
         # 카드 안 판정 클릭 → 기입 시트에 즉시 기록 (엑셀 파일이 단일 원장 — 채점기와 동일 소스)
         import openpyxl
@@ -559,6 +653,14 @@ class H(SimpleHTTPRequestHandler):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
             return self._send(200, j(api_calin(N(q.get("product", [""])[0]))))
+        if self.path.startswith("/api/xlsx"):
+            from urllib.parse import urlparse, parse_qs, unquote
+            q = parse_qs(urlparse(self.path).query)
+            return self._send(200, j(api_xlsx(N(unquote(q.get("path", [""])[0])))))
+        if self.path.startswith("/api/s2diff"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            return self._send(200, j(api_s2diff(N(q.get("product", [""])[0]))))
         if self.path.startswith("/api/runlog"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
