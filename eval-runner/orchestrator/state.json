@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T09:12:52",
+  "updated": "2026-07-24T09:13:55",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -19,7 +19,7 @@
       }
     },
     "RC2": {
-      "stage": "GOLDENSET_BATCH",
+      "stage": "CALIBRATION",
       "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
@@ -33,6 +33,12 @@
         },
         "COVERAGE_MAP": {
           "done_at": "2026-07-23T11:25:22"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-07-24T09:13:54"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-07-24T09:13:55"
         }
       },
       "open_gates": [],
@@ -44,7 +50,7 @@
         "reviewer": false
       },
       "goldenset": {
-        "phase": "ROUNDS",
+        "phase": "DONE",
         "round": 20,
         "done_units": [
           "RC2-REMOTE-001",
@@ -1020,7 +1026,21 @@
             "RC2-HTTPSW-4481"
           ]
         },
-        "reject_feedback": "홍보 문구라 필요 없음"
+        "unfit_units": [
+          "RC2-HTTPSW-4106",
+          "RC2-HTTPSW-4235",
+          "RC2-HTTPSW-4239",
+          "RC2-HTTPSW-4307",
+          "RC2-HTTPSW-4322",
+          "RC2-HTTPSW-4352",
+          "RC2-HTTPSW-4439",
+          "RC2-HTTPSW-4481",
+          "RC2-HTTPSW-4503",
+          "RC2-HTTPSW-4505",
+          "RC2-HTTPSW-4532",
+          "RC2-HTTPSW-4571",
+          "RC2-REMOTE-1758"
+        ]
       }
     },
     "EE": {
