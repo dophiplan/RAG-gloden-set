@@ -181,6 +181,12 @@ def set_status(prod, status, stage=None, reason=None, actor="script:orchestrator
     save_state(st)
     ledger_append(ps["stage"], f"{prev}→{status}", actor, evidence=evidence,
                   reason=reason, product=prod)
+    if status == "HALTED":
+        try:
+            import notify
+            notify.halt(prod, reason)   # 폰 알림 (no-op 안전)
+        except Exception:
+            pass
     return st
 
 
@@ -252,6 +258,11 @@ def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, re
         ps["open_gates"].append({"id": gate_id, "stage": stage, "flags": flags,
                                  "acked": False, "issued": now()})
     save_state(st)
+    try:
+        import notify
+        notify.gate_card(prod, gate_id, what_stopped, evidence)   # 폰 알림 (no-op 안전)
+    except Exception:
+        pass
     return gate_id
 
 

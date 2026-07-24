@@ -62,6 +62,15 @@ unset ORCH_MOCK ANTHROPIC_API_KEY
 nohup python3 dashboard/serve.py --port ${PORT} >/tmp/pipeline_dashboard.log 2>&1 &
 sleep 1.5
 
+# 텔레그램 게이트 봇 — 폰 알림 + 폰에서 승인/반려 (없으면 조용히 생략)
+if [ -f .telegram.json ]; then
+  if ! { [ -f results/_tg_bot.pid ] && ps -p "$(cat results/_tg_bot.pid)" >/dev/null 2>&1; }; then
+    nohup python3 tools/tg_gate_bot.py > results/logs/tg_bot.log 2>&1 &
+    echo $! > results/_tg_bot.pid
+    echo "텔레그램 봇 켜짐 (폰 알림·결정)"
+  fi
+fi
+
 echo "브라우저를 엽니다: $URL"
 open "$URL"
 echo ""
