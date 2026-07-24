@@ -377,11 +377,18 @@ def api_progress(code):
     return d
 
 
-def api_xlsx(relpath, max_rows=400):
-    """xlsx 미리보기 — 엑셀 안 열고 툴에서 본다 (data/ 하위만, 숨김 시트=봉인은 비노출)"""
+def api_xlsx(relpath, max_rows=400, name=None, prod=None):
+    """xlsx 미리보기 — 엑셀 안 열고 툴에서 본다 (data/ 하위만, 숨김 시트=봉인은 비노출).
+    name+prod 로 부르면 파일명만으로 최신 실물을 찾는다 (게이트 카드 → 실물 팝업)."""
     import openpyxl
     base = (ROOT / "data").resolve()
-    p = (base / relpath).resolve()
+    if name and prod:
+        hits = sorted((ROOT / "data" / prod).rglob(name)) if (ROOT / "data" / prod).is_dir() else []
+        if not hits:
+            return {"error": f"파일 못 찾음: {name}"}
+        p = hits[-1].resolve()
+    else:
+        p = (base / (relpath or "")).resolve()
     if not str(p).startswith(str(base)) or not p.exists() or p.suffix != ".xlsx":
         return {"error": "미리보기 불가 (data 하위 xlsx만)"}
     wb = openpyxl.load_workbook(p, read_only=True, data_only=True)
@@ -656,7 +663,9 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/xlsx"):
             from urllib.parse import urlparse, parse_qs, unquote
             q = parse_qs(urlparse(self.path).query)
-            return self._send(200, j(api_xlsx(N(unquote(q.get("path", [""])[0])))))
+            return self._send(200, j(api_xlsx(N(unquote(q.get("path", [""])[0]))or None,
+                                              name=N(unquote(q.get("name", [""])[0])) or None,
+                                              prod=N(q.get("product", [""])[0]) or None)))
         if self.path.startswith("/api/s2diff"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
