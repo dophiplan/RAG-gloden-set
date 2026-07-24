@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T09:13:55",
+  "updated": "2026-07-24T09:17:59",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -20,7 +20,7 @@
     },
     "RC2": {
       "stage": "CALIBRATION",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -41,7 +41,15 @@
           "done_at": "2026-07-24T09:13:55"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "CALIN_RC2",
+          "stage": "CALIBRATION",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-24T09:17:59"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
