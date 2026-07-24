@@ -306,6 +306,19 @@ def run(prod, cfg):
             _gs_progress(prod, f"{label_pre} 출제 중 — claude 대형 호출 1건 (20~40분이 정상)")
             items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
                                            want_e=is_pilot, cfg=cfg, feedback=fb)
+            if not items:
+                # 출제 AI가 빈 배열 회신 = 이 재료들은 사람 반려 규칙 대조상 출제 부적격 판단 —
+                # 무한 재시도 대신 부적격으로 확정 계상하고 진행 (마감 카드에서 사람이 최종 확인)
+                ids = sorted(u["unit_id"] for u in batch_units)
+                gs.setdefault("unfit_units", []).extend(ids)
+                if fb:
+                    gs.pop("reject_feedback", None)
+                save_state(st)
+                ledger_append("GOLDENSET_BATCH", "UNITS_UNFIT", "script:gen_goldenset",
+                              evidence={"부적격": len(ids), "예": ids[:5],
+                                        "사유": "출제 AI 전건 부적격 회신(빈 배열) — 사람 반려 규칙 대조"},
+                              product=prod)
+                return "CONTINUE", {"부적격 확정": len(ids), "다음": "잔여 재계산 후 진행/마감"}
             ground_citations(items, batch_units)   # 발췌→단위 역추적 authoritative 재기입
             label = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             path = write_batch(prod, items, label)
