@@ -2152,3 +2152,4 @@
 {"ts": "2026-07-24T10:05:34", "product": "RC2", "stage": "CALIBRATION", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-07-24T10:05:34", "product": "RC2", "stage": "CALIBRATION", "gate_id": null, "actor": "script:pipeline", "action": "STAGE_DONE", "evidence": {"캘리브레이션": "이미 통과 (규칙 C 지문 유효)"}, "reason": null}
 {"ts": "2026-07-24T10:05:34", "product": "RC2", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-24T11:04:33", "product": "RC2", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→RUNNING", "evidence": {}, "reason": null}
