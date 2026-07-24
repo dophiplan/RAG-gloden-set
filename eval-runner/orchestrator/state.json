@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T09:17:59",
+  "updated": "2026-07-24T09:32:53",
   "products": {
     "RV2": {
       "stage": "CORPUS_AUDIT",
@@ -47,7 +47,7 @@
           "stage": "CALIBRATION",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-24T09:17:59"
+          "issued": "2026-07-24T09:32:53"
         }
       ],
       "halt_reason": null,
