@@ -123,10 +123,18 @@ def api_queue():
             gate_id = f.stem.replace("GATE_", "")
             m = re.search(r"제품: (\w+)", body)
             acks = re.findall(r"- \[ \] (?:ack: )?(.+)", body)
+            prod_s = m.group(1) if m else "?"
+            uploaded = None
+            if kind == "INPUT":   # 코퍼스처럼 여러 파일을 나눠 올리는 카드 — 현황을 화면에
+                sub = "corpus" if "CORPUS" in f.stem else "08_scoring"
+                d = ROOT / "data" / prod_s / sub
+                uploaded = sorted(p.name for p in d.glob("*")
+                                  if p.is_file() and not p.name.startswith(".")) if d.is_dir() else []
             cards.append({"file": N(f.name), "kind": kind, "id": gate_id,
-                          "product": m.group(1) if m else "?",
+                          "product": prod_s,
                           "title": N(body.splitlines()[0].lstrip("# ")),
-                          "body": body, "acks": acks if kind == "GATE" else []})
+                          "body": body, "acks": acks if kind == "GATE" else [],
+                          "uploaded": uploaded})
     return cards
 
 

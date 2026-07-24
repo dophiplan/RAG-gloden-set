@@ -463,9 +463,15 @@ function renderQueue(){
           return m?`<button class="btn" onclick="openGateX('${esc(m)}','${c.id}',${c.acks.length})">👁 실물 보고 결정 (팝업)</button>`:''})()}
         <button class="btn approve" id="apr_${ci}" ${c.acks.length?'disabled':''} onclick="doApprove('${c.id}',${c.acks.length})">승인</button>
         <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
-      </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : `<div class="btns">
-        <label class="btn approve" style="cursor:pointer">📎 파일 업로드<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}')"></label>
-      </div><div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`;
+      </div>${c.acks.length?`<div class="hint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>`:''}` : (()=>{
+        const isCorpus = c.id.includes('CORPUS');
+        const up = c.uploaded||[];
+        return `<div class="btns">
+        <label class="btn ${isCorpus?'':'approve'}" style="cursor:pointer">📎 파일 올리기 (여러 개 선택 가능)<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}',${isCorpus})"></label>
+        ${isCorpus?`<button class="btn approve" ${up.length?'':'disabled'} onclick="act({cmd:'run',product:PV().code})">✅ 다 올렸어요 — 검사 시작</button>`:''}
+      </div>${isCorpus
+        ?`<div class="hint">올라간 파일 <b>${up.length}개</b>${up.length?` — ${esc(up.slice(0,4).join(', '))}${up.length>4?` 외 ${up.length-4}개`:''}`:''}<br>여러 번 나눠 올려도 돼요 — 전부 올린 뒤 [다 올렸어요]를 누르면 검사가 시작돼요. (선택창에서 Cmd 클릭 = 한번에 여러 개)</div>`
+        :`<div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`}`})();
     return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}">
       <h4>${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
@@ -746,7 +752,7 @@ async function doReject(){
     await act({cmd:'run', product:PV().code});
   }
 }
-async function doUpload(input, cardId){
+async function doUpload(input, cardId, noAutoRun){
   const files=[...input.files];
   if(!files.length) return;
   busy = true; render();
@@ -760,6 +766,11 @@ async function doUpload(input, cardId){
       if(!d.ok){ busy=false; await loadAll(); return; }
     }
   } finally { busy = false; }
+  if(noAutoRun){   // 코퍼스: 여러 번 나눠 올리는 카드 — 사람이 [다 올렸어요]를 눌러야 검사 시작
+    toast(`✅ ${files.length}개 올라갔어요 — 더 올리거나 [다 올렸어요 — 검사 시작]을 눌러주세요`);
+    await loadAll();
+    return;
+  }
   await act({cmd:'run', product:PV().code});
 }
 async function setStrategy(v){
