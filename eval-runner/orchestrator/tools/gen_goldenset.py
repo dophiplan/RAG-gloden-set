@@ -119,15 +119,18 @@ def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
                                  "아래 피드백을 이번 출제에 반드시 반영하라: " + N(feedback))
     body = json.dumps(payload, ensure_ascii=False)
     out = llm.chat("generator", SYSTEM_GEN, body, cfg)
+    # 문항 1개면 extract_json이 배열 아닌 낱개 객체를 준다 — 항상 목록으로 정규화
+    # (마지막 소차수 1문항 생성에서 'str has no get' HALT — 07-24 2차 사고)
+    norm = lambda x: [x] if isinstance(x, dict) else [i for i in x if isinstance(i, dict)]
     try:
-        return llm.extract_json(out)
+        return norm(llm.extract_json(out))
     except ValueError:
         # 실모델이 가끔 문항 JSON 없이 '만들었다'는 설명문만 답한다 (07-24 HALT 사고) —
         # JSON만 내도록 명시해 새 호출 1회 재시도, 그래도 실패면 정지(기존 안전망)
         out = llm.chat("generator", SYSTEM_GEN,
                        body + "\n\n(재요청) 직전 응답에 문항 JSON이 없었다. "
                               "설명·머리말 없이 문항 JSON 배열만 출력하라.", cfg)
-        return llm.extract_json(out)
+        return norm(llm.extract_json(out))
 
 
 def _norm(s):
