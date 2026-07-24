@@ -277,7 +277,7 @@ function nextAction(){
     const r = ps.halt_reason||'원장 확인';
     if(r.includes('한도') || r.includes('일시 중단'))
       return {icon:'⏸', text:'한도로 잠시 멈췄어요 — 진행분은 저장돼 있고, 한도가 회복되면 자동으로 이어갑니다(기다리면 돼요). 지금 바로 시도하려면 [▶ 이어서 재개].', resume:true};
-    return {icon:'⛔', text:'사고 정지 상태예요 — 원인: '+r+'. 저(Claude)를 불러주세요.'};
+    return {icon:'⛔', text:'사고 정지 — 원인: '+r+'. 일시적 오류(응답 형식 등)면 [▶ 다시 시도]로 이어갈 수 있어요. 같은 원인으로 또 멈추면 그때 저(Claude)를 불러주세요.', retry:true};
   }
   if(ps.status==='WAITING_INPUT'){
     const c = myCards.find(c=>c.kind==='INPUT');
@@ -335,7 +335,7 @@ function render(){
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
     ${renderAiTeam()}
-    <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}</div>
+    <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
@@ -618,6 +618,10 @@ async function setStrategy(v){
 }
 async function resumeRun(){   // 한도 회복 후 이어서 — 체크포인트에서 재개
   const d = await act({cmd:'resume', product:PV().code, reason:'한도/일시 중단 회복 — 체크포인트 재개'});
+  if(d.ok) await act({cmd:'run', product:PV().code});
+}
+async function retryRun(){    // 사고 정지 후 재시도 — 일시적 오류(응답 형식 등) 대응, 원장 기록
+  const d = await act({cmd:'resume', product:PV().code, reason:'사람: 대시보드 [다시 시도] — 일시적 오류 추정, 같은 원인이면 다시 멈춤'});
   if(d.ok) await act({cmd:'run', product:PV().code});
 }
 async function dismissCard(file){   // 알림형 카드 닫기 — 완료로 이동 (같은 내용 재발행 억제)
