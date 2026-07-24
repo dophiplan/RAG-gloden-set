@@ -453,9 +453,13 @@ function renderQueue(){
           <button class="btn reject" onclick="openReject('${c.id}')">반려 (사유 필수)</button>
         </div></div>`;
     }
+    const isSimple = c.body.includes('결정 성격: 형식 확인');   // 결정할 게 없는 확인 게이트
     const btns = isNotice ? `<div class="btns">
         <button class="btn reject" onclick="dismissCard('${esc(c.file)}')">✕ 확인했어요 (닫기)</button>
       </div><div class="hint">닫으면 같은 내용으로는 다시 안 떠요 — 새 모델이 또 나오면 그때 새 카드가 옵니다</div>` :
+      isSimple ? `<div class="btns">
+        <button class="btn approve" onclick="doApprove('${c.id}',0)">▶ 계속 진행</button>
+      </div><div class="hint">결정할 항목이 없는 확인 카드예요 — 내용에 문제가 보이면 <a href="#" style="color:var(--halt)" onclick="openReject('${c.id}');return false">여기서 반려</a></div>` :
       c.kind==='GATE' ? `<div class="btns">
         ${c.id.startsWith('CAL_')&&S.calin&&S.calin.rows&&S.calin.rows.length?`<button class="btn" onclick="openCalin('${c.id}')">📝 답안지 다시 열기 (판정 수정)</button>`:''}
         ${c.id.startsWith('S2DIFF_')&&S.s2diff&&S.s2diff.rows&&S.s2diff.rows.length?`<button class="btn" onclick="openS2('${c.id}')">⚖ 불일치 검토 (팝업)</button>`:''}

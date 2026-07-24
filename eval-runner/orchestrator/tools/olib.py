@@ -220,8 +220,10 @@ def issue_input_card(prod, stage, what, where, fmt, extra=""):
     return card_id
 
 
-def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, recommendation=None):
-    """WAITING_HUMAN 게이트 카드 — 플래그는 항목별 ack 필수 (§5, v1.2)"""
+def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, recommendation=None,
+                    simple=False):
+    """WAITING_HUMAN 게이트 카드 — 플래그는 항목별 ack 필수 (§5, v1.2).
+    simple=True: 형식 확인 게이트 — 화면에 [▶ 계속 진행] 단일 버튼 (반려는 작은 링크로)"""
     q = _paths()["queue"]
     q.mkdir(parents=True, exist_ok=True)
     flags = flags or []
@@ -234,7 +236,7 @@ def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, re
     body = f"""# GATE_{gate_id} — 사람 게이트
 
 - 발행: {now()} · 제품: {prod} · 단계: {dict(STAGES)[stage] if stage in STAGE_KEYS else stage}
-
+{"- 결정 성격: 형식 확인 — 문제 없으면 계속 진행하면 됩니다" if simple else ""}
 ## 무엇을 / 왜 멈췄나
 {what_stopped}
 
