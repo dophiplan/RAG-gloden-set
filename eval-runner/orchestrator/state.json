@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-26T15:25:15",
+  "updated": "2026-07-29T16:13:27",
   "products": {
     "RV2": {
-      "stage": "COVERAGE_MAP",
-      "status": "WAITING_HUMAN",
+      "stage": "GOLDENSET_BATCH",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -13,74 +13,12 @@
         },
         "TERRAIN": {
           "done_at": "2026-07-24T14:21:58"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-07-26T23:09:47"
         }
       },
-      "open_gates": [
-        {
-          "id": "COVMAP_RV2",
-          "stage": "COVERAGE_MAP",
-          "flags": [
-            {
-              "type": "GAP-목록·넘김 페이지 (내용 없음 추정)",
-              "id": "48건",
-              "candidates": [],
-              "ack_required": true,
-              "note": "페이지네이션·피드·카테고리 목록 — 예: https://content.rview.com/ko/blog/page/10/ · https://content.rview.com/ko/blog/page/11/ · https://content.rview.com/ko/blog/page/13/"
-            },
-            {
-              "type": "GAP-내용 페이지 누락 · 기타",
-              "id": "42건 (710청크)",
-              "candidates": [
-                "https://content.rview.com/ko/blog/?listType=card&search=",
-                "https://content.rview.com/ko/blog/cloud-voucher/",
-                "https://content.rview.com/ko/blog/iso-270012022-achieve/",
-                "https://content.rview.com/ko/blog/page/12/?listType=list&search=",
-                "https://content.rview.com/ko/blog/page/2/?listType=card&search=",
-                "https://content.rview.com/ko/blog/page/2/?listType=list&search=",
-                "https://content.rview.com/ko/cases/education-02/",
-                "https://content.rview.com/ko/cases/financial-01/",
-                "https://content.rview.com/ko/cases/it-solution-02/",
-                "https://content.rview.com/ko/cases/it-solution-03/",
-                "https://content.rview.com/ko/feature/rvbox/",
-                "https://content.rview.com/ko/product/mobile/",
-                "https://content.rview.com/ko/product/remoteview-ot/",
-                "https://content.rview.com/ko/product/rv-vs-vdi/",
-                "https://content.rview.com/ko/uses/cases/?filter=education",
-                "https://content.rview.com/ko/uses/cases/?filter=equipment",
-                "https://content.rview.com/ko/uses/cases/?filter=manufacture",
-                "https://content.rview.com/ko/uses/cases/?filter=medical",
-                "https://content.rview.com/ko/uses/cases/?filter=public",
-                "https://content.rview.com/ko/videoguide/adding-a-user/",
-                "https://content.rview.com/ko/videoguide/chromebook-remotework/",
-                "https://content.rview.com/ko/videoguide/conference2024/",
-                "https://content.rview.com/ko/videoguide/dhcp-wol-setting/",
-                "https://content.rview.com/ko/videoguide/managing-groups/",
-                "https://content.rview.com/ko/videoguide/mobile-remote-control/",
-                "https://content.rview.com/ko/videoguide/multiple-monitors/",
-                "https://content.rview.com/ko/videoguide/new-features-of-remoteview/",
-                "https://content.rview.com/ko/videoguide/overview_2/",
-                "https://content.rview.com/ko/videoguide/remotecontrol-freedemo/",
-                "https://content.rview.com/ko/videoguide/remoteview-se-control/",
-                "https://content.rview.com/ko/videoguide/remoteview-store-management/",
-                "https://content.rview.com/ko/videoguide/remoteview-webviewer-introduce/",
-                "https://content.rview.com/ko/videoguide/remoteviewbox-dhcp/",
-                "https://content.rview.com/ko/videoguide/remoteviewbox-display/",
-                "https://content.rview.com/ko/videoguide/remotewol-intro/",
-                "https://content.rview.com/ko/videoguide/rv-vs-vdi/",
-                "https://content.rview.com/ko/videoguide/setting-connection-time/",
-                "https://content.rview.com/ko/videoguide/telework-by-remoteview/",
-                "https://content.rview.com/ko/videoguide/use-cases-pumpkin/",
-                "https://content.rview.com/ko/videoguide/using-architectural-cad/",
-                "https://content.rview.com/ko/videoguide/wol-ip-setting/",
-                "https://content.rview.com/ko/videoguide/wol-mac-address-check/"
-              ],
-              "ack_required": true
-            }
-          ],
-          "acked": false,
-          "issued": "2026-07-26T15:25:14"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
