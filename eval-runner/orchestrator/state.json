@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-29T19:16:21",
+  "updated": "2026-07-29T19:23:55",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
@@ -29,7 +29,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 7,
+        "round": 8,
         "done_units": [
           "RV2-HTTPSC-001",
           "RV2-HTTPSC-008",
@@ -195,31 +195,31 @@
           "RV2-HTTPSC-800",
           "RV2-HTTPSC-807",
           "RV2-HTTPSC-831",
-          "RV2-HTTPSC-854"
+          "RV2-HTTPSC-854",
+          "RV2-HTTPSC-1085",
+          "RV2-HTTPSC-1193",
+          "RV2-HTTPSC-1203",
+          "RV2-HTTPSC-1213",
+          "RV2-HTTPSC-1219",
+          "RV2-HTTPSC-1286",
+          "RV2-HTTPSC-1305",
+          "RV2-HTTPSC-3642",
+          "RV2-HTTPSC-3757"
         ],
         "batch": "B1",
         "last_batch": {
-          "label": "7차",
-          "file": "RV2_골든셋_7차_18문항_v1_0.xlsx",
+          "label": "8차",
+          "file": "RV2_골든셋_8차_9문항_v1_0.xlsx",
           "units": [
-            "RV2-HTTPSC-1028",
-            "RV2-HTTPSC-1077",
-            "RV2-HTTPSC-1101",
-            "RV2-HTTPSC-1109",
-            "RV2-HTTPSC-1113",
-            "RV2-HTTPSC-1122",
-            "RV2-HTTPSC-1133",
-            "RV2-HTTPSC-1140",
-            "RV2-HTTPSC-1159",
-            "RV2-HTTPSC-1168",
-            "RV2-HTTPSC-330",
-            "RV2-HTTPSC-347",
-            "RV2-HTTPSC-3749",
-            "RV2-HTTPSC-778",
-            "RV2-HTTPSC-800",
-            "RV2-HTTPSC-807",
-            "RV2-HTTPSC-831",
-            "RV2-HTTPSC-854"
+            "RV2-HTTPSC-1085",
+            "RV2-HTTPSC-1193",
+            "RV2-HTTPSC-1203",
+            "RV2-HTTPSC-1213",
+            "RV2-HTTPSC-1219",
+            "RV2-HTTPSC-1286",
+            "RV2-HTTPSC-1305",
+            "RV2-HTTPSC-3642",
+            "RV2-HTTPSC-3757"
           ]
         }
       }
