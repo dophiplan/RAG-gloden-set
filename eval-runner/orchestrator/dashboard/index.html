@@ -670,14 +670,18 @@ async function openXlsx(path, byName){
                     : '/api/xlsx?path='+encodeURIComponent(path);
   XD = await fetch(url).then(r=>r.json()).catch(()=>({error:'로드 실패'}));
   if(XD.error){ $('x-note').textContent = XD.error; return; }
+  $('x-foot').innerHTML = `${dlBtn()}<button class="btn" onclick="xdlg.close()">닫기</button>`;
   const names = Object.keys(XD.sheets);
   $('x-tabs').innerHTML = names.length>1 ? names.map((n,i)=>`<button class="xtab ${i?'':'on'}" onclick="showSheet('${esc(n)}',this)">${esc(n)}</button>`).join('') : '';
   showSheet(names[0]);
 }
+function dlBtn(){   // 보던 파일 그대로 내려받기 — 히스토리 개인 보관용
+  return XD&&XD.path? `<a class="btn" style="text-decoration:none;margin-right:auto" href="/data/${encodeURI(XD.path)}" download>⬇ 파일 받기</a>` : '';
+}
 /* 게이트 카드 → 실물을 팝업으로 보고 그 자리에서 승인/반려 */
 async function openGateX(name, gateId, nAcks){
   await openXlsx(null, {name, product: PV().code});
-  $('x-foot').innerHTML = `<button class="btn" onclick="xdlg.close()">닫기 (나중에 결정)</button>
+  $('x-foot').innerHTML = `${dlBtn()}<button class="btn" onclick="xdlg.close()">닫기 (나중에 결정)</button>
     <button class="btn reject" onclick="xdlg.close();openReject('${gateId}')">반려 (사유 필수)</button>
     <button class="btn approve" ${nAcks?'disabled title="체크리스트는 카드에서 확인 후 승인"':''} onclick="xdlg.close();doApprove('${gateId}',0)">승인</button>`;
 }
