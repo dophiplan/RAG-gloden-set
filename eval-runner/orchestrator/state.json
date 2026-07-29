@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-29T21:23:42",
+  "updated": "2026-07-29T21:31:53",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -18,7 +18,15 @@
           "done_at": "2026-07-26T23:09:47"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RV2_12차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-29T21:31:52"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
@@ -29,7 +37,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 11,
+        "round": 12,
         "done_units": [
           "RV2-HTTPSC-001",
           "RV2-HTTPSC-008",
@@ -238,27 +246,45 @@
           "RV2-HTTPSC-1425",
           "RV2-HTTPSC-1434",
           "RV2-HTTPSC-1438",
-          "RV2-HTTPSC-4810"
+          "RV2-HTTPSC-4810",
+          "RV2-HTTPSC-1447",
+          "RV2-HTTPSC-1464",
+          "RV2-HTTPSC-1473",
+          "RV2-HTTPSC-1482",
+          "RV2-HTTPSC-1486",
+          "RV2-HTTPSC-1493",
+          "RV2-HTTPSC-1501",
+          "RV2-HTTPSC-2906",
+          "RV2-HTTPSC-3634",
+          "RV2-HTTPSC-3814",
+          "RV2-HTTPSC-3845",
+          "RV2-HTTPSC-3854",
+          "RV2-HTTPSC-815",
+          "RV2-HTTPSC-823",
+          "RV2-HTTPSC-913",
+          "RV2-HTTPSC-931"
         ],
         "batch": "B1",
         "last_batch": {
-          "label": "11차",
-          "file": "RV2_골든셋_11차_14문항_v1_0.xlsx",
+          "label": "12차",
+          "file": "RV2_골든셋_12차_16문항_v1_0.xlsx",
           "units": [
-            "RV2-HTTPSC-1306",
-            "RV2-HTTPSC-1344",
-            "RV2-HTTPSC-1362",
-            "RV2-HTTPSC-1370",
-            "RV2-HTTPSC-1376",
-            "RV2-HTTPSC-1384",
-            "RV2-HTTPSC-1393",
-            "RV2-HTTPSC-1403",
-            "RV2-HTTPSC-1411",
-            "RV2-HTTPSC-1420",
-            "RV2-HTTPSC-1425",
-            "RV2-HTTPSC-1434",
-            "RV2-HTTPSC-1438",
-            "RV2-HTTPSC-4810"
+            "RV2-HTTPSC-1447",
+            "RV2-HTTPSC-1464",
+            "RV2-HTTPSC-1473",
+            "RV2-HTTPSC-1482",
+            "RV2-HTTPSC-1486",
+            "RV2-HTTPSC-1493",
+            "RV2-HTTPSC-1501",
+            "RV2-HTTPSC-2906",
+            "RV2-HTTPSC-3634",
+            "RV2-HTTPSC-3814",
+            "RV2-HTTPSC-3845",
+            "RV2-HTTPSC-3854",
+            "RV2-HTTPSC-815",
+            "RV2-HTTPSC-823",
+            "RV2-HTTPSC-913",
+            "RV2-HTTPSC-931"
           ]
         }
       }
