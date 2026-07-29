@@ -129,8 +129,15 @@ def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
         # JSON만 내도록 명시해 새 호출 1회 재시도, 그래도 실패면 정지(기존 안전망)
         out = llm.chat("generator", SYSTEM_GEN,
                        body + "\n\n(재요청) 직전 응답에 문항 JSON이 없었다. "
-                              "설명·머리말 없이 문항 JSON 배열만 출력하라.", cfg)
-        return norm(llm.extract_json(out))
+                              "설명·머리말 없이 문항 JSON 배열만 출력하라. "
+                              "출제 가능한 문항이 없으면 빈 배열 []만 출력하라.", cfg)
+        try:
+            return norm(llm.extract_json(out))
+        except ValueError:
+            # 재요청까지 JSON 부재 = 사실상 '이 재료로는 못 만든다'는 거부 —
+            # HALT 대신 빈 배치로 반환해 부적격 확정 경로로 (설명문 거부 반복 HALT 사고 종결)
+            print(f"  ⚠ 재요청에도 문항 JSON 부재 — 빈 배치로 간주해 부적격 경로로 (응답 요지: {out[:100]})")
+            return []
 
 
 def _norm(s):
