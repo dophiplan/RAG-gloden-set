@@ -2329,3 +2329,4 @@
 {"ts": "2026-07-29T16:14:32", "product": "RV2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:auto_run", "action": "AUTO_RUN_STOPPED", "evidence": {"사유": "WAITING_HUMAN 도달 — 사람 차례거나 완료"}, "reason": null}
 {"ts": "2026-07-29T16:14:53", "product": "RV2", "stage": "GOLDENSET_BATCH", "gate_id": "GSPLAN_RV2", "actor": "사람:난희", "action": "approve", "evidence": {"flags_acked": 0}, "reason": null}
 {"ts": "2026-07-29T16:14:54", "product": "RV2", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-07-29T16:17:52", "product": "RV2", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "GSPLAN_RV2", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
