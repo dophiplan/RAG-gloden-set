@@ -411,7 +411,7 @@ def api_xlsx(relpath, max_rows=400, name=None, prod=None):
         sheets[N(sn)] = {"rows": rows, "truncated": (ws.max_row or 0) > max_rows + 1,
                          "total": ws.max_row or 0}
     wb.close()
-    return {"file": N(p.name), "sheets": sheets}
+    return {"file": N(p.name), "path": N(str(p.relative_to(base))), "sheets": sheets}
 
 
 def _s2_ledger_file(prod):
