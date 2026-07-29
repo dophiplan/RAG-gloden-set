@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-30T06:42:34",
+  "updated": "2026-07-30T07:27:19",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -18,15 +18,7 @@
           "done_at": "2026-07-26T23:09:47"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_RV2_14차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-07-30T06:42:33"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
