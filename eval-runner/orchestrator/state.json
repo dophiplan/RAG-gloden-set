@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-29T16:14:54",
+  "updated": "2026-07-29T16:19:17",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -18,7 +18,15 @@
           "done_at": "2026-07-26T23:09:47"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RV2_파일럿",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-29T16:19:16"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
@@ -28,10 +36,63 @@
         "reviewer": false
       },
       "goldenset": {
-        "phase": "PLAN_GATE",
-        "round": 0,
-        "done_units": [],
-        "batch": "B1"
+        "phase": "ROUNDS",
+        "round": 1,
+        "done_units": [
+          "RV2-HTTPSC-001",
+          "RV2-HTTPSC-008",
+          "RV2-HTTPSC-023",
+          "RV2-HTTPSC-027",
+          "RV2-HTTPSC-040",
+          "RV2-HTTPSC-047",
+          "RV2-HTTPSC-055",
+          "RV2-HTTPSC-062",
+          "RV2-HTTPSC-070",
+          "RV2-HTTPSC-078",
+          "RV2-HTTPSC-085",
+          "RV2-HTTPSC-093",
+          "RV2-HTTPSC-101",
+          "RV2-HTTPSC-111",
+          "RV2-HTTPSC-119",
+          "RV2-HTTPSC-128",
+          "RV2-HTTPSC-137",
+          "RV2-HTTPSC-143",
+          "RV2-HTTPSC-152",
+          "RV2-HTTPSC-158",
+          "RV2-HTTPSC-164",
+          "RV2-HTTPSC-2666",
+          "RV2-HTTPSC-3258"
+        ],
+        "batch": "B1",
+        "last_batch": {
+          "label": "파일럿",
+          "file": "RV2_골든셋_파일럿_24문항_v1_0.xlsx",
+          "units": [
+            "RV2-HTTPSC-001",
+            "RV2-HTTPSC-008",
+            "RV2-HTTPSC-023",
+            "RV2-HTTPSC-027",
+            "RV2-HTTPSC-040",
+            "RV2-HTTPSC-047",
+            "RV2-HTTPSC-055",
+            "RV2-HTTPSC-062",
+            "RV2-HTTPSC-070",
+            "RV2-HTTPSC-078",
+            "RV2-HTTPSC-085",
+            "RV2-HTTPSC-093",
+            "RV2-HTTPSC-101",
+            "RV2-HTTPSC-111",
+            "RV2-HTTPSC-119",
+            "RV2-HTTPSC-128",
+            "RV2-HTTPSC-137",
+            "RV2-HTTPSC-143",
+            "RV2-HTTPSC-152",
+            "RV2-HTTPSC-158",
+            "RV2-HTTPSC-164",
+            "RV2-HTTPSC-2666",
+            "RV2-HTTPSC-3258"
+          ]
+        }
       }
     },
     "RC2": {
