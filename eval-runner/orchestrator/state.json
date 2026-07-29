@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-29T16:13:27",
+  "updated": "2026-07-29T16:14:54",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
@@ -26,6 +26,12 @@
         "generator": true,
         "judge": true,
         "reviewer": false
+      },
+      "goldenset": {
+        "phase": "PLAN_GATE",
+        "round": 0,
+        "done_units": [],
+        "batch": "B1"
       }
     },
     "RC2": {
