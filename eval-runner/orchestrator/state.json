@@ -1,9 +1,9 @@
 {
-  "updated": "2026-07-30T07:59:05",
+  "updated": "2026-07-30T08:05:46",
   "products": {
     "RV2": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -18,7 +18,15 @@
           "done_at": "2026-07-26T23:09:47"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_RV2_17차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-07-30T08:05:45"
+        }
+      ],
       "halt_reason": null,
       "key_released": null,
       "strategy": "ensemble",
@@ -29,7 +37,7 @@
       },
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 16,
+        "round": 17,
         "done_units": [
           "RV2-HTTPSC-001",
           "RV2-HTTPSC-008",
@@ -291,19 +299,23 @@
           "RV2-HTTPSC-1673",
           "RV2-HTTPSC-1677",
           "RV2-HTTPSC-3931",
-          "RV2-HTTPSC-4899"
+          "RV2-HTTPSC-4899",
+          "RV2-HTTPSC-1685",
+          "RV2-HTTPSC-1690",
+          "RV2-HTTPSC-1699",
+          "RV2-HTTPSC-1709",
+          "RV2-HTTPSC-1718"
         ],
         "batch": "B1",
         "last_batch": {
-          "label": "16차",
-          "file": "RV2_골든셋_16차_6문항_v1_0.xlsx",
+          "label": "17차",
+          "file": "RV2_골든셋_17차_5문항_v1_0.xlsx",
           "units": [
-            "RV2-HTTPSC-1657",
-            "RV2-HTTPSC-1662",
-            "RV2-HTTPSC-1673",
-            "RV2-HTTPSC-1677",
-            "RV2-HTTPSC-3931",
-            "RV2-HTTPSC-4899"
+            "RV2-HTTPSC-1685",
+            "RV2-HTTPSC-1690",
+            "RV2-HTTPSC-1699",
+            "RV2-HTTPSC-1709",
+            "RV2-HTTPSC-1718"
           ]
         }
       }
