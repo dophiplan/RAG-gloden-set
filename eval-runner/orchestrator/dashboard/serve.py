@@ -545,6 +545,30 @@ def api_action(payload):
         ledger_append("STAGE2", "S2DIFF_HUMAN_FINAL", "사람:난희",
                       evidence={"문항": iid, "최종": final}, product=prod)
         return {"ok": True, "out": f"{iid} → 최종 {final}"}
+    elif cmd == "calin-set-bulk":
+        # 체크한 문항들 일괄 판정 — 파일 1회 열고 한 번에 기록
+        import openpyxl
+        prod, v = payload["product"], N(payload.get("verdict", ""))
+        ids = {N(i) for i in payload.get("ids", [])}
+        if v not in ("합격", "불합격", "") or not ids:
+            return {"ok": False, "out": "판정 값/대상 오류"}
+        f = _calin_file(prod)
+        if not f:
+            return {"ok": False, "out": "판정지 없음"}
+        wb = openpyxl.load_workbook(f)
+        ws = wb[next(s for s in wb.sheetnames if "기입" in N(s))]
+        hit = done = total = 0
+        for row in ws.iter_rows(min_row=2):
+            if row[0].value is None:
+                continue
+            if N(row[0].value) in ids:
+                row[5].value = v
+                hit += 1
+            total += 1
+            done += 1 if N(row[5].value or "") else 0
+        wb.save(f)
+        return {"ok": True, "hit": hit, "filled": done, "total": total,
+                "out": f"{hit}건 일괄 {v or '해제'} · {done}/{total}"}
     elif cmd == "calin-set":
         # 카드 안 판정 클릭 → 기입 시트에 즉시 기록 (엑셀 파일이 단일 원장 — 채점기와 동일 소스)
         import openpyxl
