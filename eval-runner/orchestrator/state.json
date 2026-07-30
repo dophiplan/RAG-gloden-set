@@ -1,8 +1,8 @@
 {
-  "updated": "2026-07-30T08:52:10",
+  "updated": "2026-07-30T09:09:34",
   "products": {
     "RV2": {
-      "stage": "GOLDENSET_BATCH",
+      "stage": "CALIBRATION",
       "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
@@ -16,15 +16,21 @@
         },
         "COVERAGE_MAP": {
           "done_at": "2026-07-26T23:09:47"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-07-30T09:03:31"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-07-30T09:03:33"
         }
       },
       "open_gates": [
         {
-          "id": "GSCLOSE_RV2",
-          "stage": "GOLDENSET_BATCH",
+          "id": "CALIN_RV2",
+          "stage": "CALIBRATION",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-30T08:52:08"
+          "issued": "2026-07-30T09:09:33"
         }
       ],
       "halt_reason": null,
