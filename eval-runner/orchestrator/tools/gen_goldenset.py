@@ -271,6 +271,10 @@ def run(prod, cfg):
     target = cfg["pipeline"].get("goldenset_target")
     units = select_representative(all_units, target) if target else all_units
     st, gs = gs_state(prod)
+    if gs.get("expand_units"):
+        # G19 · 증분 확대 모드 — 새 단위 전량이 출제 대상 (대표 추출 재선정 금지: 명단 갱신 사고 방지)
+        exp = set(gs["expand_units"])
+        units = [u for u in all_units if u["unit_id"] in exp]
     band_lo, band_hi = cfg["pipeline"].get("band", [60, 75])
     skip = set(gs["done_units"]) | set(gs.get("unfit_units", []))
     remaining = [u for u in units if u["unit_id"] not in skip]
@@ -423,6 +427,9 @@ def run(prod, cfg):
               "커버 등식": f"소실 0 (풀 {pool})"}
         ledger_append("GOLDENSET_BATCH", "BATCH_CLOSED", "script:gen_goldenset",
                       evidence=ev, product=prod)
+        if gs.get("expand_units"):
+            gs.pop("expand_units", None)   # 증분 마감 — 확대 모드 해제 (다음 확대는 새 expand로)
+            save_state(st)
         issue_gate_card(prod, "GOLDENSET_BATCH", f"GSCLOSE_{prod}",
                         what_stopped="배치 마감 — 통합 대장 생성 완료, 사람 확정",
                         evidence=ev, recommendation="승인 시 ⑤ 통합 대장 검사로")

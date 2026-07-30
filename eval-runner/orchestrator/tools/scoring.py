@@ -71,7 +71,8 @@ def _ledger_candidates(prod):
 
     def vkey(p):
         m = re.search(r"_v(\d+(?:_\d+)+)", p.name)
-        return tuple(int(x) for x in m.group(1).split("_")) if m else (0,)
+        v = tuple(int(x) for x in m.group(1).split("_")) if m else (0,)
+        return (v, p.stat().st_mtime)   # 동일 버전이면 최신 생성분 (증분 확대 대장 v+0 대응)
     return sorted(cands, key=vkey, reverse=True)
 
 
