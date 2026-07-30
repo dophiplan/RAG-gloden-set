@@ -21,3 +21,8 @@ eval-runner/orchestrator/results/_run_*.pid
 eval-runner/아카이브.zip
 eval-runner/eval-runner_old/
 config.yaml.apikeys
+
+# 별도 저장소로 분리된 프로젝트 — 이 repo에서는 추적 안 함 (디스크 파일은 보존)
+translation-manager/
+ninilab/
+Downloads/
