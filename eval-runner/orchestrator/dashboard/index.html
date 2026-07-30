@@ -373,9 +373,12 @@ function render(){
       <option value="self_check" ${strat==='self_check'?'selected':''}>제작 방식: 1개가 만들고 새 세션에서 자가 검수</option>
       <option value="solo" ${strat==='solo'?'selected':''}>제작 방식: AI 1개 단독 (빠름·저비용)</option>
     </select>`;
+  const expandBtn = ['SCORING','MAINTENANCE'].includes(ps.stage)
+    ? `<button class="archbtn" style="margin-left:8px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
+        onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
   let html = `
   <div class="track-wrap">
-    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}</div>
     ${renderAiTeam()}
     <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{

@@ -128,6 +128,31 @@ def _open_gate_ids(prod):
 
 def st_coverage_map(prod, cfg):
     maps = files_in(prod, "03_coverage_map", "*.xlsx")
+    st = load_state()
+    ps = st["products"][prod]
+    if maps and ps.get("expanding"):
+        # G19 · 증분 확대: 추가 코퍼스의 새 문서만 보완 추출(맵 v+1) → 새 단위만 출제 대상으로
+        import gen_coverage
+        import gen_goldenset
+        before = {u["unit_id"] for u in gen_goldenset.read_map_units(prod, cfg)[0]}
+        try:
+            gen_coverage.gapfill(prod)
+        except gen_coverage.CoveragePaused as e:
+            return "HALTED", {"halt": f"일시 중단(한도 추정) — 증분 추출 체크포인트 보존: {str(e)[:120]}"}
+        after = gen_goldenset.read_map_units(prod, cfg)[0]
+        new_ids = sorted({u["unit_id"] for u in after} - before)
+        st = load_state()
+        ps = st["products"][prod]
+        ps.pop("expanding", None)
+        gs = ps.setdefault("goldenset", {})
+        gs["expand_units"] = new_ids
+        gs["phase"] = "ROUNDS"
+        save_state(st)
+        ledger_append("COVERAGE_MAP", "EXPAND_MAP", "script:pipeline",
+                      evidence={"신규 단위": len(new_ids), "예": new_ids[:5],
+                                "처리": "새 단위만 ④ 차수 출제 — 기존 골든셋·판정 보존"}, product=prod)
+        maps = files_in(prod, "03_coverage_map", "*.xlsx")
+        return "DONE", {"map": N(maps[-1].name), "증분 신규 단위": len(new_ids)}
     if maps and f"COVMAP_{prod}" not in _open_gate_ids(prod):
         return "DONE", {"map": N(maps[-1].name), "files": len(maps)}
     # 맵이 없으면 생성 엔진 실행 (③ 생성→검수→반려 루프 + ③′ GAP_AUDIT)
@@ -499,6 +524,48 @@ def cmd_reject(a):
     print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
 
 
+def cmd_expand(a):
+    """G19 · 골든셋 증분 확대 — 추가 코퍼스만 추출·출제해 기존 골든셋에 잇는다.
+    기존 문항·판정·캘리브레이션 보존, 새 재료만 ③′(보완 추출)→④ 차수→⑤⑦⑧ 재통과."""
+    prod = a.product
+    st = load_state()
+    ps = st["products"].get(prod)
+    if not ps:
+        sys.exit(f"미등록 제품: {prod}")
+    if ps["stage"] not in ("SCORING", "MAINTENANCE"):
+        sys.exit(f"증분 확대는 발행 이후(⑧·⑨)에만 가능 — 현재 {ps['stage']}")
+    d = ROOT / "data" / prod
+    import datetime
+    import shutil
+    tag = datetime.datetime.now().strftime("%m%d")
+    # 재생성/구세대 산출물은 구판/ 폴더로 격리 보존 — 기록은 절대 삭제하지 않는다
+    # (응답로그도: 옛 시험지의 응답이라 새 발행본과 형식 게이트가 정당하게 충돌 — 새 로그를 받아야 함)
+    for pat, sub_ in (("*판정대장*.xlsx", "07_stage2"), ("*질문셋*발행본*.xlsx", "08_scoring"),
+                      ("*응답로그*.json", "08_scoring")):
+        old = d / sub_ / "구판"
+        for f in (d / sub_).glob(pat):
+            old.mkdir(exist_ok=True)
+            f.rename(old / f"{tag}_{f.name}")
+    # 기존 본판정 봉인을 progress 로 복원 — 새 문항만 추가 판정 (기왕 판정 보존)
+    seal = sorted((d / "07_stage2").glob("*본판정_판정문원본*.jsonl"))
+    prog = d / "07_stage2" / "_stage2_progress.jsonl"
+    if seal and not prog.exists():
+        shutil.copy(seal[-1], prog)
+    ps["expanding"] = True
+    (ps.get("goldenset") or {}).pop("last_batch", None)
+    save_state(st)
+    set_status(prod, "WAITING_INPUT", stage="COVERAGE_MAP",
+               reason="증분 확대 — 추가 코퍼스 투입 대기")
+    issue_input_card(prod, "CORPUS_AUDIT",   # 카드 id에 CORPUS → 업로드가 corpus/ 로 (다중 업로드 흐름)
+                     what=f"{prod} 추가 코퍼스 (증분 확대 — 기존 골든셋·성적 보존, 새 재료만 출제)",
+                     where=f"data/{prod}/corpus/",
+                     fmt="export 파일(xlsx/json/zip) — 다 올린 뒤 [다 올렸어요 — 검사 시작]")
+    ledger_append("MAINTENANCE", "EXPAND_START", f"사람:{a.actor}",
+                  evidence={"보존": "기존 골든셋·본판정·캘리브레이션·성적",
+                            "재생성 예정": "판정대장·발행본 (구판 보존 개명)"}, product=prod)
+    print(f"➕ 증분 확대 개시 — {prod}: 추가 코퍼스 업로드 → 새 재료만 추출·출제 → 대장·발행본 v+1")
+
+
 def cmd_resume(a):
     st = load_state()
     prod = a.after_fix
@@ -674,11 +741,12 @@ def main():
     s = sub.add_parser("set-strategy"); s.add_argument("--product", required=True); s.add_argument("--strategy", required=True, choices=["ensemble", "solo", "cross_check", "self_check"]); s.add_argument("--actor", default="난희")
     s = sub.add_parser("set-members"); s.add_argument("--product", required=True); s.add_argument("--use", required=True, help="쉼표 구분: generator,judge,reviewer"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("new-round"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("expand"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
      "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
-     "set-members": cmd_set_members, "new-round": cmd_new_round}[a.cmd](a)
+     "set-members": cmd_set_members, "new-round": cmd_new_round, "expand": cmd_expand}[a.cmd](a)
 
 
 if __name__ == "__main__":

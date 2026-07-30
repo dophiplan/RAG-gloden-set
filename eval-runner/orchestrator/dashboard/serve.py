@@ -515,6 +515,8 @@ def api_action(payload):
                  "--use", payload.get("use", "generator"), "--actor", payload.get("actor", "난희")]
     elif cmd == "new-round":
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "expand":
+        args += ["expand", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "s2diff-set":
         # 불일치 문항 확정 클릭 → 판정대장 '최종 판정' 컬럼에 즉시 기록
         import openpyxl
