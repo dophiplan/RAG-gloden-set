@@ -723,22 +723,42 @@ async function setS2(id, final){
 }
 
 /* ⑥ 채점관 면접 팝업 — 문항별 판정, 클릭 즉시 엑셀 기록 (파일이 단일 원장) */
-let CALID = null;
-function openCalin(id){ CALID = id; renderCalinDlg(); caldlg.showModal(); }
+let CALID = null, CALSEL = new Set();
+function openCalin(id){ CALID = id; CALSEL.clear(); renderCalinDlg(); caldlg.showModal(); }
+function calSel(id, on){ on? CALSEL.add(id) : CALSEL.delete(id); renderCalinDlg(); }
+async function bulkCalin(v, emptyOnly){
+  const rows = (S.calin&&S.calin.rows)||[];
+  const ids = emptyOnly? rows.filter(r=>!r.v).map(r=>r.id) : [...CALSEL];
+  if(!ids.length) return;
+  if(emptyOnly && !confirm(`아직 판정 안 한 ${ids.length}건을 전부 '${v}'으로 기록할까요?`)) return;
+  const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({cmd:'calin-set-bulk', product:PV().code, ids, verdict:v})});
+  const d = await r.json();
+  if(d.ok){ rows.forEach(row=>{ if(ids.includes(row.id)) row.v=v; }); CALSEL.clear(); renderCalinDlg(); render(); toast(d.out); }
+  else toast(d.out||'저장 실패');
+}
 function renderCalinDlg(){
   const rows = (S.calin&&S.calin.rows)||[];
   const filled = rows.filter(r=>r.v).length, all = filled===rows.length && rows.length>0;
   $('cal-prog').textContent = `${filled}/${rows.length}`;
   $('cal-done').disabled = !all;
   const keep = $('cal-body').scrollTop;
-  $('cal-body').innerHTML = rows.map((r,i)=>`<div class="calrow ${r.v?'done':''}">
-      <div class="calq"><b>${i+1}. [${esc(r.id)}]</b> ${esc(r.q)}</div>
+  const bulkbar = `<div class="btns" style="position:sticky;top:0;background:var(--panel);padding:6px 0;border-bottom:1px solid var(--line);z-index:5">
+      <span class="hint">체크한 ${CALSEL.size}건을:</span>
+      <button class="btn approve" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('합격')">합격</button>
+      <button class="btn reject" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('불합격')">불합격</button>
+      <span style="flex:1"></span>
+      <button class="btn" onclick="bulkCalin('합격',true)">나머지(미판정) 전부 합격</button>
+    </div>`;
+  $('cal-body').innerHTML = bulkbar + (rows.map((r,i)=>`<div class="calrow ${r.v?'done':''}">
+      <div class="calq"><label style="cursor:pointer"><input type="checkbox" ${CALSEL.has(r.id)?'checked':''} onchange="calSel('${esc(r.id)}',this.checked)">
+        <b>${i+1}. [${esc(r.id)}]</b></label> ${esc(r.q)}</div>
       <div class="cala">답: ${esc(r.a)}</div>
       <div class="cala hint">기준: ${esc(r.crit)}</div>
       <div class="btns" style="margin:5px 0 0">
         <button class="btn ${r.v==='합격'?'approve':''}" onclick="setCalin('${esc(r.id)}','합격')">합격</button>
         <button class="btn ${r.v==='불합격'?'reject':''}" onclick="setCalin('${esc(r.id)}','불합격')">불합격</button>
-      </div></div>`).join('') || '<div class="note">답안지 없음 — 새로고침 해보세요</div>';
+      </div></div>`).join('') || '<div class="note">답안지 없음 — 새로고침 해보세요</div>');
   $('cal-body').scrollTop = keep;
 }
 async function setCalin(id, v){
