@@ -456,6 +456,45 @@ def api_s2diff(prod):
     return {"rows": rows, "file": N(f.name)}
 
 
+def api_handoff(prod):
+    """⑧ 팀장님 전달 꾸러미 — 발행본 + 응시 안내문을 zip 한 방에 (툴에서 직접 다운로드)"""
+    import io
+    import zipfile
+    import openpyxl
+    pubs = sorted((ROOT / "data" / prod / "08_scoring").glob("*질문셋_발행본*.xlsx"))
+    if not pubs:
+        return None, "발행본 없음 — ⑧ 도달 후 이용 가능"
+    pub = pubs[-1]
+    ws = openpyxl.load_workbook(pub, read_only=True).active
+    n = max(0, (ws.max_row or 1) - 1)
+    name = "리모트콜" if prod.startswith("RC") else ("리모트뷰" if prod.startswith("RV") else prod)
+    guide = f"""# {name} RAG 평가 질문셋 응시 요청 (골든셋 v2)
+
+## 파일
+- {N(pub.name)} — {name} {n}문항 (문항ID · 질문 2컬럼, 정답 비공개)
+
+## 부탁드리는 것
+RAG 시스템에 각 질문을 그대로 넣고, 응답 로그를 json 1개로 회신 부탁드립니다.
+
+## 응답 로그 형식 (기존 회차와 동일)
+{{
+  "meta": {{ "corpus_version": "…(인입 코퍼스 버전 — 문서 N건·청크 M건 표기)" }},
+  "responses": [
+    {{ "id": "{prod}-001", "hits": [ {{"rank":1, "source":"…"}} ], "answer": "…시스템 답변…" }}
+  ]
+}}
+
+- responses는 전 문항(빠짐없이), id는 발행본의 문항ID 그대로
+- hits: 검색 근거(rank 순) · answer: 최종 생성 답변
+- 받는 즉시 자동 채점 → 성적 리포트로 회신드립니다.
+"""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(pub, N(pub.name))
+        z.writestr("응시_안내.md", guide)
+    return buf.getvalue(), f"{prod}_전달꾸러미.zip"
+
+
 def _calin_file(prod):
     d = ROOT / "data" / prod / "06_calibration"
     c = sorted(d.glob("*판정30*.xlsx")) if d.is_dir() else []
@@ -700,6 +739,20 @@ class H(SimpleHTTPRequestHandler):
             return self._send(200, j(api_xlsx(N(unquote(q.get("path", [""])[0]))or None,
                                               name=N(unquote(q.get("name", [""])[0])) or None,
                                               prod=N(q.get("product", [""])[0]) or None)))
+        if self.path.startswith("/api/handoff"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            data, fname = api_handoff(N(q.get("product", [""])[0]))
+            if data is None:
+                return self._send(404, j({"ok": False, "out": fname}))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
+            from urllib.parse import quote
+            self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote(fname)}")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if self.path.startswith("/api/s2diff"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
