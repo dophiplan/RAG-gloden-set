@@ -161,11 +161,28 @@ def format_gate(log_path, prod, round_label=None):
     good = bool(cv)
     ok &= good
     checks.append(("meta 코퍼스 버전", good, cv[:60] or "부재"))
-    # 1′) [v2] answer null 검사 — 단, 전건 null은 '검색축만 응시' 선언으로 접수 (2026-08 팀장님 요청:
-    # 생성축 LLM 호출 비용 절감. 일부만 null이면 여전히 결손으로 반려)
+    # 1′) [v2] answer null 검사 + 응시 범위 대조 — 업로드 시 사람이 선언한 범위(사이드카)와
+    # 실물(answer null 여부)을 대조. 선언 없으면 자동 감지(전건 null=검색축만). (2026-08)
     nulls = sum(1 for r in resp if not N(r.get("answer") or ""))
-    if resp and nulls == len(resp):
-        checks.append(("answer null", True, f"전건 null — 검색축만 응시 회차 (생성축·E형 미응시 처리)"))
+    all_null = bool(resp) and nulls == len(resp)
+    declared = ""
+    _sc = Path(str(log_path) + ".scope")
+    if _sc.exists():
+        declared = N(_sc.read_text(encoding="utf-8")).strip()
+    if declared == "search":
+        good = all_null
+        ok &= good
+        checks.append(("응시 범위 대조", good,
+                       "선언=검색축만 · 전건 null 일치 — 검색축만 회차 접수" if good else
+                       f"선언=검색축만인데 answer 있는 응답 {len(resp) - nulls}건 — 선언과 실물 불일치 (재확인 필요)"))
+    elif declared == "full":
+        good = nulls == 0
+        ok &= good
+        checks.append(("응시 범위 대조", good,
+                       "선언=전체 · answer 전건 존재 일치" if good else
+                       f"선언=전체인데 answer null {nulls}건 — 결손 또는 선언 오류 (재확인 필요)"))
+    elif all_null:
+        checks.append(("answer null", True, "전건 null — 검색축만 응시 회차로 자동 접수 (생성축·E형 미응시)"))
     else:
         good = nulls == 0
         ok &= good
