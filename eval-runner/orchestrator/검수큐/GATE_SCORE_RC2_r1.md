@@ -23,28 +23,56 @@ r1 성적표 확정 — E형 원문 열람(0건) + 스코프 변동 확인 후 �
 (플래그 없음)
 
 ## 기계 권고 (참고용 — 판단은 사람)
-검색축만 회차 — E형 원문 확인은 해당 없음 (answer 미제출).
-
-### 👀 사람 확인 가이드 — 검색축만 회차: 표본으로 '채점이 말이 되는지'만 보면 됩니다
-
-**① top1 성공 표본 — 1순위 출처가 정답 출처와 같은 문서인가요?**
-- RC2-483 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-- RC2-488 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-- RC2-489 · 정답: https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/
-
-**② 실패 표본 — 정답과 가져온 출처가 정말 다른가요? (사실 같은 문서인데 실패 처리면 반려)**
-- RC2-482 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/blog/persuade-remotecall/ | https://www.remotecall.com/kr/blog/so
-- RC2-484 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/support/update-history/update-20221115/ | https://files.rsupport.
-- RC2-485 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/blog/rsupport-remotecall-iso-27001-27017-certification/ | https:/
-
-**③ 수치 감**: top1 236 · top5 369 / 889문항 — 표본과 모순 없으면 승인하세요. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)
+E형 원시 판정은 그대로 믿지 말 것(P-신규-3) — 원문 확인 후 실질 수치 병기. 열람 자료: —
 
 ## 재개
 - 승인: `python3 tools/pipeline.py approve SCORE_RC2_r1`
 - 반려: `python3 tools/pipeline.py reject SCORE_RC2_r1 --reason "..."` (사유 필수)
+
+## 설계본부 소견 (독립 세션 · 참고 — 확정은 사람)
+채점기 설계까지 확인 완료했습니다. 핵심 의문이 해소됐습니다: `aggregate()`(scoring.py:313-321)가 검색 필드에서 top1/top5를 세고, **search_only 감지 시(line 359-362) 생성·E형을 '미응시'로 정당히 억제**합니다. 즉 산출물 건별의 `생성=fail` 888건과 RC2-E1의 `E형거절=true`는 채점기(run_score_v11)의 무조건 출력이며, 공식 요약에서 올바르게 '미응시'로 덮입니다. E형 원문 열람 0건도 search_only일 때 `e_context_review` 생략(line 371)이라 **설계상 정상**입니다.
+
+소견서를 제출합니다.
+
+---
+
+# 소견서 — GATE_SCORE_RC2_r1
+
+## [판정] 조건부 승인 **권고** (검색축 수치 검증 완료 / 표기 조건 2 + 사람확인 큐 2)
+확정은 사람이 누릅니다(§1). 아래는 권고와 근거까지입니다.
+
+## 실측 수치 (카드 에코가 아니라 산출물에서 독립 재계산 — §2-1)
+- 레코드 수: **889** (골든셋 통합대장 889·로그 889·누락0·잉여0 — 형식게이트 PASS 원장 15:04:24)
+- 검색 분포: hit_top1 **236** · hit_top5 **133** · miss **519** · N/A **1**(RC2-E1, E형)
+- **top1 = 236** ✓ (카드 일치) / **top5 누적 = 236+133 = 369** ✓ (카드 일치)
+- 생성 분포(원시 산출물): fail 888 · pass 1(RC2-E1) → 공식 요약에서 **'미응시'로 억제됨**(정상)
+- E형환각 true: 0 / E형거절 true: 1(RC2-E1) → 공식 요약 **'미응시'**(정상)
+- 응시 범위: 검색축만 (answer 전건 null — 형식게이트 "응시 범위 대조" ok)
+
+**결론: 카드가 사람에게 확정을 요청한 검색축 3수치(n=889·top1=236·top5=369)는 산출물에서 독립 재계산과 완전 일치. 승인 가능.**
+
+## 발동 조항/판례
+- §2-1(선언≠실측)·§2-6(도구 재현성) — 카드 숫자 독립 재계산으로 확인
+- §2-3(문맥 확인)·P-009(회귀도 산출물) — `생성=fail` 888건을 오탐 아닌 설계 기본값으로 확인(원문·소스 열람)
+- **P-신규-3**(E형 원시/실질 병기) — 계보 repo 실재 확인(원장 `E_CONTEXT_JUDGED`·scoring.py:324·성적리포트_규격_v1_0.md). **단, 내 주입 판례집(P-001~P-014)엔 부재** → §4′·P-007로 계보 요구·확인 완료
+
+## 재현 수단
+- 도구·명령(1줄): `grep -o '"검색": "[^"]*"' results/score_RC2_r1/score_report.json | sort | uniq -c` (top5 = hit_top1+hit_top5)
+- 산출물: `results/score_RC2_r1/score_report.json` (889 레코드) · 원장 `SCORED`/`FORMAT_GATE_PASS`(2026-08-03 15:04)
+
+## 다음 단계 지시 (승인 시 반영 조건 — 모두 비차단, search_only 회차라 이번 확정을 막지 않음)
+**표기 조건 2 (성적표 작성 시):**
+1. 생성축·E형은 반드시 **'미응시'**로 표기(요약이 이미 그리 처리 — 유지 확인). 산출물 `score_report.json/xlsx`의 건별 `생성=fail`·RC2-E1 `E형거절`은 **raw 기본값이니 성적표·다운스트림에서 인용 금지**.
+2. 검색 히트율 분모: 889에 검색축 없는 E형 1건(RC2-E1)이 포함됨. 엄밀 분모는 검색가능 888. 미세(26.5%↔26.6%)하나 **회차 비교 시 분모 정의를 일관 유지**할 것.
+
+**사람확인 큐 2 (§2-5 — 판단 보류, 정리해 올림):**
+- (A) **판례집 동기화**: P-신규-1~4가 주입 판례집에 없음(RV 계열 별도 번호). 이번 회차는 E형 열람이 없어 무해하나, **다음 생성축/E형 회차 전** 주입 판례집 병합 필요.
+- (B) **도구 개선 후보(§3 노화 감시)**: search_only일 때 run_score_v11이 생성/E를 아예 비우거나 '미응시'로 출력하면 raw 산출물 오독 위험이 원천 제거됨. 수리 시 과거 결과 소급 재산출 대상 아님(공식 수치 불변).
+
+## 재개
+- 승인: `python3 tools/pipeline.py approve SCORE_RC2_r1`
+- 반려: `python3 tools/pipeline.py reject SCORE_RC2_r1 --reason "..."`
+
+---
+
+한 줄 요약: **검색축 핵심 수치 3개는 직접 세어 카드와 완전히 일치 — 승인해도 되는 상태**입니다. 다만 성적표에 "생성·E형은 안 봤음(미응시)"을 분명히 적고, 산출물 파일 안의 `생성=fail` 888줄은 채점기가 답이 없을 때 기계적으로 찍는 껍데기 값이니 성적으로 옮기지 말라는 게 조건입니다.
