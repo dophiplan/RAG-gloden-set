@@ -456,11 +456,13 @@ def api_s2diff(prod):
     return {"rows": rows, "file": N(f.name)}
 
 
-def api_handoff(prod):
-    """⑧ 팀장님 전달 꾸러미 — 발행본 + 응시 안내문을 zip 한 방에 (툴에서 직접 다운로드)"""
+def api_handoff(prod, scope="full"):
+    """⑧ 팀장님 전달 꾸러미 — 발행본 + 응시 안내문을 zip 한 방에 (툴에서 직접 다운로드).
+    scope: full=전체 응시(검색+생성) / search=검색축만(top1·top5, answer:null) — 안내문이 달라진다."""
     import io
     import zipfile
     import openpyxl
+    import datetime
     pubs = sorted((ROOT / "data" / prod / "08_scoring").glob("*질문셋_발행본*.xlsx"))
     if not pubs:
         return None, "발행본 없음 — ⑧ 도달 후 이용 가능"
@@ -468,36 +470,55 @@ def api_handoff(prod):
     ws = openpyxl.load_workbook(pub, read_only=True).active
     n = max(0, (ws.max_row or 1) - 1)
     name = "리모트콜" if prod.startswith("RC") else ("리모트뷰" if prod.startswith("RV") else prod)
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    search = scope == "search"
+    scope_ko = "검색축만 (top1·top5 히트율 — answer 미제출)" if search else "전체 (검색축 + 생성축)"
+    ans_line = ('"answer": null  ← 이번 회차는 전 문항 null로 통일해 주세요'
+                if search else '"answer": "…시스템 답변…"')
+    ask = ("RAG 시스템에 각 질문을 넣되, **답변 생성(LLM 호출)은 생략**하고 검색 결과(hits)만 기록해 주세요. "
+           "answer는 전 문항 null로 통일합니다 (일부만 null이면 결손으로 반려됩니다)."
+           if search else
+           "RAG 시스템에 각 질문을 그대로 넣고, 응답 로그를 json 1개로 회신 부탁드립니다.")
+    tail = ("- 채점: 검색축(top1·top5)만 산출 — 생성축·E형은 리포트에 '미응시' 표기\n"
+            if search else
+            "- hits: 검색 근거(rank 순) · answer: 최종 생성 답변\n")
     guide = f"""# {name} RAG 평가 질문셋 응시 요청 (골든셋 v2)
+
+> 꾸러미 생성: {stamp} · 발행본: {N(pub.name)} ({n}문항)
+> **이번 회차 응시 범위: {scope_ko}**
+> ※ 꾸러미는 요청 시점의 최신판으로 자동 조립됩니다 — 재요청 시 관제판에서 버튼 한 번 더.
 
 ## 파일
 - {N(pub.name)} — {name} {n}문항 (문항ID · 질문 2컬럼, 정답 비공개)
 
 ## 부탁드리는 것
-RAG 시스템에 각 질문을 그대로 넣고, 응답 로그를 json 1개로 회신 부탁드립니다.
+{ask}
 
-## 응답 로그 형식 (기존 회차와 동일)
+## 응답 로그 형식
 {{
   "meta": {{ "corpus_version": "…(인입 코퍼스 버전 — 문서 N건·청크 M건 표기)" }},
   "responses": [
-    {{ "id": "{prod}-001", "hits": [ {{"rank":1, "source":"…"}} ], "answer": "…시스템 답변…" }}
+    {{ "id": "{prod}-001", "hits": [ {{"rank":1, "source":"…"}} ], {ans_line} }}
   ]
 }}
 
 - responses는 전 문항(빠짐없이), id는 발행본의 문항ID 그대로
-- hits: 검색 근거(rank 순) · answer: 최종 생성 답변
-- 받는 즉시 자동 채점 → 성적 리포트로 회신드립니다.
-
-## 검색축만 응시 옵션 (LLM 호출 비용 절감)
-top1·top5 히트율만 필요한 회차는 answer 없이 보내셔도 됩니다:
-- 전 문항 "answer": null 로 통일 (일부만 null은 결손으로 반려됩니다)
-- 이 경우 검색축(top1·top5)만 채점되고, 생성축·E형은 리포트에 '미응시'로 표기됩니다.
+{tail}- 받는 즉시 자동 채점 → 성적 리포트로 회신드립니다.
 """
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         z.write(pub, N(pub.name))
         z.writestr("응시_안내.md", guide)
-    return buf.getvalue(), f"{prod}_전달꾸러미.zip"
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append("SCORING", "HANDOFF_DOWNLOADED", "사람:난희",
+                      evidence={"발행본": N(pub.name), "응시 범위": scope_ko, "생성": stamp},
+                      product=prod)
+    except Exception:
+        pass
+    tag = "검색축만" if search else "전체응시"
+    return buf.getvalue(), f"{prod}_전달꾸러미_{tag}_{datetime.date.today():%m%d}.zip"
 
 
 def _calin_file(prod):
@@ -747,7 +768,8 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/handoff"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
-            data, fname = api_handoff(N(q.get("product", [""])[0]))
+            data, fname = api_handoff(N(q.get("product", [""])[0]),
+                                      N(q.get("scope", ["full"])[0]) or "full")
             if data is None:
                 return self._send(404, j({"ok": False, "out": fname}))
             self.send_response(200)
