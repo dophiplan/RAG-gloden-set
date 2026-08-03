@@ -18,9 +18,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from olib import ROOT, N
 
 
-def _cause_section(prod, rep, log_path, n):
+def _cause_section(ca, rep, n):
     """§3 저조 원인 분석 (표준 섹션) — 억울한 miss 분해 + 합집합 지표"""
-    ca = content_analysis(prod, rep, log_path)
     if not ca:
         return "## 3. 저조 원인 분석\n(내용 기준 재채점 불가 — 코퍼스/발췌 미확보)"
     return f"""## 3. 저조 원인 분석 — 점수가 왜 이렇게 나왔나 (전건 실측·매 회차 표준)
@@ -40,6 +39,33 @@ def _cause_section(prod, rep, log_path, n):
 | **진짜 검색 실패** (top5 어디에도 정답 내용 없음) | **{ca['true_fail']}** | 검색기/인입 개선 대상 — §2 소스군 분해 참조 |
 
 → 요약: 낮은 점수의 {ca['rescued']/max(1,ca['miss']):.0%}는 채점·데이터 요인, {ca['true_fail']/max(1,ca['miss']):.0%}는 실제 검색 실패."""
+
+
+def _action_section(ca, dead, no_url, sect_miss_top):
+    """§4 실행 가이드 (표준·최종 섹션) — 보고서는 정답률을 높이는 처방으로 끝난다 (난희 원칙 2026-08-03)"""
+    rows = []
+    if dead:
+        rows.append(("**전멸 소스군 인입/인덱싱 확인**: " + " · ".join(dead), "팀장님",
+                     "해당 문항 전건 회복 가능", "top5에 한 번도 안 잡힘 = 인덱스 부재 의심"))
+    if sect_miss_top:
+        tgt = " · ".join(f"{k}({v}건)" for k, v in sect_miss_top)
+        rows.append((f"**진짜 실패 최다 소스군 우선 튜닝**: {tgt}", "팀장님",
+                     f"최대 +{sum(v for _, v in sect_miss_top)}건", "§2-① miss 분해"))
+    if ca and ca.get("rescue_nourl"):
+        rows.append(("**골든셋 출처 URL 결측 보정 + 소급 재채점**", "우리(평가)",
+                     f"공식 지표 +{ca['rescue_nourl']}건", "§3 분류 ① — 채점 불가였던 문항"))
+    if ca and ca.get("rescue_alt"):
+        rows.append(("**합집합(v12) 병기 지표를 공식 보고에 병기**", "우리(평가)",
+                     f"+{ca['rescue_alt']}건 정당 인정", "§3 분류 ② — 다른 문서의 같은 내용"))
+    body = "\n".join(f"| {i+1} | {a} | {o} | {e} | {g} |" for i, (a, o, e, g) in enumerate(rows)) \
+           or "| — | 이번 회차 특이 조치 없음 | | | |"
+    return f"""## 4. 다음 회차 정답률을 올리려면 (실행 가이드 — 우선순위순)
+
+| # | 조치 | 담당 | 예상 효과 | 근거 |
+|---|---|---|---|---|
+{body}
+
+→ 다음 회차(r+1)에서 이 표의 이행 여부와 지표 변화를 대조해 보고합니다."""
 
 
 def summ_cell(rep, kind, n):
@@ -157,6 +183,7 @@ def draft(prod, round_label, rep, summ, search_only, sys_ver="", log_path=None):
     sect_rows = "\n".join(f"| {k} | {v} | {sect_miss[k]} | {sect_miss[k]/v:.0%} |"
                           for k, v in sect.most_common(12))
     dead = [k for k, v in sect.items() if v >= 5 and sect_miss[k] == v]
+    _ca = content_analysis(prod, rep, log_path)
     scope = "검색축만 (answer 미제출 — 생성축·E형 미응시)" if search_only else "전체 (검색+생성)"
     gen_row = ("| 생성/E형 | — 미응시 | 본 회차 answer 미제출 |" if search_only else
                f"| 생성 | 실측 | pass {summ.get('pass')} · partial {summ.get('partial')} |")
@@ -194,7 +221,9 @@ def draft(prod, round_label, rep, summ, search_only, sys_ver="", log_path=None):
 ### ③ 방법론 이슈
 {f'- 정답 출처 URL 결측 {no_url}건 (miss {no_url_miss}) — 구조적 채점 불가, 골든셋 보정 후 규칙 D 소급 재채점 권고' if no_url else '- 없음'}
 
-{_cause_section(prod, rep, log_path, n)}
+{_cause_section(_ca, rep, n)}
+
+{_action_section(_ca, dead, no_url, [(k, v) for k, v in sect_miss.most_common() if k not in dead][:3])}
 
 ## E형
 {'미응시 (검색축만 회차)' if search_only else '원시/실질 병기 — E형 문맥확인 자료 참조'}
