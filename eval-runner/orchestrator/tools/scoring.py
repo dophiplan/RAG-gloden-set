@@ -387,7 +387,8 @@ def score(prod, log_path, round_label, warns=None):
         import report_gen
         rp = report_gen.draft(prod, round_label, rep, summ, search_only,
                               sys_ver=N(str(json.loads(Path(log_path).read_text(encoding='utf-8'))
-                                            .get("meta", {}).get("system_version", ""))))
+                                            .get("meta", {}).get("system_version", ""))),
+                              log_path=log_path)
         ev["리포트 초안"] = N(rp.name)
     except Exception as e:
         print(f"(리포트 초안 생성 실패 — 무시: {str(e)[:80]})")
