@@ -142,7 +142,7 @@ def api_scores():
     """회차 성적 미니보드 — results/score_<P>_<r>/score_report.json 실측 집계"""
     out = {}
     for d in sorted((ROOT / "results").glob("score_*_r*")):
-        m = re.match(r"score_(\w+)_(r\d+)", d.name)
+        m = re.fullmatch(r"score_([A-Z0-9]+)_(r\d+)", d.name)   # 병기(_v12 등) 폴더는 공식 표에서 제외
         if not m:
             continue
         prod, rnd = m.group(1), m.group(2)
