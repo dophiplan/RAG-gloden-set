@@ -156,11 +156,19 @@ def api_scores():
         # 검색축만 회차 감지 — 회차 리포트에 '검색축만' 명기 여부로 판단 (생성 수치를 미응시로 표기)
         search_only = any("검색축만" in md.read_text(encoding="utf-8")[:2500]
                           for md in d.glob("*리포트*.md"))
+        # 지표 툴팁용 분석(엄격/결측 제외/합집합) — report_gen 이 회차마다 생성
+        anal = None
+        ap = d / "analysis.json"
+        if ap.exists():
+            try:
+                anal = json.loads(ap.read_text(encoding="utf-8"))
+            except Exception:
+                pass
         out.setdefault(prod, {})[rnd] = {
             "top1": top1, "top5": top1 + c.get("hit_top5", 0),
             "pass": ("미응시" if search_only else g.get("pass", 0)),
             "partial": ("미응시" if search_only else g.get("partial", 0)),
-            "검색축만": search_only,
+            "검색축만": search_only, "분석": anal,
             "E환각": sum(1 for r in rep if r.get("E형환각")),
             "E거절": sum(1 for r in rep if r.get("E형거절")),
             "n": len(rep), "scorer": "run_score_v11",

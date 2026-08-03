@@ -111,6 +111,12 @@
   .card .meta{font-size:11px;color:var(--tx2);margin-bottom:8px}
   .card .evidence{font-family:var(--mono);font-size:11.5px;background:var(--ink);border-radius:6px;padding:8px 10px;margin-bottom:9px;white-space:pre-wrap;max-height:320px;overflow-y:auto}
   #caldlg[open],#xdlg[open],#sdlg[open]{display:flex;flex-direction:column}   /* 전체화면 팝업 — 본문만 스크롤 */
+  .ihelp{cursor:help;color:var(--run);font-size:10px;margin-left:3px;font-weight:400}
+  #itip{display:none;position:fixed;z-index:9999;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 44px rgba(0,0,0,.62);padding:10px 12px;font-size:11.5px;line-height:1.7}
+  #itip table{border-collapse:collapse;font-family:var(--mono);font-size:11px;margin:4px 0 6px}
+  #itip th,#itip td{border-bottom:1px solid var(--line);padding:3px 8px;text-align:right;white-space:nowrap}
+  #itip th:first-child,#itip td:first-child{text-align:left}
+  #itip .concl{color:var(--run);font-weight:600}
   .xtbl{border-collapse:collapse;font-family:var(--mono);font-size:11px}
   .xtbl th{position:sticky;top:0;background:var(--panel2);border:1px solid var(--line);padding:4px 7px;text-align:left;white-space:nowrap}
   .xtbl td{border:1px solid var(--line);padding:3px 7px;vertical-align:top;max-width:360px;white-space:pre-wrap;word-break:break-word}
@@ -258,6 +264,7 @@
 </dialog>
 
 <div class="toast" id="toast" role="status"></div>
+<div id="itip" role="tooltip"></div>
 
 <script>
 const STAGE_ORDER = ["CORPUS_AUDIT","TERRAIN","COVERAGE_MAP","GOLDENSET_BATCH","UNIFIED_LEDGER","CALIBRATION","STAGE2","SCORING","MAINTENANCE"];
@@ -565,7 +572,7 @@ function renderScores(ps){
   const mk = (label, sc, retired, code) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
-    const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}</th>`).join('');
+    const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
     const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)"
       return (typeof v==='number'&&n)? `${v} <span class="hint">(${Math.round(v/n*100)}%)</span>` : esc(String(v??'·')); };
     const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
@@ -701,6 +708,29 @@ async function doApprove(id, nAcks){
   await act({cmd:'run', product:PV().code});
 }
 function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
+
+/* ⓘ 지표 툴팁 — 출처 오류를 걷어낸 실질 검색 성능 (엄격/결측 제외/합집합) */
+function showITip(evt, codeEnc, r){
+  const a = ((S.scores[decodeURIComponent(codeEnc)]||{})[r]||{}).분석;
+  if(!a) return;
+  const pc = (v,n)=> (typeof v==='number'&&n)? `${v} (${(v/n*100).toFixed(1)}%)` : '·';
+  const scoreable = a.n - (a.no_url||0);
+  const t1p=(a.top1/scoreable*100).toFixed(0), t5p=(a.top5/scoreable*100).toFixed(0);
+  const tip = $('itip');
+  tip.innerHTML = `<b>${r} — 출처 오류를 걷어내면?</b>
+    <table>
+      <tr><th>기준</th><th>top1</th><th>top5</th></tr>
+      <tr><td>전량 (엄격 — 출처 오류 포함)</td><td>${pc(a.top1,a.n)}</td><td>${pc(a.top5,a.n)}</td></tr>
+      <tr><td>출처 결측 ${a.no_url||0}건 제외</td><td>${pc(a.top1,scoreable)}</td><td>${pc(a.top5,scoreable)}</td></tr>
+      <tr><td>내용 정답 인정 (합집합 v12)</td><td>${pc(a.u1,a.ca_n)}</td><td>${pc(a.u5,a.ca_n)}</td></tr>
+    </table>
+    <div class="concl">→ 출처 오류를 제외한 실질 검색 성능은 top1 약 ${t1p}%, top5 약 ${t5p}%입니다.</div>
+    <div class="hint">이 간극(전량 vs 실질)이 골든셋 출처 보정·코퍼스 큐레이션으로 줄여야 할 오류율이에요.</div>`;
+  tip.style.display = 'block';
+  const x = Math.min(evt.clientX + 12, innerWidth - 400), y = Math.min(evt.clientY + 14, innerHeight - tip.offsetHeight - 16);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideITip(){ $('itip').style.display = 'none'; }
 
 /* 📤 리포트 보관함 — 회차 누적 리스트에서 골라 받기 */
 function openReports(codeEnc, label){
