@@ -566,16 +566,39 @@ function renderScores(ps){
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}</th>`).join('');
+    const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)"
+      return (typeof v==='number'&&n)? `${v} <span class="hint">(${Math.round(v/n*100)}%)</span>` : esc(String(v??'·')); };
     const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
-      `<td class="${i===rounds.length-1?'cur':''}">${sc[r][k]??'·'}</td>`).join('')}</tr>`;
+      `<td class="${i===rounds.length-1?'cur':''}">${fmt(r,k)}</td>`).join('')}</tr>`;
+    // 전 회차 대비 변화 — 같은 시험지(세대) 안에서만 의미 있음
+    const delta = `<tr><td class="m">Δ 전회차</td>${rounds.map((r,i)=>{
+      if(i===0) return `<td class="hint">기준선</td>`;
+      const p=sc[rounds[i-1]], v=sc[r];
+      const d1=(typeof v.top1==='number'&&typeof p.top1==='number')? v.top1-p.top1 : null;
+      const d5=(typeof v.top5==='number'&&typeof p.top5==='number')? v.top5-p.top5 : null;
+      const s=x=> x===null?'·':(x>0?`▲${x}`:x<0?`▼${-x}`:'—');
+      return `<td class="${i===rounds.length-1?'cur':''}" style="color:${(d1??0)>0?'var(--ok,#3dd6b0)':(d1??0)<0?'var(--halt)':'inherit'}">${s(d1)}/${s(d5)}</td>`;}).join('')}</tr>`;
     const nRep = code? rounds.filter(r=>sc[r].scorer!=='기록 이관').length : 0;
     const repLinks = nRep? `<button class="archbtn" onclick="openReports('${encodeURIComponent(code)}','${esc(label)}')">📤 리포트 보관함 ${nRep} ›</button>` : '';
+    // 이전 세대(은퇴) 마지막 회차 참고선 — 시험지가 달라 직접 비교는 참고만
+    let refLine = '';
+    if(!retired){
+      for(const lg of (PV().legacy||[])){
+        const lsc = S.scores[lg.code]||{}; const lrs = Object.keys(lsc).sort();
+        if(!lrs.length) continue;
+        const last = lsc[lrs[lrs.length-1]];
+        const p = (v,n)=> (typeof v==='number'&&n)? ` (${Math.round(v/n*100)}%)` : '';
+        const ln = last.n || (lg.gen.match(/(\d+)문항/)||[])[1];
+        refLine = `<div class="hint" style="margin:2px 0 4px">참고 — 이전 세대 마지막(${lrs[lrs.length-1]}): top1 ${last.top1}${p(last.top1,ln)} · top5 ${last.top5}${p(last.top5,ln)} <i>(시험지가 달라 직접 비교는 참고만)</i></div>`;
+        break;
+      }
+    }
     return `<div class="score-row"><span><b>${esc(label)}</b></span><span></span>
         <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
-        <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}</tbody>
-      </table></div>${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
+        <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
+      </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
   const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.retired?null:g.code)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
