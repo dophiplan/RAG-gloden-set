@@ -234,6 +234,12 @@
   </div>
 </dialog>
 
+<dialog id="rptdlg" style="max-width:560px;width:92vw">
+  <div class="dlg-head">📤 리포트 보관함 — <span id="rpt-title"></span> <span class="hint">(회차별 팀장님 보고용 꾸러미: 리포트+원자료)</span></div>
+  <div class="dlg-body" id="rpt-body" style="max-height:60vh;overflow-y:auto"></div>
+  <div class="dlg-foot"><button class="btn" onclick="rptdlg.close()">닫기</button></div>
+</dialog>
+
 <dialog id="rdlg">
   <div class="dlg-head">반려 — 사유 필수 (원장 기록)</div>
   <div class="dlg-body">
@@ -562,8 +568,8 @@ function renderScores(ps){
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}</th>`).join('');
     const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
       `<td class="${i===rounds.length-1?'cur':''}">${sc[r][k]??'·'}</td>`).join('')}</tr>`;
-    const repLinks = code? rounds.filter(r=>sc[r].scorer!=='기록 이관')
-      .map(r=>`<a class="dl" href="/api/report?product=${encodeURIComponent(code)}&round=${r}" download>📤 ${r} 리포트</a>`).join(' ') : '';
+    const nRep = code? rounds.filter(r=>sc[r].scorer!=='기록 이관').length : 0;
+    const repLinks = nRep? `<button class="archbtn" onclick="openReports('${encodeURIComponent(code)}','${esc(label)}')">📤 리포트 보관함 ${nRep} ›</button>` : '';
     return `<div class="score-row"><span><b>${esc(label)}</b></span><span></span>
         <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
@@ -672,6 +678,22 @@ async function doApprove(id, nAcks){
   await act({cmd:'run', product:PV().code});
 }
 function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
+
+/* 📤 리포트 보관함 — 회차 누적 리스트에서 골라 받기 */
+function openReports(codeEnc, label){
+  const code = decodeURIComponent(codeEnc);
+  const sc = S.scores[code] || {};
+  const rounds = Object.keys(sc).sort().filter(r=>sc[r].scorer!=='기록 이관');
+  $('rpt-title').textContent = label;
+  $('rpt-body').innerHTML = rounds.map(r=>{
+    const v = sc[r];
+    return `<div class="frow">
+      <span class="fn"><b>${esc(r)}</b> · top1 ${v.top1??'·'} · top5 ${v.top5??'·'}${v.n?` / ${v.n}문항`:''}${v.pass==='미응시'?' · 검색축만':''}</span>
+      <a class="dl" href="/api/report?product=${encodeURIComponent(code)}&round=${encodeURIComponent(r)}" download>⬇ 받기</a>
+    </div>`;
+  }).join('') || '<div class="note">받을 수 있는 회차 리포트가 아직 없어요</div>';
+  rptdlg.showModal();
+}
 
 /* 👁 xlsx 미리보기 — 엑셀 안 열고 툴에서 (숨김=봉인 시트는 서버가 비노출) */
 let XD = null;
