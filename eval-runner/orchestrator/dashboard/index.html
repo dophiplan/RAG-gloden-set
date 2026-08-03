@@ -556,20 +556,22 @@ function renderScores(ps){
       ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴한 골든셋 리스트 — 누적 현황·성적표 (참고용)">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
     + curGens.map(genRow).join('') + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
-  const mk = (label, sc, retired) => {
+  const mk = (label, sc, retired, code) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}</th>`).join('');
     const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
       `<td class="${i===rounds.length-1?'cur':''}">${sc[r][k]??'·'}</td>`).join('')}</tr>`;
+    const repLinks = code? rounds.filter(r=>sc[r].scorer!=='기록 이관')
+      .map(r=>`<a class="dl" href="/api/report?product=${encodeURIComponent(code)}&round=${r}" download>📤 ${r} 리포트</a>`).join(' ') : '';
     return `<div class="score-row"><span><b>${esc(label)}</b></span><span></span>
         <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
         <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}</tbody>
-      </table></div>`;
+      </table></div>${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
-  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired)).filter(Boolean).join('<div style="height:10px"></div>')
+  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.retired?null:g.code)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + impNote(displayGens);
   // 보관함 화면 = 은퇴한 골든셋 리스트만 (누적 현황 줄 — 표는 기본 화면 몫)
