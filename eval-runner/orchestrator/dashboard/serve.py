@@ -832,10 +832,16 @@ class H(SimpleHTTPRequestHandler):
                     break
                 f.write(chunk)
                 remaining -= len(chunk)
+        # 응시 범위 선언 사이드카 — 형식 게이트가 실물(answer null 여부)과 대조
+        scope = N(q.get("scope", [""])[0])
+        if scope in ("search", "full") and name.lower().endswith(".json") and "08_scoring" in sub:
+            (dest_dir / f"{name}.scope").write_text(scope, encoding="utf-8")
         sys.path.insert(0, str(ROOT / "tools"))
         from olib import ledger_append
         ledger_append("INPUT", "FILE_UPLOADED", "사람:대시보드",
-                      evidence={"file": name, "size": n, "dest": f"data/{prod}/{sub}/"},
+                      evidence={"file": name, "size": n, "dest": f"data/{prod}/{sub}/",
+                                **({"응시 범위 선언": "검색축만" if scope == "search" else "전체"}
+                                   if scope in ("search", "full") else {})},
                       product=prod)
         return {"ok": True, "out": f"업로드 완료: {name} ({n:,}B) → data/{prod}/{sub}/ — 입구 검사를 실행합니다"}
 
