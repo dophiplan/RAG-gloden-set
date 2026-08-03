@@ -382,6 +382,15 @@ def score(prod, log_path, round_label, warns=None):
         ev.update({f"병기(v12).{k}": v for k, v in sec_summ.items()})
     if e_md:
         ev["E형 문맥확인 자료"] = str(e_md.relative_to(ROOT))
+    # 회차 리포트 초안 자동 생성 — 사람은 검증·확정만 (규격 v1.0)
+    try:
+        import report_gen
+        rp = report_gen.draft(prod, round_label, rep, summ, search_only,
+                              sys_ver=N(str(json.loads(Path(log_path).read_text(encoding='utf-8'))
+                                            .get("meta", {}).get("system_version", ""))))
+        ev["리포트 초안"] = N(rp.name)
+    except Exception as e:
+        print(f"(리포트 초안 생성 실패 — 무시: {str(e)[:80]})")
     ledger_append("SCORING", "SCORED", "script:scoring", evidence=ev, product=prod)
     flags = (warns or []) + e_flags
     if search_only:

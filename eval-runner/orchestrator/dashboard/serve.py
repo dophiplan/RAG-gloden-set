@@ -521,6 +521,29 @@ def api_handoff(prod, scope="full"):
     return buf.getvalue(), f"{prod}_전달꾸러미_{tag}_{datetime.date.today():%m%d}.zip"
 
 
+def api_report(prod, rnd):
+    """회차 리포트 꾸러미 — 리포트 md + 원자료(json/xlsx)를 zip으로 (툴에서 직접 다운로드)"""
+    import io
+    import re as _re
+    import zipfile
+    if not _re.fullmatch(r"[A-Z0-9]{1,8}", prod) or not _re.fullmatch(r"r\d{1,3}", rnd):
+        return None, "인자 오류"
+    d = ROOT / "results" / f"score_{prod}_{rnd}"
+    if not d.is_dir():
+        return None, f"{prod} {rnd} 채점 산출물 없음"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted(d.iterdir()):
+            if p.is_file() and not p.name.startswith("."):
+                z.write(p, N(p.name))
+    sys.path.insert(0, str(ROOT / "tools"))
+    from olib import ledger_append
+    ledger_append("SCORING", "REPORT_DOWNLOADED", "사람:난희",
+                  evidence={"회차": rnd, "구성": [N(p.name) for p in sorted(d.iterdir()) if p.is_file()]},
+                  product=prod)
+    return buf.getvalue(), f"{prod}_{rnd}_리포트꾸러미.zip"
+
+
 def _calin_file(prod):
     d = ROOT / "data" / prod / "06_calibration"
     c = sorted(d.glob("*판정30*.xlsx")) if d.is_dir() else []
@@ -775,6 +798,20 @@ class H(SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/zip")
             from urllib.parse import quote
+            self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote(fname)}")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        if self.path.startswith("/api/report"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query)
+            data, fname = api_report(N(q.get("product", [""])[0]), N(q.get("round", [""])[0]))
+            if data is None:
+                return self._send(404, j({"ok": False, "out": fname}))
+            from urllib.parse import quote
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
             self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote(fname)}")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
