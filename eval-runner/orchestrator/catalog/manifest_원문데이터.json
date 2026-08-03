@@ -275,6 +275,10 @@
   "data/RC/06_calibration/2axis_result_B03.json": {
    "sha256": "f98210ccd06e3fcfa2960b6d581d276d34549132abd9dac694b8616252438c36",
    "등재": "2026-07-21T13:15:43"
+  },
+  "data/RC2/08_scoring/RC2_골든셋_응답로그_2026-08-03.json": {
+   "sha256": "4ba60dedd2bf2e99f881b0adc27d0dda842870aa37177fbb44fa69c405861d1b",
+   "등재": "2026-08-03T15:04:24"
   }
  }
 }
