@@ -487,6 +487,11 @@ RAG 시스템에 각 질문을 그대로 넣고, 응답 로그를 json 1개로 �
 - responses는 전 문항(빠짐없이), id는 발행본의 문항ID 그대로
 - hits: 검색 근거(rank 순) · answer: 최종 생성 답변
 - 받는 즉시 자동 채점 → 성적 리포트로 회신드립니다.
+
+## 검색축만 응시 옵션 (LLM 호출 비용 절감)
+top1·top5 히트율만 필요한 회차는 answer 없이 보내셔도 됩니다:
+- 전 문항 "answer": null 로 통일 (일부만 null은 결손으로 반려됩니다)
+- 이 경우 검색축(top1·top5)만 채점되고, 생성축·E형은 리포트에 '미응시'로 표기됩니다.
 """
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
