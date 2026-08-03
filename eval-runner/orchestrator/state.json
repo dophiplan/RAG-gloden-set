@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-03T15:04:32",
+  "updated": "2026-08-03T15:22:38",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -937,8 +937,8 @@
       }
     },
     "RC2": {
-      "stage": "SCORING",
-      "status": "WAITING_HUMAN",
+      "stage": "MAINTENANCE",
+      "status": "DONE",
       "calibration_passed": true,
       "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
       "compare_blocked": false,
@@ -963,17 +963,12 @@
         },
         "STAGE2": {
           "done_at": "2026-07-24T14:05:51"
+        },
+        "SCORING": {
+          "done_at": "2026-08-03T15:21:34"
         }
       },
-      "open_gates": [
-        {
-          "id": "SCORE_RC2_r1",
-          "stage": "SCORING",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-03T15:04:31"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "key_released": null,
       "ai_use": {
