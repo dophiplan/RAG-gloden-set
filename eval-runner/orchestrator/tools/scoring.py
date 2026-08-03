@@ -384,12 +384,54 @@ def score(prod, log_path, round_label, warns=None):
         ev["E형 문맥확인 자료"] = str(e_md.relative_to(ROOT))
     ledger_append("SCORING", "SCORED", "script:scoring", evidence=ev, product=prod)
     flags = (warns or []) + e_flags
+    if search_only:
+        what = f"{round_label} 성적표 확정 — 검색축만 회차 (top1·top5) · 표본 확인 후 사람 확정"
+        rec = ("검색축만 회차 — E형 원문 확인은 해당 없음 (answer 미제출).\n"
+               + _search_guide(prod, rep, log_path, summ))
+    else:
+        what = f"{round_label} 성적표 확정 — E형 원문 열람({len(e_flags)}건) + 스코프 변동 확인 후 사람 확정"
+        rec = ("E형 원시 판정은 그대로 믿지 말 것(P-신규-3) — 원문 확인 후 실질 수치 병기. "
+               + f"열람 자료: {ev.get('E형 문맥확인 자료','—')}")
     issue_gate_card(prod, "SCORING", f"SCORE_{prod}_{round_label}",
-                    what_stopped=f"{round_label} 성적표 확정 — E형 원문 열람({len(e_flags)}건) + 스코프 변동 확인 후 사람 확정",
-                    evidence=ev, flags=flags,
-                    recommendation="E형 원시 판정은 그대로 믿지 말 것(P-신규-3) — 원문 확인 후 실질 수치 병기. "
-                                   + (f"열람 자료: {ev.get('E형 문맥확인 자료','—')}"))
+                    what_stopped=what, evidence=ev, flags=flags, recommendation=rec)
     return "WAITING_HUMAN", ev
+
+
+def _search_guide(prod, rep, log_path, summ, n_show=3):
+    """검색축 회차 사람 확인 가이드 — '채점이 말이 되는가'를 표본으로 보여준다:
+    성공/실패 사례마다 정답 출처 vs 시스템이 가져온 출처를 나란히."""
+    try:
+        d = json.loads(Path(log_path).read_text(encoding="utf-8"))
+        hits = {N(r.get("id", "")): [N(h.get("source") or h.get("source_url") or h.get("name") or "")
+                                     for h in (r.get("hits") or [])[:3]]
+                for r in d.get("responses", [])}
+        import openpyxl
+        gw = openpyxl.load_workbook(golden_xlsx(prod), read_only=True, data_only=True).active
+        gh = [N(c) for c in next(gw.iter_rows(max_row=1, values_only=True))]
+        si = next((i for i, h in enumerate(gh) if h.startswith("근거 출처")), None)
+        gold = ({N(r[0]): N(r[si]) for r in gw.iter_rows(min_row=2, values_only=True) if r[0]}
+                if si is not None else {})
+        def url(s):
+            m = re.search(r"https?://\S+", s or "")
+            return m.group(0) if m else (s or "?")
+        oks = [r for r in rep if r.get("검색") == "hit_top1"][:n_show]
+        miss = [r for r in rep if r.get("검색") not in ("hit_top1", "hit_top5")][:n_show]
+        L = ["", "### 👀 사람 확인 가이드 — 검색축만 회차: 표본으로 '채점이 말이 되는지'만 보면 됩니다",
+             "", "**① top1 성공 표본 — 1순위 출처가 정답 출처와 같은 문서인가요?**"]
+        for r in oks:
+            i = N(r["id"])
+            L += [f"- {i} · 정답: {url(gold.get(i))[:75]}",
+                  f"  ↳ 시스템 1순위: {(hits.get(i) or ['?'])[0][:75]}"]
+        L += ["", "**② 실패 표본 — 정답과 가져온 출처가 정말 다른가요? (사실 같은 문서인데 실패 처리면 반려)**"]
+        for r in miss:
+            i = N(r["id"])
+            L += [f"- {i} · 정답: {url(gold.get(i))[:75]}",
+                  f"  ↳ 시스템 상위: {' | '.join((hits.get(i) or ['?'])[:2])[:95]}"]
+        L += ["", f"**③ 수치 감**: top1 {summ.get('top1')} · top5 {summ.get('top5')} / {summ.get('n')}문항 — "
+                  "표본과 모순 없으면 승인하세요. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)"]
+        return "\n".join(L)
+    except Exception as e:
+        return f"(표본 가이드 생성 실패 — 수치만으로 판단: {str(e)[:80]})"
 
 
 def extract_summary(rep):
