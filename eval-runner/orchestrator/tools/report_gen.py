@@ -233,4 +233,12 @@ def draft(prod, round_label, rep, summ, search_only, sys_ver="", log_path=None):
 """
     out_dir.mkdir(parents=True, exist_ok=True)
     out.write_text(body, encoding="utf-8")
+    # 지표 툴팁용 분석 수치 — 대시보드 r-헤더 ⓘ에서 사용 (엄격/결측 제외/합집합)
+    try:
+        (out_dir / "analysis.json").write_text(json.dumps(
+            {"top1": top1, "top5": top5, "n": n, "no_url": no_url,
+             "u1": (_ca or {}).get("u1"), "u5": (_ca or {}).get("u5"),
+             "ca_n": (_ca or {}).get("n")}, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
     return out
