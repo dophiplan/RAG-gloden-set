@@ -409,26 +409,36 @@ def _search_guide(prod, rep, log_path, summ, n_show=3):
         gw = openpyxl.load_workbook(golden_xlsx(prod), read_only=True, data_only=True).active
         gh = [N(c) for c in next(gw.iter_rows(max_row=1, values_only=True))]
         si = next((i for i, h in enumerate(gh) if h.startswith("근거 출처")), None)
-        gold = ({N(r[0]): N(r[si]) for r in gw.iter_rows(min_row=2, values_only=True) if r[0]}
-                if si is not None else {})
+        qi = gh.index("질문") if "질문" in gh else None
+        gold, ques = {}, {}
+        for r in gw.iter_rows(min_row=2, values_only=True):
+            if not r[0]:
+                continue
+            if si is not None:
+                gold[N(r[0])] = N(r[si])
+            if qi is not None:
+                ques[N(r[0])] = N(r[qi])
         def url(s):
             m = re.search(r"https?://\S+", s or "")
             return m.group(0) if m else (s or "?")
         oks = [r for r in rep if r.get("검색") == "hit_top1"][:n_show]
         miss = [r for r in rep if r.get("검색") not in ("hit_top1", "hit_top5")][:n_show]
-        L = ["", "### 👀 사람 확인 가이드 — 검색축만 회차: 표본으로 '채점이 말이 되는지'만 보면 됩니다",
-             "", "**① top1 성공 표본 — 1순위 출처가 정답 출처와 같은 문서인가요?**"]
+        tail_of = lambda u: "…/" + "/".join((url(u).rstrip("/").split("/"))[-2:])   # 주소 꼬리만 (읽기 쉽게)
+        L = ["", "### 👀 사람 확인 가이드 — 검색축만 회차",
+             "주소가 같은지는 기계가 이미 대조했습니다. 난희가 볼 건 하나: **질문과 문서가 상식적으로 어울리는가?**",
+             "", "**① 성공 표본 — 질문에 맞는 문서를 1순위로 가져온 게 맞아 보이나요?**"]
         for r in oks:
             i = N(r["id"])
-            L += [f"- {i} · 정답: {url(gold.get(i))[:75]}",
-                  f"  ↳ 시스템 1순위: {(hits.get(i) or ['?'])[0][:75]}"]
-        L += ["", "**② 실패 표본 — 정답과 가져온 출처가 정말 다른가요? (사실 같은 문서인데 실패 처리면 반려)**"]
+            L += [f"- {i} 질문: “{ques.get(i, '?')[:70]}”",
+                  f"  정답·시스템 1순위 동일: {tail_of(gold.get(i))[:70]}"]
+        L += ["", "**② 실패 표본 — 질문과 동떨어진 문서를 가져온 게 맞나요? (오히려 질문에 맞는 문서를 가져왔는데 실패 처리됐다면 반려)**"]
         for r in miss:
             i = N(r["id"])
-            L += [f"- {i} · 정답: {url(gold.get(i))[:75]}",
-                  f"  ↳ 시스템 상위: {' | '.join((hits.get(i) or ['?'])[:2])[:95]}"]
-        L += ["", f"**③ 수치 감**: top1 {summ.get('top1')} · top5 {summ.get('top5')} / {summ.get('n')}문항 — "
-                  "표본과 모순 없으면 승인하세요. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)"]
+            L += [f"- {i} 질문: “{ques.get(i, '?')[:70]}”",
+                  f"  정답 문서: {tail_of(gold.get(i))[:60]}",
+                  f"  ↳ 시스템이 가져온 것: {' | '.join(tail_of(h) for h in (hits.get(i) or ['?'])[:2])[:90]}"]
+        L += ["", f"**③ 수치**: top1 {summ.get('top1')} · top5 {summ.get('top5')} / {summ.get('n')}문항 — "
+                  "표본이 상식과 맞으면 [승인]. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)"]
         return "\n".join(L)
     except Exception as e:
         return f"(표본 가이드 생성 실패 — 수치만으로 판단: {str(e)[:80]})"
