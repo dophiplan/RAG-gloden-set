@@ -476,7 +476,9 @@ function renderQueue(){
         const isCorpus = c.id.includes('CORPUS');
         const up = c.uploaded||[];
         return `<div class="btns">
-        ${c.id.includes('SCORING')?`<a class="btn" style="text-decoration:none" href="/api/handoff?product=${encodeURIComponent(c.product)}" download>📦 팀장님 전달 꾸러미 받기</a>`:''}
+        ${c.id.includes('SCORING')?`<span class="hint" style="align-self:center">📦 전달 꾸러미:</span>
+        <a class="btn" style="text-decoration:none" href="/api/handoff?product=${encodeURIComponent(c.product)}&scope=full" download title="검색+생성 모두 응시 — hits와 answer 둘 다 제출">전체 응시</a>
+        <a class="btn" style="text-decoration:none" href="/api/handoff?product=${encodeURIComponent(c.product)}&scope=search" download title="top1·top5만 — answer는 전건 null (LLM 호출 비용 절감)">검색축만</a>`:''}
         <label class="btn ${isCorpus?'':'approve'}" style="cursor:pointer">📎 파일 올리기 (여러 개 선택 가능)<input type="file" multiple style="display:none" onchange="doUpload(this,'${c.id}',${isCorpus})"></label>
         ${isCorpus?`<button class="btn approve" ${up.length?'':'disabled'} onclick="if(confirm('지금까지 올린 ${up.length}개로 검사를 시작할까요?\\n(더 올릴 파일이 있으면 취소)')) act({cmd:'run',product:PV().code})">✅ 다 올렸어요 — 검사 시작</button>`:''}
       </div>${isCorpus
