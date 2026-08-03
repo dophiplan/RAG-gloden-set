@@ -25,25 +25,29 @@ r1 성적표 확정 — E형 원문 열람(0건) + 스코프 변동 확인 후 �
 ## 기계 권고 (참고용 — 판단은 사람)
 검색축만 회차 — E형 원문 확인은 해당 없음 (answer 미제출).
 
-### 👀 사람 확인 가이드 — 검색축만 회차: 표본으로 '채점이 말이 되는지'만 보면 됩니다
+### 👀 사람 확인 가이드 — 검색축만 회차
+주소가 같은지는 기계가 이미 대조했습니다. 난희가 볼 건 하나: **질문과 문서가 상식적으로 어울리는가?**
 
-**① top1 성공 표본 — 1순위 출처가 정답 출처와 같은 문서인가요?**
-- RC2-483 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-- RC2-488 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-- RC2-489 · 정답: https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/
-  ↳ 시스템 1순위: https://www.remotecall.com/kr/blog/how-to-add-remote-support-vibe-coding/
+**① 성공 표본 — 질문에 맞는 문서를 1순위로 가져온 게 맞아 보이나요?**
+- RC2-483 질문: “리모트콜의 PC 원격지원은 기업·학교 환경에서 부서별 PC 문제를 어떻게 해결한다고 설명하는가?”
+  정답·시스템 1순위 동일: …/blog/holiday-customer-support-remotecall
+- RC2-488 질문: “리모트콜은 긴 연휴나 휴가에도 어떤 지원까지 모두 가능한 고객지원 파트너라고 소개하는가?”
+  정답·시스템 1순위 동일: …/blog/holiday-customer-support-remotecall
+- RC2-489 질문: “리모트콜 블로그에서 설명하는 '바이브 코딩(Vibe Coding)'이란 무엇인가?”
+  정답·시스템 1순위 동일: …/blog/how-to-add-remote-support-vibe-coding
 
-**② 실패 표본 — 정답과 가져온 출처가 정말 다른가요? (사실 같은 문서인데 실패 처리면 반려)**
-- RC2-482 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/blog/persuade-remotecall/ | https://www.remotecall.com/kr/blog/so
-- RC2-484 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/support/update-history/update-20221115/ | https://files.rsupport.
-- RC2-485 · 정답: https://www.remotecall.com/kr/blog/holiday-customer-support-remotecall/
-  ↳ 시스템 상위: https://www.remotecall.com/kr/blog/rsupport-remotecall-iso-27001-27017-certification/ | https:/
+**② 실패 표본 — 질문과 동떨어진 문서를 가져온 게 맞나요? (오히려 질문에 맞는 문서를 가져왔는데 실패 처리됐다면 반려)**
+- RC2-482 질문: “리모트콜을 활용하면 고객 문제를 어떤 방식의 원격지원으로 신속하게 해결할 수 있는가?”
+  정답 문서: …/blog/holiday-customer-support-remotecall
+  ↳ 시스템이 가져온 것: …/blog/persuade-remotecall | …/blog/solution-review
+- RC2-484 질문: “리모트콜의 영상 원격지원은 상대방의 카메라 화면 위에서 어떤 기능을 제공하는가?”
+  정답 문서: …/blog/holiday-customer-support-remotecall
+  ↳ 시스템이 가져온 것: …/update-history/update-20221115 | …/guides/RemoteCall-SaaS-Agent-Manual-Visual-Support-Ko
+- RC2-485 질문: “리모트콜의 강력한 보안을 더욱 신뢰할 수 있게 뒷받침하는 국제 정보보안 인증은 무엇인가?”
+  정답 문서: …/blog/holiday-customer-support-remotecall
+  ↳ 시스템이 가져온 것: …/blog/rsupport-remotecall-iso-27001-27017-certification | …/blog/new-office-building
 
-**③ 수치 감**: top1 236 · top5 369 / 889문항 — 표본과 모순 없으면 승인하세요. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)
+**③ 수치**: top1 236 · top5 369 / 889문항 — 표본이 상식과 맞으면 [승인]. (생성축·E형은 미응시 — 이번 회차 확인 대상 아님)
 
 ## 재개
 - 승인: `python3 tools/pipeline.py approve SCORE_RC2_r1`
