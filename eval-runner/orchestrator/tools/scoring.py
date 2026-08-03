@@ -161,11 +161,15 @@ def format_gate(log_path, prod, round_label=None):
     good = bool(cv)
     ok &= good
     checks.append(("meta 코퍼스 버전", good, cv[:60] or "부재"))
-    # 1′) [v2] answer null 검사
+    # 1′) [v2] answer null 검사 — 단, 전건 null은 '검색축만 응시' 선언으로 접수 (2026-08 팀장님 요청:
+    # 생성축 LLM 호출 비용 절감. 일부만 null이면 여전히 결손으로 반려)
     nulls = sum(1 for r in resp if not N(r.get("answer") or ""))
-    good = nulls == 0
-    ok &= good
-    checks.append(("answer null", good, f"{nulls}건"))
+    if resp and nulls == len(resp):
+        checks.append(("answer null", True, f"전건 null — 검색축만 응시 회차 (생성축·E형 미응시 처리)"))
+    else:
+        good = nulls == 0
+        ok &= good
+        checks.append(("answer null", good, f"{nulls}건 (검색축만 회차는 전건 null이어야 함)"))
     # 1″) [v2] meta 스코프·청크 전 회차 대조 (변동 = 플래그, 사람 ack)
     if round_label and cv:
         had_history = _meta_history_path(prod).exists()
@@ -324,10 +328,21 @@ def e_context_review(prod, round_label, rep, log_path, out_dir):
 
 def score(prod, log_path, round_label, warns=None):
     out_dir = ROOT / "results" / f"score_{prod}_{round_label}"
+    # 검색축만 응시 회차 감지 (전건 answer null) — 생성축·E형은 '미응시'로 정직 표기
+    try:
+        _d = json.loads(Path(log_path).read_text(encoding="utf-8"))
+        _resp = _d.get("responses", [])
+        search_only = bool(_resp) and all(not N(r.get("answer") or "") for r in _resp)
+    except Exception:
+        search_only = False
     rep, err = _run_scorer(RUN_SCORE, prod, log_path, out_dir)   # 공식(v1.1 기준점)
     if rep is None:
         return "HALTED", err
     summ = aggregate(rep)
+    if search_only:
+        for k in ("pass", "partial", "unparsed", "E환각(원시)", "E거절"):
+            summ[k] = "미응시"
+        summ["응시 범위"] = "검색축만 (answer 미제출 — 생성축·E형 채점 없음)"
     # [v2] 병기 채점기 (v12 존재 시)
     sec = _secondary_scorer()
     sec_summ = None
@@ -335,8 +350,8 @@ def score(prod, log_path, round_label, warns=None):
         rep2, err2 = _run_scorer(sec, prod, log_path, ROOT / "results" / f"score_{prod}_{round_label}_v12")
         if rep2 is not None:
             sec_summ = aggregate(rep2)
-    # [v2] E형 문맥 확인 의무 — 전건 열람 자료 + ack
-    e_flags, e_md = e_context_review(prod, round_label, rep, log_path, out_dir)
+    # [v2] E형 문맥 확인 의무 — 전건 열람 자료 + ack (검색축만 회차는 답변이 없어 생략)
+    e_flags, e_md = ([], None) if search_only else e_context_review(prod, round_label, rep, log_path, out_dir)
     stt = load_state()
     ps = stt["products"][prod]
     compare_blocked = ps.get("compare_blocked", False)
