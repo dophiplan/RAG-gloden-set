@@ -100,6 +100,23 @@ footer{margin-top:80px;padding-top:16px;border-top:1px solid var(--line);font-si
   <div class="pr"><b>전부 툴 안에서 끝납니다</b>엑셀을 열 일 없습니다 — 보기·판정·다운로드 모두 팝업과 버튼으로 합니다.</div>
 </div>
 
+<h2><span class="n">AI</span>이 시스템은 누가 움직이나</h2>
+<h3>AI 다섯 역할 + 자동화 일꾼 둘 + 사람</h3>
+<table>
+  <tr><th>역할</th><th>모델</th><th>하는 일</th><th>세션 정책</th></tr>
+  <tr><td><b>출제 AI</b></td><td>claude (Opus)</td><td>③ 커버리지맵 추출·병합 · ④ 골든셋 문항 출제</td><td>호출마다 새 세션 — 이전 맥락 없음</td></tr>
+  <tr><td><b>채점관</b></td><td>Kimi K2.6</td><td>③ 앙상블 추출 · ⑥ 면접 응시 · ⑦ 본판정</td><td>새 세션 + 출제 맥락 완전 차단 (문항·기준서만 전달)</td></tr>
+  <tr><td><b>검토자</b></td><td>claude 새 세션</td><td>⑦ 이중 판정 — 전 문항 독립 재판정</td><td>채점관의 판정을 보지 않음 (독립)</td></tr>
+  <tr><td><b>설계본부</b></td><td>claude 새 세션</td><td>게이트마다 자동 소환 → 카드에 검수 소견 첨부</td><td>작업 맥락 없이 규정집·판례집만 주입</td></tr>
+  <tr><td>(예비) codex</td><td>GPT (Codex CLI)</td><td>세 번째 추출·교차 검토 — 로그인 시 합류</td><td>—</td></tr>
+</table>
+<table>
+  <tr><th>AI가 아닌 자동화 일꾼</th><th>하는 일</th></tr>
+  <tr><td><b>무인 워커</b></td><td>사용량 한도로 멈추면 스스로 기다렸다 재개, 사람 차례가 되면 멈추는 배경 프로세스</td></tr>
+  <tr><td><b>텔레그램 봇</b></td><td>카드 알림을 폰으로 보내고, 폰의 승인/반려를 시스템에 중계</td></tr>
+</table>
+<div class="warn"><b>3권 분립 + 스크립트 원칙</b> — 생성(작업 AI) ≠ 검증(설계본부·검토자) ≠ 확정(사람). 어떤 AI도 자기 산출물을 스스로 승인하지 못하며, 최종 확정은 언제나 사람의 버튼입니다. 그리고 검수 8종·채점기·형식 게이트·리포트 생성은 AI가 아닌 <b>스크립트</b>입니다 — 같은 입력이면 언제나 같은 결과가 나와야 하는 곳에는 일부러 AI를 쓰지 않았습니다.</div>
+
 <h2><span class="n">00</span>전체 여정 한 장</h2>
 <h3>사람이 누르는 지점(마름모)만 따라가면 됩니다</h3>
 <div class="flow">
