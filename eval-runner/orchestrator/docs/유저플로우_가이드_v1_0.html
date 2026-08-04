@@ -1,0 +1,349 @@
+<title>RAG 평가 관제판 — 유저 플로우 가이드</title>
+<style>
+:root{
+  --bg:#f4f6f5; --ink:#1c2430; --sub:#5b6675; --line:#d8dee2;
+  --accent:#178f80; --ok:#1e9e77; --no:#c94f4f; --input:#b07d2e;
+  --panel:#ffffff;
+  /* 목업(실제 툴 화면 재현)은 테마와 무관하게 항상 다크 — 실물이 다크라서 */
+  --m-bg:#10161d; --m-panel:#161d26; --m-line:#2a3340; --m-tx:#dde5ec; --m-sub:#8b98a8;
+  --m-ok:#3dd6b0; --m-no:#e0705d; --m-run:#4fc3e8; --m-inp:#e8b34f;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#12171d; --ink:#e3e9ef; --sub:#96a2b0; --line:#2b333d; --panel:#1a212a; --accent:#3fc4b1;}
+}
+:root[data-theme="dark"]{--bg:#12171d; --ink:#e3e9ef; --sub:#96a2b0; --line:#2b333d; --panel:#1a212a; --accent:#3fc4b1;}
+:root[data-theme="light"]{--bg:#f4f6f5; --ink:#1c2430; --sub:#5b6675; --line:#d8dee2; --panel:#ffffff; --accent:#178f80;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  line-height:1.75;margin:0;padding:0 20px 90px}
+.wrap{max-width:900px;margin:0 auto}
+header{padding:58px 0 10px;border-bottom:3px solid var(--ink);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:700}
+h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:8px 0 6px;text-wrap:balance}
+.lede{color:var(--sub);max-width:62ch;margin:0}
+.meta{font-size:12px;color:var(--sub);margin-top:14px;font-variant-numeric:tabular-nums}
+
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:26px 0 8px}
+.pr{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);padding:13px 16px;font-size:14px}
+.pr b{display:block;margin-bottom:2px}
+
+h2{font-size:15px;letter-spacing:.14em;font-weight:800;color:var(--accent);
+  margin:64px 0 6px;padding-top:20px;border-top:1px solid var(--line)}
+h2 .n{display:inline-block;min-width:30px;color:var(--ink);opacity:.35;font-variant-numeric:tabular-nums}
+h3{font-size:21px;font-weight:800;letter-spacing:-.01em;margin:2px 0 10px;text-wrap:balance}
+p{max-width:66ch}
+p.note{color:var(--sub);font-size:14px}
+
+.flow{background:var(--panel);border:1px solid var(--line);padding:14px;overflow-x:auto;margin:14px 0}
+.flow svg{min-width:640px}
+
+/* ── 실물 화면 재현(목업) — 항상 다크 (실제 툴이 다크 UI) ── */
+.screen{background:var(--m-bg);border:1px solid var(--m-line);border-radius:12px;padding:16px 18px;
+  color:var(--m-tx);font-size:13.5px;margin:16px 0 10px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.screen .cap{font-size:11px;letter-spacing:.14em;color:var(--m-sub);margin-bottom:11px}
+.mcard{background:var(--m-panel);border:1px solid var(--m-line);border-left:3px solid var(--m-ok);
+  border-radius:10px;padding:13px 15px;margin:8px 0}
+.mcard h4{margin:0 0 4px;font-size:14px}
+.mmeta{font-size:11.5px;color:var(--m-sub);margin-bottom:9px}
+.mev{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;background:#0b1016;border-radius:6px;
+  padding:9px 11px;margin:8px 0;white-space:pre-wrap;color:#c4cedb;line-height:1.65}
+.mhr{border-top:2px solid var(--m-line);margin:10px 0}
+.mbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.mb{font-family:inherit;font-size:12.5px;border-radius:8px;padding:6px 13px;border:1px solid var(--m-line);
+  background:transparent;color:var(--m-tx);white-space:nowrap}
+.mb.ok{border-color:var(--m-ok);color:var(--m-ok);font-weight:700}
+.mb.no{border-color:var(--m-no);color:var(--m-no)}
+.mb.run{border-color:var(--m-run);color:var(--m-run);font-weight:700}
+.msel{font-size:12px;border:1px solid var(--m-line);border-radius:7px;padding:5px 9px;background:var(--m-panel);color:var(--m-tx)}
+.mhint{font-size:11.5px;color:var(--m-sub);margin-top:7px}
+.mrow{border-bottom:1px dashed var(--m-line);padding:8px 2px;font-size:12.5px}
+.mrow .q{font-weight:600}
+.mrow .a{color:var(--m-sub);font-size:11.5px;margin-top:2px}
+.mtag{display:inline-block;font-size:10.5px;border:1px solid var(--m-inp);color:var(--m-inp);border-radius:5px;padding:0 6px;margin-left:6px}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:11.5px;font-weight:800;vertical-align:middle;margin-left:6px;flex:none}
+
+/* 단계 안내 */
+ol.steps{margin:10px 0 0;padding-left:0;list-style:none;counter-reset:st;max-width:72ch}
+ol.steps li{counter-increment:st;position:relative;padding:5px 0 5px 34px;font-size:14.5px}
+ol.steps li::before{content:counter(st);position:absolute;left:0;top:7px;width:21px;height:21px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.btn-ref{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.92em;background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap}
+
+table{border-collapse:collapse;font-size:13.5px;margin:12px 0;width:100%}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--panel);font-size:12px;letter-spacing:.05em}
+td b{color:var(--accent)}
+
+.warn{border:1px solid var(--input);border-left:4px solid var(--input);background:var(--panel);
+  padding:11px 15px;font-size:13.5px;margin:12px 0;max-width:72ch}
+footer{margin-top:80px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
+@media print{.screen{box-shadow:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">RSUPPORT · RAG 평가 오케스트레이터</div>
+  <h1>RAG 평가 관제판 — 유저 플로우 가이드</h1>
+  <p class="lede">코퍼스 업로드부터 성적 리포트 전달까지, 사람이 언제 무엇을 누르는지 전 과정을 화면 그대로 담은 조작 안내서입니다.</p>
+  <div class="meta">v1.0 · 2026-08-04 · 기준 화면: 오케스트레이터 v0 (http://localhost:8791)</div>
+</header>
+
+<div class="principles">
+  <div class="pr"><b>모든 결정은 카드로 옵니다</b>사람 차례가 되면 "내가 할 일" 칸에 카드가 뜨고, 폰(텔레그램)으로도 알림이 갑니다.</div>
+  <div class="pr"><b>버튼이 없으면 할 일이 없는 겁니다</b>화면이 조용하면 시스템이 일하는 중이거나 외부 재료를 기다리는 중입니다.</div>
+  <div class="pr"><b>전부 툴 안에서 끝납니다</b>엑셀을 열 일 없습니다 — 보기·판정·다운로드 모두 팝업과 버튼으로 합니다.</div>
+</div>
+
+<h2><span class="n">00</span>전체 여정 한 장</h2>
+<h3>사람이 누르는 지점(마름모)만 따라가면 됩니다</h3>
+<div class="flow">
+<pre class="mermaid">
+flowchart TD
+  A["코퍼스 zip 업로드 (여러 번 가능)"] --> B{"「✅ 다 올렸어요 — 검사 시작」"}
+  B --> C["① 실측 · ② 지형 (자동)"]
+  C --> D{"지형 확인 카드 「▶ 계속 진행」"}
+  D --> E["③ 커버리지맵 — claude+Kimi 앙상블 (자동, 수 시간)"]
+  E --> F{"커버리지맵 카드 — 체크리스트 확인 후 「승인」"}
+  F --> G["④ 골든셋 차수 생성 (자동, 차수당 20~40분)"]
+  G --> H{"차수 카드 「👁 실물 보고 결정」"}
+  H -- 승인 --> I{"남은 재료 있나?"}
+  H -- "반려: 문항 코드만" --> G2["그 문항만 삭제 — 나머지 승인 처리"] --> I
+  H -- "반려: 이유만" --> G3["피드백 반영해 전체 재출제"] --> G
+  I -- 있음 --> G
+  I -- 없음 --> J{"마감 카드 — 커버 등식 확인 후 「승인」"}
+  J --> K["⑤ 통합 대장 (자동)"]
+  K --> L{"⑥ 채점관 면접 「📝 판정 시작」 — 30문항 합/불 후 「판정 완료」"}
+  L --> M["⑦ 이중 판정 — Kimi 본판정 + claude 전건 검토 (자동)"]
+  M --> N{"불일치 카드 「⚖ 불일치 검토」 — 문항별 확정 후 「승인」"}
+  N --> O["질문셋 발행본 생성 (자동)"]
+  O --> P{"「📦 전달 꾸러미」 전체/검색축만 선택 후 팀장님 전달"}
+  P --> Q["팀장님 시스템 응시 (외부)"]
+  Q --> R{"응답로그 업로드 — 응시 범위 선언"}
+  R --> S["형식 게이트 · 채점 · 리포트 초안 (자동, 수 분)"]
+  S --> T{"성적표 카드 — 표본 확인 후 「승인」"}
+  T --> U["성적 히스토리 기록 — ⓘ 툴팁 · 「📤 리포트 보관함」"]
+  U --> V{"다음 사이클"}
+  V -- 새 응답로그 --> W["「⬆ 실물 채점 추가로 돌리기」"] --> R
+  V -- 코퍼스 보강 --> X["「＋ 코퍼스 보강 (증분 확대)」"] --> A
+</pre>
+</div>
+<p class="note">직사각형 = 시스템이 알아서 하는 구간 · 마름모 = 사람이 버튼을 누르는 구간. 마름모 사이에는 아무것도 안 해도 됩니다.</p>
+
+<h2><span class="n">01</span>메인 화면 읽는 법</h2>
+<h3>다섯 구역만 알면 됩니다</h3>
+<div class="screen"><div class="cap">메인 화면 구조 (실제 배치 재현)</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <span class="mb">RV 리모트뷰 <span class="mtag">1</span></span><span class="mb ok">RC 리모트콜</span>
+    <span style="flex:1"></span><span class="mb">● 실전 모드 — 출제 claude · 채점 Kimi</span>
+  </div>
+  <div class="mcard" style="border-left-color:var(--m-run)">🎉 지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요 <span class="mark">2</span></div>
+  <div class="mev">① 코퍼스 실측 ─ ② 지형 판정 ─ ③ 커버리지맵 ─ ④ 골든셋 배치 ─ ⑤ 통합 대장 ─ ⑥ 캘리브레이션 ─ ⑦ 본판정 ─ ⑧ 실물 채점 ─ ⑨ 유지보수   <span class="mark">3</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div class="mcard" style="border-left-color:var(--m-line)"><h4>현재 단계</h4><div class="mhint">지금 어느 공정인지</div></div>
+    <div class="mcard"><h4>내가 할 일 (검수큐)</h4><div class="mhint">결정 카드가 여기 뜸 <span class="mark">4</span></div></div>
+    <div class="mcard" style="border-left-color:var(--m-line)"><h4>성적 히스토리</h4><div class="mhint">회차별 성적·리포트 <span class="mark">5</span></div></div>
+  </div>
+</div>
+<ol class="steps">
+  <li><b>제품 탭</b> — 빨간 숫자 배지가 붙은 탭이 내 차례가 있는 제품입니다. 탭을 누르면 그 제품 화면으로 바뀝니다.</li>
+  <li><b>"지금 할 일" 줄</b> — 화면이 지금 뭘 하라는지 한 문장으로 알려줍니다. 멈췄을 때 재개 버튼도 여기 나타납니다.</li>
+  <li><b>공정 트랙</b> — ①~⑨ 중 어디까지 왔는지. 노랗게 빛나는 단계가 현재 위치입니다.</li>
+  <li><b>검수큐</b> — 모든 결정 카드가 여기 옵니다. 이 문서의 나머지는 전부 이 칸의 카드 조작법입니다.</li>
+  <li><b>성적 히스토리</b> — 회차 성적, ⓘ 상세 툴팁, 리포트 다운로드가 여기 있습니다.</li>
+</ol>
+
+<h2><span class="n">02</span>① 코퍼스 올리기</h2>
+<h3>여러 번 나눠 올려도 됩니다 — 시작 버튼은 따로</h3>
+<div class="screen"><div class="cap">입력 대기 카드 (① 코퍼스 실측)</div>
+  <div class="mcard" style="border-left-color:var(--m-inp)">
+    <h4>INPUT_CORPUS_AUDIT — 입력 대기</h4>
+    <div class="mmeta">📎 파일을 올려주세요 · RAG 시스템 인입분 전량 (xlsx/json/zip)</div>
+    <div class="mbtns">
+      <span class="mb ok">📎 파일 올리기 (여러 개 선택 가능)</span><span class="mark">1</span>
+      <span class="mb run">✅ 다 올렸어요 — 검사 시작</span><span class="mark">3</span>
+    </div>
+    <div class="mhint">올라간 파일 <b style="color:var(--m-tx)">3개</b> — RAG_RV_data.zip, content.rview.com_ko.zip_ … <span class="mark">2</span><br>
+    여러 번 나눠 올려도 돼요 — 전부 올린 뒤 [다 올렸어요]를 누르면 검사가 시작돼요.</div>
+  </div>
+</div>
+<ol class="steps">
+  <li><span class="btn-ref">📎 파일 올리기</span> — 팀장님이 준 export 파일을 선택합니다. 선택창에서 <b>Cmd 누른 채 클릭</b>하면 여러 개를 한 번에, 부족하면 몇 번이고 다시 올려도 됩니다. zip은 압축 그대로 올립니다.</li>
+  <li>카드의 <b>"올라간 파일 N개"</b> 숫자로 다 들어갔는지 확인합니다.</li>
+  <li><span class="btn-ref">✅ 다 올렸어요 — 검사 시작</span> — 확인창("지금까지 올린 N개로 시작할까요?")에서 확인을 누르면 실측이 시작됩니다. 더 올릴 게 있으면 취소하면 됩니다.</li>
+</ol>
+
+<h2><span class="n">03</span>② 지형 확인 — 결정할 게 없는 카드</h2>
+<h3>형식 확인 카드는 버튼이 하나뿐입니다</h3>
+<div class="screen"><div class="cap">형식 확인 게이트 (설정이 이미 완비된 경우)</div>
+  <div class="mcard">
+    <h4>GATE_TERRAIN — 사람 게이트</h4>
+    <div class="mmeta">결정 성격: 형식 확인 — 문제 없으면 계속 진행하면 됩니다</div>
+    <div class="mev">- 제품명: 리모트뷰 ✅ · citation 규칙 ✅ · 앵커 규칙 ✅ (전부 완비 — 확인만)</div>
+    <div class="mbtns"><span class="mb ok">▶ 계속 진행</span><span class="mark">1</span></div>
+    <div class="mhint">결정할 항목이 없는 확인 카드예요 — 내용에 문제가 보이면 여기서 반려</div>
+  </div>
+</div>
+<ol class="steps">
+  <li><span class="btn-ref">▶ 계속 진행</span> 하나만 누르면 됩니다. 승인/반려로 고민할 카드가 아니라는 뜻으로 버튼이 하나만 나옵니다. (③ 앙상블 추출이 바로 출발 — 수 시간 소요, 폰 알림 대기)</li>
+</ol>
+
+<h2><span class="n">04</span>③ 커버리지맵 승인 — 체크리스트가 있는 카드</h2>
+<h3>체크박스를 전부 체크해야 승인이 켜집니다</h3>
+<div class="screen"><div class="cap">플래그(확인 항목)가 달린 게이트 카드</div>
+  <div class="mcard">
+    <h4>GATE_COVMAP — 사람 게이트</h4>
+    <div class="mev">- 커버 단위(검수 통과): 6,937
+- 1축 문자 대조: 불일치 0 · GAP 실측 완료</div>
+    <div class="mrow">☐ ack: GAP-목록·넘김 페이지 48건 — 내용 없는 목록 페이지 (무해) <span class="mark">1</span></div>
+    <div class="mrow">☐ ack: GAP-내용 페이지 42건 — 보완 추출 완료분 확인</div>
+    <div class="mbtns"><span class="mb ok" style="opacity:.45">승인</span><span class="mb no">반려 (사유 필수)</span><span class="mark">2</span></div>
+    <div class="mhint">체크리스트 전부 확인(체크)해야 승인 버튼이 켜져요</div>
+  </div>
+</div>
+<ol class="steps">
+  <li>플래그(☐) 항목을 하나씩 읽고 <b>전부 체크</b>합니다 — "봤다"는 기록이 원장에 남습니다.</li>
+  <li>전부 체크하면 흐리던 <span class="btn-ref">승인</span>이 켜집니다. 내용이 궁금하면 자료실의 <span class="btn-ref">👁 보기</span>로 맵 실물을 팝업으로 볼 수 있습니다.</li>
+</ol>
+
+<h2><span class="n">05</span>④ 골든셋 차수 — 가장 자주 만나는 카드</h2>
+<h3>실물을 팝업으로 보고, 그 자리에서 결정합니다</h3>
+<div class="screen"><div class="cap">차수 카드 → 「👁 실물 보고 결정」 팝업</div>
+  <div class="mcard">
+    <h4>GATE_GSBATCH_12차 — 사람 게이트</h4>
+    <div class="mev">### 👀 사람 확인 가이드 — 표본 문항과 확인 포인트 (맨 위)
+1. 질문이 실제 고객이 물어볼 법한 말인가요?
+2. 정답이 질문에 대한 답인가요?</div>
+    <div class="mhr"></div>
+    <div class="mhint">아래는 참고용 상세(실측 수치·설계본부 소견)</div>
+    <div class="mbtns">
+      <span class="mb run">👁 실물 보고 결정 (팝업)</span><span class="mark">1</span>
+      <span class="mb ok">승인</span><span class="mark">2</span>
+      <span class="mb no">반려 (사유 필수)</span><span class="mark">3</span>
+    </div>
+  </div>
+  <div class="mcard" style="border-left-color:var(--m-run)">
+    <h4>👁 팝업 — 문항 전체 표</h4>
+    <div class="mev">ID      질문                       정답 (필수 포함 요소)      근거 출처 …
+RC2-401 리모트뷰의 지원 OS는?      Windows, macOS … (전체 75행)</div>
+    <div class="mbtns"><span class="mb">⬇ 파일 받기</span><span class="mb">닫기 (나중에 결정)</span><span class="mb no">반려 (사유 필수)</span><span class="mb ok">승인</span></div>
+  </div>
+</div>
+<ol class="steps">
+  <li><span class="btn-ref">👁 실물 보고 결정</span> — 문항 전체가 표 팝업으로 뜹니다. 카드 맨 위의 👀 표본·확인 포인트를 기준으로 훑습니다. (실선 아래는 참고용)</li>
+  <li>문제 없으면 팝업 아래(또는 카드)의 <span class="btn-ref">승인</span> — 다음 차수가 자동으로 출발합니다.</li>
+  <li>이상한 문항이 있으면 <span class="btn-ref">반려</span> — 사유 창에 아래 표처럼 적습니다. <b>반려 후 승인·실행을 또 누를 필요 없습니다</b> — 재출제가 자동 시작됩니다.</li>
+</ol>
+<table>
+  <tr><th>반려 사유에 이렇게 쓰면</th><th>이렇게 동작합니다</th></tr>
+  <tr><td><b>RC2-539, RC2-541</b> (문항 코드만)</td><td>그 문항들만 빠지고 <b>나머지는 승인 처리</b> → 바로 다음 차수</td></tr>
+  <tr><td><b>"홍보문구는 필요 없음"</b> (이유만)</td><td>이번 차수 <b>전체</b>를 그 피드백을 반영해 다시 만듦</td></tr>
+  <tr><td><b>RC2-539 — 홍보문구라 필요 없음</b></td><td>그 문항만 빼고, 이유는 다음 출제에 피드백으로 반영</td></tr>
+</table>
+<div class="warn">💡 실수로 승인을 눌렀어도 복구됩니다 — 채팅에서 클로드에게 문항 코드를 말하면 사후 삭제 처리해 줍니다.</div>
+
+<h2><span class="n">06</span>⑥ 채점관 면접 — 30문항 판정 팝업</h2>
+<h3>기준은 하나: "답이 채점 기준에 맞는가" (문항이 필요한가가 아님)</h3>
+<div class="screen"><div class="cap">「📝 판정 시작」 → 전체화면 팝업</div>
+  <div class="mcard" style="border-left-color:var(--m-run)">
+    <h4>🧑‍⚖️ 채점관 면접 답안지 — 12/30 <span style="color:var(--m-sub);font-size:11px">(클릭 즉시 저장 · 중간에 닫아도 안전)</span></h4>
+    <div class="mbtns" style="border-bottom:1px solid var(--m-line);padding-bottom:8px">
+      <span class="mhint">체크한 2건을:</span><span class="mb ok">합격</span><span class="mb no">불합격</span>
+      <span style="flex:1"></span><span class="mb">나머지(미판정) 전부 합격</span><span class="mark">3</span>
+    </div>
+    <div class="mrow"><span class="q">☑ 1. [RC2-414] 리모트콜 스마트보드의 정식 명칭은?</span><span class="mark">2</span>
+      <div class="a">답: RSUPPORT SMARTBOARD입니다 · 기준: 정답에 'RSUPPORT SMARTBOARD' 포함</div>
+      <div class="mbtns"><span class="mb ok">합격</span><span class="mb no">불합격</span></div></div>
+    <div class="mbtns" style="margin-top:12px"><span class="mb">닫기 (이어서 나중에)</span><span class="mb no">반려 (사유 필수)</span><span class="mb ok" style="opacity:.45">판정 완료 — 면접 결과 보기</span><span class="mark">4</span></div>
+  </div>
+</div>
+<ol class="steps">
+  <li>카드의 <span class="btn-ref">📝 판정 시작 (팝업)</span>을 누르면 30문항이 전체화면으로 뜹니다.</li>
+  <li>문항마다 질문·답·기준을 보고 <b>"이 답이 이 기준이면 합격인가?"만</b> 판정합니다. 질문이 마음에 안 들어도 그건 여기서 따지지 않습니다(그건 ④ 골든셋 반려의 몫). 이상한 것만 <span class="btn-ref">불합격</span> 클릭.</li>
+  <li>나머지는 <span class="btn-ref">나머지(미판정) 전부 합격</span> 한 번으로 끝 — 체크박스로 여러 개를 묶어 일괄 판정도 됩니다. 클릭 즉시 저장되니 중간에 닫아도 됩니다.</li>
+  <li>30/30이 되면 <span class="btn-ref">판정 완료 — 면접 결과 보기</span>가 켜집니다. 내 답과 AI 채점관의 답이 90% 이상 일치하면 채점관 채용 확정.</li>
+</ol>
+
+<h2><span class="n">07</span>⑦ 이중 판정 — 갈린 문항만 봅니다</h2>
+<h3>Kimi와 claude가 다르게 판정한 것만 사람이 확정</h3>
+<div class="screen"><div class="cap">「⚖ 불일치 검토」 팝업 — 문항별 두 판정문 비교</div>
+  <div class="mcard" style="border-left-color:var(--m-run)">
+    <h4>⚖ 이중 판정 불일치 검토 — 20건 중 7건 확정</h4>
+    <div class="mrow"><span class="q">3. [RC2-586] 대량 배포 시 지원되는 방식은?</span>
+      <div class="a">🤖 Kimi <b>부분</b> — 필수 요소 중 1개 누락…</div>
+      <div class="a">🔍 claude <b>합격</b> — 표현은 다르나 요소 충족…</div>
+      <div class="mbtns"><span class="mb ok">Kimi 판정 (부분)</span><span class="mb">claude 판정 (합격)</span><span class="mark">2</span></div></div>
+    <div class="mbtns" style="margin-top:12px"><span class="mb">닫기 (이어서 나중에)</span><span class="mb ok">검토 완료 — 대장 확정</span></div>
+  </div>
+</div>
+<ol class="steps">
+  <li>불일치 카드에서 <span class="btn-ref">⚖ 불일치 검토 (팝업)</span> — 두 AI의 판정문이 나란히 보입니다. (전체 수백 문항 중 갈린 것만 옵니다 — r1은 889건 중 20건)</li>
+  <li>문항마다 더 설득력 있는 쪽 버튼을 클릭 — 즉시 저장됩니다. 다 봤으면 <span class="btn-ref">검토 완료</span> → 카드 <span class="btn-ref">승인</span>.</li>
+</ol>
+
+<h2><span class="n">08</span>⑧ 시험 왕복 — 내보내고, 받고, 성적 내보내기</h2>
+<h3>왕복 세 버튼: 📦 전달 → 📎 업로드 → 📤 리포트</h3>
+<div class="screen"><div class="cap">⑧ 실물 채점 카드 + 성적 히스토리</div>
+  <div class="mcard" style="border-left-color:var(--m-inp)">
+    <h4>INPUT_SCORING — 응답로그 대기</h4>
+    <div class="mbtns">
+      <span class="mhint">📦 전달 꾸러미:</span><span class="mb">전체 응시</span><span class="mb">검색축만</span><span class="mark">1</span>
+      <select class="msel"><option>응시 범위: 검색축만 (answer 전건 null)</option></select><span class="mark">2</span>
+      <span class="mb ok">📎 파일 올리기</span>
+    </div>
+  </div>
+  <div class="mcard">
+    <h4>성적 히스토리 — 골든셋 v2.0 <span style="float:right">📤 리포트 보관함 1 ›</span><span class="mark">5</span></h4>
+    <div class="mev">지표        r1 ⓘ  <span class="mark">4</span>
+top1     236 (27%)
+top5     369 (42%)
+생성 pass    미응시</div>
+  </div>
+</div>
+<ol class="steps">
+  <li><span class="btn-ref">📦 전달 꾸러미</span> — <b>전체 응시</b>(검색+생성) 또는 <b>검색축만</b>(top1·top5만, LLM 비용 절감)을 골라 받습니다. zip 안에 질문셋 발행본+응시 안내문이 들어 있어 그대로 팀장님께 전달하면 됩니다. "다시 주세요"면 버튼 한 번 더 — 항상 최신판이 나옵니다.</li>
+  <li>응답로그(json)가 돌아오면 <b>응시 범위를 선언</b>하고 <span class="btn-ref">📎 파일 올리기</span> — 시스템이 선언과 실물(answer 유무)을 대조해 어긋나면 그 자리에서 잡아냅니다.</li>
+  <li>채점은 자동입니다. 성적표 카드가 오면 <b>표본 가이드</b>(질문 ↔ 가져온 문서가 어울리는지 성공/실패 각 3건)만 훑고 <span class="btn-ref">승인</span>.</li>
+  <li>기록된 회차의 <span class="btn-ref">ⓘ</span>에 마우스를 올리면 "출처 오류를 걷어내면?" 표와 실질 성능이 뜹니다.</li>
+  <li><span class="btn-ref">📤 리포트 보관함</span> — 회차별 보고용 꾸러미(리포트+원자료+작업 목록)를 받아 팀장님께 전달합니다.</li>
+</ol>
+
+<h2><span class="n">09</span>⑨ 운영 — 반복되는 두 동선</h2>
+<h3>새 로그가 오면, 새 자료가 오면</h3>
+<ol class="steps">
+  <li><b>새 응답로그(r2, r3…)</b> — 성적 히스토리의 <span class="btn-ref">⬆ 실물 채점 추가로 돌리기</span>에 올리면 회차 부여부터 리포트까지 자동. 표에 전 회차 대비 Δ(▲▼)가 같이 표시됩니다.</li>
+  <li><b>코퍼스 보강(매뉴얼·FAQ 등)</b> — 오른쪽 위 청록색 <span class="btn-ref">＋ 코퍼스 보강 (증분 확대)</span> → 추가분만 올리면 <b>기존 문항·성적은 그대로</b> 두고 새 재료만 출제해 골든셋이 커집니다.</li>
+</ol>
+
+<h2><span class="n">10</span>폰에서 결정하기 (텔레그램)</h2>
+<h3>자리에 없어도 흐름이 끊기지 않습니다</h3>
+<div class="screen"><div class="cap">@ragcheck_bot 알림 (요약만 전송 — 상세는 관제판)</div>
+  <div class="mcard">
+    <div class="mev">🙋 결정해 주세요 — RC2 · GSBATCH_12차
+12차 생성·검수 완료 — 사람 게이트
+· 문항: 75 · 검수: PASS</div>
+    <div class="mbtns"><span class="mb ok">✅ 승인</span><span class="mb no">↩ 반려 (사유)</span></div>
+  </div>
+</div>
+<ol class="steps">
+  <li>카드가 뜨면 폰으로 요약 알림이 옵니다. <span class="btn-ref">✅ 승인</span>을 누르면 즉시 처리+다음 단계 자동 실행.</li>
+  <li><span class="btn-ref">↩ 반려</span>를 누르면 "사유를 보내주세요" — <b>다음에 보내는 메시지가 그대로 반려 사유</b>가 됩니다(문항 코드 부분 반려도 동일하게 작동).</li>
+  <li>언제든 <span class="btn-ref">/status</span>를 보내면 제품별 현재 상태 요약이 옵니다. 내용을 자세히 봐야 하는 결정은 놔뒀다가 PC에서 팝업으로 — 카드는 도망가지 않습니다.</li>
+</ol>
+
+<h2><span class="n">11</span>멈췄을 때 — 세 가지 버튼</h2>
+<h3>대부분 버튼 한 번으로 살아납니다</h3>
+<table>
+  <tr><th>화면 표시</th><th>뜻</th><th>할 일</th></tr>
+  <tr><td>⏸ 한도로 잠시 멈췄어요</td><td>AI 사용량 한도 — 진행분은 저장됨</td><td>기다리면 <b>자동 재개</b>. 급하면 <span class="btn-ref">▶ 이어서 재개</span></td></tr>
+  <tr><td>↩ 반려 접수됨</td><td>반려 후 재출제가 자동 시작 안 된 경우</td><td><span class="btn-ref">▶ 이어서 진행</span></td></tr>
+  <tr><td>⛔ 사고 정지</td><td>일시 오류(응답 형식 등)일 가능성</td><td><span class="btn-ref">▶ 다시 시도</span> — <b>같은 원인으로 또 멈추면</b> 클로드 호출</td></tr>
+</table>
+<div class="warn">어떤 정지든 데이터는 체크포인트에 보존됩니다 — 만들어둔 것이 날아가는 정지는 없습니다.</div>
+
+<footer>
+  RAG 평가 관제판 유저 플로우 가이드 v1.0 · 2026-08-04 · 작성: 난희 + Claude · 원본: eval-runner/orchestrator/docs/유저플로우_가이드_v1_0.html
+</footer>
+</div>
