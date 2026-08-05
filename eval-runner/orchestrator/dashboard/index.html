@@ -627,12 +627,12 @@ function renderScores(ps){
         <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
       </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
-  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.retired?null:g.code)).filter(Boolean).join('<div style="height:10px"></div>')
+  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.code)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + impNote(displayGens);
   // 보관함 화면 = 은퇴한 골든셋 리스트만 (누적 현황 줄 — 표는 기본 화면 몫)
   // 보관함 = 은퇴 골든셋의 현황 줄 + 상세 성적표까지 (옛 회차 기록은 여기서 열람)
-  const archBody = archGens.map(g=>genRow(g) + (mk(g.label, S.scores[g.code], true, null)||'')).join('') + impNote(archGens);
+  const archBody = archGens.map(g=>genRow(g) + (mk(g.label, S.scores[g.code], true, g.code)||'')).join('') + impNote(archGens);
   const open = !!VSTATE['scores:'+cur];   // 자동 갱신 후에도 보고 있던 화면 유지
   return `<div class="vswitch" data-vskey="scores:${esc(cur)}">
     <div class="curview" style="display:${open?'none':'block'}">${summary}${curBody}</div>
@@ -732,21 +732,28 @@ function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal
 
 /* ⓘ 지표 툴팁 — 출처 오류를 걷어낸 실질 검색 성능 (엄격/결측 제외/합집합) */
 function showITip(evt, codeEnc, r){
-  const a = ((S.scores[decodeURIComponent(codeEnc)]||{})[r]||{}).분석;
+  const sc = (S.scores[decodeURIComponent(codeEnc)]||{})[r]||{};
+  const a = sc.분석;
   if(!a) return;
   const pc = (v,n)=> (typeof v==='number'&&n)? `${v} (${(v/n*100).toFixed(1)}%)` : '·';
-  const scoreable = a.n - (a.no_url||0);
-  const t1p=(a.top1/scoreable*100).toFixed(0), t5p=(a.top5/scoreable*100).toFixed(0);
+  let rows = `<tr><td>전량 (엄격)</td><td>${pc(a.top1,a.n)}</td><td>${pc(a.top5,a.n)}</td></tr>`;
+  let concl = '', hint = '';
+  if(a.no_url){   // 결측 실측이 있는 회차 — 실질 성능 병기
+    const scoreable = a.n - a.no_url;
+    rows += `<tr><td>출처 결측 ${a.no_url}건 제외</td><td>${pc(a.top1,scoreable)}</td><td>${pc(a.top5,scoreable)}</td></tr>`;
+    concl = `<div class="concl">→ 출처 오류를 제외한 실질 검색 성능은 top1 약 ${(a.top1/scoreable*100).toFixed(0)}%, top5 약 ${(a.top5/scoreable*100).toFixed(0)}%입니다.</div>`;
+    hint = `<div class="hint">이 간극(전량 vs 실질)이 골든셋 출처 보정·코퍼스 큐레이션으로 줄여야 할 오류율이에요.</div>`;
+  }
+  if(typeof a.u1==='number'){   // 합집합(v12) 실측이 있는 회차
+    rows += `<tr><td>내용 정답 인정 (합집합 v12)</td><td>${pc(a.u1,a.ca_n)}</td><td>${pc(a.u5,a.ca_n)}</td></tr>`;
+  }
+  if(a.이관){
+    hint = `<div class="hint">기록 이관 회차 — 원자료(응답로그) 미보유, 당시 보고서 수치입니다.</div>`;
+  }
+  const note = a.note? `<div class="hint">당시 보고서 주석 — ${esc(String(a.note))}</div>` : '';
   const tip = $('itip');
-  tip.innerHTML = `<b>${r} — 출처 오류를 걷어내면?</b>
-    <table>
-      <tr><th>기준</th><th>top1</th><th>top5</th></tr>
-      <tr><td>전량 (엄격 — 출처 오류 포함)</td><td>${pc(a.top1,a.n)}</td><td>${pc(a.top5,a.n)}</td></tr>
-      <tr><td>출처 결측 ${a.no_url||0}건 제외</td><td>${pc(a.top1,scoreable)}</td><td>${pc(a.top5,scoreable)}</td></tr>
-      <tr><td>내용 정답 인정 (합집합 v12)</td><td>${pc(a.u1,a.ca_n)}</td><td>${pc(a.u5,a.ca_n)}</td></tr>
-    </table>
-    <div class="concl">→ 출처 오류를 제외한 실질 검색 성능은 top1 약 ${t1p}%, top5 약 ${t5p}%입니다.</div>
-    <div class="hint">이 간극(전량 vs 실질)이 골든셋 출처 보정·코퍼스 큐레이션으로 줄여야 할 오류율이에요.</div>`;
+  tip.innerHTML = `<b>${r} — 상세 내역</b>
+    <table><tr><th>기준</th><th>top1</th><th>top5</th></tr>${rows}</table>${concl}${note}${hint}`;
   tip.style.display = 'block';
   const x = Math.min(evt.clientX + 12, innerWidth - 400), y = Math.min(evt.clientY + 14, innerHeight - tip.offsetHeight - 16);
   tip.style.left = x + 'px'; tip.style.top = y + 'px';

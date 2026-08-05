@@ -183,7 +183,9 @@ def api_scores():
         for rnd, v in rec.items():
             if rnd.startswith("_") or rnd in out.get(prod, {}):
                 continue   # 로컬 실측이 항상 우선 — 이관본은 빈 회차만 채움
-            out.setdefault(prod, {})[rnd] = {**v, "scorer": "기록 이관"}
+            out.setdefault(prod, {})[rnd] = {**v, "scorer": "기록 이관",
+                "분석": {"top1": v.get("top1"), "top5": v.get("top5"), "n": v.get("n"),
+                         "note": v.get("note"), "이관": True}}
     return out
 
 
