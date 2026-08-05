@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-05T13:56:31",
+  "updated": "2026-08-05T19:28:20",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -2031,6 +2031,18 @@
         ],
         "batch": "B1"
       }
+    },
+    "CI": {
+      "stage": "CORPUS_AUDIT",
+      "status": "WAITING_INPUT",
+      "calibration_passed": false,
+      "scorer_version": null,
+      "compare_blocked": false,
+      "stage_history": {},
+      "open_gates": [],
+      "halt_reason": null,
+      "strategy": "ensemble",
+      "start_mode": "full"
     }
   }
 }
