@@ -12,6 +12,10 @@ pipeline:
   goldenset_exclude_sources: ["Known Issue"]   # 출제 제외 소스 (2026-07-23 난희 결정: 내부 결함 목록은 고객 질문이 아님)
   recheck_rate: 0.05          # 본판정 무작위 재검 (1키 모드면 코드가 0.10으로 강제 상향)
   recheck_seed: null          # null이면 실행 시 생성 — 원장에 시드+추출 목록 기록 의무
+  goldenset_quota:            # [예약 · v3 발주 2026-08-05] v3 세대 제작 시 활성화 — docs/골든셋_v3_출제규칙_개정발주_v1_0.md
+    e_type: 0.10              # E형 함정(부재 인정) — v1 수준 복원
+    complex: 0.10             # 복합(비교·다중 조건·복수 단위 결합)
+    table: 0.05               # 표 기반 (표 청크 보유량 내)
   calibration_threshold: 0.90
   stage2_dual: true           # ⑦ 이중 판정 — Kimi(정) + claude 새 세션(검토), 불일치만 사람 게이트
 
