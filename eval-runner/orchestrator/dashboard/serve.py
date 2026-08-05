@@ -61,6 +61,10 @@ def api_state():
             "code": code, "name": meta["product_name"], "gen": meta["gen"],
             "legacy": LEGACY_GENS.get(meta["display"], []),
         }
+        # G20: 외부 Q&A 별도 트랙 현황 — 시험지 발행 여부 (파일명에 문항 수 내장)
+        papers = sorted((ROOT / "data" / code / "external_qa").glob(f"외부QA_시험지_{code}_*문항_v*.xlsx"))
+        pm = re.search(r"_(\d+)문항_", papers[-1].name) if papers else None
+        ps["_qa"] = {"paper": N(papers[-1].name), "n": int(pm.group(1)) if pm else None} if papers else None
     # 모델 모드 부가
     try:
         from model_adapter import detect_mode, effective_recheck_rate
@@ -171,7 +175,10 @@ def api_scores():
             "검색축만": search_only, "분석": anal,
             "E환각": sum(1 for r in rep if r.get("E형환각")),
             "E거절": sum(1 for r in rep if r.get("E형거절")),
-            "n": len(rep), "scorer": "run_score_v11",
+            "n": len(rep),
+            # G20: 외부 Q&A 별도 트랙은 기계 내용 대조 채점 — 라벨로 구분 (골든셋 채점기 아님)
+            "scorer": ("내용 대조(Q&A 트랙)" if any(d.glob("외부QA_r*_리포트.md"))
+                       else "run_score_v11"),
         }
     # 문서 기록 이관 — 로컬 재채점본이 없는 회차를 인수인계 보고서 수치로 병기 (출처 라벨)
     for f in (ROOT / "results").glob("기록이관_*.json"):
@@ -471,6 +478,66 @@ def api_s2diff(prod):
     return {"rows": rows, "file": N(f.name)}
 
 
+def api_qa_handoff(prod):
+    """G20 · 외부 Q&A 별도 트랙 전달 꾸러미 — 시험지(질문만) + 안내문 + 응답로그 예시 zip."""
+    import io
+    import zipfile
+    import openpyxl
+    import datetime
+    d = ROOT / "data" / prod / "external_qa"
+    papers = sorted(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx"))
+    if not papers:
+        return None, "Q&A 시험지 없음 — 외부 Q&A 분류 카드 승인 후 이용 가능"
+    pub = papers[-1]
+    ws = openpyxl.load_workbook(pub, read_only=True).active
+    first = next(ws.iter_rows(min_row=2, max_row=2, values_only=True), None)
+    qid0 = str(first[0]) if first else f"{prod}-Q001"
+    n = max(0, (ws.max_row or 1) - 1)
+    name = "리모트콜" if prod.startswith("RC") else ("리모트뷰" if prod.startswith("RV") else prod)
+    stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    guide = f"""# {name} 외부 Q&A 세트 응시 요청 (별도 트랙 — 골든셋 아님)
+
+> 꾸러미 생성: {stamp} · 시험지: {N(pub.name)} ({n}문항)
+> **검색축만**: 답변 생성(LLM 호출)은 생략하고 검색 결과(hits)만 기록해 주세요.
+
+## 이 시험지는 무엇이 다른가
+- 외부에서 제작된 질문·답변 세트 중 코퍼스에 근거가 실재하는 문항만 추린 것입니다.
+- 기존 골든셋 회차와는 **성적이 분리 집계**됩니다 (별도 트랙).
+
+## 부탁드리는 것
+각 질문을 RAG 시스템에 넣고, 검색 hits(rank 순, 본문 포함)를 json 1개로 회신 부탁드립니다.
+hits 항목에 **본문(content) 텍스트가 꼭 포함**돼야 합니다 — 채점이 내용 대조 방식이라 URL만으로는 판정이 안 됩니다.
+
+## 응답 로그 형식 (예시 파일 동봉)
+{{
+  "responses": [
+    {{ "id": "{qid0}", "hits": [ {{"rank": 1, "url": "…", "content": "…청크 본문…"}} ], "answer": null }}
+  ]
+}}
+"""
+    example = json.dumps({"responses": [
+        {"id": qid0, "hits": [{"rank": 1, "url": "https://…", "content": "…검색된 청크 본문…"},
+                              {"rank": 2, "url": "https://…", "content": "…"}], "answer": None}]},
+        ensure_ascii=False, indent=1)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(pub, N(pub.name))
+        z.writestr("응시_안내문.md", guide)
+        z.writestr("응답로그_예시.json", example)
+    ledger_append_safe("EXTERNAL_QA", "QA_HANDOFF_DOWNLOADED",
+                       evidence={"시험지": N(pub.name), "문항": n}, product=prod)
+    return buf.getvalue(), f"외부QA_꾸러미_{prod}_{n}문항.zip"
+
+
+def ledger_append_safe(stage, action, evidence=None, product=None):
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append(stage, action, "사람:대시보드", evidence=evidence, product=product)
+    except Exception:
+        pass
+
+
 def api_handoff(prod, scope="full"):
     """⑧ 팀장님 전달 꾸러미 — 발행본 + 응시 안내문을 zip 한 방에 (툴에서 직접 다운로드).
     scope: full=전체 응시(검색+생성) / search=검색축만(top1·top5, answer:null) — 안내문이 달라진다."""
@@ -623,6 +690,11 @@ def api_action(payload):
     elif cmd == "qa-import":
         # 외부 Q&A 인입 — 업로드 직후 자동 대조·분류 (G19)
         args += ["qa-import", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "qa-score":
+        # 외부 Q&A 별도 트랙 채점 — 응답로그 업로드 직후 (G20)
+        args += ["qa-score", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+        if payload.get("log"):
+            args += ["--log", payload["log"]]
     elif cmd == "s2diff-set":
         # 불일치 문항 확정 클릭 → 판정대장 '최종 판정' 컬럼에 즉시 기록
         import openpyxl
@@ -818,6 +890,19 @@ class H(SimpleHTTPRequestHandler):
             return self._send(200, j(api_xlsx(N(unquote(q.get("path", [""])[0]))or None,
                                               name=N(unquote(q.get("name", [""])[0])) or None,
                                               prod=N(q.get("product", [""])[0]) or None)))
+        if self.path.startswith("/api/qa-handoff"):
+            from urllib.parse import urlparse, parse_qs, quote
+            q = parse_qs(urlparse(self.path).query)
+            data, fname = api_qa_handoff(N(q.get("product", [""])[0]))
+            if data is None:
+                return self._send(404, j({"ok": False, "out": fname}))
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quote(fname)}")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         if self.path.startswith("/api/handoff"):
             from urllib.parse import urlparse, parse_qs
             q = parse_qs(urlparse(self.path).query)
@@ -868,7 +953,9 @@ class H(SimpleHTTPRequestHandler):
 
     UPLOAD_DIRS = {"CORPUS": "corpus", "SCORING": "08_scoring",
                    "COVERAGE": "03_coverage_map", "UNIFIED": "05_unified_ledger",
-                   "CALIBRATION": "06_calibration", "QA": "external_qa"}
+                   "CALIBRATION": "06_calibration",
+                   "QALOG": "external_qa/로그",   # Q&A 응답로그 — 원본과 섞이면 재대조가 오인 (QA보다 먼저 매칭돼야 함)
+                   "QA": "external_qa"}
 
     def _upload(self):
         """INPUT 카드용 파일 업로드 — 쿼리: product, target(카드 종류), name. 본문 = 파일 원바이트.
