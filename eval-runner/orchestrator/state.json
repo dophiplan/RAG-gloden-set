@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-05T09:48:00",
+  "updated": "2026-08-05T13:56:31",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -37,7 +37,7 @@
       "ai_use": {
         "generator": true,
         "judge": true,
-        "reviewer": false
+        "reviewer": true
       },
       "goldenset": {
         "phase": "DONE",
