@@ -78,6 +78,13 @@
   .expandbtn{font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--run);background:rgba(80,200,255,.08);border:1px solid var(--run);border-radius:8px;padding:5px 12px}
   .expandbtn:hover{background:rgba(80,200,255,.18)}
   .qachip{font-size:11px;font-weight:600;color:#c9a6ff;background:rgba(170,120,255,.10);border:1px solid rgba(170,120,255,.55);border-radius:999px;padding:4px 11px;margin-left:10px;white-space:nowrap}
+  /* G20: 외부 Q&A 옆길 레인 — ①~⑨ 본선 아래, 별도 트랙이 어디까지 왔는지 */
+  .qalane{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px;padding:7px 12px;border:1px dashed rgba(170,120,255,.45);border-radius:10px;background:rgba(170,120,255,.05);font-size:11px}
+  .qalane .lbl{font-weight:700;color:#c9a6ff;white-space:nowrap}
+  .qalane .qstep{padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--tx2);white-space:nowrap}
+  .qalane .qstep.done{border-color:rgba(61,214,176,.5);color:#3dd6b0}
+  .qalane .qstep.act{border-color:#c9a6ff;color:#c9a6ff;background:rgba(170,120,255,.14);font-weight:700}
+  .qalane .qarr{color:var(--tx2)}
   .archbtn.on,.archbtn:hover:not(:disabled){color:var(--tx);border-color:var(--tx2)}
   .archbtn:disabled{opacity:.45;cursor:not-allowed}
   .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
@@ -418,14 +425,24 @@ function render(){
     ? `<button class="expandbtn" style="margin-left:10px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
         onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
   const qaBtn = `<label class="expandbtn" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
-  // G20: 외부 Q&A 트랙 진행 표시 — 골든셋 본류와 별개로 돌고 있음을 헤더에서 한눈에
+  // G20: 외부 Q&A 옆길 레인 — 본선(①~⑨) 진행선 아래에서 별도 트랙의 현재 위치를 보여준다
   const qaGateOpen = (ps.open_gates||[]).some(g=>g.id.startsWith('QAIMP_'));
   const qaRounds = Object.keys(S.scores[PV().code+'QA']||{}).length;
-  const qaChip = qaGateOpen? `<span class="qachip" title="외부 Q&A 분류 결과가 검수큐에서 승인/반려를 기다려요">🧩 외부 Q&A — 분류 검수 대기</span>`
-    : ps._qa? `<span class="qachip" title="외부 Q&A는 골든셋과 분리된 별도 트랙으로 돌아요 — 성적 히스토리 '외부 Q&A' 줄">🧩 외부 Q&A 트랙 가동중 — ${qaRounds?`채점 ${qaRounds}회차`:'시험지 발행 · 응답로그 대기'}</span>` : '';
+  let qaLane = '';
+  if(qaGateOpen || ps._qa || qaRounds){
+    const stage = qaGateOpen? 0 : qaRounds? 3 : ps._qa? 2 : 0;
+    const steps = ['분류 검수', '시험지 발행', '응답로그 대기', qaRounds?`채점 qa-r${qaRounds}`:'채점'];
+    const tail = qaGateOpen? '지금: 검수큐 카드에서 승인/반려'
+      : qaRounds? `채점 ${qaRounds}회차 완료 — 다음 로그가 오면 이어서`
+      : '지금: [📦 Q&A 꾸러미]를 팀장님께 전달하고 응답로그를 기다려요';
+    qaLane = `<div class="qalane" title="외부 Q&A는 골든셋 본선(①~⑨)과 분리된 별도 트랙 — 성적도 따로 쌓여요">
+      <span class="lbl">🧩 외부 Q&A 별도 트랙</span><span class="hint">AI 없음 — 기계 문자 대조</span>`
+      + steps.map((t,i)=>`<span class="qstep ${i<stage?'done':i===stage?'act':''}">${t}</span>`).join('<span class="qarr">→</span>')
+      + `<span class="hint" style="margin-left:4px">${tail}</span></div>`;
+  }
   let html = `
   <div class="track-wrap">
-    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}${qaChip}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
     ${renderAiTeam()}
     <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
@@ -438,6 +455,7 @@ function render(){
         <div class="s-ai">${esc(stageAI(s.k).who)}</div>
       </div>`;}).join('')}
     </div>
+    ${qaLane}
   </div>
   <main>
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
