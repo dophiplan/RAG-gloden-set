@@ -95,8 +95,23 @@ def st_corpus_audit(prod, cfg):
                          fmt="json([{doc,chunk_id,text}] · {chunks:[…]} export) · md/txt · zip(내부 chunks-*.json)")
         return "WAITING_INPUT", {"corpus_files": len(corpus), "청크": 0}
     docs = len({c["doc"] for c in chunks})
-    return "DONE", {"corpus_files": len(corpus), "청크": len(chunks), "문서": docs,
-                    "manifest": mf_path.name}
+    # [모달리티 실측 2026-08-05] 표·이미지·그래프 커버리지 — "시험지가 뭘 못 보는지"를 받자마자 알린다
+    # (본부장님 질문 계기: 표/그래프/복합 질문 검증 여부 — 골든셋은 코퍼스에 있는 것만 출제 가능)
+    import re as _re
+    n_tbl = sum(1 for c in chunks if str(c.get("text", "")).count("|") >= 6)
+    n_imgref = sum(1 for c in chunks if _re.search(r"!\[|<img|\.png|\.jpe?g", str(c.get("text", ""))))
+    n_chart = sum(1 for c in chunks
+                  if len(_re.findall(r"\d+(?:\.\d+)?\s*%", str(c.get("text", "")))) >= 3)
+    ev = {"corpus_files": len(corpus), "청크": len(chunks), "문서": docs, "manifest": mf_path.name,
+          "모달리티(표 청크)": f"{n_tbl}건 ({n_tbl/len(chunks):.0%})",
+          "모달리티(이미지 참조)": f"{n_imgref}건 ({n_imgref/len(chunks):.0%}) — 참조≠내용",
+          "모달리티(수치 나열=그래프 서술 추정)": f"{n_chart}건"}
+    if n_imgref > len(chunks) * 0.3 and n_chart < len(chunks) * 0.02:
+        ev["⚠ 모달리티 경고"] = ("이미지 참조는 많은데 그래프·수치 서술 텍스트가 희박 — "
+                              "이미지 안의 내용(그래프·표 스크린샷)은 이 export에 없을 가능성. "
+                              "그래프 능력을 시험하려면 이미지→텍스트 처리분 export 필요")
+    ledger_append("CORPUS_AUDIT", "MODALITY_AUDIT", "script:pipeline", evidence=ev, product=prod)
+    return "DONE", ev
 
 
 def st_terrain(prod, cfg):
