@@ -3,6 +3,7 @@ models:
   judge:     {provider: "moonshot", model: "kimi-k2.6", temperature: 1, api_key_env: "JUDGE_KEY", max_tokens: 16384}   # 2026-07-23 난희 결정: K3→K2.6 (비용) · 규칙 C: ⑥ 캘리브레이션은 이 모델로 측정
   # 앙상블 추출 전용 (판정 아님 — 규칙 C 무관): K3는 추론에 예산을 써서 대량 베껴쓰기에 부적합.
   # 실측: K3 25청크=빈 응답, 10청크=345초 / v1-128k 25청크=223초·1축 통과 96%
+  reviewer:  {provider: "cli", command: ["codex", "exec", "--skip-git-repo-check"], prompt_arg: true}   # 2026-08-05 합류: ChatGPT Plus 구독 (스모크 1문항 통과) — 교차 검토 역할
   judge_extract: {provider: "moonshot", model: "moonshot-v1-128k", temperature: 0.3, api_key_env: "JUDGE_KEY", max_tokens: 16384}
 
 pipeline:
