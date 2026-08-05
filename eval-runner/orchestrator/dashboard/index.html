@@ -630,7 +630,8 @@ function renderScores(ps){
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + impNote(displayGens);
   // 보관함 화면 = 은퇴한 골든셋 리스트만 (누적 현황 줄 — 표는 기본 화면 몫)
-  const archBody = archGens.map(genRow).join('') + impNote(archGens);
+  // 보관함 = 은퇴 골든셋의 현황 줄 + 상세 성적표까지 (옛 회차 기록은 여기서 열람)
+  const archBody = archGens.map(g=>genRow(g) + (mk(g.label, S.scores[g.code], true, null)||'')).join('') + impNote(archGens);
   const open = !!VSTATE['scores:'+cur];   // 자동 갱신 후에도 보고 있던 화면 유지
   return `<div class="vswitch" data-vskey="scores:${esc(cur)}">
     <div class="curview" style="display:${open?'none':'block'}">${summary}${curBody}</div>
