@@ -114,7 +114,8 @@ def parse_qa_files(qa_dir):
     """external_qa/ 의 원본 파일 전부 → [{출처, 질문, 답변}] (분류결과·반려 파일 제외)"""
     items, skipped = [], []
     for p in sorted(qa_dir.glob("*")):
-        if (not p.is_file() or p.name.startswith((".", "반려_", "외부QA_분류결과"))
+        # 외부QA_* = 우리가 만든 산출물(분류결과·시험지·정답키) — 원재료가 아니라 제외
+        if (not p.is_file() or p.name.startswith((".", "반려_", "외부QA_"))
                 or p.suffix == ".md"):
             continue
         rows = ({".xlsx": _rows_from_xlsx, ".csv": _rows_from_csv,
@@ -264,14 +265,179 @@ def run(prod, actor="난희"):
     return {"ok": True, "out": out}
 
 
+# ── G20 · 별도 트랙 — 외부 Q&A는 기존 골든셋과 절대 섞지 않는다 (난희 설계 2026-08-05)
+#    승인 → 시험지(질문만)+정답키(봉인) 발행 → 꾸러미 전달 → 응답로그 → 자체 회차(qa r1, r2…)
+#    합치기(v3 편입)는 필요해질 때 별도 공사.
+
+def latest_report(prod):
+    """최신 유효 분류결과 (반려_ 제외)"""
+    hits = sorted((DATA / prod / "external_qa").glob(f"외부QA_분류결과_{prod}_v*.xlsx"))
+    return hits[-1] if hits else None
+
+
+def publish(prod, actor="난희"):
+    """QAIMP 승인 후처리 — 편입 후보만으로 시험지(ID·질문, 정답 비공개)와 정답키(봉인) 발행."""
+    import openpyxl
+    rep = latest_report(prod)
+    if not rep:
+        print("발행 불가 — 분류결과 파일이 없어요 (먼저 외부 Q&A를 올려 분류부터)")
+        return None
+    ws = openpyxl.load_workbook(rep, read_only=True, data_only=True).active
+    rows = [[("" if c is None else str(c)) for c in (r or [])] for r in ws.iter_rows(values_only=True)]
+    hdr = rows[0]
+    ix = {k: hdr.index(k) for k in ("출처 파일", "질문", "답변", "분류", "확인 발췌", "비고")}
+    cand = [r for r in rows[1:]
+            if r[ix["분류"]].startswith("편입 후보") and "중복" not in r[ix["비고"]]]
+    if not cand:
+        print("발행 생략 — 편입 후보(근거 실재) 문항이 0건이에요 (보류·E형·부분 일치만 있음)")
+        return None
+    d = DATA / prod / "external_qa"
+    ver = 1 + len(list(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx")))
+    paper = openpyxl.Workbook()
+    pw = paper.active
+    pw.title = "시험지"
+    pw.append(["문항ID", "질문"])
+    key = openpyxl.Workbook()
+    kw = key.active
+    kw.title = "정답키(봉인)"
+    kw.append(["문항ID", "질문", "정답(외부 제공)", "확인 발췌(코퍼스 실재)", "출처 파일"])
+    for i, r in enumerate(cand, 1):
+        qid = f"{prod}-Q{i:03d}"
+        pw.append([qid, r[ix["질문"]]])
+        kw.append([qid, r[ix["질문"]], r[ix["답변"]], r[ix["확인 발췌"]], r[ix["출처 파일"]]])
+    pname = f"외부QA_시험지_{prod}_{len(cand)}문항_v{ver}.xlsx"
+    paper.save(d / pname)
+    key.save(d / f"외부QA_정답키_{prod}_v{ver}.xlsx")
+    ledger_append("EXTERNAL_QA", "QA_PUBLISHED", f"script:import_qa({actor})",
+                  evidence={"시험지": pname, "문항": len(cand), "분류결과": N(rep.name),
+                            "트랙": "별도 (기존 골든셋과 미합류)"}, product=prod)
+    print(f"📄 Q&A 시험지 발행 — {pname} ({len(cand)}문항, 정답키 봉인 보관). "
+          f"[📦 Q&A 꾸러미]로 팀장님께 전달하세요.")
+    return pname
+
+
+def _hit_text(hit):
+    """검색 hit 안의 모든 문자열을 모아 대조용으로 — 형식이 회사마다 달라도 내용만 있으면 잡는다"""
+    if isinstance(hit, str):
+        return hit
+    if isinstance(hit, dict):
+        return " ".join(str(v) for v in hit.values() if isinstance(v, (str, int, float)))
+    return ""
+
+
+def score(prod, log_name=None, actor="난희"):
+    """Q&A 트랙 채점 — 검색축(내용 대조 기준): 정답 절이 hits 본문에 실재하는 첫 순위로 판정.
+    기계 판정만 (LLM 없음) — 생성축은 미채점(별도 트랙 v0 규격)."""
+    import openpyxl
+    d = DATA / prod / "external_qa"
+    keys = sorted(d.glob(f"외부QA_정답키_{prod}_v*.xlsx"))
+    if not keys:
+        msg = "채점 불가 — Q&A 시험지가 아직 발행 전이에요 (분류 카드 승인이 먼저)"
+        print(msg)
+        return {"ok": False, "out": msg}
+    ws = openpyxl.load_workbook(keys[-1], read_only=True, data_only=True).active
+    answers = {}   # qid → {질문, 절 목록}
+    for r in list(ws.iter_rows(values_only=True))[1:]:
+        qid, q, a = str(r[0] or ""), str(r[1] or ""), str(r[2] or "")
+        cl = _clauses(a) or ([a] if _norm(a) else [])
+        answers[qid] = {"질문": q, "절": cl, "qnorm": _norm(q)}
+    ld = d / "로그"   # 응답로그 전용 폴더 — Q&A 원본과 섞이면 재대조가 로그를 문항으로 오인
+    logs = ([ld / log_name] if log_name else
+            sorted(ld.glob("*.json"), key=lambda p: p.stat().st_mtime) if ld.is_dir() else [])
+    if not logs or not logs[-1].exists():
+        msg = "채점 불가 — 응답로그(json)가 안 보여요. [⬆ Q&A 응답로그 채점]으로 올려주세요."
+        print(msg)
+        return {"ok": False, "out": msg}
+    log_f = logs[-1]
+    data = json.loads(log_f.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        for k in ("responses", "items", "results", "data", "logs"):
+            if isinstance(data.get(k), list):
+                data = data[k]
+                break
+    if not isinstance(data, list):
+        msg = f"채점 불가 — {N(log_f.name)} 이 응답 목록 형식이 아니에요"
+        print(msg)
+        return {"ok": False, "out": msg}
+    by_id, by_q = {}, {}
+    for it in data:
+        if not isinstance(it, dict):
+            continue
+        iid = str(it.get("id") or it.get("question_id") or it.get("문항ID") or "")
+        if iid:
+            by_id[iid] = it
+        qn = _norm(it.get("question") or it.get("질문") or "")
+        if qn:
+            by_q[qn] = it
+    rows, cnt = [], {"hit_top1": 0, "hit_top5": 0, "miss": 0, "결측": 0}
+    for qid, a in answers.items():
+        it = by_id.get(qid) or by_q.get(a["qnorm"])
+        verdict, rank, ev = "결측", "", ""
+        if it is not None:
+            hits = next((it[k] for k in ("hits", "results", "documents", "contexts", "chunks")
+                         if isinstance(it.get(k), list)), [])
+            verdict = "miss"
+            for i, h in enumerate(hits[:5], 1):
+                hn = _norm(_hit_text(h))
+                found = next((c for c in a["절"] if _norm(c) in hn), None)
+                if found:
+                    verdict = "hit_top1" if i == 1 else "hit_top5"
+                    rank, ev = i, found[:100]
+                    break
+        cnt[verdict] += 1
+        rows.append({"문항ID": qid, "질문": a["질문"], "검색": verdict,
+                     "명중순위": rank, "확인 절": ev})
+    rnd = 1 + len(list((ROOT / "results").glob(f"score_{prod}QA_r*")))
+    out_d = ROOT / "results" / f"score_{prod}QA_r{rnd}"
+    out_d.mkdir(parents=True, exist_ok=True)
+    (out_d / "score_report.json").write_text(
+        json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+    wb = openpyxl.Workbook()
+    xw = wb.active
+    xw.title = "Q&A채점"
+    xw.append(list(rows[0].keys()))
+    for r in rows:
+        xw.append(list(r.values()))
+    wb.save(out_d / f"외부QA_채점_{prod}_r{rnd}.xlsx")
+    n = len(rows)
+    t1, t5 = cnt["hit_top1"], cnt["hit_top1"] + cnt["hit_top5"]
+    (out_d / f"외부QA_r{rnd}_리포트.md").write_text(
+        f"# 외부 Q&A 별도 트랙 — {prod} qa-r{rnd} (검색축만 · 내용 대조 기준)\n\n"
+        f"- 응답로그: {N(log_f.name)} · 시험지: {N(keys[-1].name).replace('정답키','시험지')}\n"
+        f"- top1 {t1}/{n} ({t1/n:.1%}) · top5 {t5}/{n} ({t5/n:.1%}) · "
+        f"miss {cnt['miss']} · 결측 {cnt['결측']}\n\n"
+        f"판정 방식: 정답(외부 제공)의 절이 검색 hits 본문에 실재하는 첫 순위 — 기계 판정(LLM 없음).\n"
+        f"이 트랙은 기존 골든셋 성적과 **분리 집계**됩니다 (합류는 v3 편입 시 별도 공사).\n",
+        encoding="utf-8")
+    ledger_append("EXTERNAL_QA", "QA_SCORED", f"script:import_qa({actor})",
+                  evidence={"회차": f"qa-r{rnd}", "n": n, "top1": t1, "top5": t5,
+                            "결측": cnt["결측"], "로그": N(log_f.name)}, product=prod)
+    msg = (f"✅ Q&A 트랙 채점 완료 — qa-r{rnd}: top1 {t1}/{n} ({t1/n:.0%}) · "
+           f"top5 {t5}/{n} ({t5/n:.0%}) — 성적 히스토리 '외부 Q&A' 줄에서 확인")
+    print(msg)
+    return {"ok": True, "out": msg}
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("--product", required=True)
     r.add_argument("--actor", default="난희")
+    p = sub.add_parser("publish")
+    p.add_argument("--product", required=True)
+    p.add_argument("--actor", default="난희")
+    s = sub.add_parser("score")
+    s.add_argument("--product", required=True)
+    s.add_argument("--log")
+    s.add_argument("--actor", default="난희")
     a = ap.parse_args()
-    run(a.product, a.actor)
+    if a.cmd == "run":
+        run(a.product, a.actor)
+    elif a.cmd == "publish":
+        publish(a.product, a.actor)
+    else:
+        score(a.product, a.log, a.actor)
 
 
 if __name__ == "__main__":

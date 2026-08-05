@@ -77,6 +77,7 @@
   .archbtn{font:inherit;font-size:10px;letter-spacing:0;cursor:pointer;color:var(--tx2);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
   .expandbtn{font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--run);background:rgba(80,200,255,.08);border:1px solid var(--run);border-radius:8px;padding:5px 12px}
   .expandbtn:hover{background:rgba(80,200,255,.18)}
+  .qachip{font-size:11px;font-weight:600;color:#c9a6ff;background:rgba(170,120,255,.10);border:1px solid rgba(170,120,255,.55);border-radius:999px;padding:4px 11px;margin-left:10px;white-space:nowrap}
   .archbtn.on,.archbtn:hover:not(:disabled){color:var(--tx);border-color:var(--tx2)}
   .archbtn:disabled{opacity:.45;cursor:not-allowed}
   .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
@@ -417,9 +418,14 @@ function render(){
     ? `<button class="expandbtn" style="margin-left:10px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
         onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
   const qaBtn = `<label class="expandbtn" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
+  // G20: 외부 Q&A 트랙 진행 표시 — 골든셋 본류와 별개로 돌고 있음을 헤더에서 한눈에
+  const qaGateOpen = (ps.open_gates||[]).some(g=>g.id.startsWith('QAIMP_'));
+  const qaRounds = Object.keys(S.scores[PV().code+'QA']||{}).length;
+  const qaChip = qaGateOpen? `<span class="qachip" title="외부 Q&A 분류 결과가 검수큐에서 승인/반려를 기다려요">🧩 외부 Q&A — 분류 검수 대기</span>`
+    : ps._qa? `<span class="qachip" title="외부 Q&A는 골든셋과 분리된 별도 트랙으로 돌아요 — 성적 히스토리 '외부 Q&A' 줄">🧩 외부 Q&A 트랙 가동중 — ${qaRounds?`채점 ${qaRounds}회차`:'시험지 발행 · 응답로그 대기'}</span>` : '';
   let html = `
   <div class="track-wrap">
-    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}${qaChip}</div>
     ${renderAiTeam()}
     <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
@@ -575,7 +581,7 @@ function renderScores(ps){
     const rounds = Object.keys(sc).sort();
     const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
     const flow = rounds.map(r=>sc[r].scorer==='기록 이관'?r+'*':r).join(' → ');
-    return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>'}</span>
+    return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.badge||(g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>')}</span>
       <span class="trend">${rounds.length?flow:'회차 없음'}</span>
       <span class="num">${rounds.length?`${rounds.length}회차${n?` · ${n}문항`:''}`:'—'}</span></div>`;
   };
@@ -590,12 +596,18 @@ function renderScores(ps){
   const fallback = (!curGens.some(scored) && retiredScored.length) ? [retiredScored[0]] : [];
   const displayGens = [...curGens, ...fallback];
   const archGens = retiredScored;
+  // G20: 외부 Q&A 별도 트랙 — 기존 골든셋과 절대 안 섞임 (시험지·성적·보관 전부 분리)
+  const qaCode = pv.code+'QA';
+  const qaSc = S.scores[qaCode]||{};
+  const qaTrack = ps._qa;   // {paper, n} — 시험지 발행돼야 생김
+  const qaBadge = '<span class="hint" style="color:var(--run)">Q&A 별도 트랙 · 검색축(내용 대조)</span>';
+  const qaRow = (qaTrack||Object.keys(qaSc).length)? genRow({label:'외부 Q&A', code:qaCode, badge:qaBadge}) : '';
   const summary = `<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
       <span>버전별 누적 현황</span>
       ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴한 골든셋 리스트 — 누적 현황·성적표 (참고용)">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
-    + curGens.map(genRow).join('') + divider;
+    + curGens.map(genRow).join('') + qaRow + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
-  const mk = (label, sc, retired, code) => {
+  const mk = (label, sc, retired, code, badge) => {
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort();
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
@@ -627,14 +639,21 @@ function renderScores(ps){
       }
     }
     return `<div class="score-row"><span><b>${esc(label)}</b></span><span></span>
-        <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
+        <span>${badge||(retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>')}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
         <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
       </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
+  // Q&A 트랙 상세 표 + 조작 버튼 (꾸러미 전달 → 로그 채점) — 시험지 발행 후에만 노출
+  const qaControls = qaTrack? `<div class="btns" style="margin:6px 0 4px">
+      <a class="btn" style="text-decoration:none" href="/api/qa-handoff?product=${encodeURIComponent(pv.code)}" download title="시험지(질문만)+안내문+응답로그 예시 zip — 팀장님께 전달">📦 Q&A 꾸러미</a>
+      <label class="btn" style="cursor:pointer" title="팀장님이 준 Q&A 응답로그(json)를 올리면 즉시 채점돼요 — 내용 대조 기준, 기존 성적과 분리 집계">⬆ Q&A 응답로그 채점<input type="file" accept=".json" style="display:none" onchange="uploadQALog(this)"></label>
+    </div><div class="hint" style="margin-bottom:8px">외부 Q&A 시험지 <b>${qaTrack.n??'?'}문항</b> 발행됨 (${esc(qaTrack.paper)}) — 이 트랙 성적은 골든셋 회차와 안 섞여요</div>` : '';
+  const qaBody = (mk('외부 Q&A', qaSc, true, qaCode, qaBadge)||'') + qaControls;
   const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.code)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
+    + (qaBody?`<div style="height:10px"></div>`+qaBody:'')
     + impNote(displayGens);
   // 보관함 화면 = 은퇴한 골든셋 리스트만 (누적 현황 줄 — 표는 기본 화면 몫)
   // 보관함 = 은퇴 골든셋의 현황 줄 + 상세 성적표까지 (옛 회차 기록은 여기서 열람)
@@ -947,6 +966,21 @@ async function uploadQA(input){
     toast('⏳ 코퍼스 대조·분류 중…', 0);
     const d = await act({cmd:'qa-import', product:PV().code});
     if(d.ok) toast('✅ 분류 완료 — 검수큐에 카드가 생겼어요 (팝업에서 실물 확인 후 승인/반려)');
+  } finally { busy = false; await loadAll(); }
+}
+async function uploadQALog(input){   // G20: Q&A 응답로그 → 별도 트랙 즉시 채점 (내용 대조 기준)
+  const f = input.files[0];
+  input.value = '';
+  if(!f) return;
+  busy = true; render();
+  toast('⏳ Q&A 응답로그 업로드 중…', 0);
+  try{
+    const r = await fetch(`/api/upload?product=${PV().code}&target=QALOG&name=${encodeURIComponent(f.name)}`,
+      {method:'POST', body:f});
+    const d = await r.json();
+    if(!d.ok){ toast(d.out||'업로드 실패'); return; }
+    toast('⏳ 채점 중… (내용 대조 기준)', 0);
+    await act({cmd:'qa-score', product:PV().code, log:f.name});
   } finally { busy = false; await loadAll(); }
 }
 async function reQA(){   // 코퍼스 도착 후 재분류 — 파일 다시 올릴 필요 없음

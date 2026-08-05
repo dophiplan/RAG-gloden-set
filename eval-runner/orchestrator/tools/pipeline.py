@@ -427,6 +427,11 @@ def cmd_approve(a):
             return
         ps["status"] = "PENDING"
         save_state(st)
+    if a.gate_id.startswith("QAIMP_"):
+        # 외부 Q&A 분류 승인 = 별도 트랙 시험지 자동 발행 (편입 후보 0건이면 발행 생략)
+        import import_qa
+        import_qa.publish(prod, a.actor)
+        return
     print(f"✅ 승인 — {a.gate_id} (ack {len(flags)}건 원장 기록). 다음: run --product {prod}")
 
 
@@ -763,6 +768,14 @@ def cmd_qa_import(a):
         sys.exit(1)   # 화면 토스트가 실패 메시지를 그대로 보여주도록 (성공 오인 방지)
 
 
+def cmd_qa_score(a):
+    """G20 · 외부 Q&A 별도 트랙 채점 — 응답로그(내용 대조 기준) → results/score_<P>QA_rN"""
+    import import_qa
+    r = import_qa.score(a.product, getattr(a, "log", None), a.actor)
+    if not r.get("ok"):
+        sys.exit(1)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -779,12 +792,13 @@ def main():
     s = sub.add_parser("new-round"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     s = sub.add_parser("expand"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     s = sub.add_parser("qa-import"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("qa-score"); s.add_argument("--product", required=True); s.add_argument("--log"); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
      "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
      "set-members": cmd_set_members, "new-round": cmd_new_round, "expand": cmd_expand,
-     "qa-import": cmd_qa_import}[a.cmd](a)
+     "qa-import": cmd_qa_import, "qa-score": cmd_qa_score}[a.cmd](a)
 
 
 if __name__ == "__main__":
