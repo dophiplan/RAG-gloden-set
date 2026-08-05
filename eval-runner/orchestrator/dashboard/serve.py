@@ -720,6 +720,18 @@ def api_action(payload):
         # 장시간 AI 작업(③ 등) — 백그라운드 실행. 서버(단일 스레드)와 화면이 얼지 않게.
         import os
         prod = payload["product"]
+        # 출제 AI 미연결 가드 — 돌려봤자 즉시 실패할 실행을 친절하게 차단
+        try:
+            sys.path.insert(0, str(ROOT / "tools"))
+            from model_adapter import detect_mode
+            from olib import load_config as _lc
+            if os.environ.get("ORCH_MOCK") != "1" and not detect_mode(_lc(), os.environ)["have"].get("generator"):
+                return {"ok": False,
+                        "out": "⛔ 출제 AI(claude)가 연결돼 있지 않아 실행할 수 없어요. "
+                               "터미널에서 claude 로그인(구독) 또는 키설정.txt에 API 키를 넣고 "
+                               "실전모드_켜기.command 를 다시 실행한 뒤 시도해 주세요."}
+        except ImportError:
+            pass   # 어댑터 로드 실패 시 가드는 건너뛴다 (실행 자체를 막지 않음)
         pidf = ROOT / "results" / f"_run_{prod}.pid"
         pidf.parent.mkdir(exist_ok=True)
         # 중복 실행 방지 — 이미 도는 프로세스가 있으면 새로 안 띄운다 (재개 버튼 연타 등)

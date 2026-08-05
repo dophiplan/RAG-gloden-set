@@ -115,6 +115,14 @@ footer{margin-top:80px;padding-top:16px;border-top:1px solid var(--line);font-si
   <tr><td><b>무인 워커</b></td><td>사용량 한도로 멈추면 스스로 기다렸다 재개, 사람 차례가 되면 멈추는 배경 프로세스</td></tr>
   <tr><td><b>텔레그램 봇</b></td><td>카드 알림을 폰으로 보내고, 폰의 승인/반려를 시스템에 중계</td></tr>
 </table>
+<p><b>AI 연결법</b> — 팀 칩이 ⚫(미연결)일 때. 연결이 안 돼 있으면 화면에 빨간 경고가 뜨고 실행이 차단됩니다.</p>
+<table>
+  <tr><th>AI</th><th>연결 방법</th></tr>
+  <tr><td>claude (출제 대표)</td><td>터미널에서 <span class="btn-ref">claude</span> 실행 → 구독 계정 로그인 (또는 키설정.txt에 API 키)</td></tr>
+  <tr><td>Kimi (채점)</td><td><span class="btn-ref">키설정.txt</span>에 API 키 입력 → <span class="btn-ref">실전모드_켜기.command</span> 재실행</td></tr>
+  <tr><td>codex (교차 검토)</td><td>터미널에서 <span class="btn-ref">codex login</span> → ChatGPT Plus 계정 로그인</td></tr>
+</table>
+<p class="note">AI가 1명만 남으면 제작 방식이 "자가 검수"로 자동 전환되고, 앙상블·교차 옵션은 2명 이상일 때만 선택할 수 있습니다.</p>
 <div class="warn"><b>3권 분립 + 스크립트 원칙</b> — 생성(작업 AI) ≠ 검증(설계본부·검토자) ≠ 확정(사람). 어떤 AI도 자기 산출물을 스스로 승인하지 못하며, 최종 확정은 언제나 사람의 버튼입니다. 그리고 검수 8종·채점기·형식 게이트·리포트 생성은 AI가 아닌 <b>스크립트</b>입니다 — 같은 입력이면 언제나 같은 결과가 나와야 하는 곳에는 일부러 AI를 쓰지 않았습니다.</div>
 
 <h2><span class="n">00</span>전체 여정 한 장</h2>
