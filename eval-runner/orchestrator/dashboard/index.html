@@ -624,7 +624,7 @@ function renderScores(ps){
         <span>${retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>'}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
-        <tbody>${[["top1",'top1'],["top5",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
+        <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
       </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
   const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.code)).filter(Boolean).join('<div style="height:10px"></div>')
@@ -753,7 +753,7 @@ function showITip(evt, codeEnc, r){
   const note = a.note? `<div class="hint">당시 보고서 주석 — ${esc(String(a.note))}</div>` : '';
   const tip = $('itip');
   tip.innerHTML = `<b>${r} — 상세 내역</b>
-    <table><tr><th>기준</th><th>top1</th><th>top5</th></tr>${rows}</table>${concl}${note}${hint}`;
+    <table><tr><th>기준</th><th>top1</th><th>top5 (누적)</th></tr>${rows}</table>${concl}${note}${hint}`;
   tip.style.display = 'block';
   const x = Math.min(evt.clientX + 12, innerWidth - 400), y = Math.min(evt.clientY + 14, innerHeight - tip.offsetHeight - 16);
   tip.style.left = x + 'px'; tip.style.top = y + 'px';
