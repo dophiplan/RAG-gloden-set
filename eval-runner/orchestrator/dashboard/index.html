@@ -996,7 +996,7 @@ function stageAI(k){
     case 'GOLDENSET_BATCH': return {who:g, session:S_INDEP+' · 배치 독립', how:`배분 계획·문항 출제: ${g} → 스크립트 검수 7종 → 반려 루프 → 확정은 사람`};
     case 'UNIFIED_LEDGER':  return {who:'스크립트', session:S_NONE, how:'AI 없음 — 스크립트가 배치 병합·중복 검사'};
     case 'CALIBRATION':     return {who:`${j}×사람`, session:S_ISOLATED, how:`채점관 면접 — ${j}가 30문항 판정, 사람 판정 30건과 대조 (일치 90% 미만이면 본판정 잠김)`};
-    case 'STAGE2':          return {who:`${j}+사람`, session:S_ISOLATED, how:`본판정: ${j} (새 세션 · 규칙 B — [문항, 기준서]만 전달) + 사람 무작위 재검`};
+    case 'STAGE2':          return {who:`${j}+${g}+사람`, session:S_ISOLATED, how:`이중 판정 — 본판정: ${j} (새 세션 · 규칙 B) + 전건 검토: ${g} 새 세션 (서로의 판정 안 봄) → 갈린 문항만 사람 확정`};
     case 'SCORING':         return {who:'스크립트+사람', session:S_NONE, how:'AI 없음 — 스크립트가 정답키와 기계 대조 채점, E형 확인은 사람'};
     case 'MAINTENANCE':     return {who:'사람', session:S_NONE, how:'AI 없음 — 되먹임 큐 판단은 사람'};
   }
