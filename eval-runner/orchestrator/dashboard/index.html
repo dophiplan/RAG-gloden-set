@@ -1024,7 +1024,15 @@ function renderAiTeam(){
                cross_check:'claude가 만들고, 다른 AI가 검수',
                self_check:'claude가 만들고, 새 세션에서 자가 검수',
                solo:'claude 단독 제작'};
-  return `<div class="aiteam">AI 팀 ${chips}<span class="hint">🟢 연결 · ⚫ 미연결 — ${HOW[strat]||''}</span></div>`;
+  // 출제 대표(claude) 미연결 = 아무것도 못 만든다 — 빨간 경고 + 연결법을 화면에 바로
+  const gen = ai.engines.find(e=>e.role==='generator');
+  const noneOn = !ai.engines.some(e=>e.connected);
+  const warn = (gen && !gen.connected) || noneOn
+    ? `<div class="aiteam" style="border:1px solid var(--halt);border-radius:8px;padding:6px 10px;color:var(--halt);margin-bottom:6px">
+        ⛔ ${noneOn?'AI가 하나도 연결돼 있지 않아요':'출제 AI(claude)가 미연결이에요'} — 이 상태로는 실행이 시작되지 않아요.
+        <span class="hint" style="color:var(--tx2)">연결법: claude=터미널에서 claude 로그인(구독) · Kimi=키설정.txt에 API 키 · codex=터미널에서 codex login → 그 후 실전모드_켜기.command 재실행</span></div>`
+    : '';
+  return warn + `<div class="aiteam">AI 팀 ${chips}<span class="hint">🟢 연결 · ⚫ 미연결 — ${HOW[strat]||''}</span></div>`;
 }
 async function toggleMember(){
   const roles=[...document.querySelectorAll('.aichip input[data-role]')]
