@@ -416,9 +416,10 @@ function render(){
   const expandBtn = ['SCORING','MAINTENANCE'].includes(ps.stage)
     ? `<button class="expandbtn" style="margin-left:10px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
         onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
+  const qaBtn = `<label class="expandbtn" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
   let html = `
   <div class="track-wrap">
-    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}</div>
+    <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
     ${renderAiTeam()}
     <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
     <div class="track" id="track">${stages.map((s,i)=>{
@@ -928,6 +929,33 @@ async function doUpload(input, cardId, noAutoRun, scopeSelId){
 }
 async function setStrategy(v){
   await act({cmd:'set-strategy', product:PV().code, strategy:v});
+}
+/* G19: 외부 제작 Q&A 셋 인입 — 올리면 자동으로: 저장 → 코퍼스 대조 → 3갈래 분류 → 승인 카드 */
+async function uploadQA(input){
+  const files=[...input.files];
+  input.value='';
+  if(!files.length) return;
+  busy = true; render();
+  toast(`⏳ 외부 Q&A 업로드 중… (${files.length}개)`, 0);
+  try{
+    for(const f of files){
+      const r=await fetch(`/api/upload?product=${PV().code}&target=QA&name=${encodeURIComponent(f.name)}`,
+        {method:'POST', body:f});
+      const d=await r.json();
+      if(!d.ok){ toast(d.out||'업로드 실패'); busy=false; await loadAll(); return; }
+    }
+    toast('⏳ 코퍼스 대조·분류 중…', 0);
+    const d = await act({cmd:'qa-import', product:PV().code});
+    if(d.ok) toast('✅ 분류 완료 — 검수큐에 카드가 생겼어요 (팝업에서 실물 확인 후 승인/반려)');
+  } finally { busy = false; await loadAll(); }
+}
+async function reQA(){   // 코퍼스 도착 후 재분류 — 파일 다시 올릴 필요 없음
+  busy = true; render();
+  toast('⏳ 올려둔 외부 Q&A를 다시 대조·분류 중…', 0);
+  try{
+    const d = await act({cmd:'qa-import', product:PV().code});
+    if(d.ok) toast('✅ 재분류 완료 — 검수큐에 새 카드가 생겼어요');
+  } finally { busy = false; await loadAll(); }
 }
 async function resumeRun(){   // 한도 회복 후 이어서 — 체크포인트에서 재개
   const d = await act({cmd:'resume', product:PV().code, reason:'한도/일시 중단 회복 — 체크포인트 재개'});

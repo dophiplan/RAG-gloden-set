@@ -535,6 +535,16 @@ def cmd_reject(a):
         set_status(prod, "REJECTED", reason=a.reason)
         print(f"↩ 반려 접수 — {a.gate_id} · 피드백을 반영해 재출제합니다 (승인·실행 추가로 누를 필요 없음)")
         return
+    if a.gate_id.startswith("QAIMP_"):
+        # 외부 Q&A 분류 반려 = 이번 분류만 폐기 (원본 Q&A 보존 · 제품 상태는 건드리지 않음
+        # — CI처럼 코퍼스 대기 중인 제품이 REJECTED로 오염되는 사고 방지)
+        ver = a.gate_id.rsplit("_", 1)[-1]
+        f = ROOT / "data" / prod / "external_qa" / f"외부QA_분류결과_{prod}_{ver}.xlsx"
+        if f.exists():
+            f.rename(f.parent / f"반려_{f.name}")
+        print(f"↩ 반려 — {a.gate_id} · 분류결과 폐기(반려_ 표시). 원본 Q&A는 보존 — "
+              f"파일을 고쳐 올리거나 [🔁 재대조]를 누르면 새 분류가 나와요.")
+        return
     set_status(prod, "REJECTED", reason=a.reason)
     print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
 
@@ -742,6 +752,17 @@ def cmd_onboard(a):
         print(f"🆕 {prod} 온보딩 — ① WAITING_INPUT 정지 · INPUT_CORPUS 카드 발행 · calibration_passed=false")
 
 
+def cmd_qa_import(a):
+    """G19 · 외부 제작 Q&A 셋 인입 — 코퍼스 대조·3갈래 분류 후 QAIMP 게이트 카드 발행."""
+    st = load_state()
+    if a.product not in st["products"]:
+        sys.exit(f"미등록 제품: {a.product} — 먼저 제품을 추가(온보딩)해 주세요")
+    import import_qa
+    r = import_qa.run(a.product, a.actor)
+    if not r.get("ok"):
+        sys.exit(1)   # 화면 토스트가 실패 메시지를 그대로 보여주도록 (성공 오인 방지)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -757,11 +778,13 @@ def main():
     s = sub.add_parser("set-members"); s.add_argument("--product", required=True); s.add_argument("--use", required=True, help="쉼표 구분: generator,judge,reviewer"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("new-round"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     s = sub.add_parser("expand"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("qa-import"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
      "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
-     "set-members": cmd_set_members, "new-round": cmd_new_round, "expand": cmd_expand}[a.cmd](a)
+     "set-members": cmd_set_members, "new-round": cmd_new_round, "expand": cmd_expand,
+     "qa-import": cmd_qa_import}[a.cmd](a)
 
 
 if __name__ == "__main__":

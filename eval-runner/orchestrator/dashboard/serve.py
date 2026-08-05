@@ -620,6 +620,9 @@ def api_action(payload):
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "expand":
         args += ["expand", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "qa-import":
+        # 외부 Q&A 인입 — 업로드 직후 자동 대조·분류 (G19)
+        args += ["qa-import", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "s2diff-set":
         # 불일치 문항 확정 클릭 → 판정대장 '최종 판정' 컬럼에 즉시 기록
         import openpyxl
@@ -865,7 +868,7 @@ class H(SimpleHTTPRequestHandler):
 
     UPLOAD_DIRS = {"CORPUS": "corpus", "SCORING": "08_scoring",
                    "COVERAGE": "03_coverage_map", "UNIFIED": "05_unified_ledger",
-                   "CALIBRATION": "06_calibration"}
+                   "CALIBRATION": "06_calibration", "QA": "external_qa"}
 
     def _upload(self):
         """INPUT 카드용 파일 업로드 — 쿼리: product, target(카드 종류), name. 본문 = 파일 원바이트.
