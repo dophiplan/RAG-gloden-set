@@ -402,9 +402,13 @@ function render(){
   const na = nextAction();
   const legacyLine = (PV().legacy||[]).map(l=>esc(l.gen)).join(' · ');
   const strat = ps.strategy || 'ensemble';
+  // 참여 AI 수 실측 — 1명이면 다인용 전략(앙상블·교차)은 선택 불가로 잠금
+  const aiUse = ((S.ai&&S.ai.products&&S.ai.products[cur])||{}).ai_use || {};
+  const nAI = ((S.ai&&S.ai.engines)||[]).filter(e=>e.connected && aiUse[e.role]!==false).length || 1;
+  const multi = nAI >= 2;
   const stratSel = `<select id="stratSel" onchange="setStrategy(this.value)" style="font:inherit;font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--tx);padding:4px 8px;margin-left:12px">
-      <option value="ensemble" ${strat==='ensemble'?'selected':''}>제작 방식: 앙상블 — AI 전원이 각자 만들고 병합 (촘촘)</option>
-      <option value="cross_check" ${strat==='cross_check'?'selected':''}>제작 방식: 1개가 만들고 다른 AI가 검수</option>
+      <option value="ensemble" ${strat==='ensemble'?'selected':''} ${multi?'':'disabled'}>제작 방식: 앙상블 — AI 전원이 각자 만들고 병합 (촘촘)${multi?'':' — AI 2명 이상 필요'}</option>
+      <option value="cross_check" ${strat==='cross_check'?'selected':''} ${multi?'':'disabled'}>제작 방식: 1개가 만들고 다른 AI가 검수${multi?'':' — AI 2명 이상 필요'}</option>
       <option value="self_check" ${strat==='self_check'?'selected':''}>제작 방식: 1개가 만들고 새 세션에서 자가 검수</option>
       <option value="solo" ${strat==='solo'?'selected':''}>제작 방식: AI 1개 단독 (빠름·저비용)</option>
     </select>`;
@@ -1026,6 +1030,12 @@ async function toggleMember(){
   const roles=[...document.querySelectorAll('.aichip input[data-role]')]
     .filter(i=>i.checked).map(i=>i.dataset.role);
   await act({cmd:'set-members', product:PV().code, use:roles.join(',')||'generator'});
+  // AI가 1명만 남으면 앙상블·교차 검수는 성립 불가 — '자가 검수'로 자동 전환 (거짓 라벨 방지)
+  const strat = PS().strategy || 'ensemble';
+  if(roles.length < 2 && (strat==='ensemble' || strat==='cross_check')){
+    await act({cmd:'set-strategy', product:PV().code, strategy:'self_check'});
+    toast('AI가 1명이라 제작 방식을 "만들고 새 세션에서 자가 검수"로 자동 전환했어요 — 멤버를 다시 켜면 앙상블 선택이 풀립니다');
+  }
 }
 
 /* G15: 진행/막힘 실시간 — AI 작업(run) 중 4초마다 진행 파일 폴링 */

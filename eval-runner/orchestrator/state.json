@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-03T15:22:38",
+  "updated": "2026-08-05T09:41:38",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1968,7 +1968,8 @@
           "RC2-HTTPSW-4571",
           "RC2-REMOTE-1758"
         ]
-      }
+      },
+      "strategy": "ensemble"
     },
     "EE": {
       "stage": "SCORING",
