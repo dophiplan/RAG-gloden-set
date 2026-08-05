@@ -100,7 +100,8 @@
   .arch[open] summary::before{transform:rotate(90deg)}
   .arch .frow{opacity:.75}
 
-  main{display:grid;grid-template-columns:320px 1fr 450px;gap:16px;padding:8px 24px 20px}
+  main{display:grid;grid-template-columns:290px 1fr 560px;gap:16px;padding:8px 24px 20px}
+  @media(max-width:1400px){main{grid-template-columns:270px 1fr 480px}}
   @media(max-width:1100px){main{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .p-head{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;color:var(--tx2);display:flex;justify-content:space-between;align-items:center}
