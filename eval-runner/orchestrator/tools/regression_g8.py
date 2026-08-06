@@ -167,7 +167,8 @@ def t13():
           interrupted and n_saved == 40, f"보존 {n_saved}/40")
     # (b) 재실행 → 이어받아 완주, 판정 수 = 문항 수
     outcome, ev = judge_run.run_stage2(prod, cfg)
-    total = sum(ev.get("판정", {}).values()) if outcome == "DONE" else 0
+    # 이중 판정 도입(b296bc72)으로 ev 키가 "판정"→"판정(Kimi)"로 개명 — 낡은 키를 읽어 0으로 오탐하던 것 수리
+    total = sum(ev.get("판정(Kimi)", ev.get("판정", {})).values()) if outcome == "DONE" else 0
     check("T13b", "재실행 resume → 완주 (판정 수 = 문항 수 50)",
           outcome == "DONE" and total == 50, f"{outcome} · 판정 {total}")
     # (c) 미판정 1건 주입 → DONE 금지, 게이트 발행

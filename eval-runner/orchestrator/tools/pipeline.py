@@ -28,7 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 import olib
 from olib import (N, STAGES, STAGE_KEYS, HUMAN_GATES, ROOT,
-                  load_config, load_state, save_state, set_status,
+                  load_config, load_state, save_state, update_state, set_status,
                   ledger_append, issue_input_card, issue_gate_card,
                   close_gate, find_gate, advance_stage, now)
 
@@ -388,12 +388,14 @@ def cmd_approve(a):
             sys.exit(f"승인 불가 — 일치율 실측 {_m.get('measured_match','?')}/{_m.get('total','?')} 가 "
                      f"임계(≥{_thr:.0%}) 미달이에요. 답안지에서 판정 수정/보완 후 다시 시도하세요. "
                      f"(카드는 그대로 유지됩니다)")
+    # 게이트 선점이 먼저 [P0-5] — 대시보드·폰이 동시에 승인해도 한쪽만 통과 (이중 전진·이중 발행 차단)
+    if not close_gate(prod, a.gate_id):
+        sys.exit(f"이미 처리된 게이트예요: {a.gate_id} — 다른 곳(폰/대시보드)에서 먼저 승인/반려됐어요. 추가 조치 불필요.")
     for f in flags:
         ledger_append(g["stage"], "FLAG_ACK", f"사람:{a.actor}", gate_id=a.gate_id,
                       evidence=f, product=prod)
     ledger_append(g["stage"], "approve", f"사람:{a.actor}", gate_id=a.gate_id,
                   evidence={"flags_acked": len(flags)}, product=prod)
-    close_gate(prod, a.gate_id)
     # 승인 = 게이트만 닫는다. 단계 전진은 러너가 DONE을 보고할 때만 (다중 게이트 단계 대응).
     st = load_state()
     ps = st["products"][prod]
@@ -408,11 +410,8 @@ def cmd_approve(a):
                     d[prod]["onboarding"] = False
                     tf.write_text(_yaml.safe_dump(d, allow_unicode=True, sort_keys=False),
                                   encoding="utf-8")
-        if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
-            ps["calibration_passed"] = True     # 임계 통과 게이트 승인 시에만 (입구에서 실측 검사 통과)
         if g["stage"] == "SCORING" and a.gate_id.startswith("SCORE_"):
             # 성적표 확정 = ⑧ 완료 → ⑨ 유지보수로 전진 (재채점 루프 방지)
-            save_state(st)
             ledger_append("SCORING", "SCORE_CONFIRMED", f"사람:{a.actor}",
                           gate_id=a.gate_id, product=prod)
             advance_stage(prod)
@@ -420,13 +419,18 @@ def cmd_approve(a):
             print(f"✅ 성적표 확정 — {a.gate_id} · ⑨ 유지보수로 전진")
             return
         if g["stage"] == "MAINTENANCE":
-            ps["status"] = "DONE"
-            save_state(st)
+            update_state(lambda s: s["products"][prod].__setitem__("status", "DONE"))
             ledger_append("MAINTENANCE", "PRODUCT_CYCLE_DONE", f"사람:{a.actor}", product=prod)
             print(f"✅ 승인 — {a.gate_id} · {prod} 사이클 완료")
             return
-        ps["status"] = "PENDING"
-        save_state(st)
+
+        def _mut(s):   # [P0-5] 낡은 st 되쓰기 금지 — 잠금 아래 신선 병합
+            p = s["products"][prod]
+            if g["stage"] == "CALIBRATION" and a.gate_id.startswith("CAL_"):
+                p["calibration_passed"] = True   # 임계 통과 게이트 승인 시에만 (입구 실측 검사 통과)
+            p["status"] = "PENDING"
+
+        update_state(_mut)
     if a.gate_id.startswith("QAIMP_"):
         # 외부 Q&A 분류 승인 = 별도 트랙 시험지 자동 발행 (편입 후보 0건이면 발행 생략)
         import import_qa
@@ -527,9 +531,12 @@ def cmd_reject(a):
     if not g:
         sys.exit(f"이미 처리됐거나 닫힌 게이트예요: {a.gate_id} — 반려는 대기 중인 카드에서만 가능해요. "
                  f"입력한 사유는 반영되지 않았으니, 반려할 게 있으면 지금 열려 있는 카드에서 다시 눌러 주세요.")
+    # 게이트 선점이 먼저 [P0-5] — 승인과 반려가 동시에 오면 한쪽만 통과
+    if not close_gate(prod, a.gate_id):
+        sys.exit(f"이미 처리된 게이트예요: {a.gate_id} — 다른 곳에서 먼저 승인/반려됐어요. "
+                 f"입력한 사유는 반영되지 않았으니, 반려할 게 남았으면 새 카드에서 다시 눌러 주세요.")
     ledger_append(g["stage"], "reject", f"사람:{a.actor}", gate_id=a.gate_id,
                   reason=a.reason, product=prod)
-    close_gate(prod, a.gate_id)
     if a.gate_id.startswith("GSBATCH_"):
         mode = _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
         if mode == "partial":

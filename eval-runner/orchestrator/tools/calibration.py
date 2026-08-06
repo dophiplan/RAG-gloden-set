@@ -66,9 +66,12 @@ def measure_agreement(path):
                 if fhp < len(r) and N(r[fhp]):
                     human[N(r[fid])] = N(r[fhp])
     pairs, recorded_match, causes, mismatches = [], 0, {}, []
+    n_judged = 0   # judge 판정이 있는 전체 행 — 부분 기입 검출용 (P0-2: 10건만 채워도 통과되는 구멍)
     for r in ws.iter_rows(min_row=2, values_only=True):
         j = N(r[ji]) if ji < len(r) else ""
         h = human.get(N(r[0]), "") or (N(r[hi]) if hi < len(r) else "")
+        if j:
+            n_judged += 1
         if not j or not h:
             continue
         pairs.append((j, h))
@@ -81,7 +84,7 @@ def measure_agreement(path):
             causes[N(r[ci])] = causes.get(N(r[ci]), 0) + 1
     wb.close()
     measured = sum(1 for j, h in pairs if j == h)
-    return {"total": len(pairs), "measured_match": measured,
+    return {"total": len(pairs), "measured_match": measured, "n_judged": n_judged,
             "recorded_match": recorded_match, "agreement": measured / len(pairs) if pairs else 0.0,
             "mismatch_causes": causes, "mismatches": mismatches, "sheet": sheet}
 
@@ -171,6 +174,14 @@ def run(prod, cfg):
                         evidence={"파일": N(t.name), "judge 판정": "완료·보존", "사람 판정": "0/30 기입"},
                         recommendation="블라인드 원칙 — judge 판정 열람 전 독립 판정")
         return "WAITING_HUMAN", {"사람 판정": "미기입"}
+    if m["total"] < m["n_judged"]:
+        # 부분 기입 — 기입분만으로 일치율을 재면 10건 채우고 90% 통과가 가능 (P0-2). 전건 기입까지 대기.
+        issue_gate_card(prod, "CALIBRATION", f"CALIN_{prod}",
+                        what_stopped=f"사람 판정 부분 기입 {m['total']}/{m['n_judged']}건 — 전건 기입해야 일치율을 잽니다 "
+                                     f"(일부만으로 재면 표본이 왜곡돼요). [📝 답안지]에서 남은 {m['n_judged']-m['total']}건을 채워주세요",
+                        evidence={"대조표": N(t.name), "기입": f"{m['total']}/{m['n_judged']}"},
+                        recommendation="블라인드 원칙 유지 — 남은 문항도 judge 판정 열람 전 독립 판정")
+        return "WAITING_HUMAN", {"사람 판정": f"부분 기입 {m['total']}/{m['n_judged']}"}
     thr = cfg["pipeline"].get("calibration_threshold", 0.90)
     ev = {"대조표": N(t.name), "일치율(실측)": f"{m['measured_match']}/{m['total']} = {m['agreement']:.1%}",
           "임계": f"≥{thr:.0%}", "불일치 분류": m["mismatch_causes"] or "—"}
