@@ -65,13 +65,16 @@ def measure_agreement(path):
             for r in fs.iter_rows(min_row=2, values_only=True):
                 if fhp < len(r) and N(r[fhp]):
                     human[N(r[fid])] = N(r[fhp])
-    pairs, recorded_match, causes = [], 0, {}
+    pairs, recorded_match, causes, mismatches = [], 0, {}, []
     for r in ws.iter_rows(min_row=2, values_only=True):
         j = N(r[ji]) if ji < len(r) else ""
         h = human.get(N(r[0]), "") or (N(r[hi]) if hi < len(r) else "")
         if not j or not h:
             continue
         pairs.append((j, h))
+        if j != h:
+            # "왜 100%가 아닌가" 실물 — 게이트 카드에 그대로 노출 (사람이 갈린 건만 보게)
+            mismatches.append({"id": N(r[0]), "judge": j, "human": h})
         if ri is not None and ri < len(r) and "일치" == N(r[ri]):
             recorded_match += 1
         if ci is not None and ci < len(r) and N(r[ci]):
@@ -80,7 +83,7 @@ def measure_agreement(path):
     measured = sum(1 for j, h in pairs if j == h)
     return {"total": len(pairs), "measured_match": measured,
             "recorded_match": recorded_match, "agreement": measured / len(pairs) if pairs else 0.0,
-            "mismatch_causes": causes, "sheet": sheet}
+            "mismatch_causes": causes, "mismatches": mismatches, "sheet": sheet}
 
 
 # ── 규칙 C 지문 ─────────────────────────────────────────────
@@ -171,6 +174,12 @@ def run(prod, cfg):
     thr = cfg["pipeline"].get("calibration_threshold", 0.90)
     ev = {"대조표": N(t.name), "일치율(실측)": f"{m['measured_match']}/{m['total']} = {m['agreement']:.1%}",
           "임계": f"≥{thr:.0%}", "불일치 분류": m["mismatch_causes"] or "—"}
+    # 왜 100%가 아닌가 — 갈린 문항 실물을 카드에 (사람은 이 목록만 보면 됨)
+    if m.get("mismatches"):
+        ev["왜 100%가 아닌가"] = " · ".join(
+            f"{x['id']}: 채점관 '{x['judge']}' vs 사람 '{x['human']}'"
+            for x in m["mismatches"][:12]) + (
+            f" 외 {len(m['mismatches'])-12}건" if len(m["mismatches"]) > 12 else "")
     warn = ""
     if m["recorded_match"] and m["recorded_match"] != m["measured_match"]:
         warn = (f"⚠ 기록된 일치({m['recorded_match']}) ≠ 실측({m['measured_match']}) — "
