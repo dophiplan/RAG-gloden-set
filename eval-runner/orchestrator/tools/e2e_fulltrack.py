@@ -238,7 +238,21 @@ def main():
     print(f"  {'✅' if seed_ok else '❌'} 재검 시드+추출 목록 원장 기록")
 
     if not keep:
-        pass  # 산출물 보존 (재실행 시 자동 초기화)
+        # [P1-5] 종료 정리 — 모의 제품이 실전 state·검수큐에 잔존하면 관제판에 가짜 사람 대기가
+        # 상시 노출되고(폰 알림까지), state의 60%가 테스트 소음이 되는 원인. --keep이면 산출물 보존.
+        if DATA.exists():
+            shutil.rmtree(DATA)
+        td = ROOT / "terrain.d" / f"{PROD}.yaml"
+        if td.exists():
+            td.unlink()
+        st2 = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
+        st2["products"].pop(PROD, None)
+        (ROOT / "state.json").write_text(json.dumps(st2, ensure_ascii=False, indent=2), encoding="utf-8")
+        for f in (ROOT / "검수큐").glob(f"*_{PROD}*.md"):
+            f.unlink()
+        for f in (ROOT / "results").glob(f"score_{PROD}_*"):
+            shutil.rmtree(f, ignore_errors=True)
+        print("(종료 정리 — 모의 제품 흔적 제거 · 보존하려면 --keep)")
     print(f"\nE2E: {'전 구간 관통 ✅' if ok else '실패 ❌'}")
     sys.exit(0 if ok else 1)
 

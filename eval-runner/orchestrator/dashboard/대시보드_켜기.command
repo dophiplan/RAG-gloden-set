@@ -12,11 +12,9 @@ echo "────────────────────────�
 echo " 연습 모드 — 가짜 AI(mock)로 클릭 연습"
 echo "──────────────────────────────────────────"
 
-# 실전모드가 바꿔둔 config가 있으면 원복
-if [ -f config.yaml.apikeys ]; then
-  cp config.yaml.apikeys config.yaml
-  echo "config 원복(API 키 설정본)"
-fi
+# [P1-1] config는 건드리지 않는다 — 연습/실전 전환은 ORCH_MOCK 환경변수만으로 충분.
+# (과거의 'config.yaml.apikeys 원복'은 낡은 백업으로 되돌려서 이후의 설정 결정
+#  — 880 목표·Known Issue 제외·채점 K2.6 — 를 조용히 지우는 사고 경로였음. 전수검수 P1-1)
 
 # 기존 서버 끄고 연습 모드(ORCH_MOCK=1)로 재시작
 pkill -f "serve.py --port ${PORT}" 2>/dev/null; sleep 1

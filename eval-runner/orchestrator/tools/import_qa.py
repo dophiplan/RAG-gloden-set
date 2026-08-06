@@ -69,10 +69,30 @@ def _rows_from_xlsx(p):
     return out
 
 
+def _ver_of(name):
+    """파일명에서 vN 추출 — 문자열 정렬 금지 [P1-2]: '5문항_v1'과 '12문항_v2'는
+    글자 정렬로는 v1이 뒤(최신 오인). 버전 숫자로만 비교한다."""
+    m = re.search(r"_v(\d+)\.xlsx$", str(name))
+    return int(m.group(1)) if m else 0
+
+
+def _latest(paths):
+    paths = list(paths)
+    return max(paths, key=lambda p: _ver_of(p.name)) if paths else None
+
+
 def _rows_from_csv(p):
     out = []
-    with open(p, newline="", encoding="utf-8-sig") as f:
-        rows = list(csv.reader(f))
+    rows = None
+    for enc in ("utf-8-sig", "cp949", "euc-kr"):   # [P1-4] 한국 엑셀 기본 내보내기 = cp949
+        try:
+            with open(p, newline="", encoding=enc) as f:
+                rows = list(csv.reader(f))
+            break
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    if rows is None:
+        return out
     if not rows:
         return out
     qi, ai = _pick_col(rows[0], Q_KEYS), _pick_col(rows[0], A_KEYS)
@@ -118,8 +138,12 @@ def parse_qa_files(qa_dir):
         if (not p.is_file() or p.name.startswith((".", "반려_", "외부QA_"))
                 or p.suffix == ".md"):
             continue
-        rows = ({".xlsx": _rows_from_xlsx, ".csv": _rows_from_csv,
-                 ".json": _rows_from_json}.get(p.suffix.lower(), lambda _: [])(p))
+        try:   # [P1-4] 파일 하나(손상 xlsx·미지 인코딩)가 인입 전체를 죽이면 안 됨 — 건너뛰고 목록 보고
+            rows = ({".xlsx": _rows_from_xlsx, ".csv": _rows_from_csv,
+                     ".json": _rows_from_json}.get(p.suffix.lower(), lambda _: [])(p))
+        except Exception as e:
+            print(f"  ⚠ {N(p.name)} 읽기 실패({type(e).__name__}) — 건너뜀")
+            rows = []
         if rows:
             for r in rows:
                 r["출처 파일"] = N(p.name)
@@ -217,8 +241,9 @@ def run(prod, actor="난희"):
         return {"ok": False, "out": msg}
     corpus_norm, corpus_used, corpus_unread = load_corpus_text(prod)
     items = classify(items, corpus_norm)
-    version = 1 + len(list(qa_dir.glob(f"외부QA_분류결과_{prod}_v*.xlsx"))) \
-                + len(list(qa_dir.glob(f"반려_외부QA_분류결과_{prod}_v*.xlsx")))
+    version = 1 + max((_ver_of(p.name) for p in
+                       list(qa_dir.glob(f"외부QA_분류결과_{prod}_v*.xlsx"))
+                       + list(qa_dir.glob(f"반려_외부QA_분류결과_{prod}_v*.xlsx"))), default=0)
     report = write_report(prod, items, version)
     cnt = {}
     for it in items:
@@ -270,9 +295,8 @@ def run(prod, actor="난희"):
 #    합치기(v3 편입)는 필요해질 때 별도 공사.
 
 def latest_report(prod):
-    """최신 유효 분류결과 (반려_ 제외)"""
-    hits = sorted((DATA / prod / "external_qa").glob(f"외부QA_분류결과_{prod}_v*.xlsx"))
-    return hits[-1] if hits else None
+    """최신 유효 분류결과 (반려_ 제외) — 버전 숫자 기준 [P1-2]"""
+    return _latest((DATA / prod / "external_qa").glob(f"외부QA_분류결과_{prod}_v*.xlsx"))
 
 
 def publish(prod, actor="난희"):
@@ -292,7 +316,9 @@ def publish(prod, actor="난희"):
         print("발행 생략 — 편입 후보(근거 실재) 문항이 0건이에요 (보류·E형·부분 일치만 있음)")
         return None
     d = DATA / prod / "external_qa"
-    ver = 1 + len(list(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx")))
+    ver = 1 + max((_ver_of(p.name) for p in
+                   list(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx"))
+                   + list(d.glob(f"외부QA_정답키_{prod}_v*.xlsx"))), default=0)   # [P1-2] 개수 아닌 최대+1
     paper = openpyxl.Workbook()
     pw = paper.active
     pw.title = "시험지"
@@ -302,7 +328,9 @@ def publish(prod, actor="난희"):
     kw.title = "정답키(봉인)"
     kw.append(["문항ID", "질문", "정답(외부 제공)", "확인 발췌(코퍼스 실재)", "출처 파일"])
     for i, r in enumerate(cand, 1):
-        qid = f"{prod}-Q{i:03d}"
+        # [P1-3] ID에 시험지 버전 내장 — v1 응답로그가 v2 정답키와 짝지어지면 ID가 안 맞아
+        # '결측'으로 드러난다 (무증상 오채점 차단). 채점기는 ID로 정답키 버전을 역추적한다.
+        qid = f"{prod}-Qv{ver}-{i:03d}"
         pw.append([qid, r[ix["질문"]]])
         kw.append([qid, r[ix["질문"]], r[ix["답변"]], r[ix["확인 발췌"]], r[ix["출처 파일"]]])
     pname = f"외부QA_시험지_{prod}_{len(cand)}문항_v{ver}.xlsx"
@@ -328,19 +356,14 @@ def _hit_text(hit):
 def score(prod, log_name=None, actor="난희"):
     """Q&A 트랙 채점 — 검색축(내용 대조 기준): 정답 절이 hits 본문에 실재하는 첫 순위로 판정.
     기계 판정만 (LLM 없음) — 생성축은 미채점(별도 트랙 v0 규격)."""
+    import hashlib
     import openpyxl
     d = DATA / prod / "external_qa"
-    keys = sorted(d.glob(f"외부QA_정답키_{prod}_v*.xlsx"))
+    keys = list(d.glob(f"외부QA_정답키_{prod}_v*.xlsx"))
     if not keys:
         msg = "채점 불가 — Q&A 시험지가 아직 발행 전이에요 (분류 카드 승인이 먼저)"
         print(msg)
         return {"ok": False, "out": msg}
-    ws = openpyxl.load_workbook(keys[-1], read_only=True, data_only=True).active
-    answers = {}   # qid → {질문, 절 목록}
-    for r in list(ws.iter_rows(values_only=True))[1:]:
-        qid, q, a = str(r[0] or ""), str(r[1] or ""), str(r[2] or "")
-        cl = _clauses(a) or ([a] if _norm(a) else [])
-        answers[qid] = {"질문": q, "절": cl, "qnorm": _norm(q)}
     ld = d / "로그"   # 응답로그 전용 폴더 — Q&A 원본과 섞이면 재대조가 로그를 문항으로 오인
     logs = ([ld / log_name] if log_name else
             sorted(ld.glob("*.json"), key=lambda p: p.stat().st_mtime) if ld.is_dir() else [])
@@ -349,6 +372,14 @@ def score(prod, log_name=None, actor="난희"):
         print(msg)
         return {"ok": False, "out": msg}
     log_f = logs[-1]
+    log_sha = hashlib.sha256(log_f.read_bytes()).hexdigest()[:16]
+    # 같은 로그 재채점 차단 [P1-7] — 재클릭·재업로드로 중복 회차가 쌓이는 사고 방지
+    for old_md in (ROOT / "results").glob(f"score_{prod}QA_r*/외부QA_r*_리포트.md"):
+        if f"로그지문: {log_sha}" in old_md.read_text(encoding="utf-8"):
+            msg = (f"이미 채점된 로그예요 ({old_md.parent.name}) — 같은 파일로는 회차를 더 만들지 않아요. "
+                   f"새 응답로그를 받으면 올려주세요.")
+            print(msg)
+            return {"ok": False, "out": msg}
     data = json.loads(log_f.read_text(encoding="utf-8"))
     if isinstance(data, dict):
         for k in ("responses", "items", "results", "data", "logs"):
@@ -359,6 +390,26 @@ def score(prod, log_name=None, actor="난희"):
         msg = f"채점 불가 — {N(log_f.name)} 이 응답 목록 형식이 아니에요"
         print(msg)
         return {"ok": False, "out": msg}
+    # 로그-시험지 버전 바인딩 [P1-3]: 로그 ID의 Qv{N}으로 정답키 버전을 역추적 — 구판 로그를
+    # 신판 키로 채점하는 무증상 오채점 차단. 버전 표기가 없는 로그(구형)는 최신 키 사용.
+    vm = next((re.search(r"-Qv(\d+)-", str(it.get("id") or it.get("question_id") or ""))
+               for it in data if isinstance(it, dict) and
+               re.search(r"-Qv(\d+)-", str(it.get("id") or it.get("question_id") or ""))), None)
+    key_f = None
+    if vm:
+        want = int(vm.group(1))
+        key_f = next((k for k in keys if _ver_of(k.name) == want), None)
+        if key_f is None:
+            msg = f"채점 불가 — 로그가 시험지 v{want} 응답인데 그 버전 정답키가 없어요 (있는 버전: {sorted(_ver_of(k.name) for k in keys)})"
+            print(msg)
+            return {"ok": False, "out": msg}
+    key_f = key_f or _latest(keys)
+    ws = openpyxl.load_workbook(key_f, read_only=True, data_only=True).active
+    answers = {}   # qid → {질문, 절 목록}
+    for r in list(ws.iter_rows(values_only=True))[1:]:
+        qid, q, a = str(r[0] or ""), str(r[1] or ""), str(r[2] or "")
+        cl = _clauses(a) or ([a] if _norm(a) else [])
+        answers[qid] = {"질문": q, "절": cl, "qnorm": _norm(q)}
     by_id, by_q = {}, {}
     for it in data:
         if not isinstance(it, dict):
@@ -387,7 +438,9 @@ def score(prod, log_name=None, actor="난희"):
         cnt[verdict] += 1
         rows.append({"문항ID": qid, "질문": a["질문"], "검색": verdict,
                      "명중순위": rank, "확인 절": ev})
-    rnd = 1 + len(list((ROOT / "results").glob(f"score_{prod}QA_r*")))
+    rnd = 1 + max((int(m.group(1)) for p in (ROOT / "results").glob(f"score_{prod}QA_r*")
+                   if (m := re.fullmatch(rf"score_{re.escape(prod)}QA_r(\d+)", p.name))),
+                  default=0)   # [P1-7] 개수 방식은 폴더 이동/삭제 시 기존 회차 덮어씀 — 최대+1
     out_d = ROOT / "results" / f"score_{prod}QA_r{rnd}"
     out_d.mkdir(parents=True, exist_ok=True)
     (out_d / "score_report.json").write_text(
@@ -401,11 +454,15 @@ def score(prod, log_name=None, actor="난희"):
     wb.save(out_d / f"외부QA_채점_{prod}_r{rnd}.xlsx")
     n = len(rows)
     t1, t5 = cnt["hit_top1"], cnt["hit_top1"] + cnt["hit_top5"]
+    warn = ""
+    if cnt["결측"] > n / 2:
+        warn = (f"\n⚠ 결측이 과반({cnt['결측']}/{n}) — 응답로그가 다른 버전 시험지의 것이거나 "
+                f"ID 형식이 다를 수 있어요. 꾸러미를 다시 받아 재응시를 요청하세요.\n")
     (out_d / f"외부QA_r{rnd}_리포트.md").write_text(
         f"# 외부 Q&A 별도 트랙 — {prod} qa-r{rnd} (검색축만 · 내용 대조 기준)\n\n"
-        f"- 응답로그: {N(log_f.name)} · 시험지: {N(keys[-1].name).replace('정답키','시험지')}\n"
+        f"- 응답로그: {N(log_f.name)} · 로그지문: {log_sha} · 정답키: {N(key_f.name)}\n"
         f"- top1 {t1}/{n} ({t1/n:.1%}) · top5 {t5}/{n} ({t5/n:.1%}) · "
-        f"miss {cnt['miss']} · 결측 {cnt['결측']}\n\n"
+        f"miss {cnt['miss']} · 결측 {cnt['결측']}\n{warn}\n"
         f"판정 방식: 정답(외부 제공)의 절이 검색 hits 본문에 실재하는 첫 순위 — 기계 판정(LLM 없음).\n"
         f"이 트랙은 기존 골든셋 성적과 **분리 집계**됩니다 (합류는 v3 편입 시 별도 공사).\n",
         encoding="utf-8")

@@ -99,10 +99,12 @@ def t11_t12():
         bare.rename(td / "remote.gone")
         f3 = td / "c.txt"
         f3.write_text("blocked")
+        led_before = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")
         p = pb(["send", "--title", "SopoC", "--files", str(f3)], boxA, "AI1", ok_fail=True)
-        led = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")
-        check("T11b", "원격 차단 — exit≠0 + SEND_FAILED 원장 + 성공출력 없음",
-              p.returncode != 0 and "SEND_FAILED" in led and "발송 확인: SopoC" not in p.stdout,
+        led_new = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")[len(led_before):]
+        # 새로 쓰인 원장 행에서만 검사 — 과거 실행의 SEND_FAILED가 영원히 참으로 만드는 오탐 방지 [P1-5]
+        check("T11b", "원격 차단 — exit≠0 + SEND_FAILED 원장(신규 행) + 성공출력 없음",
+              p.returncode != 0 and "SEND_FAILED" in led_new and "발송 확인: SopoC" not in p.stdout,
               f"exit={p.returncode}")
         (td / "remote.gone").rename(bare)
 
@@ -118,14 +120,15 @@ def t11_t12():
         seen = boxA / ".postbox_seen.json"
         if seen.exists():
             seen.unlink()
+        led_before = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")
         p = pb(["poll"], boxA, "AI1")
-        led = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")
+        led_new = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")[len(led_before):]
         card = next((ROOT / "검수큐").glob("POSTBOX_AI2_SopoB.md"), None)
         card_warn = card and "해시 불일치" in card.read_text(encoding="utf-8")
-        check("T12", "변조 소포 → RECV_HASH_MISMATCH + 투입 금지 카드",
-              "RECV_HASH_MISMATCH" in led and bool(card_warn))
-        # 테스트 카드 정리
-        for c in (ROOT / "검수큐").glob("POSTBOX_AI*.md"):
+        check("T12", "변조 소포 → RECV_HASH_MISMATCH(신규 행) + 투입 금지 카드",
+              "RECV_HASH_MISMATCH" in led_new and bool(card_warn))
+        # 테스트 카드 정리 — 이 테스트가 만든 발신자(AI1/AI2)만 (실전 우체통 카드 오삭제 방지 [P1-5])
+        for c in list((ROOT / "검수큐").glob("POSTBOX_AI1_Sopo*.md")) + list((ROOT / "검수큐").glob("POSTBOX_AI2_Sopo*.md")):
             c.unlink()
 
 
@@ -153,6 +156,28 @@ def t13():
     st["products"][prod]["calibration_passed"] = True
     olib.save_state(st)
     cfg = olib.load_config()
+    try:
+        _t13_body(prod, d, cfg)
+    finally:
+        # 어디서 죽어도 모의 제품 ZZ가 실전 state·검수큐에 잔류하지 않게 [P1-5]
+        import olib as _o
+        _st = _o.load_state()
+        _st["products"].pop(prod, None)
+        _o.save_state(_st)
+        if d.exists():
+            shutil.rmtree(d)
+        for _g in ("GATE_S2MISS_ZZ.md", "GATE_S2DIFF_ZZ.md"):
+            _f = ROOT / "검수큐" / _g
+            if _f.exists():
+                _f.unlink()
+        _p = ROOT / "results" / "_progress_ZZ.json"
+        if _p.exists():
+            _p.unlink()
+
+
+def _t13_body(prod, d, cfg):
+    import judge_run
+    import olib
     # (a) 3번째 배치 강제 예외 → 중단 + progress 보존
     os.environ["ORCH_FAIL_AT_BATCH"] = "3"
     interrupted = False
@@ -179,14 +204,6 @@ def t13():
     del os.environ["ORCH_DROP_ID"]
     check("T13c", "미판정 1건 주입 → WAITING_HUMAN 게이트 (DONE 금지)",
           outcome == "WAITING_HUMAN" and ev.get("미판정") == 1, f"{outcome} {ev}")
-    # 정리
-    st = olib.load_state()
-    st["products"].pop(prod, None)
-    olib.save_state(st)
-    shutil.rmtree(d)
-    g = ROOT / "검수큐" / "GATE_S2MISS_ZZ.md"
-    if g.exists():
-        g.unlink()
 
 
 def t14():
@@ -194,12 +211,16 @@ def t14():
     probe = ROOT / "results" / "_env_probe.py"
     probe.write_text("import os,sys; sys.stdin.read(); print('LEAK' if os.environ.get('ANTHROPIC_API_KEY') else 'CLEAN')",
                      encoding="utf-8")
+    _orig_key = os.environ.get("ANTHROPIC_API_KEY")   # 사용자 키 보존 [P1-5]
     os.environ["ANTHROPIC_API_KEY"] = "sk-test-danger"
     os.environ.pop("ORCH_MOCK", None)   # _cli 실호출 경로
     try:
         out = llm._cli({"provider": "cli", "command": [sys.executable, str(probe)]}, "s", "u")
     finally:
-        del os.environ["ANTHROPIC_API_KEY"]
+        if _orig_key is None:
+            del os.environ["ANTHROPIC_API_KEY"]
+        else:
+            os.environ["ANTHROPIC_API_KEY"] = _orig_key
         os.environ["ORCH_MOCK"] = "1"
         probe.unlink()
     check("T14", "자식 프로세스 env에서 ANTHROPIC_API_KEY 제거", out.strip().endswith("CLEAN"), out.strip()[-20:])

@@ -63,6 +63,24 @@ def gate_product(gate_id):
     return None
 
 
+def gate_flags(gate_id):
+    """게이트의 플래그 수 — 플래그 있는 카드는 폰 원탭 승인 금지 [P1-6]
+    (폰 알림엔 체크리스트가 안 보이는데 --ack-all로 전건 ack 되던 우회로 차단)"""
+    st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
+    for ps in st["products"].values():
+        for g in ps.get("open_gates", []):
+            if g["id"] == gate_id:
+                return len(g.get("flags") or [])
+    return 0
+
+
+def save_pending(pending):
+    """반려 사유 대기를 파일에 영속화 [P1-6] — 봇 재시작으로 사유가 증발하던 사고 방지"""
+    c = cfg()
+    c["pending_reject"] = {str(k): v for k, v in pending.items()}
+    CFG.write_text(json.dumps(c), encoding="utf-8")
+
+
 def status_text():
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
     lines = ["📊 현재 상태"]
@@ -73,10 +91,16 @@ def status_text():
     return "\n".join(lines)
 
 
+def handle_update(u, pending_reject):
+    c = cfg()
+    _handle(u, pending_reject, c)
+
+
 def main():
     print("🤖 텔레그램 게이트 봇 시작 (롱폴링)")
     offset = 0
-    pending_reject = {}   # chat_id → gate_id (반려 사유 입력 대기)
+    # 반려 사유 대기 복원 [P1-6] — 봇이 재시작돼도 "사유 보내주세요" 상태 유지
+    pending_reject = {int(k): v for k, v in (cfg().get("pending_reject") or {}).items()}
     while True:
         try:
             r = api("getUpdates", offset=offset, timeout=50)
@@ -86,60 +110,80 @@ def main():
             continue
         for u in r.get("result", []):
             offset = u["update_id"] + 1
-            c = cfg()
-            # ── 버튼 콜백 (승인/반려)
-            if "callback_query" in u:
-                cq = u["callback_query"]
-                chat = cq["message"]["chat"]["id"]
-                if chat != c.get("chat_id"):
-                    api("answerCallbackQuery", callback_query_id=cq["id"], text="권한 없음")
-                    continue
-                action, _, gate_id = cq["data"].partition(":")
-                prod = gate_product(gate_id)
-                if action == "approve":
-                    rc, out = pipeline("approve", gate_id, "--ack-all", "--actor", "난희(텔레그램)")
-                    if rc == 0 and prod:
-                        say(chat, f"✅ 승인 처리 — {gate_id}\n{run_product(prod)}")
-                    else:
-                        say(chat, f"승인 실패 — {out[:300]}")
-                    api("answerCallbackQuery", callback_query_id=cq["id"])
-                elif action == "reject":
-                    pending_reject[chat] = gate_id
-                    say(chat, f"↩ {gate_id} 반려 — 사유를 다음 메시지로 보내주세요 (그대로 원장에 기록·재출제에 반영)")
-                    api("answerCallbackQuery", callback_query_id=cq["id"])
-                continue
-            # ── 일반 메시지
-            m = u.get("message")
-            if not m or "text" not in m:
-                continue
-            chat = m["chat"]["id"]
-            if c.get("chat_id") is None:
-                # 최초 바인딩 — 이후 다른 사람은 무시
-                c["chat_id"] = chat
-                CFG.write_text(json.dumps(c), encoding="utf-8")
-                say(chat, "🤝 연결 완료! 이제 카드가 뜨면 여기로 알림이 오고, 버튼으로 바로 승인/반려할 수 있어요.\n"
-                          "/status 로 현재 상태를 언제든 볼 수 있어요.")
-                print(f"chat_id 바인딩: {chat}")
-                continue
-            if chat != c["chat_id"]:
-                continue
-            text = m["text"].strip()
-            if chat in pending_reject:
-                gate_id = pending_reject.pop(chat)
-                prod = gate_product(gate_id)
-                rc, out = pipeline("reject", gate_id, "--reason", text, "--actor", "난희(텔레그램)")
-                if rc == 0 and prod:
-                    say(chat, f"↩ 반려 접수 — {gate_id}\n사유: {text[:100]}\n{run_product(prod)}")
-                else:
-                    say(chat, f"반려 실패 — {out[:300]}")
-                continue
-            if text.startswith("/status") or text in ("상태", "현황"):
-                say(chat, status_text())
-            elif text.startswith("/start"):
-                say(chat, "이미 연결돼 있어요. /status 로 상태 확인, 카드 알림의 버튼으로 결정하면 돼요.")
-            else:
-                say(chat, "명령: /status (현재 상태) · 결정은 카드 알림의 버튼으로")
+            # 업데이트 1건의 예외로 봇 전체가 죽으면 승인 채널이 통째로 중단 [P1-6] — 건너뛰고 생존
+            try:
+                handle_update(u, pending_reject)
+            except Exception as e:
+                print(f"업데이트 처리 오류(건너뜀): {str(e)[:120]}")
         time.sleep(0.5)
+
+
+def _handle(u, pending_reject, c):
+    # ── 버튼 콜백 (승인/반려)
+    if "callback_query" in u:
+        cq = u["callback_query"]
+        chat = cq["message"]["chat"]["id"]
+        if chat != c.get("chat_id"):
+            api("answerCallbackQuery", callback_query_id=cq["id"], text="권한 없음")
+            return
+        action, _, gate_id = cq["data"].partition(":")
+        prod = gate_product(gate_id)
+        if action == "approve":
+            nf = gate_flags(gate_id)
+            if nf:
+                # 플래그 카드는 항목별 확인이 승인 조건 — 폰 원탭으로 우회 금지 [P1-6]
+                say(chat, f"⛔ {gate_id} 는 확인 체크리스트 {nf}건이 있는 카드예요 — "
+                          f"폰에서는 승인할 수 없어요. 관제판에서 항목을 확인하고 승인해 주세요.")
+                api("answerCallbackQuery", callback_query_id=cq["id"], text="체크리스트 카드 — 관제판에서")
+                return
+            rc, out = pipeline("approve", gate_id, "--actor", "난희(텔레그램)")
+            if rc == 0 and prod and not gate_id.startswith("QAIMP_"):
+                say(chat, f"✅ 승인 처리 — {gate_id}\n{run_product(prod)}")
+            elif rc == 0:
+                say(chat, f"✅ 승인 처리 — {gate_id}\n{out[:300]}")
+            else:
+                say(chat, f"승인 실패 — {out[:300]}")
+            api("answerCallbackQuery", callback_query_id=cq["id"])
+        elif action == "reject":
+            pending_reject[chat] = gate_id
+            save_pending(pending_reject)
+            say(chat, f"↩ {gate_id} 반려 — 사유를 다음 메시지로 보내주세요 (그대로 원장에 기록·재출제에 반영)")
+            api("answerCallbackQuery", callback_query_id=cq["id"])
+        return
+    # ── 일반 메시지
+    m = u.get("message")
+    if not m or "text" not in m:
+        return
+    chat = m["chat"]["id"]
+    if c.get("chat_id") is None:
+        # 최초 바인딩 — 이후 다른 사람은 무시
+        c["chat_id"] = chat
+        CFG.write_text(json.dumps(c), encoding="utf-8")
+        say(chat, "🤝 연결 완료! 이제 카드가 뜨면 여기로 알림이 오고, 버튼으로 바로 승인/반려할 수 있어요.\n"
+                  "/status 로 현재 상태를 언제든 볼 수 있어요.")
+        print(f"chat_id 바인딩: {chat}")
+        return
+    if chat != c["chat_id"]:
+        return
+    text = m["text"].strip()
+    if chat in pending_reject:
+        gate_id = pending_reject.pop(chat)
+        save_pending(pending_reject)
+        prod = gate_product(gate_id)
+        rc, out = pipeline("reject", gate_id, "--reason", text, "--actor", "난희(텔레그램)")
+        if rc == 0 and prod and not gate_id.startswith("QAIMP_"):   # QAIMP 반려 = 본선 run 무관
+            say(chat, f"↩ 반려 접수 — {gate_id}\n사유: {text[:100]}\n{run_product(prod)}")
+        elif rc == 0:
+            say(chat, f"↩ 반려 접수 — {gate_id}\n사유: {text[:100]}\n{out[:200]}")
+        else:
+            say(chat, f"반려 실패 — {out[:300]}")
+        return
+    if text.startswith("/status") or text in ("상태", "현황"):
+        say(chat, status_text())
+    elif text.startswith("/start"):
+        say(chat, "이미 연결돼 있어요. /status 로 상태 확인, 카드 알림의 버튼으로 결정하면 돼요.")
+    else:
+        say(chat, "명령: /status (현재 상태) · 결정은 카드 알림의 버튼으로")
 
 
 if __name__ == "__main__":
