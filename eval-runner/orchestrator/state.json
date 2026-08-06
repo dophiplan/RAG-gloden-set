@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-07T08:26:52",
+  "updated": "2026-08-07T08:46:03",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,32 +1972,20 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "TERRAIN",
-      "status": "WAITING_HUMAN",
+      "stage": "COVERAGE_MAP",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
           "done_at": "2026-08-07T08:26:28"
+        },
+        "TERRAIN": {
+          "done_at": "2026-08-07T08:46:03"
         }
       },
-      "open_gates": [
-        {
-          "id": "TERRAIN_CI",
-          "stage": "TERRAIN",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-07T08:26:28"
-        },
-        {
-          "id": "QAIMP_CI_v1",
-          "stage": "EXTERNAL_QA",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-07T08:26:52"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"
