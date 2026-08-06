@@ -401,15 +401,16 @@ def cmd_approve(a):
     ps = st["products"][prod]
     if ps["stage"] == g["stage"]:
         if g["stage"] == "TERRAIN":
-            # 승인 = 지형 확정 — terrain.d 오버레이의 onboarding 플래그 해제
+            # 승인 = 지형 확정 — terrain.d 오버레이의 onboarding 플래그 해제.
+            # [P2-2] 파일이 없으면(config 본문 프로파일 제품: RM·HR) 만들어서라도 해제 —
+            # 아니면 승인해도 다음 run이 같은 게이트를 재발행하는 무한 반복
             import yaml as _yaml
             tf = ROOT / "terrain.d" / f"{prod}.yaml"
-            if tf.exists():
-                d = _yaml.safe_load(tf.read_text(encoding="utf-8")) or {}
-                if prod in d:
-                    d[prod]["onboarding"] = False
-                    tf.write_text(_yaml.safe_dump(d, allow_unicode=True, sort_keys=False),
-                                  encoding="utf-8")
+            d = (_yaml.safe_load(tf.read_text(encoding="utf-8")) or {}) if tf.exists() else {}
+            d.setdefault(prod, {})["onboarding"] = False
+            tf.parent.mkdir(exist_ok=True)
+            tf.write_text(_yaml.safe_dump(d, allow_unicode=True, sort_keys=False),
+                          encoding="utf-8")
         if g["stage"] == "SCORING" and a.gate_id.startswith("SCORE_"):
             # 성적표 확정 = ⑧ 완료 → ⑨ 유지보수로 전진 (재채점 루프 방지)
             ledger_append("SCORING", "SCORE_CONFIRMED", f"사람:{a.actor}",
@@ -538,7 +539,15 @@ def cmd_reject(a):
     ledger_append(g["stage"], "reject", f"사람:{a.actor}", gate_id=a.gate_id,
                   reason=a.reason, product=prod)
     if a.gate_id.startswith("GSBATCH_"):
-        mode = _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
+        try:
+            mode = _gsbatch_reject_rollback(prod, a.gate_id, a.reason)
+        except Exception as e:
+            # [P2-1] 롤백 중 예외(배치 xlsx 손상 등) — 게이트는 이미 닫혔으니 조용한 고아
+            # (open_gates 0 + WAITING_HUMAN, 누를 카드 없음) 대신 명시 HALT로 정지·안내
+            set_status(prod, "HALTED",
+                       reason=f"반려 롤백 중 오류({type(e).__name__}) — 배치 파일 확인 후 [다시 시도] "
+                              f"(반환 회계 미완: 사유 '{a.reason[:80]}' 는 원장에 기록됨)")
+            sys.exit(f"⛔ 반려 접수됐지만 롤백 중 오류 — 사고 정지로 전환했어요: {e}")
         if mode == "partial":
             # 부분 반려 = 지목 문항만 삭제 + 나머지 승인 — 다음 차수로 바로 진행
             set_status(prod, "PENDING")
@@ -557,8 +566,13 @@ def cmd_reject(a):
         print(f"↩ 반려 — {a.gate_id} · 분류결과 폐기(반려_ 표시). 원본 Q&A는 보존 — "
               f"파일을 고쳐 올리거나 [🔁 재대조]를 누르면 새 분류가 나와요.")
         return
-    set_status(prod, "REJECTED", reason=a.reason)
-    print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
+    # [P2-1/M-1] 지난 단계의 잔존 게이트 반려가 현재 단계 상태를 REJECTED로 오염하지 않게 —
+    # 단계가 일치할 때만 상태 전이 (approve의 stage 가드와 대칭)
+    if ps["stage"] == g["stage"]:
+        set_status(prod, "REJECTED", reason=a.reason)
+        print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
+    else:
+        print(f"↩ 반려 — {a.gate_id} (지난 단계 {g['stage']} 카드 정리 · 현재 단계 {ps['stage']} 상태는 유지)")
 
 
 def cmd_expand(a):

@@ -135,7 +135,8 @@ def meta_history_compare(prod, round_label, cv):
     hist = json.loads(hp.read_text(encoding="utf-8")) if hp.exists() else {}
     warns = []
     if docs is not None and hist:
-        prev_r = sorted(hist)[-1]
+        # [P2-3] 문자열 정렬은 "r10"<"r9" — r10부터 직전 회차를 잘못 집어 스코프 변동 게이트가 눈멂
+        prev_r = max(hist, key=lambda r: int(re.sub(r"\D", "", r) or 0))
         pd_, pc = hist[prev_r].get("docs"), hist[prev_r].get("chunks")
         if pd_ is not None and (docs != pd_ or chunks != pc):
             warns.append({"type": "스코프·청크 변동", "id": f"{prev_r}→{round_label}",

@@ -602,7 +602,7 @@ function renderScores(ps){
   // ── 버전별 누적 현황 줄 (몇 회차가 쌓였고 마지막이 어느 회차인지) — 세대별
   const genRow = g=>{
     const sc = S.scores[g.code]||{};
-    const rounds = Object.keys(sc).sort();
+    const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
     const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
     const flow = rounds.map(r=>sc[r].scorer==='기록 이관'?r+'*':r).join(' → ');
     return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.badge||(g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>')}</span>
@@ -633,7 +633,7 @@ function renderScores(ps){
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired, code, badge) => {
     if(!sc || !Object.keys(sc).length) return '';
-    const rounds = Object.keys(sc).sort();
+    const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
     const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)"
       return (typeof v==='number'&&n)? `${v} <span class="hint">(${Math.round(v/n*100)}%)</span>` : esc(String(v??'·')); };
@@ -823,7 +823,7 @@ function hideITip(){ $('itip').style.display = 'none'; }
 function openReports(codeEnc, label){
   const code = decodeURIComponent(codeEnc);
   const sc = S.scores[code] || {};
-  const rounds = Object.keys(sc).sort().filter(r=>sc[r].scorer!=='기록 이관');
+  const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''))).filter(r=>sc[r].scorer!=='기록 이관');
   $('rpt-title').textContent = label;
   $('rpt-body').innerHTML = rounds.map(r=>{
     const v = sc[r];
