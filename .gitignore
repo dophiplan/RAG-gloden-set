@@ -26,3 +26,10 @@ config.yaml.apikeys
 translation-manager/
 ninilab/
 Downloads/
+
+# 외부 파트너 원본 자료 격리 — CI 제품의 데이터·산출물은 원격 업로드 금지 (2026-08-07 운영 지시)
+eval-runner/orchestrator/data/CI/**
+eval-runner/orchestrator/catalog/manifest_corpus_CI.json
+eval-runner/orchestrator/results/*CI*
+eval-runner/orchestrator/검수큐/*CI*.md
+eval-runner/orchestrator/검수큐/완료/*CI*.md
