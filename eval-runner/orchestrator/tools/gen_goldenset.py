@@ -21,7 +21,7 @@ import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
 import llm
-from olib import (ROOT, N, load_state, save_state, ledger_append,
+from olib import (ROOT, N, load_state, save_state, save_goldenset, ledger_append,
                   issue_gate_card, load_config)
 
 DATA = ROOT / "data"
@@ -105,6 +105,34 @@ SYSTEM_GEN = """[TASK:GOLDENSET_ITEMS] 너는 RAG 평가 골든셋 출제기다(
 ② '근거 출처'에 unit_id 와 source(URL/파일명) 병기 — 채점기 출처 대조용
 ③ '정답' 끝에 반드시 "필수: 요소1, 요소2" 줄 포함 — 채점기 필수 요소 파싱 규격
 ④ 질문에 제품명 명시 ⑤ want_e=true면 코퍼스 부재 소재 E형 1문항 추가 ⑥ 질문 중복 금지."""
+
+
+def next_item_no(prod):
+    """다음 문항 시작 번호 = 기존 배치 파일(반려_ 포함)의 최대 발행 번호 + 1 [P0-1].
+    done_units 개수 기준은 미인용(lost) 발생 시 직전 차수와 번호가 겹쳐 서로 다른 문항이
+    같은 ID를 받는다 (실측: RC2 76건·RV2 3건 증발). 반려_ 파일 번호도 재사용 금지(증적 모호 방지)."""
+    mx = 0
+    pat = re.compile(rf"^{re.escape(prod)}-[A-Za-z]{{0,2}}0*(\d+)$")
+    d = DATA / prod / "04_goldenset_batch"
+    for b in (sorted(d.glob("*.xlsx")) if d.is_dir() else []):
+        if b.name.startswith(("~$", ".")):
+            continue
+        try:
+            wb = openpyxl.load_workbook(b, read_only=True, data_only=True)
+            ws = wb[wb.sheetnames[0]]
+            hdr = [N(c) for c in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
+            if "ID" not in hdr:
+                wb.close()
+                continue
+            ci = hdr.index("ID")
+            for r in ws.iter_rows(min_row=2, values_only=True):
+                m = pat.match(N(r[ci])) if ci < len(r) and r[ci] else None
+                if m:
+                    mx = max(mx, int(m.group(1)))
+            wb.close()
+        except Exception:
+            continue   # 손상 파일은 번호 산정에서 제외 — 검수 7종이 별도로 잡는다
+    return mx + 1 if mx else None
 
 
 def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
@@ -293,7 +321,7 @@ def run(prod, cfg):
         plan = llm.chat("generator", "[TASK:ALLOCATION_PLAN] 커버 단위를 배치로 배분하는 계획을 JSON으로.",
                         json.dumps({"units": len(units)}, ensure_ascii=False), cfg)
         gs["phase"] = "PLAN_GATE"
-        save_state(st)
+        save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
         issue_gate_card(prod, "GOLDENSET_BATCH", f"GSPLAN_{prod}",
                         what_stopped="배분계획 승인 — 재료실측 완료, 배치 배분안 확인",
                         evidence={"재료 풀(맵 단위)": len(all_units),
@@ -315,7 +343,8 @@ def run(prod, cfg):
             fb = gs.get("reject_feedback")   # 직전 배치 사람 반려 사유 — 이번 출제에 반영
             label_pre = "파일럿" if is_pilot else f"{gs['round'] + 1}차"
             _gs_progress(prod, f"{label_pre} 출제 중 — claude 대형 호출 1건 (20~40분이 정상)")
-            items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
+            items = generate_items_chunked(prod, batch_units,
+                                           start_no=next_item_no(prod) or (len(gs["done_units"]) + 1),
                                            want_e=is_pilot, cfg=cfg, feedback=fb)
             if not items:
                 # 출제 AI가 빈 배열 회신 = 이 재료들은 사람 반려 규칙 대조상 출제 부적격 판단 —
@@ -324,7 +353,7 @@ def run(prod, cfg):
                 gs.setdefault("unfit_units", []).extend(ids)
                 if fb:
                     gs.pop("reject_feedback", None)
-                save_state(st)
+                save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
                 ledger_append("GOLDENSET_BATCH", "UNITS_UNFIT", "script:gen_goldenset",
                               evidence={"부적격": len(ids), "예": ids[:5],
                                         "사유": "출제 AI 전건 부적격 회신(빈 배열) — 사람 반려 규칙 대조"},
@@ -358,7 +387,7 @@ def run(prod, cfg):
             gs["last_batch"] = {"label": label, "file": N(path.name), "units": sorted(cited)}
             if fb:
                 gs.pop("reject_feedback", None)   # 피드백은 1회 반영 후 소거 (영구 편향 방지)
-            save_state(st)
+            save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
             verdict = "PASS" if rc == 0 else "REJECTED(재생성 후에도)"
             ev = {"배치": N(path.name), "문항": len(items), "검수 7종": verdict,
                   "직접 커버 누계": len(gs["done_units"]), "잔여": len(units) - len(gs["done_units"])}
@@ -381,17 +410,45 @@ def run(prod, cfg):
     # 3) 배치 마감 (잔여 0)
     if gs["phase"] == "CLOSING":
         batches = sorted((DATA / prod / "04_goldenset_batch").glob(f"{prod}_골든셋_*.xlsx"))
-        all_items, seen = [], set()
+        # 같은 차수의 구버전(v1_0)·신버전(v1_1)이 함께 잔존하면 이중 집계 — 차수별 최신판만 [P0-1]
+        groups = {}
+        for b in batches:
+            mv = re.match(r"(.+?)_\d+문항_v(\d+)_(\d+)\.xlsx$", b.name)
+            key = mv.group(1) if mv else b.stem
+            ver = (int(mv.group(2)), int(mv.group(3))) if mv else (0, 0)
+            if key not in groups or ver > groups[key][0]:
+                groups[key] = (ver, b)
+        batches = sorted((b for _, b in groups.values()), key=lambda p: p.name)
+        all_items, seen, dup_rows = [], set(), []
         for b in batches:
             wb = openpyxl.load_workbook(b, read_only=True, data_only=True)
             ws = wb[wb.sheetnames[0]]
             hdr = [N(c) for c in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
             for r in ws.iter_rows(min_row=2, values_only=True):
                 d = {h: N(v) for h, v in zip(hdr, r)}
-                if d.get("ID") and d["ID"] not in seen:
-                    seen.add(d["ID"])
-                    all_items.append(d)
+                if not d.get("ID"):
+                    continue
+                if d["ID"] in seen:
+                    # 무단 드롭 금지 [P0-1] — 격리 파일로 보존하고 마감 카드에 실측 보고
+                    dup_rows.append({**d, "출처 배치": N(b.name)})
+                    continue
+                seen.add(d["ID"])
+                all_items.append(d)
             wb.close()
+        if dup_rows:
+            qwb = openpyxl.Workbook()
+            qws = qwb.active
+            qws.title = "ID중복_격리"
+            qws.append(["출처 배치"] + STD_HEADER)
+            for d in dup_rows:
+                qws.append([d.get("출처 배치", "")] + [d.get(h, "") for h in STD_HEADER])
+            qf = DATA / prod / "05_unified_ledger" / f"{prod}_ID중복_격리_{len(dup_rows)}건.xlsx"
+            qf.parent.mkdir(parents=True, exist_ok=True)
+            qwb.save(qf)
+            ledger_append("GOLDENSET_BATCH", "ID_COLLISION_QUARANTINED", "script:gen_goldenset",
+                          evidence={"중복": len(dup_rows), "격리 파일": N(qf.name),
+                                    "사유": "차수 간 ID 충돌 — 대장에는 선착 문항만, 나머지는 격리 보존"},
+                          product=prod)
         direct = len(all_items)
         pool = len(units)
         # 회계 주의: 제외소스(Known Issue) 도입으로 대표 추출 명단이 중간에 갱신됨 —
@@ -422,14 +479,16 @@ def run(prod, cfg):
             ws2.append(row)
         wb.save(out)
         gs["phase"] = "DONE"
-        save_state(st)
-        ev = {"통합 대장": N(out.name), "문항": direct, "ID 중복": 0,
+        save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
+        ev = {"통합 대장": N(out.name), "문항": direct,
+              "ID 중복": (f"{len(dup_rows)}건 — 격리 보존(대장 미편입), 격리 파일 확인 필요"
+                          if dup_rows else 0),   # 하드코딩 0 금지 [P0-1] — 실측만 보고
               "커버 등식": f"소실 0 (풀 {pool})"}
         ledger_append("GOLDENSET_BATCH", "BATCH_CLOSED", "script:gen_goldenset",
                       evidence=ev, product=prod)
         if gs.get("expand_units"):
             gs.pop("expand_units", None)   # 증분 마감 — 확대 모드 해제 (다음 확대는 새 expand로)
-            save_state(st)
+            save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
         issue_gate_card(prod, "GOLDENSET_BATCH", f"GSCLOSE_{prod}",
                         what_stopped="배치 마감 — 통합 대장 생성 완료, 사람 확정",
                         evidence=ev, recommendation="승인 시 ⑤ 통합 대장 검사로")

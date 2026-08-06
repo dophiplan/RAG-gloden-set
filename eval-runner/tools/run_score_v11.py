@@ -32,7 +32,8 @@ REJECTION_PATTERNS = [
     "찾지 못했",
     "근거를 찾지 못",
     "명시되어 있지 않",
-    "명시적으로 언급",
+    "언급되지 않",   # v1.2: 구 패턴 "명시적으로 언급"은 긍정문("~라고 명시적으로 언급되어 있습니다"=환각)에도
+                     # 매치되는 오탐이라 부정형 앵커로 교체 (P0-3)
     "언급되어 있지 않",
     "언급이 없",
     "안내된 적 없",
@@ -160,9 +161,9 @@ def contains_normalized(haystack: str, needle: str) -> bool:
 
 
 def is_rejection(answer: str) -> bool:
-    """거절/부재 응답인지 판정."""
+    """거절/부재 응답인지 판정. 빈 답변은 거절이 아니라 무응답 — 거절 성공(pass)으로 승격 금지 (P0-3)."""
     if not isinstance(answer, str) or not answer.strip():
-        return True
+        return False
     return any(pat in answer for pat in REJECTION_PATTERNS)
 
 
@@ -301,6 +302,9 @@ def score_e_type(row: pd.Series, response: dict) -> dict:
     answer = response.get("answer", "")
     if not isinstance(answer, str):
         answer = str(answer) if pd.notna(answer) else ""
+    if not answer.strip():
+        # 무응답/결측 — 거절 성공도, 환각도 아님 (생성 fail로만 계상, P0-3)
+        return {"e_type": True, "rejection": False, "hallucination": False}
     rejected = is_rejection(answer)
     return {
         "e_type": True,

@@ -119,12 +119,13 @@ def run_calibration_judging(prod, cfg):
     from openpyxl.worksheet.datavalidation import DataValidation
     ws0 = wb.active
     ws0.title = "판정_기입(여기만 채우세요)"
-    ws0.append(["문항ID", "유형", "질문", "시스템 정답", "합격 기준", "사람 판정(합격/불합격)", "메모(선택)"])
+    ws0.append(["문항ID", "유형", "질문", "시스템 정답", "합격 기준", "사람 판정(합격/부분/0점)", "메모(선택)"])
     for it in cal:
         ws0.append([it["ID"], it.get("유형", ""), it["질문"],
                     N(it.get("정답 (필수 포함 요소)") or it.get("정답", "")),
                     N(it.get("합격 기준", "")), "", ""])
-    dv = DataValidation(type="list", formula1='"합격,불합격"', allow_blank=True)
+    # 어휘는 채점관과 동일한 3단이어야 일치율 비교가 성립 (P0-2: 2단이면 '부분/0점' 동의가 전부 불일치로 집계)
+    dv = DataValidation(type="list", formula1='"합격,부분,0점"', allow_blank=True)
     ws0.add_data_validation(dv)
     dv.add(f"F2:F{len(cal) + 1}")
     for col, w in zip("ABCDEFG", (10, 5, 46, 46, 34, 16, 20)):

@@ -169,17 +169,57 @@ def save_state(st, _skip_ledger=False):
     tmp.replace(path)
 
 
+# ── 상태 잠금 [P0-5] ────────────────────────────────────────
+# 대시보드(승인/반려)·auto_run 워커·텔레그램 봇이 별개 프로세스로 state.json을 같이 쓴다.
+# 잠금 없는 load→(작업)→save 는 그 사이 남이 쓴 변경을 통째로 되돌린다 (반려 증발 사고 경로).
+import fcntl
+from contextlib import contextmanager
+
+
+@contextmanager
+def _state_lock():
+    lf = _paths()["state"].with_name("state.lock")
+    with open(lf, "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)   # 프로세스 간 배타 — 임계 구간은 ms 단위라 블로킹 대기
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def update_state(mutator):
+    """잠금 아래 '신선 로드 → 변경 → 저장' — 낡은 스냅샷 되쓰기 금지의 표준 경로.
+    mutator(st) 는 st 를 제자리 수정하고, 반환값은 그대로 호출자에게 전달된다.
+    주의: mutator 안에서 set_status/issue_gate_card 등 잠금 잡는 함수 호출 금지 (교착)."""
+    with _state_lock():
+        st = load_state()
+        r = mutator(st)
+        save_state(st)
+        return r
+
+
+def save_goldenset(prod, gs):
+    """출제 러너 전용 [P0-5] — 러너가 20~40분 들고 있던 st 전체를 되쓰면 그 사이 사람이 한
+    반려/승인이 증발한다. 자기 제품의 goldenset 장부만 신선 병합."""
+    update_state(lambda st: st["products"][prod].__setitem__("goldenset", gs))
+
+
 def set_status(prod, status, stage=None, reason=None, actor="script:orchestrator", evidence=None):
-    st = load_state()
-    ps = st["products"].setdefault(prod, _initial_product_state())
-    if stage:
-        ps["stage"] = stage
-    prev = ps["status"]
-    ps["status"] = status
-    if status == "HALTED":
-        ps["halt_reason"] = reason
-    save_state(st)
-    ledger_append(ps["stage"], f"{prev}→{status}", actor, evidence=evidence,
+    box = {}
+
+    def _mut(s):
+        ps = s["products"].setdefault(prod, _initial_product_state())
+        if stage:
+            ps["stage"] = stage
+        box["prev"], box["stage"], box["st"] = ps["status"], ps["stage"] if not stage else stage, s
+        ps["status"] = status
+        if status == "HALTED":
+            ps["halt_reason"] = reason
+        box["stage"] = ps["stage"]
+
+    update_state(_mut)   # [P0-5] 잠금 아래 신선 병합 — 다른 프로세스 변경 보존
+    st = box["st"]
+    ledger_append(box["stage"], f"{box['prev']}→{status}", actor, evidence=evidence,
                   reason=reason, product=prod)
     if status == "HALTED":
         try:
@@ -253,13 +293,15 @@ def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, re
     (q / f"GATE_{gate_id}.md").write_text(body, encoding="utf-8")
     ledger_append(stage, "ISSUE_GATE_CARD", "script:orchestrator", gate_id=gate_id,
                   evidence=evidence, product=prod)
-    # 상태에 게이트 오픈 기록
-    st = load_state()
-    ps = st["products"][prod]
-    if gate_id not in [g["id"] for g in ps["open_gates"]]:
-        ps["open_gates"].append({"id": gate_id, "stage": stage, "flags": flags,
-                                 "acked": False, "issued": now()})
-    save_state(st)
+
+    # 상태에 게이트 오픈 기록 — 잠금 아래 신선 병합 [P0-5]
+    def _mut(s):
+        ps = s["products"][prod]
+        if gate_id not in [g["id"] for g in ps["open_gates"]]:
+            ps["open_gates"].append({"id": gate_id, "stage": stage, "flags": flags,
+                                     "acked": False, "issued": now()})
+
+    update_state(_mut)
     try:
         import notify
         notify.gate_card(prod, gate_id, what_stopped, evidence)   # 폰 알림 (no-op 안전)
@@ -269,15 +311,21 @@ def issue_gate_card(prod, stage, gate_id, what_stopped, evidence, flags=None, re
 
 
 def close_gate(prod, gate_id):
-    st = load_state()
-    ps = st["products"][prod]
-    ps["open_gates"] = [g for g in ps["open_gates"] if g["id"] != gate_id]
-    save_state(st)
+    """게이트 닫기 = 선점 [P0-5]: 잠금 아래 원자적으로 제거하고, 실제로 이 호출이 닫았는지 반환.
+    대시보드·텔레그램이 동시에 승인해도 한쪽만 True — 이중 승인(단계 이중 전진·시험지 이중 발행) 차단."""
+    def _mut(s):
+        ps = s["products"][prod]
+        n0 = len(ps["open_gates"])
+        ps["open_gates"] = [g for g in ps["open_gates"] if g["id"] != gate_id]
+        return len(ps["open_gates"]) < n0
+
+    removed = update_state(_mut)
     card = _paths()["queue"] / f"GATE_{gate_id}.md"
     if card.exists():
         done = _paths()["queue"] / "완료"
         done.mkdir(exist_ok=True)
         card.rename(done / card.name)
+    return removed
 
 
 def find_gate(gate_id):
@@ -290,15 +338,16 @@ def find_gate(gate_id):
 
 
 def advance_stage(prod):
-    """현 단계 DONE → 다음 단계 PENDING"""
-    st = load_state()
-    ps = st["products"][prod]
-    i = STAGE_KEYS.index(ps["stage"])
-    ps["stage_history"][ps["stage"]] = {"done_at": now()}
-    if i + 1 < len(STAGE_KEYS):
-        ps["stage"] = STAGE_KEYS[i + 1]
-        ps["status"] = "PENDING"
-    else:
-        ps["status"] = "DONE"
-    save_state(st)
-    return ps["stage"]
+    """현 단계 DONE → 다음 단계 PENDING (잠금 아래 신선 병합 [P0-5])"""
+    def _mut(s):
+        ps = s["products"][prod]
+        i = STAGE_KEYS.index(ps["stage"])
+        ps["stage_history"][ps["stage"]] = {"done_at": now()}
+        if i + 1 < len(STAGE_KEYS):
+            ps["stage"] = STAGE_KEYS[i + 1]
+            ps["status"] = "PENDING"
+        else:
+            ps["status"] = "DONE"
+        return ps["stage"]
+
+    return update_state(_mut)
