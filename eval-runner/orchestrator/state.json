@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-06T10:21:05",
+  "updated": "2026-08-06T11:52:06",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1971,33 +1971,45 @@
       },
       "strategy": "ensemble"
     },
+    "CI": {
+      "stage": "CORPUS_AUDIT",
+      "status": "WAITING_INPUT",
+      "calibration_passed": false,
+      "scorer_version": null,
+      "compare_blocked": false,
+      "stage_history": {},
+      "open_gates": [],
+      "halt_reason": null,
+      "strategy": "ensemble",
+      "start_mode": "full"
+    },
     "EE": {
       "stage": "SCORING",
       "status": "WAITING_HUMAN",
       "calibration_passed": true,
-      "scorer_version": "a127a0871a96371e60035e0e9f9f255d9e60a55abce0c60de205b036924be189",
+      "scorer_version": "cf97a03d94f334cb3740ce9710ef8f0ba678ef443659cc6c7e6814dd727710d4",
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
-          "done_at": "2026-07-23T13:28:21"
+          "done_at": "2026-08-06T11:51:53"
         },
         "TERRAIN": {
-          "done_at": "2026-07-23T13:28:22"
+          "done_at": "2026-08-06T11:51:53"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-07-23T13:28:23"
+          "done_at": "2026-08-06T11:51:55"
         },
         "GOLDENSET_BATCH": {
-          "done_at": "2026-07-23T13:28:26"
+          "done_at": "2026-08-06T11:51:58"
         },
         "UNIFIED_LEDGER": {
-          "done_at": "2026-07-23T13:28:26"
+          "done_at": "2026-08-06T11:51:59"
         },
         "CALIBRATION": {
-          "done_at": "2026-07-23T13:28:29"
+          "done_at": "2026-08-06T11:52:02"
         },
         "STAGE2": {
-          "done_at": "2026-07-23T13:28:29"
+          "done_at": "2026-08-06T11:52:02"
         }
       },
       "open_gates": [
@@ -2006,7 +2018,7 @@
           "stage": "SCORING",
           "flags": [],
           "acked": false,
-          "issued": "2026-07-23T13:28:32"
+          "issued": "2026-08-06T11:52:06"
         }
       ],
       "halt_reason": null,
@@ -2029,20 +2041,26 @@
           "EE-POLICY-003",
           "EE-POLICY-004"
         ],
-        "batch": "B1"
+        "batch": "B1",
+        "last_batch": {
+          "label": "파일럿",
+          "file": "EE_골든셋_파일럿_13문항_v1_0.xlsx",
+          "units": [
+            "EE-MANUAL-001",
+            "EE-MANUAL-002",
+            "EE-MANUAL-003",
+            "EE-MANUAL-004",
+            "EE-NOTICE-001",
+            "EE-NOTICE-002",
+            "EE-NOTICE-003",
+            "EE-NOTICE-004",
+            "EE-POLICY-001",
+            "EE-POLICY-002",
+            "EE-POLICY-003",
+            "EE-POLICY-004"
+          ]
+        }
       }
-    },
-    "CI": {
-      "stage": "CORPUS_AUDIT",
-      "status": "WAITING_INPUT",
-      "calibration_passed": false,
-      "scorer_version": null,
-      "compare_blocked": false,
-      "stage_history": {},
-      "open_gates": [],
-      "halt_reason": null,
-      "strategy": "ensemble",
-      "start_mode": "full"
     }
   }
 }
