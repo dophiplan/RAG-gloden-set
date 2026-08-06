@@ -85,6 +85,12 @@
   .qalane .qstep.done{border-color:rgba(61,214,176,.5);color:#3dd6b0}
   .qalane .qstep.act{border-color:#c9a6ff;color:#c9a6ff;background:rgba(170,120,255,.14);font-weight:700}
   .qalane .qarr{color:var(--tx2)}
+  /* G26: 카드 출처 배지 — 제목만 봐도 어느 작업 줄기인지 (외부 Q&A / rN 실측 / 골든셋 N차 …) */
+  .srcbadge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:2px 8px;margin-right:8px;vertical-align:2px;white-space:nowrap}
+  .src-qa{color:#c9a6ff;background:rgba(170,120,255,.12);border:1px solid rgba(170,120,255,.5)}
+  .src-r{color:#3dd6b0;background:rgba(61,214,176,.10);border:1px solid rgba(61,214,176,.5)}
+  .src-gs{color:var(--run);background:rgba(80,200,255,.08);border:1px solid rgba(80,200,255,.5)}
+  .src-h{color:#ffcc66;background:rgba(255,204,102,.08);border:1px solid rgba(255,204,102,.5)}
   .archbtn.on,.archbtn:hover:not(:disabled){color:var(--tx);border-color:var(--tx2)}
   .archbtn:disabled{opacity:.45;cursor:not-allowed}
   .archwrap{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
@@ -564,7 +570,7 @@ function renderQueue(){
         ?`<div class="hint">올라간 파일 <b>${up.length}개</b>${up.length?` — ${esc(up.slice(0,4).join(', '))}${up.length>4?` 외 ${up.length-4}개`:''}`:''}<br>여러 번 나눠 올려도 돼요 — 전부 올린 뒤 [다 올렸어요]를 누르면 검사가 시작돼요. (선택창에서 Cmd 클릭 = 한번에 여러 개)</div>`
         :`<div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행</div>`}`})();
     return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}">
-      <h4>${esc(c.title)}</h4>
+      <h4>${srcBadge(c)}${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
       ${review?`<div class="evidence" style="max-height:420px">${esc(review)}</div>
       <div style="border-top:2px solid var(--line);margin:10px 0"></div>
@@ -785,6 +791,25 @@ async function _act(payload){
     busy = false;
     await loadAll();
   }
+}
+/* G26: 카드 출처 배지 — 게이트 id에서 작업 줄기를 읽어 제목 앞에 표시 (안 헷갈리게) */
+function srcBadge(c){
+  const id = c.id || '';
+  const rm = id.match(/_r(\d+)(?:_|$)/);
+  const b = (cls, txt) => `<span class="srcbadge ${cls}">${txt}</span>`;
+  if(id.startsWith('QAIMP_') || id.startsWith('QA_')) return b('src-qa','외부 Q&A');
+  if(id.startsWith('SCORE_')) return b('src-r', rm? `r${rm[1]} 실측` : '실물 채점');
+  if(id.includes('SCORING'))  return b('src-r', rm? `r${rm[1]} 실측` : '실물 채점');
+  if(id.startsWith('GSBATCH_')){ const lm = id.match(/_(파일럿|\d+차)/); return b('src-gs', `골든셋 ${lm? lm[1] : '배치'}`); }
+  if(id.startsWith('GSPLAN_'))  return b('src-gs','골든셋 계획');
+  if(id.startsWith('GSCLOSE_')) return b('src-gs','골든셋 마감');
+  if(id.startsWith('COVMAP_'))  return b('src-gs','커버리지맵');
+  if(id.startsWith('TERRAIN_')) return b('src-gs','지형');
+  if(id.includes('CORPUS'))     return b('src-gs','코퍼스');
+  if(id.startsWith('CAL'))      return b('src-h','면접');
+  if(id.startsWith('S2'))       return b('src-h','판정 검토');
+  if(id.startsWith('MAINT'))    return b('src-h','유지보수');
+  return '';
 }
 async function doApprove(id, nAcks){
   const d = await act({cmd:'approve', gate_id:id, ack_all:nAcks>0});
