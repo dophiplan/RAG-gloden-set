@@ -286,7 +286,7 @@ const STATUS_KO = {RUNNING:'진행 중', WAITING_HUMAN:'결정 대기 (내 차�
 let S = {state:null, catalog:null, queue:null, scores:null, ledger:null};
 let cur = null, rejectTarget = null, busy = false;
 const $ = id => document.getElementById(id);
-const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');   // [P3] 따옴표 파일명이 onclick/속성을 깨던 것
 const kb = n => n>=1048576?(n/1048576).toFixed(1)+'MB':(n/1024).toFixed(1)+'KB';
 // U1: 화면의 주체 = 제품(display). 내부 트랙 코드는 이 두 헬퍼 뒤로 숨긴다.
 const PV = () => S.state._products[cur];          // {code, name, gen, legacy[]}
@@ -307,6 +307,11 @@ async function _loadAll(fromPoll){
   ]);
   S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg, ai};
   const disp = Object.keys(st._products||{});
+  if(!disp.length){   // [P3] 제품 0개(신규 설치 등)면 PV()가 undefined → render TypeError 백지
+    $('tabs').innerHTML = `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
+    $('view').innerHTML = '<div class="note" style="margin:24px">등록된 제품이 없어요 — 상단 [＋ 제품]으로 첫 제품을 추가하면 시작됩니다.</div>';
+    return;
+  }
   if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
   if(!cur || !st._products[cur]) cur = disp[0];
   // ⑥ 채점관 면접 카드가 있으면 답안지(30문항)도 함께 로드 — 카드 안에서 바로 판정

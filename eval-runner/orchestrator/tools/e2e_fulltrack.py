@@ -175,6 +175,8 @@ def make_mock_response_log():
 
 def main():
     keep = "--keep" in sys.argv
+    lp = ROOT / "ledger.jsonl"
+    led_offset = len(lp.read_text(encoding="utf-8")) if lp.exists() else 0   # [P3] 이번 실행분만 검사
     # ── 초기화: 이전 TT 흔적 제거
     if DATA.exists():
         shutil.rmtree(DATA)
@@ -232,7 +234,8 @@ def main():
     ok &= final_ok
     print(f"  {'✅' if final_ok else '❌'} 최종 상태: {ps['stage']} · {ps['status']} · cal={ps['calibration_passed']} (기대: SCORING·WAITING_HUMAN·True)")
     # 원장에 재검 시드 기록 확인
-    led = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")
+    # [P3] 전체 원장 검사는 과거 실행 기록으로 영원히 참 — 이번 실행이 쓴 구간만 검사
+    led = (ROOT / "ledger.jsonl").read_text(encoding="utf-8")[led_offset:]
     seed_ok = '"STAGE2_JUDGED"' in led and '"recheck_ids"' in led
     ok &= seed_ok
     print(f"  {'✅' if seed_ok else '❌'} 재검 시드+추출 목록 원장 기록")

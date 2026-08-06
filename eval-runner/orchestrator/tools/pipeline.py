@@ -242,7 +242,9 @@ def st_calibration(prod, cfg):
                          where=f"data/{prod}/06_calibration/",
                          fmt="대조표 xlsx — 문항별 양측 판정 + 불일치 사유 3분류")
         return "WAITING_INPUT", {}
-    return "WAITING_HUMAN", {"대조표": N(t.name)}
+    # [P3] ImportError 폴백에서 게이트 카드 없이 WAITING_HUMAN을 주면 누를 버튼이 없는 교착 —
+    # 모듈 로드 실패는 환경 사고이므로 명시 정지
+    return "HALTED", {"halt": "calibration 모듈 로드 실패 — 의존성/문법 확인 필요 (대조표는 존재)"}
 
 
 def st_stage2(prod, cfg):
@@ -271,7 +273,7 @@ def st_scoring(prod, cfg):
                          fmt="json — meta(search_scope) + responses 전량. 투입 시 형식 게이트 자동 실행",
                          extra=f"질문셋 발행본이 이미 있다면 발행 게이트(ID·질문 2컬럼) 통과분인지 확인")
         return "WAITING_INPUT", {"logs": 0}
-    return "WAITING_HUMAN", {"logs": len(logs)}
+    return "HALTED", {"halt": "scoring 모듈 로드 실패 — 의존성/문법 확인 필요 (로그는 존재)"}   # [P3] 카드 없는 WAITING_HUMAN 교착 방지
 
 
 def st_maintenance(prod, cfg):
@@ -347,7 +349,10 @@ def cmd_run(a):
             qdir = ROOT / cfg["paths"]["queue"]
             done_dir = qdir / "완료"
             for card in qdir.glob(f"INPUT_*_{prod}.md"):
-                if f"INPUT_{stage}_" in card.name or stage in card.name:
+                # [P3] 증분 확대는 COVERAGE_MAP 단계에서 INPUT_CORPUS_AUDIT 카드를 발행 —
+                # 그 카드도 이 단계 완료로 해소된 것 (불일치로 영구 잔존하던 고아 카드 정리)
+                if (f"INPUT_{stage}_" in card.name or stage in card.name
+                        or (stage == "COVERAGE_MAP" and "CORPUS_AUDIT" in card.name)):
                     done_dir.mkdir(exist_ok=True)
                     card.rename(done_dir / card.name)
             nxt = advance_stage(prod)
@@ -366,6 +371,11 @@ def cmd_run(a):
         elif outcome == "HALTED":
             set_status(prod, "HALTED", reason=json.dumps(ev, ensure_ascii=False))
             return
+    # [P3] 루프 소진(CONTINUE 연속 등) — RUNNING 잔존 금지: PENDING으로 명시 복귀
+    st = load_state()
+    if st["products"][prod]["status"] == "RUNNING":
+        set_status(prod, "PENDING", reason="run 루프 소진 — 재실행 필요 (RUNNING 잔존 방지)")
+        print(f"↻ {prod} run 루프 소진 — PENDING 복귀 (다시 [▶ 이어서 진행])")
 
 
 def cmd_approve(a):
@@ -458,6 +468,8 @@ def _gsbatch_partial_remove(prod, gs, lb, ids, reason, st):
     hit = [r for r in range(2, ws.max_row + 1) if str(ws.cell(r, cid).value) in set(ids)]
     if not hit:
         return None                      # 코드가 이 배치에 없음 — 전체 반려 경로로
+    if len(hit) >= ws.max_row - 1:
+        return None                      # [P3] 전 문항 지목 = 사실상 전체 반려 — 빈 '0문항' 배치 생성 금지
     for r in reversed(hit):
         ws.delete_rows(r)
     n = ws.max_row - 1
@@ -482,6 +494,9 @@ def _gsbatch_partial_remove(prod, gs, lb, ids, reason, st):
     ledger_append("GOLDENSET_BATCH", "ITEM_REMOVED", "script:pipeline(부분 반려)",
                   evidence={"삭제 문항": sorted(set(ids)), "잔존": n, "배치": N(new_name),
                             "반환 단위": len(returned), "사유": reason[:150]}, product=prod)
+    # [P3] 잔존분 승인의 원장 근거를 명시 — "부분 반려 = 나머지 승인" 판단이 간접 추론이 되지 않게
+    ledger_append("GOLDENSET_BATCH", "PARTIAL_APPROVE", "사람:반려 사유의 문항 지목",
+                  evidence={"승인 잔존": n, "배치": N(new_name)}, product=prod)
     if returned:
         ledger_append("GOLDENSET_BATCH", "UNITS_RETURNED", "script:pipeline(부분 반려)",
                       evidence={"반환": len(returned), "사유": "삭제 문항 단독 인용 단위"}, product=prod)
@@ -555,6 +570,18 @@ def cmd_reject(a):
             return
         set_status(prod, "REJECTED", reason=a.reason)
         print(f"↩ 반려 접수 — {a.gate_id} · 피드백을 반영해 재출제합니다 (승인·실행 추가로 누를 필요 없음)")
+        return
+    if a.gate_id.startswith("GSPLAN_"):
+        # [P3] 배분계획 반려가 기능적으로 무시되던 결함 — phase를 되돌리고 피드백을 재계획에 주입
+        # (기존: phase=PLAN_GATE 그대로라 반려해도 다음 run이 곧장 파일럿 생성)
+        def _mut(s):
+            gs = s["products"][prod].get("goldenset") or {}
+            gs["phase"] = "MATERIAL"
+            gs["reject_feedback"] = a.reason
+            s["products"][prod]["goldenset"] = gs
+        update_state(_mut)
+        set_status(prod, "REJECTED", reason=a.reason)
+        print(f"↩ 배분계획 반려 — {a.gate_id} · 재료실측부터 다시, 피드백은 재계획에 반영")
         return
     if a.gate_id.startswith("QAIMP_"):
         # 외부 Q&A 분류 반려 = 이번 분류만 폐기 (원본 Q&A 보존 · 제품 상태는 건드리지 않음
@@ -743,6 +770,13 @@ def cmd_onboard(a):
               "05_unified_ledger", "06_calibration", "07_stage2", "08_scoring", "09_maintenance"]:
         (DATA / prod / d).mkdir(parents=True, exist_ok=True)
     # ⓒ 상태 생성 + ⓓ 규칙 C + 실행 전략(기본 앙상블)
+    # [P3] --force 재온보딩이 열린 게이트를 초기화할 때 카드가 검수큐에 고아로 남지 않게
+    for g_old in (st["products"].get(prod, {}) or {}).get("open_gates", []):
+        old_card = ROOT / cfg["paths"]["queue"] / f"GATE_{g_old['id']}.md"
+        if old_card.exists():
+            done_dir = ROOT / cfg["paths"]["queue"] / "완료"
+            done_dir.mkdir(exist_ok=True)
+            old_card.rename(done_dir / old_card.name)
     scoring_only = getattr(a, "start", "full") == "scoring"
     st["products"][prod] = {"stage": "SCORING" if scoring_only else "CORPUS_AUDIT",
                             "status": "PENDING",

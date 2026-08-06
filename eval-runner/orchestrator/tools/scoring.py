@@ -182,6 +182,11 @@ def format_gate(log_path, prod, round_label=None):
         checks.append(("응시 범위 대조", good,
                        "선언=전체 · answer 전건 존재 일치" if good else
                        f"선언=전체인데 answer null {nulls}건 — 결손 또는 선언 오류 (재확인 필요)"))
+    elif declared:
+        # [P3] 미지 선언값(오타 등)을 조용히 무시하면 선언-실물 대조 게이트가 무력화 — FAIL
+        ok = False
+        checks.append(("응시 범위 대조", False,
+                       f"알 수 없는 선언값 '{declared}' — search/full 만 유효 (사이드카 재확인)"))
     elif all_null:
         checks.append(("answer null", True, "전건 null — 검색축만 응시 회차로 자동 접수 (생성축·E형 미응시)"))
     else:
@@ -240,7 +245,13 @@ def format_gate(log_path, prod, round_label=None):
 
 # ── 채점 ───────────────────────────────────────────────────
 def scorer_fingerprint():
-    return hashlib.sha256(RUN_SCORE.read_bytes()).hexdigest()
+    # [P3] 병기 채점기(v12)도 지문에 포함 — v12 산출(합집합)이 리포트에 공표되므로
+    # v12 변경도 소급 재채점 대상 (v11만 감시하던 구멍)
+    h = hashlib.sha256(RUN_SCORE.read_bytes())
+    v12 = RUN_SCORE.parent / "run_score_v12.py"
+    if v12.exists():
+        h.update(v12.read_bytes())
+    return h.hexdigest()
 
 
 def golden_xlsx(prod):
@@ -615,9 +626,10 @@ def run(prod, cfg):
                           evidence={"위반": bad, "판정": "원문 변조 의심 — 채점 중단 (T18)"},
                           product=prod)
             return "HALTED", {"halt": "원문 해시 불일치 (응답로그) — T18 게이트", "위반": bad}
-    rnd_m = re.search(r"r\d+", N(log.name))
+    # [P3] 경계 앵커 — "ver2" 속 'r2'를 회차로 오인해 기존 폴더에 덮어 채점하던 결함
+    rnd_m = re.search(r"(?:^|[_\-.])(r\d+)(?=[_\-.]|$)", N(log.stem))
     if rnd_m:
-        rnd = rnd_m.group()
+        rnd = rnd_m.group(1)
     else:
         # 파일명에 회차가 없으면 자동 부여 — 기존 성적 폴더의 다음 번호
         used = [int(m.group(1)) for d in (ROOT / "results").glob(f"score_{prod}_r*")
@@ -652,6 +664,8 @@ def main():
         print(f"▶ {st}")
         sys.exit(0 if st == "PASS" else 3)
     elif a.cmd == "score":
+        # [P3] 수동 채점 경로도 규칙 D 감시 — run() 경로만 감시하면 CLI 채점이 버전 변경을 놓침
+        rule_d_check(a.product)
         fstatus, checks, warns = format_gate(a.log, a.product, round_label=a.round)
         if fstatus != "PASS":
             for n, g, det in checks:

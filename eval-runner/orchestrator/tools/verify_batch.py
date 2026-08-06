@@ -208,7 +208,8 @@ def main():
     mism = []
     for r in rows:
         cits = cit_re.findall(r["출처"])
-        pool = "".join(facts_norm.get(c, "") for c in cits)
+        # [P3] 구분자 없는 join은 인접 두 fact의 경계에 걸친 위조 발췌가 우연 매치될 수 있다
+        pool = "\x1f".join(facts_norm.get(c, "") for c in cits)
         for seg in split_segments(r["발췌"]):
             if norm(seg) not in pool:
                 mism.append((r["ID"], seg[:40]))

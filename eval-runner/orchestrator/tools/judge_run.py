@@ -11,6 +11,7 @@ judge_run.py — ⑥ 캘리브레이션 판정 실행 + ⑦ 본판정 (사양서
 """
 import json
 import random
+import re
 import sys
 import unicodedata
 from collections import Counter
@@ -27,11 +28,19 @@ DATA = ROOT / "data"
 
 
 def load_items(prod):
-    """정본 통합 대장 → 문항 리스트"""
-    led = sorted((DATA / prod / "05_unified_ledger").glob("*.xlsx"))
+    """정본 통합 대장 → 문항 리스트.
+    [P3] 선정 규칙을 채점(scoring)과 통일 — 렉시 정렬은 v1_9>v1_10 역전·엑셀 락파일(~$)을
+    집는 경로가 있어 ⑦ 판정 대상과 ⑧ 채점 기준이 다른 대장을 볼 수 있었음."""
+    led = [p for p in (DATA / prod / "05_unified_ledger").glob("*.xlsx")
+           if not p.name.startswith(("~$", ".", "반려_"))]
     if not led:
         return [], None
-    path = led[-1]
+
+    def _vkey(p):
+        m = re.search(r"_v(\d+)_(\d+)\.xlsx$", p.name)
+        return ((int(m.group(1)), int(m.group(2))) if m else (0, 0), p.stat().st_mtime)
+
+    path = max(led, key=_vkey)
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     items = []
     for sn in wb.sheetnames:
@@ -345,12 +354,21 @@ def run_stage2(prod, cfg, batch_size=20):
     wb.save(out)
     # progress 봉인 — 삭제 금지(증적), 판정문 원본으로 개명 보존
     sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건.jsonl")
+    k = 2
+    while sealed.exists():   # [P3] 동명 봉인본 무경고 덮어쓰기 금지 — 증적은 삭제·대체 불가
+        sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건_{k}.jsonl")
+        k += 1
     prog.rename(sealed)
     # [P2-5] 검토 체크포인트도 봉인 — 다음 회차가 낡은 기준서의 이전 검토 판정을 resume해
     # 새 본판정과 대조하는 오염 방지 (본판정 봉인과 대칭)
     prog2 = out.parent / "_stage2_review_claude.jsonl"
     if prog2.exists():
-        prog2.rename(prog2.with_name(f"{prod}_검토판정원본_{len(done2)}건.jsonl"))
+        sealed2 = prog2.with_name(f"{prod}_검토판정원본_{len(done2)}건.jsonl")
+        k = 2
+        while sealed2.exists():
+            sealed2 = prog2.with_name(f"{prod}_검토판정원본_{len(done2)}건_{k}.jsonl")
+            k += 1
+        prog2.rename(sealed2)
     # [P2-5] 검토 부분 이행은 침묵 통과 금지 — 실측을 밖으로
     dual = cfg["pipeline"].get("stage2_dual", True)
     unreviewed = ([i["ID"] for i in items if i["ID"] not in done2] if dual else [])

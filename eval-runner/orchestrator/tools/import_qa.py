@@ -366,7 +366,8 @@ def score(prod, log_name=None, actor="난희"):
         return {"ok": False, "out": msg}
     ld = d / "로그"   # 응답로그 전용 폴더 — Q&A 원본과 섞이면 재대조가 로그를 문항으로 오인
     logs = ([ld / log_name] if log_name else
-            sorted(ld.glob("*.json"), key=lambda p: p.stat().st_mtime) if ld.is_dir() else [])
+            sorted((p for p in ld.glob("*") if p.suffix.lower() == ".json"),
+                   key=lambda p: p.stat().st_mtime) if ld.is_dir() else [])   # [P3] .JSON 대소문자 허용
     if not logs or not logs[-1].exists():
         msg = "채점 불가 — 응답로그(json)가 안 보여요. [⬆ Q&A 응답로그 채점]으로 올려주세요."
         print(msg)
