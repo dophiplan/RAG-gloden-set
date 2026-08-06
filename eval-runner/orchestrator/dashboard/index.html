@@ -365,7 +365,12 @@ function stageView(code){
   const ps = S.state.products[code];
   const hist = ps.stage_history||{};
   const curIdx = STAGE_ORDER.indexOf(ps.stage);
+  // 사이클 완료(⑨ DONE) 후에도 새 응답로그는 언제든 받는다(G16) — 그 실감을 ⑧에 표시
+  // (난희: "완료라는데 우리는 r2 로그를 기다리는 중이잖아" — 상태 기계는 그대로, 표시만)
+  const nextRoundWait = ps.stage==='MAINTENANCE' && ps.status==='DONE';
   return STAGE_ORDER.map((k,i)=>{
+    if(k==='SCORING' && nextRoundWait && hist[k])
+      return {k, cls:'input', label:'새 로그 대기'};
     if(hist[k] && (i<curIdx || ps.status==='DONE')) return {k, cls:'done', label:'완료'};
     if(i===curIdx){
       const map = {RUNNING:['run','진행 중'], WAITING_HUMAN:['human','결정 대기'],
