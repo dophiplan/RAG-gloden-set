@@ -27,8 +27,10 @@ from olib import ROOT, N, ledger_append, issue_gate_card, load_state, save_state
 
 DATA = ROOT / "data"
 
-Q_KEYS = ("질문", "문의", "question", "query", "q")
-A_KEYS = ("답변", "정답", "응답", "답", "answer", "a", "response")
+Q_KEYS = ("질문", "문의", "question", "query", "q",
+          "質問", "タイトル", "問い", "title")            # 일본어 FAQ 지원 (タイトル=FAQ 질문 제목)
+A_KEYS = ("답변", "정답", "응답", "답", "answer", "a", "response",
+          "回答", "本文", "答え")                          # 일본어 FAQ 지원 (本文=FAQ 답변 본문)
 
 
 def _norm(s):
@@ -84,7 +86,7 @@ def _latest(paths):
 def _rows_from_csv(p):
     out = []
     rows = None
-    for enc in ("utf-8-sig", "cp949", "euc-kr"):   # [P1-4] 한국 엑셀 기본 내보내기 = cp949
+    for enc in ("utf-8-sig", "cp949", "euc-kr", "cp932"):   # [P1-4] 한국 엑셀=cp949, 일본 엑셀=cp932(Shift-JIS)
         try:
             with open(p, newline="", encoding=enc) as f:
                 rows = list(csv.reader(f))
