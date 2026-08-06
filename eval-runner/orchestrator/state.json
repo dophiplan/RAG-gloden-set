@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-06T11:52:06",
+  "updated": "2026-08-06T12:11:39",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1982,85 +1982,6 @@
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"
-    },
-    "EE": {
-      "stage": "SCORING",
-      "status": "WAITING_HUMAN",
-      "calibration_passed": true,
-      "scorer_version": "cf97a03d94f334cb3740ce9710ef8f0ba678ef443659cc6c7e6814dd727710d4",
-      "compare_blocked": false,
-      "stage_history": {
-        "CORPUS_AUDIT": {
-          "done_at": "2026-08-06T11:51:53"
-        },
-        "TERRAIN": {
-          "done_at": "2026-08-06T11:51:53"
-        },
-        "COVERAGE_MAP": {
-          "done_at": "2026-08-06T11:51:55"
-        },
-        "GOLDENSET_BATCH": {
-          "done_at": "2026-08-06T11:51:58"
-        },
-        "UNIFIED_LEDGER": {
-          "done_at": "2026-08-06T11:51:59"
-        },
-        "CALIBRATION": {
-          "done_at": "2026-08-06T11:52:02"
-        },
-        "STAGE2": {
-          "done_at": "2026-08-06T11:52:02"
-        }
-      },
-      "open_gates": [
-        {
-          "id": "SCORE_EE_r1",
-          "stage": "SCORING",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-06T11:52:06"
-        }
-      ],
-      "halt_reason": null,
-      "strategy": "ensemble",
-      "start_mode": "full",
-      "goldenset": {
-        "phase": "DONE",
-        "round": 1,
-        "done_units": [
-          "EE-MANUAL-001",
-          "EE-MANUAL-002",
-          "EE-MANUAL-003",
-          "EE-MANUAL-004",
-          "EE-NOTICE-001",
-          "EE-NOTICE-002",
-          "EE-NOTICE-003",
-          "EE-NOTICE-004",
-          "EE-POLICY-001",
-          "EE-POLICY-002",
-          "EE-POLICY-003",
-          "EE-POLICY-004"
-        ],
-        "batch": "B1",
-        "last_batch": {
-          "label": "파일럿",
-          "file": "EE_골든셋_파일럿_13문항_v1_0.xlsx",
-          "units": [
-            "EE-MANUAL-001",
-            "EE-MANUAL-002",
-            "EE-MANUAL-003",
-            "EE-MANUAL-004",
-            "EE-NOTICE-001",
-            "EE-NOTICE-002",
-            "EE-NOTICE-003",
-            "EE-NOTICE-004",
-            "EE-POLICY-001",
-            "EE-POLICY-002",
-            "EE-POLICY-003",
-            "EE-POLICY-004"
-          ]
-        }
-      }
     }
   }
 }
