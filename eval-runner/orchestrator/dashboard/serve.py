@@ -730,7 +730,7 @@ def api_action(payload):
         import openpyxl
         prod, v = payload["product"], N(payload.get("verdict", ""))
         ids = {N(i) for i in payload.get("ids", [])}
-        if v not in ("합격", "불합격", "") or not ids:
+        if v not in ("합격", "부분", "0점", "불합격", "") or not ids:   # 불합격=구형 시트 호환
             return {"ok": False, "out": "판정 값/대상 오류"}
         f = _calin_file(prod)
         if not f:
@@ -753,7 +753,7 @@ def api_action(payload):
         # 카드 안 판정 클릭 → 기입 시트에 즉시 기록 (엑셀 파일이 단일 원장 — 채점기와 동일 소스)
         import openpyxl
         prod, iid, v = payload["product"], N(payload.get("id", "")), N(payload.get("verdict", ""))
-        if v not in ("합격", "불합격", ""):
+        if v not in ("합격", "부분", "0점", "불합격", ""):   # 불합격=구형 시트 호환
             return {"ok": False, "out": "판정 값 오류"}
         f = _calin_file(prod)
         if not f:
