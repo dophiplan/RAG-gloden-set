@@ -349,11 +349,14 @@ def run_stage2(prod, cfg, batch_size=20):
                   evidence={**ev, "recheck_ids": recheck_ids, "불일치_ID": diffs[:50]}, product=prod)
     if diffs:
         qmap = {it["ID"]: N(it.get("질문", ""))[:50] for it in items}
-        dev = {"불일치": f"{len(diffs)}/{len(items)}", "대장": N(out.name)}
+        agree_pct = (len(items) - len(diffs)) / len(items) if items else 0
+        dev = {"AI 합의율": f"{agree_pct:.1%} ({len(items)-len(diffs)}/{len(items)} 일치)",
+               "불일치": f"{len(diffs)}/{len(items)}", "대장": N(out.name)}
         for i in diffs[:15]:
             dev[i] = f"Kimi {done[i]['판정']} / claude {N(done2.get(i, {}).get('판정', '?'))} · {qmap.get(i, '')}"
         issue_gate_card(prod, "STAGE2", f"S2DIFF_{prod}",
-                        what_stopped=f"이중 판정 불일치 {len(diffs)}건 — 채점관(Kimi)과 검토자(claude)의 판정이 갈린 문항만 사람 확인",
+                        what_stopped=f"두 AI 판정 일치율 {agree_pct:.1%} — 일치한 {len(items)-len(diffs)}건은 확인 불필요, "
+                                     f"갈린 {len(diffs)}건만 봐주세요. 왜 100%가 아닌가: 아래 목록이 그 이유(문항별 두 AI의 판정 차이)",
                         evidence=dev,
                         recommendation="자료실에서 판정대장의 '불일치 ✚' 행만 보면 됩니다.\n"
                                        "승인 = 채용 채점관(Kimi) 판정 유지 / 특정 문항을 뒤집으려면 반려 사유에 문항 코드+방향을 적어주세요.")
