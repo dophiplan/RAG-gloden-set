@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-06T15:58:42",
+  "updated": "2026-08-06T16:13:15",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1982,6 +1982,32 @@
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"
+    },
+    "EE": {
+      "stage": "SCORING",
+      "status": "WAITING_HUMAN",
+      "calibration_passed": true,
+      "scorer_version": null,
+      "compare_blocked": false,
+      "stage_history": {},
+      "open_gates": [
+        {
+          "id": "SCORE_EE_r1",
+          "stage": "SCORING",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-06T16:13:14"
+        },
+        {
+          "id": "QAIMP_EE_v1",
+          "stage": "EXTERNAL_QA",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-06T16:13:15"
+        }
+      ],
+      "halt_reason": null,
+      "strategy": "ensemble"
     }
   }
 }
