@@ -105,11 +105,16 @@ def _openai_compat(base, model, key, system, user, max_tokens, temperature=0.3):
                             {"role": "user", "content": user}]})
     ch = d["choices"][0]
     content = ch["message"].get("content") or ""
+    fr = ch.get("finish_reason")
     if not content.strip():
         # 빈 응답은 침묵하지 말고 원인을 말한다 (추론 모델이 생각에 예산을 다 쓴 경우 등)
-        fr = ch.get("finish_reason")
         raise RuntimeError(f"빈 응답 (finish_reason={fr}, max_tokens={max_tokens}) — "
                            "추론 예산 부족 의심: max_tokens 상향 필요")
+    if fr == "length":
+        # [P2-4] 잘린 응답을 성공으로 넘기면 extract_json이 완전한 객체만 골라 '부분 판정'이
+        # 무단 유실된다 (배치 20건 중 15건만 반환 등). 유실보다 정지 — 체크포인트가 재개한다.
+        raise RuntimeError(f"응답 절단 (finish_reason=length, max_tokens={max_tokens}) — "
+                           "부분 데이터 유실 방지 정지: max_tokens 상향 또는 배치 축소 필요")
     return content
 
 
@@ -118,6 +123,10 @@ def _anthropic(model, key, system, user, max_tokens):
               {"x-api-key": key, "anthropic-version": "2023-06-01"},
               {"model": model, "max_tokens": max_tokens, "system": system,
                "messages": [{"role": "user", "content": user}]})
+    if d.get("stop_reason") == "max_tokens":
+        # [P2-4] 절단 응답 = 부분 유실 위험 — 성공 위장 금지
+        raise RuntimeError(f"응답 절단 (stop_reason=max_tokens, max_tokens={max_tokens}) — "
+                           "부분 데이터 유실 방지 정지: max_tokens 상향 또는 배치 축소 필요")
     return "".join(b.get("text", "") for b in d["content"])
 
 

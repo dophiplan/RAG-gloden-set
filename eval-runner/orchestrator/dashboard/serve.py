@@ -966,6 +966,11 @@ class H(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        # [P2-6] CSRF 방어 — 브라우저의 타 사이트 페이지가 localhost로 승인/업로드 POST를
+        # 쏘는 것 차단. Origin 없는 요청(CLI·봇·curl)은 로컬 도구라 허용.
+        origin = self.headers.get("Origin")
+        if origin and origin not in ("http://localhost:8791", "http://127.0.0.1:8791"):
+            return self._send(403, j({"ok": False, "out": f"차단된 출처: {origin}"}))
         if self.path.startswith("/api/action"):
             n = int(self.headers.get("Content-Length", 0))
             payload = json.loads(self.rfile.read(n) or b"{}")

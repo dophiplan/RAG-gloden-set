@@ -86,7 +86,10 @@ def judge_batch(items, rubric, cfg, batch=20, role="judge"):
                 for it in part]
         resp = llm.chat(role, SYSTEM_J,
                         json.dumps({"items": reqs, "rubric": rubric}, ensure_ascii=False), cfg)
-        out += llm.extract_json(resp)
+        r = llm.extract_json(resp)
+        # 1문항 배치면 배열 아닌 낱개 dict가 온다 — list+=dict는 키 문자열이 원소로 유입돼
+        # vmap에서 TypeError HALT (gen_goldenset 07-24 사고와 동계열, 판정 경로 수리 [P2])
+        out += [r] if isinstance(r, dict) else [i for i in r if isinstance(i, dict)]
     return out
 
 
@@ -343,9 +346,19 @@ def run_stage2(prod, cfg, batch_size=20):
     # progress 봉인 — 삭제 금지(증적), 판정문 원본으로 개명 보존
     sealed = prog.with_name(f"{prod}_본판정_판정문원본_{len(items)}건.jsonl")
     prog.rename(sealed)
+    # [P2-5] 검토 체크포인트도 봉인 — 다음 회차가 낡은 기준서의 이전 검토 판정을 resume해
+    # 새 본판정과 대조하는 오염 방지 (본판정 봉인과 대칭)
+    prog2 = out.parent / "_stage2_review_claude.jsonl"
+    if prog2.exists():
+        prog2.rename(prog2.with_name(f"{prod}_검토판정원본_{len(done2)}건.jsonl"))
+    # [P2-5] 검토 부분 이행은 침묵 통과 금지 — 실측을 밖으로
+    dual = cfg["pipeline"].get("stage2_dual", True)
+    unreviewed = ([i["ID"] for i in items if i["ID"] not in done2] if dual else [])
     ev = {"판정(Kimi)": dict(cnt), "claude 검토": f"{len(done2)}/{len(items)}",
           "불일치": len(diffs), "재검": f"{len(recheck_ids)}건 (rate {rate})",
           "seed": seed, "기준서": rname, "산출": N(out.name), "판정문 봉인": N(sealed.name)}
+    if unreviewed:
+        ev["검토 미수신"] = f"{len(unreviewed)}건 — 해당 문항은 이중 판정이 아니라 Kimi 단독 판정"
     ledger_append("STAGE2", "STAGE2_JUDGED", "script:judge_run",
                   evidence={**ev, "recheck_ids": recheck_ids, "불일치_ID": diffs[:50]}, product=prod)
     if diffs:
@@ -361,6 +374,13 @@ def run_stage2(prod, cfg, batch_size=20):
                         evidence=dev,
                         recommendation="자료실에서 판정대장의 '불일치 ✚' 행만 보면 됩니다.\n"
                                        "승인 = 채용 채점관(Kimi) 판정 유지 / 특정 문항을 뒤집으려면 반려 사유에 문항 코드+방향을 적어주세요.")
+        return "WAITING_HUMAN", ev
+    if unreviewed:
+        # [P2-5] 불일치 0이어도 검토 미수신이 있으면 DONE 침묵 통과 금지 — 사람이 인지하고 결정
+        issue_gate_card(prod, "STAGE2", f"S2DIFF_{prod}",
+                        what_stopped=f"이중 판정 불일치 0건 — 단, claude 검토 미수신 {len(unreviewed)}건이 있어요. "
+                                     f"이 문항들은 Kimi 단독 판정입니다. 승인 = 단독 판정 수용 / 반려 = 검토 재실행",
+                        evidence={**ev, "미검토 예": unreviewed[:10]})
         return "WAITING_HUMAN", ev
     return "DONE", ev
 
