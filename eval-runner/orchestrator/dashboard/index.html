@@ -348,6 +348,15 @@ async function _loadAll(fromPoll){
       {id:'RC2-707',q:'모바일 지원 대상 OS는?',a:'iOS와 Android를 지원한다.',kimi:'합격',kimi_why:'필수 요소 전부 포함',claude:'부분',claude_why:'버전 명시가 없어 부분으로 판정',final:'합격'}]}; openS2('S2DIFF_DEMO'); }
     if(dm==='gatex'){ openGateX('RC2_골든셋_10차_74문항_v1_1.xlsx','GSBATCH_DEMO',0); }
     if(dm==='report'){ openReports(encodeURIComponent('RC2'),'골든셋 v2.0'); }
+    if(dm==='qacard'){
+      // 외부 Q&A 인입 직후의 모습 (가상) — 서버·실데이터 무기록, 화면만
+      const pc = PV().code;
+      S.state.products[pc].open_gates.push({id:`QAIMP_${pc}_v1`, stage:'EXTERNAL_QA', flags:[]});
+      S.queue.unshift({file:`GATE_QAIMP_${pc}_v1.md`, kind:'GATE', id:`QAIMP_${pc}_v1`, product:pc,
+        title:`GATE_QAIMP_${pc}_v1 — 사람 게이트`, acks:[], uploaded:null,
+        body:`# GATE_QAIMP_${pc}_v1 — 사람 게이트\n\n- 발행: (데모) · 제품: ${pc} · 단계: EXTERNAL_QA\n\n## 무엇을 / 왜 멈췄나\n외부 Q&A 120문항을 코퍼스와 대조해 3갈래로 분류했어요. [👁 실물 보고 결정] 팝업에서 분류결과(외부QA_분류결과_${pc}_v1.xlsx)를 확인해 주세요.\n- 편입 후보(근거 실재): 승인하면 골든셋 출제 재료로 쓰입니다 (검수 8종·사람 게이트는 그대로 통과해야 함)\n- E형 후보(코퍼스 부재): v3 함정 문항(E형 10%) 재료로 보관됩니다\n- 부분 일치: 코퍼스와 다르게 서술된 것 — 어느 쪽이 정본인지 사람 확인이 필요합니다\n\n## 실측 수치\n- 총 문항: 120\n- 편입 후보(근거 실재): 74건\n- E형 후보(코퍼스 부재): 31건\n- 부분 일치(사람 검토): 12건\n- 중복 질문: 3건\n- 분류결과 파일: 외부QA_분류결과_${pc}_v1.xlsx\n\n## 플래그 ack 체크리스트 (전건 ack 없이 통과 불가)\n(플래그 없음)`});
+      render();
+    }
     return;
   }
 }
@@ -770,6 +779,7 @@ function toast(msg, ms=6000){
   clearTimeout(t._t); if(ms) t._t=setTimeout(()=>t.style.display='none', ms);
 }
 async function act(payload){
+  if(window._demoMode){ toast('📸 데모 모드 — 실제 실행 안 함'); return {ok:false, out:'데모'}; }   // P0-4 완결: 데모에선 모든 실행 차단
   // 재진입 가드 [P1-7]: 긴 처리(승인→발행, qa-import) 중 재클릭이 서버 큐에 쌓였다가
   // 연달아 실행돼 이중 채점·카드 연쇄 교체가 나는 사고 방지
   if(window._acting){ toast('⏳ 앞의 요청을 처리 중이에요 — 끝나면 자동으로 갱신됩니다'); return {ok:false, out:'처리 중'}; }
