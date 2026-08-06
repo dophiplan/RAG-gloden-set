@@ -460,7 +460,7 @@ function render(){
     const tail = qaGateOpen? '지금: 검수큐 카드에서 승인/반려'
       : qaRounds? `채점 ${qaRounds}회차 완료 — 다음 로그가 오면 이어서`
       : '지금: [📦 Q&A 꾸러미]를 팀장님께 전달하고 응답로그를 기다려요';
-    qaLane = `<div style="margin-top:8px"><span class="srcbadge src-qa" style="font-size:11px;padding:4px 11px"
+    qaLane = `<div style="margin:2px 0 10px"><span class="srcbadge src-qa" style="font-size:11px;padding:4px 11px"
       title="외부 Q&A는 골든셋 본선(①~⑨)과 분리된 별도 트랙 (AI 없음 — 기계 문자 대조)&#10;분류 검수 → 시험지 발행 → 응답로그 대기 → 채점&#10;${esc(tail)}">🧩 외부 Q&A · ${stg}</span>
       <span class="hint" style="margin-left:8px">${esc(tail)}</span></div>`;
   }
@@ -469,6 +469,7 @@ function render(){
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
     ${renderAiTeam()}
     <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
+    ${qaLane}
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
       return `<div class="stage ${s.cls} ${gate}" tabindex="0" role="button" data-i="${i}"
@@ -479,7 +480,6 @@ function render(){
         <div class="s-ai">${esc(stageAI(s.k).who)}</div>
       </div>`;}).join('')}
     </div>
-    ${qaLane}
   </div>
   <main>
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
