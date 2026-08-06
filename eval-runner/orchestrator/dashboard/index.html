@@ -450,20 +450,19 @@ function render(){
     ? `<button class="expandbtn" style="margin-left:10px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
         onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
   const qaBtn = `<label class="expandbtn" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
-  // G20: 외부 Q&A 옆길 레인 — 본선(①~⑨) 진행선 아래에서 별도 트랙의 현재 위치를 보여준다
+  // G20/G26: 외부 Q&A 트랙 표시 — 난희 결정: 큰 레인 대신 진행선 맨 앞 배지 하나로 압축.
+  // 배지 = [외부 Q&A · 현재 단계], 상세(단계 사슬+다음 할 일)는 마우스 오버 툴팁.
   const qaGateOpen = (ps.open_gates||[]).some(g=>g.id.startsWith('QAIMP_'));
   const qaRounds = Object.keys(S.scores[PV().code+'QA']||{}).length;
   let qaLane = '';
   if(qaGateOpen || ps._qa || qaRounds){
-    const stage = qaGateOpen? 0 : qaRounds? 3 : ps._qa? 2 : 0;
-    const steps = ['분류 검수', '시험지 발행', '응답로그 대기', qaRounds?`채점 qa-r${qaRounds}`:'채점'];
+    const stg = qaGateOpen? '분류 검수 중' : qaRounds? `채점 qa-r${qaRounds}` : ps._qa? '응답로그 대기' : '분류 검수 중';
     const tail = qaGateOpen? '지금: 검수큐 카드에서 승인/반려'
       : qaRounds? `채점 ${qaRounds}회차 완료 — 다음 로그가 오면 이어서`
       : '지금: [📦 Q&A 꾸러미]를 팀장님께 전달하고 응답로그를 기다려요';
-    qaLane = `<div class="qalane" title="외부 Q&A는 골든셋 본선(①~⑨)과 분리된 별도 트랙 — 성적도 따로 쌓여요">
-      <span class="lbl">🧩 외부 Q&A 별도 트랙</span><span class="hint">AI 없음 — 기계 문자 대조</span>`
-      + steps.map((t,i)=>`<span class="qstep ${i<stage?'done':i===stage?'act':''}">${t}</span>`).join('<span class="qarr">→</span>')
-      + `<span class="hint" style="margin-left:4px">${tail}</span></div>`;
+    qaLane = `<div style="margin-top:8px"><span class="srcbadge src-qa" style="font-size:11px;padding:4px 11px"
+      title="외부 Q&A는 골든셋 본선(①~⑨)과 분리된 별도 트랙 (AI 없음 — 기계 문자 대조)&#10;분류 검수 → 시험지 발행 → 응답로그 대기 → 채점&#10;${esc(tail)}">🧩 외부 Q&A · ${stg}</span>
+      <span class="hint" style="margin-left:8px">${esc(tail)}</span></div>`;
   }
   let html = `
   <div class="track-wrap">
