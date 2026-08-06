@@ -189,11 +189,25 @@ def cmd_poll(a):
     seen = json.loads(sp.read_text(encoding="utf-8")) if sp.exists() else []
     new = []
     for mf in sorted((box / "outbox").rglob("manifest.json")):
-        d = json.loads(mf.read_text(encoding="utf-8"))
-        if sanitize(d.get("from", "")) == me:
-            continue
         key = str(mf.parent.relative_to(box))
         if key in seen:
+            continue
+        try:
+            d = json.loads(mf.read_text(encoding="utf-8"))
+        except Exception as e:
+            # [P3] 독소포(poison parcel) — 손상 manifest 하나가 poll 전체를 영구 봉쇄하던 결함:
+            # seen에 등재해 재크래시 루프를 끊고, 카드로 사람에게 알린다 (원장 기록)
+            seen.append(key)
+            ledger_append("POSTBOX", "RECV_MANIFEST_CORRUPT", "script:postbox",
+                          evidence={"위치": key, "오류": f"{type(e).__name__}: {str(e)[:120]}"})
+            q = ROOT / load_config()["paths"]["queue"]
+            q.mkdir(exist_ok=True)
+            (q / f"POSTBOX_손상소포_{sanitize(key)[:40]}.md").write_text(
+                f"# 우체통 손상 소포 — manifest 해독 불가\n\n- 위치: 우체통/{key}/\n"
+                f"- 오류: {type(e).__name__}\n\n> 발신자에게 재발송을 요청하세요. 이 소포는 투입 금지.\n",
+                encoding="utf-8")
+            continue
+        if sanitize(d.get("from", "")) == me:
             continue
         seen.append(key)
         # [FIX-03] 수신 해시 전건 대조 — 이름이 아니라 내용물의 벽
@@ -230,7 +244,10 @@ def cmd_poll(a):
 > {'내용 확인 후 해당 data/ 폴더로 투입하면 입구 검사(해시 등록·형식 게이트)가 실행된다.' if not mismatch else ''}
 """, encoding="utf-8")
         new.append((key, d, bool(mismatch)))
-    sp.write_text(json.dumps(seen, ensure_ascii=False, indent=1), encoding="utf-8")
+    # [P3] seen 원자적 쓰기 — 파손되면 독소포 결함과 결합해 poll 영구 사망
+    tmp = sp.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(seen, ensure_ascii=False, indent=1), encoding="utf-8")
+    tmp.replace(sp)
     bad = sum(1 for _, _, m in new if m)
     print(f"📬 새 소포 {len(new)}건" + (f" (해시 불일치 {bad}건 ⛔)" if bad else "")
           + (f": {[d.get('title') for _, d, _ in new]}" if new else ""))

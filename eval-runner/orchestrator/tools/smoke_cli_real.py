@@ -50,6 +50,9 @@ def run(*args, real=True):
     env.pop("ORCH_MOCK", None)
     p = subprocess.run([sys.executable, str(ROOT / "tools/pipeline.py"), *args],
                        capture_output=True, text=True, cwd=str(ROOT), env=env)
+    if p.returncode != 0:
+        # [P3] onboard/approve 실패가 침묵하면 스모크가 헛것을 측정 — 즉시 드러낸다
+        print(f"  ⚠ pipeline {args[0]} 실패(exit {p.returncode}): {(p.stderr or p.stdout)[:200]}")
     return p
 
 

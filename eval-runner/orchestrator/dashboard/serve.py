@@ -132,19 +132,23 @@ def api_queue():
             # 유령 카드 청소 — 게이트는 닫혔는데 카드만 남으면(늦은 소견 재생성 등) 사람이
             # 죽은 카드에 반려를 눌러 사유가 소실되는 사고. 발행 직후 레이스 방지: 2분 유예.
             if (open_ids is not None and f.name.startswith("GATE_")
-                    and f.stem.replace("GATE_", "") not in open_ids
+                    and f.stem.removeprefix("GATE_") not in open_ids
                     and time.time() - f.stat().st_mtime > 120):
                 done = q / "완료" / f.name
                 done.parent.mkdir(exist_ok=True)
-                if done.exists() and "## 설계본부 소견" in body and "## 설계본부 소견" not in done.read_text(encoding="utf-8"):
-                    idx = body.index("## 설계본부 소견")
-                    done.write_text(done.read_text(encoding="utf-8").rstrip() + "\n\n" + body[idx:], encoding="utf-8")
+                if done.exists() and "## 설계본부 소견" in body:
+                    # [P3] 2회차 재생성 소견도 보존 — 완료본에 (구)소견이 있어도 새 소견이
+                    # 다른 내용이면 이어붙인다 (기존: 구 소견 존재 시 새 소견 무통보 폐기)
+                    seg = body[body.index("## 설계본부 소견"):].strip()
+                    dtext = done.read_text(encoding="utf-8")
+                    if seg not in dtext:
+                        done.write_text(dtext.rstrip() + "\n\n" + seg + "\n", encoding="utf-8")
                 elif not done.exists():
                     done.write_text(body, encoding="utf-8")
                 f.unlink()
                 continue
             kind = "GATE" if f.name.startswith("GATE_") else "INPUT"
-            gate_id = f.stem.replace("GATE_", "")
+            gate_id = f.stem.removeprefix("GATE_")
             m = re.search(r"제품: (\w+)", body)
             acks = re.findall(r"- \[ \] (?:ack: )?(.+)", body)
             prod_s = m.group(1) if m else "?"
@@ -442,7 +446,11 @@ def api_xlsx(relpath, max_rows=400, name=None, prod=None):
         p = hits[-1].resolve()
     else:
         p = (base / (relpath or "")).resolve()
-    if not str(p).startswith(str(base)) or not p.exists() or p.suffix != ".xlsx":
+    try:
+        p.relative_to(base)   # [P3] prefix 문자열 비교는 data2/ 같은 형제 디렉토리를 통과시킴
+    except ValueError:
+        return {"error": "미리보기 불가 (data 하위 xlsx만)"}
+    if not p.exists() or p.suffix != ".xlsx":
         return {"error": "미리보기 불가 (data 하위 xlsx만)"}
     wb = openpyxl.load_workbook(p, read_only=True, data_only=True)
     sheets = {}
@@ -988,11 +996,11 @@ class H(SimpleHTTPRequestHandler):
     def _upload(self):
         """INPUT 카드용 파일 업로드 — 쿼리: product, target(카드 종류), name. 본문 = 파일 원바이트.
         저장 후 입구 검사는 pipeline run 이 수행 ('받으면 무조건 실측부터')."""
-        from urllib.parse import urlparse, parse_qs, unquote
+        from urllib.parse import urlparse, parse_qs
         q = parse_qs(urlparse(self.path).query)
         prod = N(q.get("product", [""])[0])
         target = N(q.get("target", ["CORPUS"])[0]).upper()
-        name = N(unquote(q.get("name", ["upload.bin"])[0]))
+        name = N(q.get("name", ["upload.bin"])[0])   # [P3] parse_qs가 이미 디코드 — unquote 중복 금지
         name = name.replace("/", "_").replace("\\", "_").replace("..", "_")  # 경로 이탈 차단
         sub = next((d for k, d in self.UPLOAD_DIRS.items() if k in target), "corpus")
         # 채점만 모드: SCORING 카드에 골든셋(xlsx)과 로그(json)를 같이 올려도 자동 분류
@@ -1014,6 +1022,10 @@ class H(SimpleHTTPRequestHandler):
                     break
                 f.write(chunk)
                 remaining -= len(chunk)
+        if remaining > 0:
+            # [P3] 부분 수신 = 잘린 파일 — 저장·원장 기록 금지 (손상 코퍼스가 입구 검사로 흘러들던 것)
+            dest.unlink(missing_ok=True)
+            return {"ok": False, "out": f"업로드 중단 감지 — {n-remaining:,}/{n:,}B만 수신. 다시 올려주세요."}
         # 응시 범위 선언 사이드카 — 형식 게이트가 실물(answer null 여부)과 대조
         scope = N(q.get("scope", [""])[0])
         if scope in ("search", "full") and name.lower().endswith(".json") and "08_scoring" in sub:

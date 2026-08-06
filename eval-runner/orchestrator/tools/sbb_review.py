@@ -81,11 +81,19 @@ def review(prod, gate_id):
         return
     # 소환(LLM 호출) 동안 카드가 갱신됐을 수 있다 — 쓰기 직전 본문을 새로 읽어 소견만 덧붙인다
     # (낡은 사본으로 덮어써 가이드가 증발한 사고: 2026-08-03 SCORE_RC2_r1)
-    fresh = card.read_text(encoding="utf-8")
-    if MARK in fresh:
-        print("이미 소견 있음(경합) — 생략")
+    try:
+        fresh = card.read_text(encoding="utf-8")
+        if MARK in fresh:
+            print("이미 소견 있음(경합) — 생략")
+            return
+        card.write_text(fresh.rstrip() + section, encoding="utf-8")
+    except FileNotFoundError:
+        # [P3] exists()와 read 사이에 승인으로 카드가 이동 — 크래시 대신 완료 사본에 보존
+        done = card.parent / "완료" / card.name
+        if done.exists() and MARK not in done.read_text(encoding="utf-8"):
+            done.write_text(done.read_text(encoding="utf-8").rstrip() + section, encoding="utf-8")
+        print(f"쓰기 직전 승인됨(경합) — 완료 카드에 소견 보존: {card.name}")
         return
-    card.write_text(fresh.rstrip() + section, encoding="utf-8")
     ledger_append("GOVERNANCE", "SBB_REVIEWED", "설계본부:독립세션",
                   evidence={"gate": gate_id, "소견 길이": len(opinion),
                             "주입": "프롬프트 v1.2 + 판례집 + 카드 + 산출물 표본 (작업 맥락 없음)"},

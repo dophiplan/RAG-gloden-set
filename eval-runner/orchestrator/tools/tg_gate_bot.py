@@ -156,7 +156,13 @@ def _handle(u, pending_reject, c):
         return
     chat = m["chat"]["id"]
     if c.get("chat_id") is None:
-        # 최초 바인딩 — 이후 다른 사람은 무시
+        # 최초 바인딩 — 이후 다른 사람은 무시.
+        # [P3] .telegram.json에 "bind_code"가 있으면 첫 메시지가 그 코드와 일치해야 바인딩
+        # (봇 유저명을 아는 타인이 먼저 말 걸어 승인 권한을 가로채는 창 차단 — 미설정 시 기존 동작)
+        code = c.get("bind_code")
+        if code and m["text"].strip() != str(code):
+            say(chat, "연결 코드가 필요해요 — 관제판 설정의 bind_code를 첫 메시지로 보내주세요.")
+            return
         c["chat_id"] = chat
         CFG.write_text(json.dumps(c), encoding="utf-8")
         say(chat, "🤝 연결 완료! 이제 카드가 뜨면 여기로 알림이 오고, 버튼으로 바로 승인/반려할 수 있어요.\n"

@@ -158,6 +158,13 @@ def load_state():
     for prod in cfg["terrain"]["profiles"]:
         st["products"][prod] = _initial_product_state()
     save_state(st, _skip_ledger=True)
+    # [P3] 무언 재초기화 금지 — state.json 유실은 사건이다 (전 제품 진행이 초기화된 것처럼 보임)
+    try:
+        ledger_append("CORPUS_AUDIT", "STATE_REINITIALIZED", "script:olib",
+                      evidence={"사유": "state.json 부재 — config 프로파일 기준 신규 생성",
+                                "products": sorted(st["products"])})
+    except Exception:
+        pass
     return st
 
 

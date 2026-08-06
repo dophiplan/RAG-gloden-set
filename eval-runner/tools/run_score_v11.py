@@ -184,7 +184,7 @@ def load_golden(path: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"골든셋에 누락된 컬럼: {missing}")
     # ID를 문자열로
-    df["ID"] = df["ID"].astype(str).str.strip()
+    df["ID"] = df["ID"].astype(str).map(lambda s: unicodedata.normalize("NFC", s)).str.strip()   # v1.2: NFC 통일
     return df
 
 
@@ -192,7 +192,11 @@ def load_log(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if "responses" not in data:
-        raise ValueError("응답 로그에 'responses' 키가 없습니다.")
+        # v1.2: 일부 export가 'results' 키를 쓴다 — 형식 게이트와 허용 범위 통일
+        if isinstance(data.get("results"), list):
+            data["responses"] = data["results"]
+        else:
+            raise ValueError("응답 로그에 'responses' 키가 없습니다.")
     return data
 
 
@@ -399,7 +403,9 @@ def score_all(
     log_data: dict,
     mapping: dict[str, dict] | None,
 ) -> list[dict]:
-    responses = {str(r.get("id")).strip(): r for r in log_data.get("responses", [])}
+    # v1.2: NFC 정규화 — 골든 ID에 NFD 한글이 섞이면 전건 무음 miss 되던 결함 (게이트의 N()과 규칙 통일)
+    responses = {unicodedata.normalize("NFC", str(r.get("id"))).strip(): r
+                 for r in log_data.get("responses", [])}
     results = []
     for _, row in golden_df.iterrows():
         qid = row["ID"]
