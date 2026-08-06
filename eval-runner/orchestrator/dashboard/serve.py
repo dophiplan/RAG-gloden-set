@@ -41,7 +41,7 @@ LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨) 
     "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 2026-07-20 은퇴(정답키 공개, 참고용)"}],
     "RC": [{"code": "RC", "gen": "골든셋 v1.1 · 891문항 — 2026-07-20 은퇴(정답키 공개, 참고용)"}],
 }
-HIDDEN_CODES = {"EE"}   # 자동 테스트 전용 제품 — 화면에서 숨김 (E2E가 쓰고 지나가는 자리)
+HIDDEN_CODES = set()  # SMOKE-TEMP   # 자동 테스트 전용 제품 — 화면에서 숨김 (E2E가 쓰고 지나가는 자리)
 
 
 def display_of(code):
