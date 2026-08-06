@@ -323,7 +323,7 @@ async function loadAll(fromPoll){
     if(hit) cur = hit; }
   render();
   // 데모 모드 (?demo=calin|s2|gatex|report) — 가이드 문서 캡처용, 실데이터 안 건드림
-  if(!window._demoDone && qp.get('demo')){ window._demoDone = true; const dm = qp.get('demo');
+  if(!window._demoDone && qp.get('demo')){ window._demoDone = true; window._demoMode = true; const dm = qp.get('demo');
     if(dm==='calin'){ S.calin={rows:[
       {id:'RC2-414',q:'리모트콜 스마트보드 제품의 정식 명칭은 무엇인가요?',a:'RSUPPORT SMARTBOARD입니다.\n필수: RSUPPORT SMARTBOARD',crit:"정답에 'RSUPPORT SMARTBOARD'가 포함",v:'합격'},
       {id:'RC2-918',q:'리모트콜은 원격 접속을 위해 어떤 설치 과정이 필요한가요?',a:'별도의 설치 과정 없이 웹 브라우저만으로 즉시 접속할 수 있다.\n필수: 별도 설치 없음, 웹 브라우저',crit:"'설치 불필요'와 '웹 브라우저 접속' 두 요소 포함",v:''},
@@ -876,6 +876,7 @@ function renderS2Dlg(){
   $('s2-body').scrollTop = keep;
 }
 async function setS2(id, final){
+  if(window._demoMode){ (S.s2diff.rows||[]).forEach(row=>{ if(row.id===id) row.final=final; }); renderS2Dlg(); toast('📸 데모 모드 — 실제 기록 안 함'); return; }
   const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({cmd:'s2diff-set', product:PV().code, id, final})});
   const d = await r.json();
@@ -892,6 +893,7 @@ async function bulkCalin(v, emptyOnly){
   const ids = emptyOnly? rows.filter(r=>!r.v).map(r=>r.id) : [...CALSEL];
   if(!ids.length) return;
   if(emptyOnly && !confirm(`아직 판정 안 한 ${ids.length}건을 전부 '${v}'으로 기록할까요?`)) return;
+  if(window._demoMode){ rows.forEach(row=>{ if(ids.includes(row.id)) row.v=v; }); CALSEL.clear(); renderCalinDlg(); render(); toast('📸 데모 모드 — 실제 기록 안 함'); return; }
   const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({cmd:'calin-set-bulk', product:PV().code, ids, verdict:v})});
   const d = await r.json();
@@ -907,7 +909,8 @@ function renderCalinDlg(){
   const bulkbar = `<div class="btns" style="position:sticky;top:0;background:var(--panel);padding:6px 0;border-bottom:1px solid var(--line);z-index:5">
       <span class="hint">체크한 ${CALSEL.size}건을:</span>
       <button class="btn approve" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('합격')">합격</button>
-      <button class="btn reject" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('불합격')">불합격</button>
+      <button class="btn" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('부분')">부분</button>
+      <button class="btn reject" ${CALSEL.size?'':'disabled'} onclick="bulkCalin('0점')">0점</button>
       <span style="flex:1"></span>
       <button class="btn" onclick="bulkCalin('합격',true)">나머지(미판정) 전부 합격</button>
     </div>`;
@@ -918,13 +921,15 @@ function renderCalinDlg(){
       <div class="cala hint">기준: ${esc(r.crit)}</div>
       <div class="btns" style="margin:5px 0 0">
         <button class="btn ${r.v==='합격'?'approve':''}" onclick="setCalin('${esc(r.id)}','합격')">합격</button>
-        <button class="btn ${r.v==='불합격'?'reject':''}" onclick="setCalin('${esc(r.id)}','불합격')">불합격</button>
+        <button class="btn ${r.v==='부분'?'approve':''}" onclick="setCalin('${esc(r.id)}','부분')" title="필수 요소 일부만 충족">부분</button>
+        <button class="btn ${r.v==='0점'?'reject':''}" onclick="setCalin('${esc(r.id)}','0점')">0점</button>
       </div></div>`).join('') || '<div class="note">답안지 없음 — 새로고침 해보세요</div>');
   $('cal-body').scrollTop = keep;
 }
 async function setCalin(id, v){
   const row = (S.calin.rows||[]).find(r=>r.id===id);
   if(row && row.v===v) v='';               // 같은 버튼 다시 누르면 해제
+  if(window._demoMode){ if(row) row.v=v; renderCalinDlg(); render(); toast('📸 데모 모드 — 실제 기록 안 함'); return; }
   const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({cmd:'calin-set', product:PV().code, id, verdict:v})});
   const d = await r.json();
@@ -1176,7 +1181,7 @@ async function doOnboard(){
 const dlg=$('dlg'), rdlg=$('rdlg');
 
 loadAll();
-setInterval(()=>{ if(!busy) loadAll(true); }, 15000);
+setInterval(()=>{ if(!busy && !window._demoMode) loadAll(true); }, 15000);   // 데모 중 폴링이 가짜 데이터를 지우고 TypeError 내는 것 방지
 </script>
 </body>
 </html>
