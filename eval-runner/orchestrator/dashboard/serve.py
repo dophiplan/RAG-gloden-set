@@ -48,6 +48,12 @@ def display_of(code):
     return PRODUCT_META.get(code, {}).get("display", code)
 
 
+def _qa_ver(p):
+    """외부QA 파일의 vN — 최신 선택은 반드시 이 숫자로 (import_qa._ver_of와 동일 규칙 [P1-2])"""
+    m = re.search(r"_v(\d+)\.xlsx$", p.name)
+    return int(m.group(1)) if m else 0
+
+
 def api_state():
     import os
     st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))
@@ -61,10 +67,11 @@ def api_state():
             "code": code, "name": meta["product_name"], "gen": meta["gen"],
             "legacy": LEGACY_GENS.get(meta["display"], []),
         }
-        # G20: 외부 Q&A 별도 트랙 현황 — 시험지 발행 여부 (파일명에 문항 수 내장)
-        papers = sorted((ROOT / "data" / code / "external_qa").glob(f"외부QA_시험지_{code}_*문항_v*.xlsx"))
-        pm = re.search(r"_(\d+)문항_", papers[-1].name) if papers else None
-        ps["_qa"] = {"paper": N(papers[-1].name), "n": int(pm.group(1)) if pm else None} if papers else None
+        # G20: 외부 Q&A 별도 트랙 현황 — 최신 = 버전 숫자 기준 (문자열 정렬은 문항 수 자릿수에 속음 [P1-2])
+        papers = list((ROOT / "data" / code / "external_qa").glob(f"외부QA_시험지_{code}_*문항_v*.xlsx"))
+        latest = max(papers, key=_qa_ver) if papers else None
+        pm = re.search(r"_(\d+)문항_", latest.name) if latest else None
+        ps["_qa"] = {"paper": N(latest.name), "n": int(pm.group(1)) if pm else None} if latest else None
     # 모델 모드 부가
     try:
         from model_adapter import detect_mode, effective_recheck_rate
@@ -89,11 +96,24 @@ def api_state():
 
 
 def api_ledger(n=60):
+    """원장 테일 — 화면 표시용. 테스트 전용 제품(EE·ZZ) 행은 숨김 [P1-5]
+    (원장 파일 자체는 append-only 그대로 — 표시만 거른다. 과거 누적 테스트 소음이 원장의 60%)"""
     p = ROOT / "ledger.jsonl"
     if not p.exists():
         return []
-    lines = p.read_text(encoding="utf-8").strip().splitlines()
-    return [json.loads(x) for x in lines[-n:]][::-1]
+    hidden = HIDDEN_CODES | {"ZZ", "TT"}
+    out = []
+    for x in reversed(p.read_text(encoding="utf-8").strip().splitlines()):
+        try:
+            r = json.loads(x)
+        except Exception:
+            continue   # 손상 행 1개로 화면 전체가 백지 되지 않게 (전수검수 F3 계열)
+        if r.get("product") in hidden:
+            continue
+        out.append(r)
+        if len(out) >= n:
+            break
+    return out
 
 
 def api_queue():
@@ -153,7 +173,10 @@ def api_scores():
         rp = d / "score_report.json"
         if not rp.exists():
             continue
-        rep = json.loads(rp.read_text(encoding="utf-8"))
+        try:
+            rep = json.loads(rp.read_text(encoding="utf-8"))
+        except Exception:
+            continue   # 쓰는 중/손상 회차 하나로 성적판 전체가 500 되지 않게
         c = Counter(r.get("검색") for r in rep)
         g = Counter(r.get("생성") for r in rep)
         top1 = c.get("hit_top1", 0)
@@ -485,10 +508,10 @@ def api_qa_handoff(prod):
     import openpyxl
     import datetime
     d = ROOT / "data" / prod / "external_qa"
-    papers = sorted(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx"))
+    papers = list(d.glob(f"외부QA_시험지_{prod}_*문항_v*.xlsx"))
     if not papers:
         return None, "Q&A 시험지 없음 — 외부 Q&A 분류 카드 승인 후 이용 가능"
-    pub = papers[-1]
+    pub = max(papers, key=_qa_ver)   # [P1-2] 최신 = 버전 숫자
     ws = openpyxl.load_workbook(pub, read_only=True).active
     first = next(ws.iter_rows(min_row=2, max_row=2, values_only=True), None)
     qid0 = str(first[0]) if first else f"{prod}-Q001"

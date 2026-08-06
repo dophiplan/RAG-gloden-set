@@ -293,6 +293,10 @@ const PV = () => S.state._products[cur];          // {code, name, gen, legacy[]}
 const PS = () => S.state.products[PV().code];     // 현역 트랙 상태
 
 async function loadAll(fromPoll){
+  try{ return await _loadAll(fromPoll); }
+  catch(e){ if(!fromPoll) toast('⚠ 서버 응답이 없어요 — 15초 후 자동 재시도 (계속되면 실전모드_켜기를 다시 실행)'); }
+}
+async function _loadAll(fromPoll){
   const [st,cat,q,sc,lg,ai] = await Promise.all([
     fetch('/api/state').then(r=>r.json()),
     fetch('/api/catalog').then(r=>r.json()),
@@ -383,7 +387,8 @@ function render(){
   document.querySelectorAll('#queuebody .card').forEach(el=>{
     const key = el.dataset.file; if(!key) return;
     keep[key] = {evs:[...el.querySelectorAll('.evidence')].map(e=>e.scrollTop),
-                 acks:[...el.querySelectorAll('input[type=checkbox]')].map(b=>b.checked)};
+                 acks:[...el.querySelectorAll('input[type=checkbox]')].map(b=>b.checked),
+                 sels:[...el.querySelectorAll('select')].map(s=>s.value)};   // 응시 범위 선택 보존 [P1-8]
   });
   const winY = window.scrollY;
   const st = S.state;
@@ -478,6 +483,7 @@ function render(){
     [...el.querySelectorAll('.evidence')].forEach((e,i)=>{ if(k.evs[i]) e.scrollTop = k.evs[i]; });
     const boxes = [...el.querySelectorAll('input[type=checkbox]')];
     boxes.forEach((b,i)=>{ b.checked = !!k.acks[i]; });
+    [...el.querySelectorAll('select')].forEach((s,i)=>{ if(k.sels && k.sels[i]) s.value = k.sels[i]; });   // [P1-8]
     if(boxes.length && boxes.every(b=>b.checked)){
       const btn = el.querySelector('.btn.approve'); if(btn) btn.disabled = false;
     }
@@ -753,10 +759,18 @@ function toast(msg, ms=6000){
   clearTimeout(t._t); if(ms) t._t=setTimeout(()=>t.style.display='none', ms);
 }
 async function act(payload){
-  busy = true; render();
-  toast('⏳ 처리 중… (실전 모드에서는 AI 작업에 몇 분 걸릴 수 있어요)', 0);
-  if(payload.cmd==='run') startProgressPoll();   // G15: AI 작업 중 진행/막힘 표시
-  try{
+  // 재진입 가드 [P1-7]: 긴 처리(승인→발행, qa-import) 중 재클릭이 서버 큐에 쌓였다가
+  // 연달아 실행돼 이중 채점·카드 연쇄 교체가 나는 사고 방지
+  if(window._acting){ toast('⏳ 앞의 요청을 처리 중이에요 — 끝나면 자동으로 갱신됩니다'); return {ok:false, out:'처리 중'}; }
+  window._acting = true;
+  try{ return await _act(payload); } finally { window._acting = false; }
+}
+async function _act(payload){
+  busy = true;
+  try{   // busy 해제는 render/toast 예외에도 보장 — busy 잔류 = 15초 갱신 영구 정지 사고
+    render();
+    toast('⏳ 처리 중… (실전 모드에서는 AI 작업에 몇 분 걸릴 수 있어요)', 0);
+    if(payload.cmd==='run') startProgressPoll();   // G15: AI 작업 중 진행/막힘 표시
     const r = await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d = await r.json();
     toast(d.out || (d.ok?'완료':'실패'));
@@ -768,7 +782,9 @@ async function act(payload){
   }
 }
 async function doApprove(id, nAcks){
-  await act({cmd:'approve', gate_id:id, ack_all:nAcks>0});
+  const d = await act({cmd:'approve', gate_id:id, ack_all:nAcks>0});
+  if(!d.ok) return;                       // 승인 실패(이미 처리됨 등)면 run 발사 금지
+  if(id.startsWith('QAIMP_')) return;     // 외부 Q&A 승인 = 시험지 발행으로 끝 — 본선 run과 무관
   await act({cmd:'run', product:PV().code});
 }
 function openReject(id){ rejectTarget=id; $('r-reason').value=''; rdlg.showModal(); }
