@@ -278,6 +278,7 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
     roles = _ensemble_roles(cfg, strategy, prod)
     pool, contrib, fails = [], {}, []
     seen = set()
+    paused = []   # 한도로 멈춘 추출자 — 다른 추출자는 계속 (난희 요청 2026-08-07: claude 멈추면 Kimi 먼저)
     for role in roles:
         try:
             units = generate_units(prod, chunks, cfg, role=role)
@@ -290,12 +291,22 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
                     pool.append(u)
                     new += 1
             contrib[role] = {"추출(검수통과)": len(ok), "신규 기여": new}
-        except CoveragePaused:
-            raise                                       # 일시 중단은 삼키지 않는다 — run()이 HALT 처리
+        except CoveragePaused as e:
+            # 한 주자의 한도가 전체를 세우지 않는다 — 체크포인트에 보존됐으니 다음 주자 계속.
+            # (재개 시: 완주한 주자는 체크포인트 즉시 재생, 멈춘 주자만 이어달림)
+            paused.append(role)
+            ledger_append("COVERAGE_MAP", "EXTRACTOR_PAUSED_CONTINUE", f"script:{role}",
+                          evidence={"사유": str(e)[:120], "조치": "다른 추출자 계속 — 이 주자는 재개 때 이어서"},
+                          product=prod)
+            print(f"  ⏸ {role} 한도 의심 중단 — 다음 추출자로 계속 (재개 때 이어달림)")
         except Exception as e:
             fails.append({"role": role, "err": str(e)[:150]})
             ledger_append("COVERAGE_MAP", "ENSEMBLE_EXTRACTOR_FAILED", f"script:{role}",
                           evidence={"err": str(e)[:200]}, product=prod)
+    if paused:
+        # 전 주자 순회를 마친 뒤에만 일시 중단 보고 — auto_run이 대기 후 재개 (멈춘 주자만 남은 셈)
+        raise CoveragePaused(f"일시 중단(한도 추정) — 추출자 {'+'.join(paused)} 대기, "
+                             f"나머지 {len(roles)-len(paused)}명은 완주(체크포인트 보존)")
     MERGE_LIMIT = 200   # 이 이상이면 LLM 병합 생략 — 기계 dedup(정확 일치)만으로 충분·안전
     if len(roles) > 1 and pool and len(pool) <= MERGE_LIMIT:
         _progress(prod, "병합(대표 AI)", "generator", 0, 1, [])
