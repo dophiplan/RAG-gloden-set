@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-07T10:37:50",
+  "updated": "2026-08-07T11:01:58",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "COVERAGE_MAP",
-      "status": "HALTED",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1986,7 +1986,7 @@
         }
       },
       "open_gates": [],
-      "halt_reason": "의도적 잠금 — 본선(③ AI 추출)은 파트너 기밀의 외부 AI 전송이라 회사 정책 결정 전 실행 금지. 외부 Q&A 트랙(시험지·채점)은 이 잠금과 무관하게 사용 가능",
+      "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"
     }
