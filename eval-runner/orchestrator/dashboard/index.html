@@ -374,7 +374,8 @@ function stageView(code){
     if(hist[k] && (i<curIdx || ps.status==='DONE')) return {k, cls:'done', label:'완료'};
     if(i===curIdx){
       const map = {RUNNING:['run','진행 중'], WAITING_HUMAN:['human','결정 대기'],
-                   WAITING_INPUT:['input','파일 대기'], HALTED:['halt','사고 정지'],
+                   WAITING_INPUT:['input','파일 대기'],
+                   HALTED:['halt', (ps.halt_reason||'').startsWith('의도적 잠금')?'🔒 잠금':'사고 정지'],
                    PENDING:['none','대기'], REJECTED:['human','반려'], DONE:['done','완료']};
       const [cls,label] = map[ps.status]||['none',ps.status];
       return {k, cls, label};
@@ -392,6 +393,8 @@ function nextAction(){
     const r = ps.halt_reason||'원장 확인';
     if(r.includes('한도') || r.includes('일시 중단'))
       return {icon:'⏸', text:'한도로 잠시 멈췄어요 — 진행분은 저장돼 있고, 한도가 회복되면 자동으로 이어갑니다(기다리면 돼요). 지금 바로 시도하려면 [▶ 이어서 재개].', resume:true};
+    if(r.startsWith('의도적 잠금'))
+      return {icon:'🔒', text:'정책 잠금 (사고 아님) — '+r.replace('의도적 잠금 — ','')+' 해제는 Claude에게 요청하세요.'};
     return {icon:'⛔', text:'사고 정지 — 원인: '+r+'. 일시적 오류(응답 형식 등)면 [▶ 다시 시도]로 이어갈 수 있어요. 같은 원인으로 또 멈추면 그때 저(Claude)를 불러주세요.', retry:true};
   }
   if(ps.status==='WAITING_INPUT'){
