@@ -490,7 +490,7 @@ function render(){
     </div>
   </div>
   <main>
-    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${STATUS_KO[ps.status]||ps.status}</div><div class="p-body">
+    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
     <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">
