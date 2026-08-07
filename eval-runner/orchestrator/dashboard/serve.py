@@ -91,7 +91,10 @@ def api_state():
     except Exception as e:
         st["_mode"] = {"mode": "?", "label": "상태 확인 실패", "cls": "off", "error": str(e)}
     # 킬스위치: HALTED 제품 수
-    st["_halt_count"] = sum(1 for p in st["products"].values() if p["status"] == "HALTED")
+    # 의도적 잠금(정책 보류)은 사고 카운트에서 제외 — 헤더 '사고 N'은 진짜 사고만
+    st["_halt_count"] = sum(1 for p in st["products"].values()
+                            if p["status"] == "HALTED"
+                            and not str(p.get("halt_reason") or "").startswith("의도적 잠금"))
     return st
 
 
