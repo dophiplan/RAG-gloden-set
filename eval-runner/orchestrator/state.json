@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-10T07:47:19",
+  "updated": "2026-08-10T07:58:17",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "COVERAGE_MAP",
-      "status": "RUNNING",
+      "status": "HALTED",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1986,7 +1986,7 @@
         }
       },
       "open_gates": [],
-      "halt_reason": null,
+      "halt_reason": "{\"halt\": \"AI 호출 연속 실패로 일시 중단 (일시 중단(한도 추정) — 추출자 generator+judge+reviewer 대기, 나머지 0명은 완주(체크포인트 보존)) — 구독 한도/네트워크 의심. 지금까지 진행분은 체크포인트에 저장됨: 한도 회복 후 [▶ 이어서 재개]를 누르면 이어서 진행\"}",
       "strategy": "ensemble",
       "start_mode": "full"
     }
