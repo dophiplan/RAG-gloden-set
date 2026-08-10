@@ -84,7 +84,10 @@ def _cli(m, system, user):
     except subprocess.TimeoutExpired as e:
         raise RuntimeError(f"CLI 호출 타임아웃({cmd[0]}, 1200s) — 배치 축소 또는 구독 한도 확인 필요") from e
     if p.returncode != 0:
-        raise RuntimeError(f"CLI 호출 실패({cmd[0]}): {p.stderr[:300]}")
+        # [수리 2026-08-10] stderr가 비면 원인 불명 — stdout까지 실어 진단 가능하게
+        # (실측 사고: OAuth 만료가 빈 stderr로 와서 "한도 의심"으로 오분류됨)
+        det = (p.stderr or "").strip() or (p.stdout or "").strip() or "(출력 없음 — 인증 만료/실행 파일 문제 의심)"
+        raise RuntimeError(f"CLI 호출 실패({cmd[0]}, exit={p.returncode}): {det[:300]}")
     return p.stdout
 
 
