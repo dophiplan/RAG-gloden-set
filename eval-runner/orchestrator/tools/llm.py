@@ -71,8 +71,13 @@ def _cli(m, system, user):
     prompt = f"{system}\n\n---\n\n{user}"
     stdin_input = prompt
     if m.get("prompt_arg"):        # 일부 CLI(codex exec 등)는 프롬프트를 인자로 받음
-        cmd = cmd + [prompt]
-        stdin_input = ""
+        # [수리 2026-08-10] 대형 배치에서 argv가 OS 한계(ARG_MAX) 초과 → "Argument list too long".
+        # codex exec는 인수 없이(또는 '-') stdin을 읽으므로, 큰 프롬프트는 stdin 폴백.
+        if len(prompt.encode("utf-8")) > 100_000:
+            cmd = cmd + ["-"]
+        else:
+            cmd = cmd + [prompt]
+            stdin_input = ""
     try:
         p = subprocess.run(cmd, input=stdin_input,
                            capture_output=True, text=True, timeout=1200, env=env)

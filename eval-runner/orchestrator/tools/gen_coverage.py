@@ -125,6 +125,23 @@ def _ckpt_save(prod, ck):
     p.write_text(json.dumps(ck, ensure_ascii=False), encoding="utf-8")
 
 
+def _extract_batch(prod, part, cfg, call_role, depth=0):
+    """배치 1건 추출 호출. [수리 2026-08-10] 응답 절단(내용이 max_tokens 초과)은 재시도로
+    안 풀리는 결정적 문제 — 배치를 반으로 쪼개 재귀 시도 (표 많은 구간 대응, 최대 3단 분할)."""
+    try:
+        out = llm.chat(call_role, SYSTEM,
+                       json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), cfg)
+        got = llm.extract_json(out)
+        return got if isinstance(got, list) else [got]
+    except RuntimeError as e:
+        if "절단" in str(e) and len(part) >= 2 and depth < 3:
+            mid = len(part) // 2
+            print(f"    ✂ 응답 절단 — 배치 {len(part)}청크를 반으로 쪼개 재시도 (분할 {depth + 1}단)")
+            return (_extract_batch(prod, part[:mid], cfg, call_role, depth + 1)
+                    + _extract_batch(prod, part[mid:], cfg, call_role, depth + 1))
+        raise
+
+
 def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
     """청크를 배치로 나눠 호출 — 대형 코퍼스 대응. 배치 단위 실패는 기록 후 계속.
     [재개] 성공 배치마다 체크포인트 저장 — 한도 소진·중단 후 재실행하면 이어서 진행.
@@ -156,10 +173,7 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
             # 추출 전용 모델이 설정돼 있으면 그걸로 (예: K3 대신 v1-128k — 판정 아님, 규칙 C 무관)
             _c = cfg or load_config()
             call_role = f"{role}_extract" if _c.get("models", {}).get(f"{role}_extract") else role
-            out = llm.chat(call_role, SYSTEM,
-                           json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), _c)
-            got = llm.extract_json(out)
-            units += got if isinstance(got, list) else [got]
+            units += _extract_batch(prod, part, _c, call_role)
             consec = []
         except Exception as e:
             # 배치 실패는 침묵하지 않는다 — 기록하고 나머지는 계속 (부분 커버리지 > 전체 실패)
