@@ -3895,3 +3895,4 @@
 {"ts": "2026-08-11T04:14:51", "product": "CI", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-08-11T04:14:52", "product": "CI", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_RESUMED", "evidence": {"재개 지점": "100/121", "보존 단위": 7781}, "reason": null}
 {"ts": "2026-08-11T04:23:09", "product": "CI", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_BATCH_FAILED", "evidence": {"batch": "101/121", "chunks": 25, "err": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"}, "reason": null}
+{"ts": "2026-08-11T04:26:35", "product": "CI", "stage": "COVERAGE_MAP", "gate_id": null, "actor": "script:generator", "action": "COVERAGE_BATCH_FAILED", "evidence": {"batch": "102/121", "chunks": 25, "err": "Expecting value: line 1 column 27 (char 26)"}, "reason": null}
