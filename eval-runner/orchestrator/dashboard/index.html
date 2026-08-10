@@ -628,7 +628,7 @@ function renderScores(ps){
   for(const lg of (pv.legacy||[])) gens.push({label: lg.gen.split(' — ')[0].split(' · ')[0], code: lg.code, retired: true});
   // ── 버전별 누적 현황 줄 (몇 회차가 쌓였고 마지막이 어느 회차인지) — 세대별
   const genRow = g=>{
-    const sc = S.scores[g.code]||{};
+    const sc = g.sc || S.scores[g.code] || {};
     const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
     const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
     const flow = rounds.map(r=>sc[r].scorer==='기록 이관'?r+'*':r).join(' → ');
@@ -649,14 +649,19 @@ function renderScores(ps){
   const archGens = retiredScored;
   // G20: 외부 Q&A 별도 트랙 — 기존 골든셋과 절대 안 섞임 (시험지·성적·보관 전부 분리)
   const qaCode = pv.code+'QA';
-  const qaSc = S.scores[qaCode]||{};
+  const qaAll = S.scores[qaCode]||{};
+  // G30: 기준선(base*)은 우리가 미리 잰 참고분 — 정식 회차(rN)와 다른 줄로 분리 (난희: 회차 번호 혼동)
+  const qaSc = Object.fromEntries(Object.entries(qaAll).filter(([k])=>!k.startsWith('base')));
+  const qaBase = Object.fromEntries(Object.entries(qaAll).filter(([k])=>k.startsWith('base')));
   const qaTrack = ps._qa;   // {paper, n} — 시험지 발행돼야 생김
   const qaBadge = '<span class="hint" style="color:var(--run)">Q&A 별도 트랙 · 검색축(내용 대조)</span>';
-  const qaRow = (qaTrack||Object.keys(qaSc).length)? genRow({label:'외부 Q&A', code:qaCode, badge:qaBadge}) : '';
+  const qaRow = (qaTrack||Object.keys(qaSc).length)? genRow({label:'외부 Q&A', code:qaCode, badge:qaBadge, sc:qaSc}) : '';
+  const baseBadge = '<span class="hint">기준선 · 참고 (우리가 미리 잰 단순검색 성적 — 정식 회차 아님)</span>';
+  const baseRow = Object.keys(qaBase).length? genRow({label:'└ 기준선(참고)', code:qaCode, badge:baseBadge, sc:qaBase}) : '';
   const summary = `<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
       <span>버전별 누적 현황</span>
       ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴한 골든셋 리스트 — 누적 현황·성적표 (참고용)">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
-    + curGens.map(genRow).join('') + qaRow + divider;
+    + curGens.map(genRow).join('') + qaRow + baseRow + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired, code, badge) => {
     if(!sc || !Object.keys(sc).length) return '';
@@ -701,7 +706,10 @@ function renderScores(ps){
       <a class="btn" style="text-decoration:none" href="/api/qa-handoff?product=${encodeURIComponent(pv.code)}" download title="시험지(질문만)+안내문+응답로그 예시 zip — 팀장님께 전달">📦 Q&A 꾸러미</a>
       <label class="btn" style="cursor:pointer" title="팀장님이 준 Q&A 응답로그(json)를 올리면 즉시 채점돼요 — 내용 대조 기준, 기존 성적과 분리 집계">⬆ Q&A 응답로그 채점<input type="file" accept=".json" style="display:none" onchange="uploadQALog(this)"></label>
     </div><div class="hint" style="margin-bottom:8px">외부 Q&A 시험지 <b>${qaTrack.n??'?'}문항</b> 발행됨 (${esc(qaTrack.paper)}) — 이 트랙 성적은 골든셋 회차와 안 섞여요</div>` : '';
-  const qaBody = (mk('외부 Q&A', qaSc, true, qaCode, qaBadge)||'') + qaControls;
+  const qaBody = (mk('외부 Q&A', qaSc, true, qaCode, qaBadge)||'')
+    + (mk('기준선(참고) — 단순검색 실측', qaBase, true, qaCode,
+          '<span class="hint">base1 FAQ포함 · base2 매뉴얼만 · base3 맥락시험지</span>')||'')
+    + qaControls;
   const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.code)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + (qaBody?`<div style="height:10px"></div>`+qaBody:'')

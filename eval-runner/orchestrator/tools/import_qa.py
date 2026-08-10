@@ -441,9 +441,11 @@ def score(prod, log_name=None, actor="난희"):
         cnt[verdict] += 1
         rows.append({"문항ID": qid, "질문": a["질문"], "검색": verdict,
                      "명중순위": rank, "확인 절": ev})
+    # [P1-7] 최대+1 (개수 방식은 폴더 이동/삭제 시 덮어씀).
+    # 기준선(score_<P>QA_base*)은 우리가 미리 잰 참고분 — 정식 회차 번호에서 제외
     rnd = 1 + max((int(m.group(1)) for p in (ROOT / "results").glob(f"score_{prod}QA_r*")
                    if (m := re.fullmatch(rf"score_{re.escape(prod)}QA_r(\d+)", p.name))),
-                  default=0)   # [P1-7] 개수 방식은 폴더 이동/삭제 시 기존 회차 덮어씀 — 최대+1
+                  default=0)
     out_d = ROOT / "results" / f"score_{prod}QA_r{rnd}"
     out_d.mkdir(parents=True, exist_ok=True)
     (out_d / "score_report.json").write_text(
