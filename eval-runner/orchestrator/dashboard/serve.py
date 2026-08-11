@@ -436,6 +436,25 @@ def api_progress(code):
     except Exception:
         pass
     d["active"] = True
+    # 추출자별 진행 현황 — 진행선 ③에 마우스 올리면 툴팁으로 (난희 요청 2026-08-10)
+    ck = ROOT / "results" / f"_ckpt_coverage_{code}.json"
+    if ck.exists():
+        try:
+            c = json.loads(ck.read_text(encoding="utf-8"))
+            names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
+            rows, tot = [], 0
+            for role, label in names.items():
+                v = c.get(role)
+                if isinstance(v, dict):
+                    n = len(v.get("units", []))
+                    tot += n
+                    rows.append({"who": label, "done": v.get("done", 0),
+                                 "total": d.get("total") or 0, "units": n})
+            if rows:
+                d["extractors"] = rows
+                d["units_total"] = tot
+        except Exception:
+            pass
     return d
 
 

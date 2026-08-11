@@ -417,6 +417,26 @@ function nextAction(){
   return {icon:'⏸', text:`${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${sname} 대기 — 잠시 멈춤(한도 회복 등) 상태예요. 자동 재개를 기다리거나 [▶ 이어서 진행]을 누르세요. 진행분은 저장돼 있어요.`, run:true};
 }
 
+/* 진행선 노드 마우스오버 현황 — ③ 추출 중이면 추출자별 배치·단위 수를 툴팁으로 [난희 요청 2026-08-10] */
+function applyStageTips(){
+  const d = window._prog;
+  if(!d || !d.active) return;
+  const idx = STAGE_ORDER.indexOf(d.stage || 'COVERAGE_MAP');
+  const node = document.querySelector(`#track .stage[data-i="${idx}"]`);
+  if(!node) return;
+  const lines = [`${d.phase || '작업 중'}${d.청크 ? ` · ${Number(d.청크).toLocaleString()}청크` : ''}`];
+  for(const e of (d.extractors||[])){
+    const pct = e.total ? Math.round(e.done/e.total*100) : null;
+    lines.push(`${e.who}: ${e.done}${e.total?'/'+e.total:''} 배치${pct!==null?` (${pct}%)`:''} · ${e.units.toLocaleString()}단위`);
+  }
+  if(d.units_total) lines.push(`합계 ${d.units_total.toLocaleString()}단위 추출`);
+  if(d.ts){
+    const age = Math.max(0, Math.round((Date.now()-new Date(d.ts).getTime())/60000));
+    lines.push(age<1 ? '방금 갱신' : `갱신 ${age}분 전`);
+  }
+  node.setAttribute('title', lines.join('\n'));
+}
+
 function render(){
   // 15초 자동 갱신이 읽던 자리를 날리지 않게 — 카드별 스크롤·체크 상태를 저장해 두고 복원
   const keep = {};
@@ -512,6 +532,7 @@ function render(){
     </div></div>
   </main>`;
   $('view').innerHTML = html;
+  applyStageTips();   // 재렌더로 지워진 노드 툴팁 복원
   // 읽던 자리 복원 — 카드 스크롤·체크박스·승인 버튼 상태 (자동 갱신에도 그대로)
   document.querySelectorAll('#queuebody .card').forEach(el=>{
     const k = keep[el.dataset.file]; if(!k) return;
@@ -1231,6 +1252,8 @@ async function pollOnce(){
         if(rl && rl.lines.length){ lg.textContent = rl.lines.join('\n'); lg.scrollTop = lg.scrollHeight; }
       }
       const d = await fetch('/api/progress?product='+PV().code).then(r=>r.json());
+      window._prog = d;                       // 진행선 노드 툴팁용 (난희 요청: ③ 마우스오버 현황)
+      applyStageTips();
       const el = $('progline');
       if(!d.active || !el) return;
       const parts = Object.entries(d.roles||{}).map(([r,v])=>{
