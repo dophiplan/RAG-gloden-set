@@ -442,14 +442,20 @@ def api_progress(code):
         try:
             c = json.loads(ck.read_text(encoding="utf-8"))
             names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
+            # 총 배치 수: 현재 뛰는 주자의 진행 파일에만 있으므로, 없는 주자는 그 값을 공유
+            # (동일 코퍼스를 같은 배치 크기로 나누므로 총 수는 전 주자 공통)
+            tt_any = max([(v or {}).get("total") or 0
+                          for v in ((d.get("roles") or {}).values())] or [0])
             rows, tot = [], 0
             for role, label in names.items():
                 v = c.get(role)
                 if isinstance(v, dict):
                     n = len(v.get("units", []))
                     tot += n
+                    # 총 배치 수는 진행 파일의 roles.<role>.total (체크포인트엔 없음)
+                    tt = (((d.get("roles") or {}).get(role) or {}).get("total") or tt_any)
                     rows.append({"who": label, "done": v.get("done", 0),
-                                 "total": d.get("total") or 0, "units": n})
+                                 "total": tt, "units": n})
             if rows:
                 d["extractors"] = rows
                 d["units_total"] = tot
