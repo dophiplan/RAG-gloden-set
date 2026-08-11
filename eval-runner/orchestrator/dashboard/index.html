@@ -404,9 +404,17 @@ function nextAction(){
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
   if(ps.status==='REJECTED')
     return {icon:'↩', text:'반려 접수됨 — 사유는 기록됐고 재출제 준비가 끝났어요. 자동으로 이어지지 않았다면 [▶ 이어서 진행]을 눌러주세요.', run:true};
-  if(ps.status==='RUNNING') return {icon:'⚙️', text:'시스템이 일하는 중'};
+  if(ps.status==='RUNNING'){
+    const who = stageAI(ps.stage).who;
+    return {icon:'⚙️', text:`${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${(S.catalog.products[cur]||{stages:[]}).stages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} 진행 중 — ${who} 작업 중이에요. 진행률은 아래 진행선을 보세요 (한도로 멈추면 자동 재개).`};
+  }
   if(ps.status==='DONE') return {icon:'🎉', text:'이 사이클은 끝났어요. 팀장님이 새 응답로그를 주시면 오른쪽 성적 히스토리의 [⬆ 실물 채점 추가로 돌리기]로 올리세요 — 회차 부여부터 보고서까지 자동이에요.'};
-  return {icon:'▶', text:'대기 중 — 파일이 준비되면 업로드로 시작하세요.'};
+  // PENDING 폴백 — 단계에 따라 문구가 달라야 한다 (①은 파일 대기, 그 외는 재개 대기)
+  // [수리 2026-08-10 난희 지적] 커버리지맵 진행 중인데 "파일 업로드로 시작" 안내가 떠서 혼동
+  if(ps.stage==='CORPUS_AUDIT')
+    return {icon:'▶', text:'대기 중 — 코퍼스 파일이 준비되면 업로드로 시작하세요.'};
+  const sname = (S.catalog.products[cur]||{stages:[]}).stages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage;
+  return {icon:'⏸', text:`${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${sname} 대기 — 잠시 멈춤(한도 회복 등) 상태예요. 자동 재개를 기다리거나 [▶ 이어서 진행]을 누르세요. 진행분은 저장돼 있어요.`, run:true};
 }
 
 function render(){
