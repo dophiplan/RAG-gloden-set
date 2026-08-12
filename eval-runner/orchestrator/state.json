@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-12T17:27:55",
+  "updated": "2026-08-13T07:41:02",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "COVERAGE_MAP",
-      "status": "RUNNING",
+      "status": "PENDING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
