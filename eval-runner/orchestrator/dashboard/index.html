@@ -1274,8 +1274,7 @@ function engName(role){
 function startProgressPoll(ms){
   stopProgressPoll();
   pollOnce();                       // 즉시 1회 — render 직후 진행선이 비는 깜빡임 제거
-  progT = setInterval(pollOnce, 4000);
-  pollOnce();   // 즉시 1회 — 멈춤 상태에서도 현황 패널이 바로 뜨게
+  progT = setInterval(pollOnce, ms || 4000);
 }
 async function pollOnce(){
     try{
