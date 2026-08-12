@@ -443,8 +443,13 @@ function renderAiProgress(){
       <span class="aibar"><i style="width:${pct}%"></i></span>
       <span class="num">${pct}% · ${e.units.toLocaleString()}단위</span></div>`;
   }).join('');
+  // 완주한 주자가 있으면 [🏁 지금 마감] — 남은 주자 한도 회복을 기다리지 않고 병합으로
+  const done100 = d.extractors.filter(e=>e.total && e.done>=e.total).map(e=>e.who);
+  const closeBtn = done100.length? `<button class="expandbtn" style="margin-top:6px"
+      title="${done100.join('+')} 가 전 배치를 훑었어요 — 남은 AI를 기다리지 않고 지금 지도를 만듭니다 (앙상블은 촘촘함 보강이라 없어도 전량 커버는 확보)"
+      onclick="if(confirm('${done100.join('+')} 완주분으로 지금 마감할까요?\\n남은 AI 대기 없이 병합·검수로 넘어갑니다.')) act({cmd:'close-ensemble', product:PV().code}).then(()=>act({cmd:'run', product:PV().code}))">🏁 지금 마감 (${done100.join('+')} 완주분으로)</button>` : '';
   return `<div class="aiprog"><div class="hd">${head}</div>${rows}
-    <div class="hint" style="margin-top:5px">합계 ${(d.units_total||0).toLocaleString()}단위 추출 · 한 AI가 한도로 멈춰도 나머지가 이어서 뜁니다(이어달리기)</div></div>`;
+    <div class="hint" style="margin-top:5px">합계 ${(d.units_total||0).toLocaleString()}단위 추출 · 한 AI가 한도로 멈춰도 나머지가 이어서 뜁니다(이어달리기)</div>${closeBtn}</div>`;
 }
 
 /* 진행선 노드 마우스오버 현황 — ③ 추출 중이면 추출자별 배치·단위 수를 툴팁으로 [난희 요청 2026-08-10] */

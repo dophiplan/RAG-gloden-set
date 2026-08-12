@@ -764,6 +764,11 @@ def api_action(payload):
     elif cmd == "qa-import":
         # 외부 Q&A 인입 — 업로드 직후 자동 대조·분류 (G19)
         args += ["qa-import", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "close-ensemble":
+        # ③ 앙상블 조기 마감 — 완주한 추출자 기준으로 병합 진행 (난희 요청)
+        args += ["close-ensemble", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+        if payload.get("force"):
+            args += ["--force"]
     elif cmd == "qa-score":
         # 외부 Q&A 별도 트랙 채점 — 응답로그 업로드 직후 (G20)
         args += ["qa-score", "--product", payload["product"], "--actor", payload.get("actor", "난희")]

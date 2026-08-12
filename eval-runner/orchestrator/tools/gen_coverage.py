@@ -21,7 +21,7 @@ import openpyxl
 
 sys.path.insert(0, str(Path(__file__).parent))
 import llm
-from olib import ROOT, N, ledger_append, issue_gate_card, load_config
+from olib import ROOT, N, ledger_append, issue_gate_card, load_config, load_state
 
 DATA = ROOT / "data"
 
@@ -286,6 +286,17 @@ MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
 출력: JSON 배열만 — 입력과 같은 스키마."""
 
 
+def _fully_covered_roles(prod, n_chunks):
+    """체크포인트 기준 '전 배치 완주'한 추출자 목록 — 조기 마감 가능 여부의 근거."""
+    ck = _ckpt_load(prod) or {}
+    total = (n_chunks + CHUNK_BATCH - 1) // CHUNK_BATCH
+    out = []
+    for role, v in ck.items():
+        if isinstance(v, dict) and v.get("done", 0) >= total and v.get("units"):
+            out.append(role)
+    return out
+
+
 def ensemble_generate(prod, chunks, cfg, strategy=None):
     """전략별 추출 → 기계 dedup → (앙상블이면) 병합 → 검수는 호출측."""
     strategy = strategy or get_strategy(prod)
@@ -318,9 +329,24 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
             ledger_append("COVERAGE_MAP", "ENSEMBLE_EXTRACTOR_FAILED", f"script:{role}",
                           evidence={"err": str(e)[:200]}, product=prod)
     if paused:
-        # 전 주자 순회를 마친 뒤에만 일시 중단 보고 — auto_run이 대기 후 재개 (멈춘 주자만 남은 셈)
-        raise CoveragePaused(f"일시 중단(한도 추정) — 추출자 {'+'.join(paused)} 대기, "
-                             f"나머지 {len(roles)-len(paused)}명은 완주(체크포인트 보존)")
+        # [난희 요청 2026-08-13] 조기 마감 — 전량 훑은 주자가 하나라도 있으면, 남은 주자를
+        # 기다리지 않고 지금 가진 풀로 맵을 낼 수 있다. 앙상블은 촘촘함의 보강이지 필수가 아님.
+        # 켜는 법: state products.<P>.close_ensemble = true (관제판 [🏁 지금 마감] 버튼)
+        st_now = load_state()["products"].get(prod, {})
+        full = _fully_covered_roles(prod, len(chunks))
+        if st_now.get("close_ensemble") and full:
+            ledger_append("COVERAGE_MAP", "ENSEMBLE_CLOSED_EARLY", "사람:난희(조기 마감)",
+                          evidence={"완주 추출자": full, "대기 중이던 추출자": paused,
+                                    "확보 단위(중복 제거 전)": len(pool),
+                                    "판단": "전량 훑은 추출자 존재 — 남은 주자 대기 없이 병합 진행"},
+                          product=prod)
+            print(f"  🏁 조기 마감 — 완주 {'+'.join(full)} 기준으로 병합 진행 (대기 생략: {'+'.join(paused)})")
+            paused = []
+        else:
+            # 전 주자 순회를 마친 뒤에만 일시 중단 보고 — auto_run이 대기 후 재개
+            raise CoveragePaused(f"일시 중단(한도 추정) — 추출자 {'+'.join(paused)} 대기, "
+                                 f"나머지 {len(roles)-len(paused)}명은 완주(체크포인트 보존)"
+                                 + ("" if full else " · 전량 훑은 추출자 없음 — 조기 마감 불가"))
     MERGE_LIMIT = 200   # 이 이상이면 LLM 병합 생략 — 기계 dedup(정확 일치)만으로 충분·안전
     if len(roles) > 1 and pool and len(pool) <= MERGE_LIMIT:
         _progress(prod, "병합(대표 AI)", "generator", 0, 1, [])

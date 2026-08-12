@@ -823,6 +823,26 @@ def cmd_qa_import(a):
         sys.exit(1)   # 화면 토스트가 실패 메시지를 그대로 보여주도록 (성공 오인 방지)
 
 
+def cmd_close_ensemble(a):
+    """③ 앙상블 조기 마감 — 전량 훑은 추출자 기준으로 병합 진행 (남은 주자 대기 생략).
+    [난희 요청 2026-08-13] 한 AI가 121/121 완주했으면 나머지 한도 회복을 기다릴 이유가 없다."""
+    prod = a.product
+    st = load_state()
+    if prod not in st["products"]:
+        sys.exit(f"미등록 제품: {prod}")
+    import gen_coverage
+    chunks = gen_coverage.load_corpus(prod)
+    full = gen_coverage._fully_covered_roles(prod, len(chunks))
+    if not full and not a.force:
+        sys.exit("조기 마감 불가 — 전량 훑은 추출자가 없어요 (부분 커버로 마감하려면 --force). "
+                 "지금 상태로는 코퍼스 일부가 지도에서 빠집니다.")
+    update_state(lambda s: s["products"][prod].__setitem__("close_ensemble", True))
+    ledger_append("COVERAGE_MAP", "ENSEMBLE_CLOSE_REQUESTED", f"사람:{a.actor}",
+                  evidence={"완주 추출자": full or "없음(강제)", "조치": "다음 실행에서 병합·검수로 진행"},
+                  product=prod)
+    print(f"🏁 조기 마감 예약 — 완주: {'+'.join(full) or '없음(강제)'} · 다음 [▶ 이어서 진행]에서 병합·검수로 넘어갑니다")
+
+
 def cmd_qa_score(a):
     """G20 · 외부 Q&A 별도 트랙 채점 — 응답로그(내용 대조 기준) → results/score_<P>QA_rN"""
     import import_qa
@@ -847,13 +867,15 @@ def main():
     s = sub.add_parser("new-round"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     s = sub.add_parser("expand"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
     s = sub.add_parser("qa-import"); s.add_argument("--product", required=True); s.add_argument("--actor", default="난희")
+    s = sub.add_parser("close-ensemble"); s.add_argument("--product", required=True); s.add_argument("--force", action="store_true"); s.add_argument("--actor", default="난희")
     s = sub.add_parser("qa-score"); s.add_argument("--product", required=True); s.add_argument("--log"); s.add_argument("--actor", default="난희")
     a = ap.parse_args()
     {"status": cmd_status, "run": cmd_run, "approve": cmd_approve, "reject": cmd_reject,
      "resume": cmd_resume, "appeal": cmd_appeal, "set-stage": cmd_set_stage,
      "onboard": cmd_onboard, "set-strategy": cmd_set_strategy,
      "set-members": cmd_set_members, "new-round": cmd_new_round, "expand": cmd_expand,
-     "qa-import": cmd_qa_import, "qa-score": cmd_qa_score}[a.cmd](a)
+     "qa-import": cmd_qa_import, "qa-score": cmd_qa_score,
+     "close-ensemble": cmd_close_ensemble}[a.cmd](a)
 
 
 if __name__ == "__main__":
