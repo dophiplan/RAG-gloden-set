@@ -417,50 +417,63 @@ def api_runlog(code, n=8):
     return {"lines": marks[-n:]}
 
 
+def _extractor_rows(code, prog=None):
+    """추출자별 현황 — 체크포인트가 진실. 진행 파일(뛰는 중에만 갱신)이 없어도 읽힌다.
+    [난희 요청 2026-08-10] 멈춤·사고 상태에서도 '누가 어디까지' 보여야 한다."""
+    ck = ROOT / "results" / f"_ckpt_coverage_{code}.json"
+    if not ck.exists():
+        return [], 0
+    try:
+        c = json.loads(ck.read_text(encoding="utf-8"))
+    except Exception:
+        return [], 0
+    roles = (prog or {}).get("roles") or {}
+    tt_any = max([(v or {}).get("total") or 0 for v in roles.values()] or [0])
+    names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
+    rows, tot = [], 0
+    for role, label in names.items():
+        v = c.get(role)
+        if not isinstance(v, dict):
+            continue
+        n = len(v.get("units", []))
+        tot += n
+        rows.append({"who": label, "role": role, "done": v.get("done", 0),
+                     "total": ((roles.get(role) or {}).get("total") or tt_any),
+                     "units": n, "fails": len(v.get("fails") or [])})
+    return rows, tot
+
+
 def api_progress(code):
-    """③ 등 장시간 작업의 실시간 진행/막힘 — 엔진이 배치마다 갱신하는 파일을 그대로"""
+    """③ 등 장시간 작업의 실시간 진행/막힘 — 엔진이 배치마다 갱신하는 파일을 그대로.
+    진행 파일이 없어도(멈춤·사고) 체크포인트 기반 현황은 항상 반환한다."""
     if not re.fullmatch(r"[A-Z0-9]{1,8}", code or ""):
         return {"active": False}
+    try:
+        _st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"][code]
+    except Exception:
+        _st = {}
     p = ROOT / "results" / f"_progress_{code}.json"
-    if not p.exists():
-        return {"active": False}
-    try:
-        d = json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return {"active": False}
-    # 단계 불일치 = 낡은 진행판 — 표시 안 함 (③ 진행판이 ④ 중에 남아 '멈춤' 오인 유발했던 사고)
-    try:
-        cur_stage = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"][code]["stage"]
-        if d.get("stage", "COVERAGE_MAP") != cur_stage:
-            return {"active": False}
-    except Exception:
-        pass
-    d["active"] = True
-    # 추출자별 진행 현황 — 진행선 ③에 마우스 올리면 툴팁으로 (난희 요청 2026-08-10)
-    ck = ROOT / "results" / f"_ckpt_coverage_{code}.json"
-    if ck.exists():
+    d = {}
+    if p.exists():
         try:
-            c = json.loads(ck.read_text(encoding="utf-8"))
-            names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
-            # 총 배치 수: 현재 뛰는 주자의 진행 파일에만 있으므로, 없는 주자는 그 값을 공유
-            # (동일 코퍼스를 같은 배치 크기로 나누므로 총 수는 전 주자 공통)
-            tt_any = max([(v or {}).get("total") or 0
-                          for v in ((d.get("roles") or {}).values())] or [0])
-            rows, tot = [], 0
-            for role, label in names.items():
-                v = c.get(role)
-                if isinstance(v, dict):
-                    n = len(v.get("units", []))
-                    tot += n
-                    # 총 배치 수는 진행 파일의 roles.<role>.total (체크포인트엔 없음)
-                    tt = (((d.get("roles") or {}).get(role) or {}).get("total") or tt_any)
-                    rows.append({"who": label, "done": v.get("done", 0),
-                                 "total": tt, "units": n})
-            if rows:
-                d["extractors"] = rows
-                d["units_total"] = tot
+            d = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
-            pass
+            d = {}
+    stale_stage = bool(d) and d.get("stage", "COVERAGE_MAP") != _st.get("stage")
+    if not d or stale_stage:
+        # 진행 파일이 없거나 낡음 — 체크포인트만으로 '멈춘 자리' 보고 (active=False, snapshot=True)
+        rows, tot = _extractor_rows(code)
+        if not rows:
+            return {"active": False}
+        return {"active": False, "snapshot": True, "stage": _st.get("stage"),
+                "status": _st.get("status"), "extractors": rows, "units_total": tot,
+                "phase": "멈춘 자리 (체크포인트 보존)"}
+    d["active"] = True
+    d["status"] = _st.get("status")
+    rows, tot = _extractor_rows(code, d)
+    if rows:
+        d["extractors"] = rows
+        d["units_total"] = tot
     return d
 
 

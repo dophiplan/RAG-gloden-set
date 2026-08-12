@@ -77,6 +77,15 @@
   .archbtn{font:inherit;font-size:10px;letter-spacing:0;cursor:pointer;color:var(--tx2);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
   .expandbtn{font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--run);background:rgba(80,200,255,.08);border:1px solid var(--run);border-radius:8px;padding:5px 12px}
   .expandbtn:hover{background:rgba(80,200,255,.18)}
+  /* AI 팀 진행 패널 — 멈춤·사고 상태에서도 '누가 어디까지' 항상 보이게 [난희 요청] */
+  .aiprog{margin:8px 0 2px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-size:11.5px}
+  .aiprog .hd{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px}
+  .aiprow{display:grid;grid-template-columns:58px 1fr 116px;gap:8px;align-items:center;margin:3px 0}
+  .aiprow b{color:var(--tx)}
+  .aibar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}
+  .aibar i{display:block;height:100%;border-radius:5px;background:var(--run)}
+  .aiprow.paused .aibar i{background:#ffcc66}
+  .aiprow .num{text-align:right;color:var(--tx2);font-variant-numeric:tabular-nums}
   .qachip{font-size:11px;font-weight:600;color:#c9a6ff;background:rgba(170,120,255,.10);border:1px solid rgba(170,120,255,.55);border-radius:999px;padding:4px 11px;margin-left:10px;white-space:nowrap}
   /* G20: 외부 Q&A 옆길 레인 — ①~⑨ 본선 아래, 별도 트랙이 어디까지 왔는지 */
   .qalane{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px;padding:7px 12px;border:1px dashed rgba(170,120,255,.45);border-radius:10px;background:rgba(170,120,255,.05);font-size:11px}
@@ -417,6 +426,27 @@ function nextAction(){
   return {icon:'⏸', text:`${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${sname} 대기 — 잠시 멈춤(한도 회복 등) 상태예요. 자동 재개를 기다리거나 [▶ 이어서 진행]을 누르세요. 진행분은 저장돼 있어요.`, run:true};
 }
 
+/* AI 팀 진행 패널 — window._prog(체크포인트 기반)로 항상 그린다 (멈춰도 보임) */
+function renderAiProgress(){
+  const d = window._prog;
+  if(!d || !(d.extractors||[]).length) return '';
+  const running = !!d.active;
+  const age = d.ts ? Math.max(0, Math.round((Date.now()-new Date(d.ts).getTime())/60000)) : null;
+  const head = running
+    ? `③ 커버리지맵 추출 진행 중 — ${esc(d.phase||'작업 중')}${d.청크?` · ${Number(d.청크).toLocaleString()}청크`:''}${age!==null?` · ${age<1?'방금 갱신':`갱신 ${age}분 전`}`:''}`
+    : `③ 커버리지맵 — ⏸ 멈춘 자리 (진행분은 저장돼 있고, 재개하면 이어서 뜁니다)`;
+  const rows = d.extractors.map(e=>{
+    const pct = e.total? Math.round(e.done/e.total*100) : 0;
+    const cls = running? '' : 'paused';
+    return `<div class="aiprow ${cls}" title="${e.who}: ${e.done}/${e.total} 배치${e.fails?` · 실패 ${e.fails}건(원장 기록)`:''}">
+      <b>${esc(e.who)}</b>
+      <span class="aibar"><i style="width:${pct}%"></i></span>
+      <span class="num">${pct}% · ${e.units.toLocaleString()}단위</span></div>`;
+  }).join('');
+  return `<div class="aiprog"><div class="hd">${head}</div>${rows}
+    <div class="hint" style="margin-top:5px">합계 ${(d.units_total||0).toLocaleString()}단위 추출 · 한 AI가 한도로 멈춰도 나머지가 이어서 뜁니다(이어달리기)</div></div>`;
+}
+
 /* 진행선 노드 마우스오버 현황 — ③ 추출 중이면 추출자별 배치·단위 수를 툴팁으로 [난희 요청 2026-08-10] */
 function applyStageTips(){
   const d = window._prog;
@@ -516,6 +546,7 @@ function render(){
         <div class="s-ai">${esc(stageAI(s.k).who)}</div>
       </div>`;}).join('')}
     </div>
+    <div id="aiprogwrap">${renderAiProgress()}</div>
   </div>
   <main>
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
@@ -546,7 +577,9 @@ function render(){
   });
   window.scrollTo(0, winY);
   // 백그라운드 실행 중이면 진행선 폴링 유지 (act 종료와 무관하게 상태 기준)
-  if(ps.status==='RUNNING') startProgressPoll(); else stopProgressPoll();
+  // [난희 요청] 멈춤·사고 상태에서도 현황이 보여야 한다 — RUNNING이면 빠르게(4초),
+  // 그 외엔 느리게(20초) 폴링해 '멈춘 자리' 패널을 유지
+  startProgressPoll(ps.status==='RUNNING' ? 4000 : 20000);
   document.querySelectorAll('.stage').forEach(el=>{
     const i = +el.dataset.i;
     el.addEventListener('mouseenter',()=>showTip(el,i));
@@ -1238,10 +1271,11 @@ function engName(role){
   const e=(S.ai&&S.ai.engines||[]).find(x=>x.role===role);
   return e? e.engine : role;
 }
-function startProgressPoll(){
+function startProgressPoll(ms){
   stopProgressPoll();
   pollOnce();                       // 즉시 1회 — render 직후 진행선이 비는 깜빡임 제거
   progT = setInterval(pollOnce, 4000);
+  pollOnce();   // 즉시 1회 — 멈춤 상태에서도 현황 패널이 바로 뜨게
 }
 async function pollOnce(){
     try{
@@ -1252,8 +1286,10 @@ async function pollOnce(){
         if(rl && rl.lines.length){ lg.textContent = rl.lines.join('\n'); lg.scrollTop = lg.scrollHeight; }
       }
       const d = await fetch('/api/progress?product='+PV().code).then(r=>r.json());
-      window._prog = d;                       // 진행선 노드 툴팁용 (난희 요청: ③ 마우스오버 현황)
+      window._prog = d;                       // 진행선 노드 툴팁 + AI 진행 패널
       applyStageTips();
+      const apw = $('aiprogwrap');
+      if(apw) apw.innerHTML = renderAiProgress();
       const el = $('progline');
       if(!d.active || !el) return;
       const parts = Object.entries(d.roles||{}).map(([r,v])=>{
