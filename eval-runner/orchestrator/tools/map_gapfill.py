@@ -128,7 +128,7 @@ def run(prod, scope="all", measure=False):
     target = {"all": faq + man, "faq": faq, "manual": man}[scope]   # 작은 것부터 = 성과가 빨리 보인다
     if not target:
         print("✅ 해당 범위에 미커버 청크가 없습니다.")
-        return 0
+        return 3          # 3 = 이 범위 완료 (무인 반복 루프의 정상 종료 신호)
     plan = gc.plan_batches(target, cfg)
     print(f"■ 이번 범위: {len(target):,}청크 · {_chars(target):,}자 → {len(plan):,}배치 "
           f"(배치당 최대 {gc._batch_chars(cfg):,}자)")
