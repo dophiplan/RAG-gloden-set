@@ -318,14 +318,20 @@ def _progress(prod, phase, role, batch, total, fails, chunks=None):
             cur = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             cur = {}
-    if cur.get("phase") != phase:      # 국면이 바뀌면 이전 국면 카운트는 지운다 (혼선 방지)
+    # [수리 2026-08-13 전수조사] 국면이 다르면 roles 전체를 지우던 것 → 같은 stage 안에서는 보존.
+    # 실측 사고: 3주자 병렬(FAQ + 매뉴얼 조각2·3)이 서로 다른 phase 로 같은 파일에 쓰면서
+    # 매번 남의 기록을 리셋 — 화면이 "한 명만 뛰는 것처럼" 깜빡였음. 국면은 주자별로 기록한다.
+    if cur.get("stage") != "COVERAGE_MAP":
         cur["roles"] = {}
     cur["phase"] = phase
     cur["stage"] = "COVERAGE_MAP"
     if chunks:
         cur["청크"] = chunks           # "3,526청크를 읽으며 추출 중" 표시용
     if role and role != "-":
-        cur.setdefault("roles", {})[role] = {"batch": batch, "total": total, "fails": fails}
+        import datetime as _dt
+        cur.setdefault("roles", {})[role] = {"batch": batch, "total": total, "fails": fails,
+                                             "phase": phase,
+                                             "ts": _dt.datetime.now().isoformat(timespec="seconds")}
     cur["ts"] = datetime.datetime.now().isoformat(timespec="seconds")
     p.write_text(json.dumps(cur, ensure_ascii=False), encoding="utf-8")
 

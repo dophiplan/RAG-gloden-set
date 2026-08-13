@@ -451,9 +451,11 @@ def _extractor_rows(code, prog=None):
     tt_any = max([(v or {}).get("total") or 0 for v in roles.values()] or [0])
     names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
     agg = {}   # role → {done,total,units,fails} (여러 구간 합산)
+    import time as _time
     for ck in sorted((ROOT / "results").glob(f"_ckpt_coverage_{code}*.json")):
         try:
             c = json.loads(ck.read_text(encoding="utf-8"))
+            mt = ck.stat().st_mtime
         except Exception:
             continue
         tagged = ck.stem != f"_ckpt_coverage_{code}"   # 태그 파일 = 구멍 메우기 등 부가 구간
@@ -470,6 +472,8 @@ def _extractor_rows(code, prog=None):
             nb, nc = int(v.get("n_batches") or 0), int(v.get("n_chunks") or 0)
             if nb and nc:
                 a["chunks_est"] += int(nc * min(1.0, v.get("done", 0) / nb))
+            # 주자별 최신 움직임 시각 — "누가 진짜 뛰고 있나"를 주자 단위로 (전수조사 2026-08-13)
+            a["mtime"] = max(a.get("mtime", 0), mt)
     # [난희 지적 2026-08-13] Kimi·codex가 안 보임 — 체크포인트가 정리되면 줄이 사라지고,
     # 이어달리기 대기조는 애초에 기록이 없어 화면에서 증발. 편성된 AI는 '대기'로라도 항상 표시.
     active_roles = set()
@@ -500,6 +504,8 @@ def _extractor_rows(code, prog=None):
             tot += a["units"]
             row = {"who": label, "role": role, "done": a["done"],
                    "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]}
+            if a.get("mtime"):
+                row["age_min"] = max(0, int((_time.time() - a["mtime"]) // 60))
             if whole and whole["total"]:
                 # 이번 조각에서 이 주자가 지나간 청크(배치 비율 근사) + 기커버(기여 주자에게)
                 seg = int(a.get("chunks_est") or 0)
