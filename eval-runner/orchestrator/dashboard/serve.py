@@ -525,38 +525,8 @@ def api_progress(code):
     if rows:
         d["extractors"] = rows
         d["units_total"] = tot
-    d["overall"] = _overall_coverage(code, d)
+    # (전체 지도 % 표시는 난희 결정으로 제거 2026-08-13 — 필요 시 map_gapfill --measure 로 실측)
     return d
-
-
-def _overall_coverage(code, prog):
-    """전체 지도 완성도 % — [난희 지적 2026-08-13] 구멍 메우기 %는 '이번 조각' 진도라
-    전체가 얼마나 됐는지 안 보임. 맥락 파일(전체 청크·기커버·이번 범위)로 환산한다.
-    범위 내 진행은 배치 비율 근사(청크 크기 편차 있음) — 화면에 '약'을 붙인다."""
-    cf = ROOT / "results" / f"_gapctx_{code}.json"
-    if not cf.exists():
-        return None
-    try:
-        ctx = json.loads(cf.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-    tot = int(ctx.get("total_chunks") or 0)
-    if not tot:
-        return None
-    before = int(ctx.get("covered_before") or 0)
-    scope = int(ctx.get("scope_chunks") or 0)
-    # 이번 범위 내 진행률 — 진행 파일의 배치 비율 (여러 주자면 최대치: 같은 범위를 나눠 뛰므로)
-    frac = 0.0
-    for v in (prog or {}).get("roles", {}).values():
-        if (v or {}).get("total"):
-            frac = max(frac, min(1.0, v.get("batch", 0) / v["total"]))
-    covered_now = before + int(scope * frac)
-    remain = {k: int(n) for k, n in (ctx.get("pending_scopes") or {}).items()}
-    return {"before_pct": round(before / tot * 100),
-            "now_pct": round(covered_now / tot * 100),
-            "after_scope_pct": round((before + scope) / tot * 100),
-            "total_chunks": tot, "covered_now": covered_now,
-            "scope": ctx.get("scope"), "pending": remain}
 
 
 def api_xlsx(relpath, max_rows=400, name=None, prod=None):

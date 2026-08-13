@@ -479,14 +479,7 @@ function renderAiProgress(){
   const closeBtn = done100.length? `<button class="expandbtn" style="margin-top:6px"
       title="${done100.join('+')} 가 전 배치를 훑었어요 — 남은 AI를 기다리지 않고 지금 지도를 만듭니다 (앙상블은 촘촘함 보강이라 없어도 전량 커버는 확보)"
       onclick="if(confirm('${done100.join('+')} 완주분으로 지금 마감할까요?\\n남은 AI 대기 없이 병합·검수로 넘어갑니다.')) act({cmd:'close-ensemble', product:PV().code}).then(()=>act({cmd:'run', product:PV().code}))">🏁 지금 마감 (${done100.join('+')} 완주분으로)</button>` : '';
-  // [난희 지적 2026-08-13] 조각 진도만 보이면 전체가 얼마나 됐는지 모른다 — 전체 지도 완성도 병기
-  const ov = d.overall;
-  const ovRow = ov ? `<div class="aiprow" style="margin-top:6px;border-top:1px dashed rgba(255,255,255,.15);padding-top:6px"
-      title="코퍼스 ${Number(ov.total_chunks).toLocaleString()}청크 중 약 ${Number(ov.covered_now).toLocaleString()}청크에서 단위 확보 (범위 내 진행은 배치 비율 근사)">
-      <b>🗺 전체 지도</b>
-      <span class="aibar"><i style="width:${ov.now_pct}%"></i></span>
-      <span class="num">약 ${ov.now_pct}% 완성 (시작 ${ov.before_pct}% → 이번 범위 끝나면 ${ov.after_scope_pct}%${Object.keys(ov.pending||{}).length?` · 이후 ${Object.entries(ov.pending).map(([k,n])=>`${k==='manual'?'매뉴얼':k} ${Number(n).toLocaleString()}청크`).join('·')} 남음`:''})</span></div>` : '';
-  return `<div class="aiprog"><div class="hd">${head}</div>${rows}${ovRow}
+  return `<div class="aiprog"><div class="hd">${head}</div>${rows}
     <div class="hint" style="margin-top:5px">합계 ${(d.units_total||0).toLocaleString()}단위 추출 · 한 AI가 한도로 멈춰도 나머지가 이어서 뜁니다(이어달리기)</div>${closeBtn}</div>`;
 }
 
