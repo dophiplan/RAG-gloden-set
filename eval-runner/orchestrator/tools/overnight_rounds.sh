@@ -20,17 +20,13 @@ caffeinate -is -w $$ &
 echo "☕ caffeinate 가동" >> $LOG
 
 launch_round() {
-  # claude 가 FAQ 중이면 2분담(Kimi·codex), 아니면 3분담
-  if pgrep -f "map_gapfill.py $PROD --scope faq" >/dev/null; then
-    echo "  편성: 2분담 (claude 는 FAQ 마무리 중)" >> $LOG
-    PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 1/2 --role judge >> $GLOG 2>&1 &
-    PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 2/2 --role reviewer >> $GLOG 2>&1 &
-  else
-    echo "  편성: 3분담 (claude 합류)" >> $LOG
-    PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 1/3 --role generator >> $GLOG 2>&1 &
-    PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 2/3 --role judge >> $GLOG 2>&1 &
-    PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 3/3 --role reviewer >> $GLOG 2>&1 &
-  fi
+  # 항상 3분담 — "FAQ 돌면 claude 바쁨"이라던 종전 검사는 오판이었다 (실측 2026-08-14 아침:
+  # claude 는 한도로 멈추고 Kimi 가 FAQ 를 이어받았는데, 지휘자가 claude 를 계속 놀렸음).
+  # claude 가 정말 바쁘거나 한도면 그 조각의 이어달리기 폴백이 알아서 다른 주자에게 넘긴다.
+  echo "  편성: 3분담" >> $LOG
+  PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 1/3 --role generator >> $GLOG 2>&1 &
+  PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 2/3 --role judge >> $GLOG 2>&1 &
+  PYTHONUNBUFFERED=1 python3 tools/map_gapfill.py $PROD --scope $SCOPE --shard 3/3 --role reviewer >> $GLOG 2>&1 &
 }
 
 for i in $(seq 1 $MAXROUND); do
