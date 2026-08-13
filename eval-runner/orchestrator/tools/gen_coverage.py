@@ -99,20 +99,51 @@ SYSTEM = """[TASK:COVERAGE_UNITS] 너는 RAG 평가용 커버리지맵 추출기
 4. source 필드에는 입력 청크의 source 값을 그대로."""
 
 
-CHUNK_BATCH = 25   # 호출당 청크 수 — 실코퍼스(수천 청크)는 한 번에 못 넣는다 (컨텍스트·타임아웃)
+CHUNK_BATCH = 25   # 호출당 청크 수 상한 — 실코퍼스(수천 청크)는 한 번에 못 넣는다 (컨텍스트·타임아웃)
 PAUSE_AFTER = 3    # 연속 실패 허용 — 이 이상이면 구독 한도/네트워크 의심, 중단하고 재개 대기
+# [수리 2026-08-13] 청크 '개수'만으로 배치를 나누면 청크 크기 차이를 못 본다.
+# 실측 사고(CI): 매뉴얼 PDF 청크 평균 25,482자(최대 31,993자) × 25개 = 배치 1건이 60만 자
+#   → judge/reviewer는 입력 초과로 하드 실패(128k 창의 3배), generator는 앞부분만 읽고 답해
+#   코퍼스 2,060만 자 중 17.8%만 커버된 맵이 "누락 0"으로 승인 직전까지 갔음.
+# 이후 배치는 '글자수 상한' 우선으로 자른다 (개수 상한과 둘 중 먼저 걸리는 쪽).
+BATCH_CHARS = 24000
 
 
 class CoveragePaused(Exception):
     """AI 호출 연속 실패 — 체크포인트 저장 후 일시 중단 (한도 회복 후 재개 가능)"""
 
 
-def _ckpt_path(prod):
-    return ROOT / "results" / f"_ckpt_coverage_{prod}.json"
+def _batch_chars(cfg=None):
+    try:
+        v = int((cfg or load_config()).get("extract_batch_chars") or BATCH_CHARS)
+        return v if v >= 2000 else BATCH_CHARS
+    except Exception:
+        return BATCH_CHARS
 
 
-def _ckpt_load(prod):
-    p = _ckpt_path(prod)
+def plan_batches(target, cfg=None):
+    """청크 목록 → 배치 목록. 글자수 상한(BATCH_CHARS) 또는 개수 상한(CHUNK_BATCH) 중 먼저 걸리는 쪽에서 끊는다.
+    상한보다 큰 청크 1개는 단독 배치로 (쪼개면 문장이 잘려 1축 대조가 깨진다)."""
+    cap = _batch_chars(cfg)
+    out, cur, cch = [], [], 0
+    for c in target:
+        n = len(str(c.get("text") or ""))
+        if cur and (cch + n > cap or len(cur) >= CHUNK_BATCH):
+            out.append(cur)
+            cur, cch = [], 0
+        cur.append(c)
+        cch += n
+    if cur:
+        out.append(cur)
+    return out
+
+
+def _ckpt_path(prod, tag=""):
+    return ROOT / "results" / f"_ckpt_coverage_{prod}{tag}.json"
+
+
+def _ckpt_load(prod, tag=""):
+    p = _ckpt_path(prod, tag)
     if p.exists():
         try:
             return json.loads(p.read_text(encoding="utf-8"))
@@ -121,8 +152,8 @@ def _ckpt_load(prod):
     return {}
 
 
-def _ckpt_save(prod, ck):
-    p = _ckpt_path(prod)
+def _ckpt_save(prod, ck, tag=""):
+    p = _ckpt_path(prod, tag)
     p.parent.mkdir(exist_ok=True)
     p.write_text(json.dumps(ck, ensure_ascii=False), encoding="utf-8")
 
@@ -148,17 +179,19 @@ def _extract_batch(prod, part, cfg, call_role, depth=0):
         raise
 
 
-def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
+def generate_units(prod, chunks, cfg, retry_ids=None, role="generator", ckpt_tag="", phase="커버리지 추출"):
     """청크를 배치로 나눠 호출 — 대형 코퍼스 대응. 배치 단위 실패는 기록 후 계속.
     [재개] 성공 배치마다 체크포인트 저장 — 한도 소진·중단 후 재실행하면 이어서 진행.
     연속 PAUSE_AFTER회 실패 = 한도/네트워크 의심 → 실패분 되감고 CoveragePaused."""
     target = [c for c in chunks if retry_ids is None
               or any(u.startswith(f"{prod}-{N(c['doc']).upper()[:6]}-{c['chunk_id']:03d}") for u in retry_ids)]
-    total = (len(target) + CHUNK_BATCH - 1) // CHUNK_BATCH
+    batches = plan_batches(target, cfg)
+    total = len(batches)
     use_ckpt = retry_ids is None          # 반려 재생성 루프는 체크포인트 미사용 (소규모)
-    ck = _ckpt_load(prod) if use_ckpt else {}
+    ck = _ckpt_load(prod, ckpt_tag) if use_ckpt else {}
     rk = ck.get(role) or {}
-    if rk.get("n_chunks") != len(target):  # 코퍼스가 달라졌으면 옛 체크포인트 무시 (오염 방지)
+    # 코퍼스가 달라졌거나 배치 분할 규격이 달라졌으면 옛 체크포인트 무시 (배치번호 의미가 달라져 오염)
+    if rk.get("n_chunks") != len(target) or (rk.get("n_batches") not in (None, total)):
         rk = {}
     units = [u for u in rk.get("units", []) if isinstance(u, dict)]   # 과거 오염분 방어
     fails = list(rk.get("fails", []))
@@ -168,11 +201,10 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
         ledger_append("COVERAGE_MAP", "COVERAGE_RESUMED", f"script:{role}",
                       evidence={"재개 지점": f"{done}/{total}", "보존 단위": len(units)}, product=prod)
         # 재개 즉시 진행 파일 갱신 — 옛 '일시 중단' 잔상 제거 (화면이 바로 살아있게)
-        _progress(prod, "커버리지 추출 (이어서)", role, done, total, fails, chunks=len(target))
+        _progress(prod, f"{phase} (이어서)", role, done, total, fails, chunks=len(target))
     consec = []                            # 연속 실패 배치 번호들
-    for bi in range(0, len(target), CHUNK_BATCH):
-        part = target[bi:bi + CHUNK_BATCH]
-        bno = bi // CHUNK_BATCH + 1
+    for bi, part in enumerate(batches):
+        bno = bi + 1
         if bno <= done:
             continue                       # 이미 처리한 배치 (재개)
         try:
@@ -190,9 +222,10 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
             consec.append(bno)
         done = bno
         if use_ckpt:
-            ck[role] = {"done": done, "units": units, "fails": fails, "n_chunks": len(target)}
-            _ckpt_save(prod, ck)
-        _progress(prod, "커버리지 추출", role, bno, total, fails, chunks=len(target))
+            ck[role] = {"done": done, "units": units, "fails": fails,
+                        "n_chunks": len(target), "n_batches": total}
+            _ckpt_save(prod, ck, ckpt_tag)
+        _progress(prod, phase, role, bno, total, fails, chunks=len(target))
         if len(consec) >= PAUSE_AFTER:
             # 한도/네트워크 의심 — 실패한 연속 배치는 되감아서 재개 때 다시 시도
             fails = [f for f in fails if int(f["batch"].split("/")[0]) not in consec]
@@ -292,13 +325,18 @@ MERGE_SYSTEM = """[TASK:COVERAGE_MERGE] 너는 커버리지맵 병합자다.
 출력: JSON 배열만 — 입력과 같은 스키마."""
 
 
-def _fully_covered_roles(prod, n_chunks):
-    """체크포인트 기준 '전 배치 완주'한 추출자 목록 — 조기 마감 가능 여부의 근거."""
+def _fully_covered_roles(prod, n_chunks, chunks=None, cfg=None):
+    """체크포인트 기준 '전 배치 완주'한 추출자 목록 — 조기 마감 가능 여부의 근거.
+    [수리 2026-08-13] 배치 수를 개수 나눗셈으로 추정하면 글자수 기준 분할과 어긋나
+    '미완주'를 '완주'로 오판할 수 있다 — 체크포인트에 기록된 실제 배치 수를 우선 사용."""
     ck = _ckpt_load(prod) or {}
-    total = (n_chunks + CHUNK_BATCH - 1) // CHUNK_BATCH
+    est = len(plan_batches(chunks, cfg)) if chunks else (n_chunks + CHUNK_BATCH - 1) // CHUNK_BATCH
     out = []
     for role, v in ck.items():
-        if isinstance(v, dict) and v.get("done", 0) >= total and v.get("units"):
+        if not isinstance(v, dict) or not v.get("units"):
+            continue
+        total = int(v.get("n_batches") or est)
+        if v.get("done", 0) >= total:
             out.append(role)
     return out
 
@@ -339,7 +377,7 @@ def ensemble_generate(prod, chunks, cfg, strategy=None):
         # 기다리지 않고 지금 가진 풀로 맵을 낼 수 있다. 앙상블은 촘촘함의 보강이지 필수가 아님.
         # 켜는 법: state products.<P>.close_ensemble = true (관제판 [🏁 지금 마감] 버튼)
         st_now = load_state()["products"].get(prod, {})
-        full = _fully_covered_roles(prod, len(chunks))
+        full = _fully_covered_roles(prod, len(chunks), chunks, cfg)
         if st_now.get("close_ensemble") and full:
             ledger_append("COVERAGE_MAP", "ENSEMBLE_CLOSED_EARLY", "사람:난희(조기 마감)",
                           evidence={"완주 추출자": full, "대기 중이던 추출자": paused,
