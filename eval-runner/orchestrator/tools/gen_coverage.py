@@ -158,6 +158,25 @@ def _ckpt_save(prod, ck, tag=""):
     p.write_text(json.dumps(ck, ensure_ascii=False), encoding="utf-8")
 
 
+def ckpt_archive(prod, tag="", why=""):
+    """체크포인트 '정리' = 삭제가 아니라 보관 [수리 2026-08-13].
+    실측 사고: 완주 시 unlink 가 Kimi 6,813 · codex 16,998 원시 단위를 영구 삭제 —
+    (중단 주자 기여가 병합에서 빠진 채) 지도만 남고 재료가 증발해 사후 회수가 불가능해졌다.
+    난희 지적: "회수하고 보관하고 추가했었어야" — 이제 지우는 경로 자체를 없앤다."""
+    import datetime
+    p = _ckpt_path(prod, tag)
+    if not p.exists():
+        return None
+    adir = p.parent / "보관함_체크포인트"
+    adir.mkdir(exist_ok=True)
+    dst = adir / f"{p.stem}_{datetime.datetime.now():%Y%m%d_%H%M%S}.json"
+    p.rename(dst)
+    ledger_append("COVERAGE_MAP", "CKPT_ARCHIVED", "script:gen_coverage",
+                  evidence={"파일": N(dst.name), "사유": why or "완주 정리 — 삭제 대신 보관"},
+                  product=prod)
+    return dst
+
+
 def _extract_batch(prod, part, cfg, call_role, depth=0):
     """배치 1건 추출 호출. [수리 2026-08-10] 응답 절단(내용이 max_tokens 초과)은 재시도로
     안 풀리는 결정적 문제 — 배치를 반으로 쪼개 재귀 시도 (표 많은 구간 대응, 최대 3단 분할)."""
@@ -561,7 +580,7 @@ def run(prod, cfg):
         ev["추출기 실패"] = fails
     _progress(prod, "완료 — 사람확인 대기", "-", 0, 0, [])
     ledger_append("COVERAGE_MAP", "MAP_GENERATED", "script:gen_coverage", evidence=ev, product=prod)
-    _ckpt_path(prod).unlink(missing_ok=True)   # 완주 — 체크포인트 정리
+    ckpt_archive(prod, why="본 추출 완주 — 재료 보관 (중단 주자 원시 단위 포함)")
     flags = (gap_flags(gaps, chunks)
              + [{"type": "생성 반려 잔존", "id": N(u.get("unit_id", "?")), "candidates": [r]}
                 for u, r in rej])
@@ -652,7 +671,7 @@ def gapfill(prod):
     vm = re.search(r"_v(\d+)_(\d+)\.xlsx$", maps[-1].name)
     nxt = f"v{vm.group(1)}_{int(vm.group(2)) + 1}" if vm else "v1_1"
     out = write_map(prod, merged, version=nxt)
-    _ckpt_path(prod).unlink(missing_ok=True)
+    ckpt_archive(prod, why="보완 추출 완료 — 재료 보관")
     ledger_append("COVERAGE_MAP", "GAPFILL_EXTRACTED", "script:gen_coverage",
                   evidence={"대상 문서": len(gaps), "대상 청크": len(target),
                             "신규 단위": len(pool), "실패": fails,

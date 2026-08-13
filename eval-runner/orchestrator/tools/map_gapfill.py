@@ -211,9 +211,9 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True
     merged = units + added
     ver = next_version(mp)
     out = gc.write_map(prod, merged, version=ver)
-    # 이 조각의 성과는 방금 지도에 합쳐졌다 — 조각 기록장(체크포인트)을 정리해야
-    # 다음 실행에서 '기커버(지도) + 옛 조각 기록'으로 이중 계산되지 않는다 (한 경주 % 정합).
-    gc._ckpt_path(prod, tag).unlink(missing_ok=True)
+    # 이 조각의 성과는 방금 지도에 합쳐졌다 — 조각 기록장은 보관함으로 (삭제 금지: 재료 증발 사고 재발 방지).
+    # 보관해야 다음 실행에서 '기커버(지도) + 옛 조각 기록' 이중 계산도 안 생긴다 (한 경주 % 정합).
+    gc.ckpt_archive(prod, tag, why=f"구멍 메우기({scope}) 성과 지도 합류 — 재료 보관")
     unc_after = uncovered(chunks, merged)
     # 한 경주 % 기준점 갱신 — 다음 폴링부터 '지도에 실제로 들어간 만큼'으로 표시
     ctx.update({"covered_before": tot_n - len(unc_after), "map": out.name,
