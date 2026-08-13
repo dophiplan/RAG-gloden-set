@@ -466,14 +466,29 @@ def _extractor_rows(code, prog=None):
             a["total"] += int(v.get("n_batches") or (0 if tagged else tt_any))
             a["units"] += len(v.get("units", []))
             a["fails"] += len(v.get("fails") or [])
+    # [난희 지적 2026-08-13] Kimi·codex가 안 보임 — 체크포인트가 정리되면 줄이 사라지고,
+    # 이어달리기 대기조는 애초에 기록이 없어 화면에서 증발. 편성된 AI는 '대기'로라도 항상 표시.
+    active_roles = set()
+    try:
+        import os as _os
+        from model_adapter import detect_mode
+        have = detect_mode(None, _os.environ)["have"]
+        st_ = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"].get(code, {})
+        use = st_.get("ai_use") or {}
+        active_roles = {r for r in ("generator", "judge", "reviewer")
+                        if have.get(r) and use.get(r, True)}
+    except Exception:
+        pass
     rows, tot = [], 0
     for role, label in names.items():
-        if role not in agg:
-            continue
-        a = agg[role]
-        tot += a["units"]
-        rows.append({"who": label, "role": role, "done": a["done"],
-                     "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]})
+        if role in agg:
+            a = agg[role]
+            tot += a["units"]
+            rows.append({"who": label, "role": role, "done": a["done"],
+                         "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]})
+        elif role in active_roles:
+            rows.append({"who": label, "role": role, "done": 0, "total": 0,
+                         "units": 0, "fails": 0, "idle": True})
     return rows, tot
 
 

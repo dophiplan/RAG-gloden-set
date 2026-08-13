@@ -462,6 +462,11 @@ function renderAiProgress(){
     ? `③ 커버리지맵 추출 진행 중 — ${esc(d.phase||'작업 중')}${d.청크?` · ${Number(d.청크).toLocaleString()}청크`:''}${age!==null?` · ${age<1?'방금 갱신':`갱신 ${age}분 전`}`:''}`
     : `③ 커버리지맵 — ⏸ 멈춘 자리 (진행분은 저장돼 있고, 재개하면 이어서 뜁니다)`;
   const rows = d.extractors.map(e=>{
+    // [난희 지적 2026-08-13] 이어달리기 대기조(Kimi·codex)도 항상 보이게 — 안 보이면 팀이 아님
+    if(e.idle) return `<div class="aiprow paused" title="${e.who}: 이어달리기 대기조 — 앞 주자가 한도로 멈추면 이 AI가 이어서 뜁니다">
+      <b>${esc(e.who)}</b>
+      <span class="aibar"><i style="width:0%"></i></span>
+      <span class="num hint">⏳ 대기 — 앞 주자 멈추면 이어달림</span></div>`;
     const pct = e.total? Math.round(e.done/e.total*100) : 0;
     const cls = (running && !ghost)? '' : 'paused';
     return `<div class="aiprow ${cls}" title="${e.who}: ${e.done}/${e.total} 배치${e.fails?` · 실패 ${e.fails}건(원장 기록)`:''}">
