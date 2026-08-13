@@ -102,3 +102,7 @@
   · eval-runner/tools/inputs/2axis_input_B30.json
   · eval-runner/tools/results/2axis_result_B30.json
 조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:36:25] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
