@@ -45,7 +45,9 @@ def _rows_from_json(d):
         return [{"doc": c.get("title") or c.get("doc_key") or c.get("doc", "?"),
                  "chunk_id": int(c.get("chunk_index", c.get("chunk_id", 0))) + (1 if "chunk_index" in c else 0),
                  "text": c.get("text", ""),
-                 "source": c.get("source_url") or c.get("title") or ""}
+                 # [수리 2026-08-13] 'source' 키 폴백 누락 — 출처가 전량 빈값이 되어
+                 # GAP 검사가 전부 스킵되고 "누락 0"이라는 거짓 안심을 주던 사고
+                 "source": c.get("source_url") or c.get("source") or c.get("title") or ""}
                 for c in d["chunks"]]
     return []
 
@@ -437,6 +439,11 @@ def gap_audit(prod, chunks, units):
     """③′ 인입 누락 대조 — source(URL/파일명) 기준: 커버 단위가 0개인 코퍼스 문서.
     [수리 2026-07-22] 종전에는 doc 제목 약칭 vs unit_id 를 대조해 281건 오탐 (369→실측 88)."""
     covered = {_gkey(u.get("source", "")) for u in units}
+    # [수리 2026-08-13] 출처가 전량 비면 대조가 성립하지 않는다 — 0(누락 없음)으로 위장 금지.
+    # 실측 사고: 단위 source=None + 청크 source='' 조합에서 "누락 문서 0"이 카드에 찍혀
+    # 58%(151/262) 문서 미커버를 사람이 못 보고 승인할 뻔했음.
+    if not any(str(u.get("source") or "").strip() for u in units):
+        return ["(측정 불가 — 커버 단위에 출처가 없어 대조 불가: 출처 보강 후 재점검 필요)"]
     gaps, seen = [], set()
     for c in chunks:
         k = _gkey(c["source"])
