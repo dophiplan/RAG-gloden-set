@@ -49,18 +49,27 @@ def display_of(code):
 
 
 def _worker_alive(code):
-    """제품별 실행 워커(auto_run) 생존 — 상태가 RUNNING인데 실행 주체가 없으면 '유령 RUNNING'.
-    [수리 2026-08-13 난희 지적] 멈춰 있는데 돌고 있는 것처럼 보이던 문제."""
+    """제품별 실행 주체 생존 — 상태가 RUNNING인데 실행 주체가 없으면 '유령 RUNNING'.
+    [수리 2026-08-13 난희 지적] 멈춰 있는데 돌고 있는 것처럼 보이던 문제.
+    [수리 2026-08-13 2차] auto_run pid 파일만 보면 nohup으로 도는 보조 작업(구멍 메우기 등)을
+    '유령'으로 오판 — 진행 파일이 최근(10분 내) 갱신됐으면 실행 주체가 있는 것."""
     pf = ROOT / "results" / f"_run_{code}.pid"
-    if not pf.exists():
-        return False
+    if pf.exists():
+        try:
+            pid = int(pf.read_text().strip())
+            st = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)],
+                                capture_output=True, text=True).stdout.strip()
+            if st and not st.startswith("Z"):   # 좀비(Z)는 죽은 것
+                return True
+        except Exception:
+            pass
+    # 폴백: 진행 파일 신선도 — 배치마다 갱신되므로 최근 갱신 = 뛰는 중
+    pg = ROOT / "results" / f"_progress_{code}.json"
     try:
-        pid = int(pf.read_text().strip())
+        import time
+        return (time.time() - pg.stat().st_mtime) < 600
     except Exception:
         return False
-    st = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)],
-                        capture_output=True, text=True).stdout.strip()
-    return bool(st) and not st.startswith("Z")   # 좀비(Z)는 죽은 것
 
 
 def _qa_ver(p):
@@ -435,27 +444,36 @@ def api_runlog(code, n=8):
 
 def _extractor_rows(code, prog=None):
     """추출자별 현황 — 체크포인트가 진실. 진행 파일(뛰는 중에만 갱신)이 없어도 읽힌다.
-    [난희 요청 2026-08-10] 멈춤·사고 상태에서도 '누가 어디까지' 보여야 한다."""
-    ck = ROOT / "results" / f"_ckpt_coverage_{code}.json"
-    if not ck.exists():
-        return [], 0
-    try:
-        c = json.loads(ck.read_text(encoding="utf-8"))
-    except Exception:
-        return [], 0
+    [난희 요청 2026-08-10] 멈춤·사고 상태에서도 '누가 어디까지' 보여야 한다.
+    [수리 2026-08-13 난희 실측] 구멍 메우기(_gapfaq 등 태그 체크포인트)가 도는데 패널이 안 보임 —
+    본 추출 파일(_ckpt_coverage_CI.json)만 읽어서. 태그 파일 전부 합산한다."""
     roles = (prog or {}).get("roles") or {}
     tt_any = max([(v or {}).get("total") or 0 for v in roles.values()] or [0])
     names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
+    agg = {}   # role → {done,total,units,fails} (여러 구간 합산)
+    for ck in sorted((ROOT / "results").glob(f"_ckpt_coverage_{code}*.json")):
+        try:
+            c = json.loads(ck.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        tagged = ck.stem != f"_ckpt_coverage_{code}"   # 태그 파일 = 구멍 메우기 등 부가 구간
+        for role in names:
+            v = c.get(role)
+            if not isinstance(v, dict):
+                continue
+            a = agg.setdefault(role, {"done": 0, "total": 0, "units": 0, "fails": 0})
+            a["done"] += v.get("done", 0)
+            a["total"] += int(v.get("n_batches") or (0 if tagged else tt_any))
+            a["units"] += len(v.get("units", []))
+            a["fails"] += len(v.get("fails") or [])
     rows, tot = [], 0
     for role, label in names.items():
-        v = c.get(role)
-        if not isinstance(v, dict):
+        if role not in agg:
             continue
-        n = len(v.get("units", []))
-        tot += n
-        rows.append({"who": label, "role": role, "done": v.get("done", 0),
-                     "total": ((roles.get(role) or {}).get("total") or tt_any),
-                     "units": n, "fails": len(v.get("fails") or [])})
+        a = agg[role]
+        tot += a["units"]
+        rows.append({"who": label, "role": role, "done": a["done"],
+                     "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]})
     return rows, tot
 
 
