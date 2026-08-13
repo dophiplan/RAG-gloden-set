@@ -327,6 +327,16 @@ def cmd_run(a):
         if ps["status"] == "WAITING_HUMAN":
             print(f"⏸  {prod} {ps['stage']} · WAITING_HUMAN — 카드 확인: 검수큐/")
             return
+        # [P0 수리 2026-08-13] 반려 잠금 확인 — 사람이 반려한 단계는 사람이 풀 때까지 자동 진행 금지.
+        # (기존: REJECTED 도 '재검사' 대상이라 반려 1초 뒤 같은 산출물로 STAGE_DONE 이 찍혔음)
+        rl = ps.get("reject_lock") or {}
+        if rl.get("stage") == ps["stage"]:
+            print(f"🔒 {prod} {ps['stage']} · 반려 잠금 — 사유: {str(rl.get('reason'))[:90]}\n"
+                  f"   자동 진행을 멈춥니다. 원인을 고친 뒤 [다시 시도](resume --after-fix {prod}) 를 누르면 풀립니다.")
+            ledger_append(ps["stage"], "RUN_BLOCKED_BY_REJECT_LOCK", "script:pipeline",
+                          evidence={"반려 사유": str(rl.get("reason"))[:200],
+                                    "반려 카드": rl.get("gate_id"), "반려 시각": rl.get("ts")}, product=prod)
+            return
         # WAITING_INPUT / REJECTED 은 재검사 — 투입물이 들어왔으면 입구 검사 후 전이 (§5′)
         if ps["status"] == "DONE":
             print(f"✅ {prod} 전 단계 완료")
@@ -409,6 +419,16 @@ def cmd_approve(a):
     # 승인 = 게이트만 닫는다. 단계 전진은 러너가 DONE을 보고할 때만 (다중 게이트 단계 대응).
     st = load_state()
     ps = st["products"][prod]
+    # [수리 2026-08-13] 같은 단계의 새 카드를 사람이 승인 = 반려 사유가 해소된 것 → 잠금 해제.
+    # (잠금이 남아 있으면 승인해도 자동 진행이 계속 막혀 '승인했는데 아무 일도 안 남' 사고)
+    if (ps.get("reject_lock") or {}).get("stage") == g["stage"]:
+        def _unlock(s):
+            s["products"][prod].pop("reject_lock", None)
+        update_state(_unlock)
+        ledger_append(g["stage"], "REJECT_LOCK_CLEARED", f"사람:{a.actor}", gate_id=a.gate_id,
+                      evidence={"근거": "같은 단계 새 카드 승인 — 반려 사유 해소로 간주"}, product=prod)
+        st = load_state()
+        ps = st["products"][prod]
     if ps["stage"] == g["stage"]:
         if g["stage"] == "TERRAIN":
             # 승인 = 지형 확정 — terrain.d 오버레이의 onboarding 플래그 해제.
@@ -597,7 +617,20 @@ def cmd_reject(a):
     # 단계가 일치할 때만 상태 전이 (approve의 stage 가드와 대칭)
     if ps["stage"] == g["stage"]:
         set_status(prod, "REJECTED", reason=a.reason)
-        print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록. (반려는 일상 — 수정 재제출 후 run)")
+        # [P0 수리 2026-08-13] 반려 잠금 — 사람의 반려가 자동 진행에 1초 만에 지워지던 사고.
+        # 실측: COVMAP_CI 반려(14:00:46) → cmd_run 의 'REJECTED 은 재검사' 경로가 즉시 재실행 →
+        #   맵 파일이 이미 있으니 STAGE_DONE → ④ 진입 (커버율 17.8% 맵으로 출제 시작).
+        # 이후 이 잠금이 걸린 단계는 사람이 [다시 시도](resume)를 누를 때까지 자동 진행 금지.
+        def _lock(s):
+            s["products"][prod]["reject_lock"] = {
+                "stage": g["stage"], "gate_id": a.gate_id, "reason": a.reason,
+                "ts": __import__("datetime").datetime.now().isoformat(timespec="seconds")}
+        update_state(_lock)
+        ledger_append(g["stage"], "REJECT_LOCK_SET", f"사람:{a.actor}", gate_id=a.gate_id,
+                      evidence={"잠금 단계": g["stage"], "해제": "사람이 [다시 시도](resume) 를 누를 때만",
+                                "목적": "반려가 자동 진행에 무효화되는 것을 막음"}, product=prod)
+        print(f"↩ 반려 — {a.gate_id} · 사유 원장 기록 + 이 단계 자동 진행 잠금 "
+              f"(고친 뒤 [다시 시도]를 누르면 풀립니다)")
     else:
         print(f"↩ 반려 — {a.gate_id} (지난 단계 {g['stage']} 카드 정리 · 현재 단계 {ps['stage']} 상태는 유지)")
 
@@ -648,16 +681,22 @@ def cmd_resume(a):
     st = load_state()
     prod = a.after_fix
     ps = st["products"].get(prod)
-    if not ps or ps["status"] != "HALTED":
-        sys.exit(f"{prod} 는 HALTED 상태가 아님")
+    # [수리 2026-08-13] 반려 잠금도 이 버튼으로 푼다 — 잠금은 REJECTED 상태에서도 걸리므로
+    # HALTED 만 허용하면 사람이 풀 수단이 없어진다 (잠금이 영구 정지가 되는 사고 방지).
+    locked = (ps or {}).get("reject_lock") or {}
+    if not ps or (ps["status"] != "HALTED" and not locked):
+        sys.exit(f"{prod} 는 HALTED 도 아니고 반려 잠금도 없음 — 풀 것이 없습니다")
     if not a.reason:
         sys.exit("HALT 해제는 사유 기록 필수 — --reason")
     ledger_append(ps["stage"], "RESUME_AFTER_FIX", f"사람:{a.actor}",
-                  reason=a.reason, evidence={"halt_was": ps["halt_reason"]}, product=prod)
+                  reason=a.reason, evidence={"halt_was": ps.get("halt_reason"),
+                                             "반려 잠금 해제": locked or "-"}, product=prod)
     ps["status"] = "PENDING"
     ps["halt_reason"] = None
+    ps.pop("reject_lock", None)
     save_state(st)
-    print(f"🔓 HALT 해제 — {prod} (원인 제거 확인 + 사유 원장 기록)")
+    print(f"🔓 해제 — {prod} (원인 제거 확인 + 사유 원장 기록"
+          + (" · 반려 잠금 함께 해제)" if locked else ")"))
 
 
 def cmd_appeal(a):

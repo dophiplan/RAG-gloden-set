@@ -16,6 +16,20 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).parent.parent
+# [2026-08-13] 회귀 시험 격리용 — ORCH_ROOT 가 있으면 state·원장·검수큐를 그 디렉터리에서 읽고 쓴다.
+# (평소에는 비어 있어 동작 변화 없음. 실데이터·원장을 건드리지 않고 사고 재현 시험을 하기 위한 장치 —
+#  '반려 무효화' 사고를 시험으로 고정하려는데 격리 수단이 없어 추가.)
+def _root_override():
+    import os
+    v = os.environ.get("ORCH_ROOT")
+    if v:
+        p = Path(v).expanduser()
+        if p.is_dir():
+            return p
+    return ROOT
+
+
+ROOT = _root_override()
 CONFIG = ROOT / "config.yaml"
 
 
