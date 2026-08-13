@@ -116,7 +116,9 @@ def shard(target, i, n):
     return [c for k, c in enumerate(target) if k % n == i]
 
 
-def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True):
+def run(prod, scope="all", measure=False, role=None, shard_spec=None):
+    """shard_spec="i/n" 이면 미커버를 n등분한 i번째 조각만 추출하고 종료 (지도는 안 씀 —
+    3주자 동시 투입용). 병합은 collect()가 전 조각을 모아 한 번에 (동시 지도 쓰기 충돌 방지)."""
     cfg = load_config()
     chunks = gc.load_corpus(prod)
     mp = latest_map(prod)
@@ -136,43 +138,62 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True
     if not target:
         print("✅ 해당 범위에 미커버 청크가 없습니다.")
         return 3          # 3 = 이 범위 완료 (무인 반복 루프의 정상 종료 신호)
+    si = sn = None
+    if shard_spec:        # "1/3" = 3등분 중 1번째 조각 (1-base)
+        si, sn = (int(x) for x in shard_spec.split("/"))
+        target = shard(target, si - 1, sn)
+        if not target:
+            print(f"✅ 조각 {shard_spec}에 남은 청크 없음")
+            return 3
     plan = gc.plan_batches(target, cfg)
     print(f"■ 이번 범위: {len(target):,}청크 · {_chars(target):,}자 → {len(plan):,}배치 "
           f"(배치당 최대 {gc._batch_chars(cfg):,}자)")
     if measure:
         return 0
 
-    tag = f"_gap{scope}"
-    # [난희 지적 2026-08-13] 패널 %가 '이번 조각' 진도만 보여줌 — 전체 지도 완성도로 보여야 한다.
-    # 대시보드가 전체 %를 계산할 수 있게 맥락 저장: 전체 청크 · 이미 커버 · 이번 범위.
-    ctx = {"total_chunks": tot_n, "covered_before": tot_n - len(unc_all),
-           "scope": scope, "scope_chunks": len(target),
-           "map": mp.name, "stage": "COVERAGE_MAP"}
-    (ROOT / "results" / f"_gapctx_{prod}.json").write_text(
-        json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
+    tag = f"_gap{scope}" + (f"_s{si}" if si else "")
+    # [난희 지적 2026-08-13] 패널 %가 '이번 조각' 진도만 보여줌 — '한 경주 %' 계산용 맥락 저장.
+    # 샤드 병렬 실행 시에는 1번 조각만 기록 (동시 쓰기 경합 방지 — 값은 어차피 동일).
+    if not si or si == 1:
+        ctx = {"total_chunks": tot_n, "covered_before": tot_n - len(unc_all),
+               "scope": scope, "scope_chunks": len(target) * (sn or 1),
+               "map": mp.name, "stage": "COVERAGE_MAP"}
+        (ROOT / "results" / f"_gapctx_{prod}.json").write_text(
+            json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
     ledger_append("COVERAGE_MAP", "MAP_GAPFILL_START", "script:map_gapfill",
                   evidence={"기존 맵": mp.name, "기존 단위": len(units), "범위": scope,
+                            "조각": shard_spec or "전체", "주자 지정": role or "이어달리기",
                             "미커버 청크": len(target), "미커버 글자": _chars(target),
                             "배치": len(plan), "착수 전 청크 커버율": f"{1 - len(unc_all) / tot_n:.1%}"},
                   product=prod)
 
+    # 주자 편성: --role 지정 시 그 주자 우선, 나머지는 예비 (한도 시 이어달리기 — 난희 지시 2026-08-13:
+    # "클로드 한도가 멈추면 kimi랑 코덱스 먼저") — 지정 주자가 멈춰도 조각이 멈추지 않는다.
     roles = gc._ensemble_roles(cfg, gc.get_strategy(prod), prod)
+    if role:
+        roles = [role] + [r for r in roles if r != role]
     paused = []
-    for role in roles:
+    for r_ in roles:
         try:
-            gc.generate_units(prod, target, cfg, role=role, ckpt_tag=tag,
-                              phase=f"커버리지 구멍 메우기 ({scope})")
-            print(f"  ✅ [{role}] 완주")
+            gc.generate_units(prod, target, cfg, role=r_, ckpt_tag=tag,
+                              phase=f"커버리지 구멍 메우기 ({scope}{'' if not si else f' 조각{si}/{sn}'})")
+            print(f"  ✅ [{r_}] 완주")
             break                     # 한 주자가 전량 훑으면 충분 (나머지는 한도 절약)
         except gc.CoveragePaused as e:
-            paused.append(role)
-            print(f"  ⏸ [{role}] 중단 — {e} → 다음 주자가 이어달림 (중간 결과 보존)")
-            ledger_append("COVERAGE_MAP", "GAPFILL_PAUSED_CONTINUE", f"script:{role}",
+            paused.append(r_)
+            print(f"  ⏸ [{r_}] 중단 — {e} → 다음 주자가 이어달림 (중간 결과 보존)")
+            ledger_append("COVERAGE_MAP", "GAPFILL_PAUSED_CONTINUE", f"script:{r_}",
                           evidence={"사유": str(e)[:150], "조치": "다음 주자 이어달리기 · 중간 단위 회수"},
                           product=prod)
         except Exception as e:
-            paused.append(role)
-            print(f"  ✖ [{role}] 실패 — {str(e)[:150]}")
+            paused.append(r_)
+            print(f"  ✖ [{r_}] 실패 — {str(e)[:150]}")
+
+    if si:
+        # 샤드 모드: 추출만 하고 종료 — 지도 병합은 collect()가 전 조각을 모아 한 번에
+        got, per = collect_ckpt_units(prod, tag)
+        print(f"■ 조각 {shard_spec} 추출 종료 — 원시 {len(got):,}단위 (병합은 collect 단계)")
+        return 0 if got else 2
 
     raw, per_role = collect_ckpt_units(prod, tag)
     print(f"■ 회수한 원시 단위: {len(raw):,}  {per_role}")
@@ -234,10 +255,76 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True
     return 0
 
 
+def collect(prod, scope):
+    """샤드 전 조각의 체크포인트를 모아 검수 → 지도 병합 → 보관. 반환 3 = 범위 완전 커버."""
+    chunks = gc.load_corpus(prod)
+    mp = latest_map(prod)
+    units = read_map(mp)
+    tags, raw, pers = [], [], {}
+    for ck in sorted((ROOT / "results").glob(f"_ckpt_coverage_{prod}_gap{scope}*.json")):
+        tag = ck.stem.replace(f"_ckpt_coverage_{prod}", "")
+        tags.append(tag)
+        got, per = collect_ckpt_units(prod, tag)
+        raw += got
+        pers[tag] = per
+    print(f"■ 조각 {len(tags)}개에서 원시 {len(raw):,}단위 회수  {pers}")
+    if not raw:
+        print("⚠ 회수 0 — 지도 미변경")
+        return 2
+    ok, rej = gc.verify_units(raw, chunks)
+    have = {gc.norm(u["fact"]) for u in units}
+    nums = [int(m.group(1)) for u in units
+            for m in [re.search(r"(\d+)$", str(u["unit_id"]))] if m]
+    nxt = (max(nums) + 1) if nums else 1
+    added = []
+    for u in ok:
+        k = gc.norm(u.get("fact", ""))
+        if len(k) < 8 or k in have:
+            continue
+        have.add(k)
+        added.append({"unit_id": f"{prod}-DOC-{nxt:04d}", "type": u.get("type", "Doc"),
+                      "title": u.get("title", ""), "fact": u.get("fact", ""),
+                      "question_hint": u.get("question_hint", ""), "source": u.get("source", "")})
+        nxt += 1
+    print(f"■ 1축 검수: 통과 {len(ok):,} / 탈락 {len(rej):,} → 신규 {len(added):,}")
+    if not added:
+        for t in tags:   # 성과 0이어도 소진된 조각은 보관 (다음 라운드 이중 계산 방지)
+            gc.ckpt_archive(prod, t, why=f"collect({scope}) — 신규 0, 기록 보관")
+        return 2
+    merged = units + added
+    out = gc.write_map(prod, merged, version=next_version(mp))
+    for t in tags:
+        gc.ckpt_archive(prod, t, why=f"collect({scope}) 지도 합류 — 재료 보관")
+    unc_after = uncovered(chunks, merged)
+    tot_n, tot_ch = len(chunks), _chars(chunks)
+    remain_scope = [c for c in unc_after if (_is_manual(c) if scope == "manual"
+                    else (not _is_manual(c)) if scope == "faq" else True)]
+    print(f"■ 저장: {out.name} ({len(units):,} → {len(merged):,}단위) · "
+          f"커버율 청크 {1 - len(unc_after) / tot_n:.1%} · 글자 {1 - _chars(unc_after) / tot_ch:.1%} · "
+          f"이 범위 남은 청크 {len(remain_scope):,}")
+    ctx = {"total_chunks": tot_n, "covered_before": tot_n - len(unc_after),
+           "scope": scope, "scope_chunks": 0, "map": out.name, "stage": "COVERAGE_MAP"}
+    (ROOT / "results" / f"_gapctx_{prod}.json").write_text(
+        json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
+    ledger_append("COVERAGE_MAP", "MAP_GAPFILL_DONE", "script:map_gapfill",
+                  evidence={"산출": out.name, "방식": f"샤드 병합 ({len(tags)}조각)", "주자별": pers,
+                            "신규 단위": len(added), "합계": len(merged), "1축 탈락": len(rej),
+                            "청크 커버율": f"{1 - len(unc_after) / tot_n:.1%}",
+                            "글자 커버율": f"{1 - _chars(unc_after) / tot_ch:.1%}",
+                            "범위 남은 청크": len(remain_scope)}, product=prod)
+    return 3 if not remain_scope else 0
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("product")
     ap.add_argument("--scope", default="all", choices=["all", "faq", "manual"])
     ap.add_argument("--measure", action="store_true", help="측정만 (AI 호출 없음)")
+    ap.add_argument("--shard", help="'1/3' = 3등분 중 1번 조각만 추출 (병합은 --collect)")
+    ap.add_argument("--role", choices=["generator", "judge", "reviewer"],
+                    help="이 조각의 우선 주자 (한도 시 나머지가 이어달림)")
+    ap.add_argument("--collect", action="store_true", help="전 조각 병합 → 지도 저장")
     a = ap.parse_args()
-    sys.exit(run(a.product, a.scope, a.measure))
+    if a.collect:
+        sys.exit(collect(a.product, a.scope))
+    sys.exit(run(a.product, a.scope, a.measure, role=a.role, shard_spec=a.shard))
