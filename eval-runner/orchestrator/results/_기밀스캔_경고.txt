@@ -1,3 +1,104 @@
 [2026-08-13 14:39:34] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
   · eval-runner/orchestrator/tools/_scan_test.py
 조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 14:57:18] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 14:58:35] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:04:37] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:10:42] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:12:02] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:14:43] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:16:58] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/3rd_input.json
+  · eval-runner/orchestrator/data/RC2/07_stage2/_stage2_review_claude.jsonl
+  · eval-runner/orchestrator/results/score_RC2_r1/score_report.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.
+[2026-08-13 15:24:09] 기밀 단어가 포함돼 자동 커밋에서 제외된 경로:
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B29.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_input_B30.json
+  · eval-runner/orchestrator/data/RC/06_calibration/2axis_result_B30.json
+  · eval-runner/orchestrator/results/score_RC2_r1_v12/score_report.json
+  · eval-runner/tools/3rd_input.json
+  · eval-runner/tools/inputs/2axis_input_B29.json
+  · eval-runner/tools/inputs/2axis_input_B30.json
+  · eval-runner/tools/results/2axis_result_B30.json
+조치: 해당 파일에서 기밀 문자열을 지우거나 금고(비공개 저장소)로 옮긴 뒤 다시 커밋하세요.

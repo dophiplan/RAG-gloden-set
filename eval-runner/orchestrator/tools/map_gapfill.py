@@ -109,7 +109,13 @@ def collect_ckpt_units(prod, tag):
     return got, per
 
 
-def run(prod, scope="all", measure=False):
+def shard(target, i, n):
+    """미커버 청크를 n등분한 i번째 조각 (0-base). 배치 경계와 무관하게 청크 단위로 균등 분할 —
+    큰 청크가 한쪽에 몰리지 않게 라운드로빈으로 나눈다 (글자수 편중 방지)."""
+    return [c for k, c in enumerate(target) if k % n == i]
+
+
+def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True):
     cfg = load_config()
     chunks = gc.load_corpus(prod)
     mp = latest_map(prod)

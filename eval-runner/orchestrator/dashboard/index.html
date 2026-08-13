@@ -394,6 +394,13 @@ function stageView(code){
 }
 
 // U4: "지금 할 일" 한 줄 — 화면이 먼저 말해준다
+function nextbarHtml(na){
+  // 안내문 + 버튼 한 벌 — 최초 렌더와 폴링 갱신이 같은 코드를 쓴다 (문구/버튼 어긋남 방지)
+  return `${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>`
+    +(na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:'')
+    +(na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:'')
+    +(na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:'');
+}
 function nextAction(){
   const ps = PS(), code = PV().code;
   const myCards = S.queue.filter(c=>c.product===code||c.product==='공통');
@@ -411,6 +418,17 @@ function nextAction(){
     return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
   }
   if(ps.status==='WAITING_HUMAN') return {icon:'🙋', text:'지금 할 일: 왼쪽 카드를 읽고 [승인] 또는 [반려]를 눌러주세요. ('+myCards.length+'건 대기)'};
+  // [수리 2026-08-13 난희 실측] 반려 잠금 중인데 "[▶ 이어서 진행]을 눌러주세요"가 떠서
+  // 눌러도 아무 일도 안 일어남 (잠금이 막는 게 정상 동작인데 화면이 반대로 안내).
+  // 잠금 = 반려 원인이 고쳐질 때까지 기계가 알아서 작업 중이거나 사람 결정 대기 — 누를 버튼 없음.
+  if(ps.reject_lock && ps.reject_lock.stage===ps.stage){
+    const busy = window._prog && window._prog.active;
+    const fix = busy
+      ? '지금 그 원인을 고치는 작업이 자동으로 돌고 있어요 — 아래 진행선을 보세요. 끝나면 새 카드가 옵니다 (누를 것 없음).'
+      : '원인 수리가 끝나면 새 카드가 와요. 수리가 멈춰 있으면 [▶ 다시 시도]로 잠금을 풀고 재개할 수 있어요.';
+    return {icon:'🔒', text:'반려 잠금 — 사유: '+esc(String(ps.reject_lock.reason||'').slice(0,80))
+      +' · 반려하신 게 정상 반영된 상태예요. '+fix, retry: !busy};
+  }
   if(ps.status==='REJECTED')
     return {icon:'↩', text:'반려 접수됨 — 사유는 기록됐고 재출제 준비가 끝났어요. 자동으로 이어지지 않았다면 [▶ 이어서 진행]을 눌러주세요.', run:true};
   if(ps.status==='RUNNING' && ps._worker === false){
@@ -547,7 +565,7 @@ function render(){
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
     ${renderAiTeam()}
-    <div class="nextbar">${na.icon} ${esc(na.text)}<span class="progline" id="progline" style="display:none"></span>${na.resume?` <button class="archbtn" onclick="resumeRun()" style="margin-left:8px">▶ 이어서 재개</button>`:''}${na.run?` <button class="archbtn" onclick="act({cmd:'run', product:PV().code})" style="margin-left:8px">▶ 이어서 진행</button>`:''}${na.retry?` <button class="archbtn" onclick="retryRun()" style="margin-left:8px">▶ 다시 시도</button>`:''}</div>
+    <div class="nextbar" id="nextbar">${nextbarHtml(na)}</div>
     ${qaLane}
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
@@ -1298,7 +1316,14 @@ async function pollOnce(){
         if(rl && rl.lines.length){ lg.textContent = rl.lines.join('\n'); lg.scrollTop = lg.scrollHeight; }
       }
       const d = await fetch('/api/progress?product='+PV().code).then(r=>r.json());
+      const firstProg = window._prog === undefined;
       window._prog = d;                       // 진행선 노드 툴팁 + AI 진행 패널
+      // 반려 잠금 안내는 진행 여부에 따라 문구·버튼이 달라진다 — 첫 진행정보 도착 시 갱신
+      // (최초 렌더 시점엔 _prog가 없어 "멈춤" 문구+버튼이 떴다가 그대로 남는 문제)
+      if(firstProg){
+        const nb = $('nextbar');
+        if(nb){ try{ nb.innerHTML = nextbarHtml(nextAction()); }catch(e){} }
+      }
       applyStageTips();
       const apw = $('aiprogwrap');
       if(apw) apw.innerHTML = renderAiProgress();
