@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-13T14:19:39",
+  "updated": "2026-08-13T14:25:22",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,8 +1972,8 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "GOLDENSET_BATCH",
-      "status": "HALTED",
+      "stage": "COVERAGE_MAP",
+      "status": "REJECTED",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1998,6 +1998,12 @@
         "round": 0,
         "done_units": [],
         "batch": "B1"
+      },
+      "reject_lock": {
+        "stage": "COVERAGE_MAP",
+        "gate_id": "COVMAP_CI",
+        "reason": "커버율 17.8% 실측 — 구멍 메우기 완료 후 재발행 대기 (난희 반려 14:00:46)",
+        "ts": "2026-08-13T14:00:46"
       }
     }
   }

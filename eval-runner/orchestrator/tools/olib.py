@@ -122,14 +122,44 @@ def _paths(cfg=None):
 
 
 # ── 원장 (append-only) ─────────────────────────────────────────
+_REDACT = None
+
+
+def redact_words():
+    """기밀 단어 목록 — `기밀단어.txt`(추적 제외)에서 읽는다.
+    코드·원장 같은 추적 파일에는 단어 자체를 적지 않는다 (그게 유출이므로)."""
+    global _REDACT
+    if _REDACT is None:
+        ws = []
+        p = ROOT / "기밀단어.txt"
+        if p.exists():
+            for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+                w = line.strip()
+                if w and not w.startswith("#"):
+                    ws.append(w)
+        _REDACT = ws
+    return _REDACT
+
+
+def redact(s):
+    """기밀 단어 → [기밀마스킹]. 대소문자 무시."""
+    import re as _re
+    for w in redact_words():
+        s = _re.sub(_re.escape(w), "[기밀마스킹]", s, flags=_re.I)
+    return s
+
+
 def ledger_append(stage, action, actor, evidence=None, gate_id=None, reason=None, product=None):
-    """원장 1행 기록. 쓰기 실패는 킬스위치 사유 — 예외를 삼키지 않는다."""
+    """원장 1행 기록. 쓰기 실패는 킬스위치 사유 — 예외를 삼키지 않는다.
+    [P0 수리 2026-08-13] 기록 직전 기밀 단어 마스킹. 실측 사고: AI 실패 응답 원문을 evidence 에
+    그대로 실어 고객사명이 공개 저장소 원장에 4행 커밋·푸시됨(2026-08-10~11). 사람 실수가 아니라
+    '외부 문자열을 검열 없이 원장에 넣는 경로'가 원인이므로, 단일 쓰기 경로에서 막는다."""
     row = {"ts": now(), "product": product, "stage": stage, "gate_id": gate_id,
            "actor": actor, "action": action, "evidence": evidence or {}, "reason": reason}
     path = _paths()["ledger"]
     try:
         with open(path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+            f.write(redact(json.dumps(row, ensure_ascii=False)) + "\n")
             f.flush()
     except OSError as e:
         # 원장 쓰기 실패 → HALT (§6). 상태에 직접 반영하고 예외 재발생.
