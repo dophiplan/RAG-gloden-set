@@ -467,12 +467,18 @@ function renderAiProgress(){
       <b>${esc(e.who)}</b>
       <span class="aibar"><i style="width:0%"></i></span>
       <span class="num hint">⏳ 대기 — 앞 주자 멈추면 이어달림</span></div>`;
-    const pct = e.total? Math.round(e.done/e.total*100) : 0;
+    // [난희 지적 2026-08-13 2차] %는 '한 경주'로 — 코퍼스 전체 대비. 구멍을 발견해 다시 뛰면
+    // 떨어진 숫자에서 이어지고, 조각마다 0%부터 새로 보이지 않는다.
+    const segPct = e.total? Math.round(e.done/e.total*100) : 0;
+    const pct = (e.whole_pct!==undefined)? e.whole_pct : segPct;
+    const numTxt = (e.whole_pct!==undefined)
+      ? `전체의 ${e.whole_pct}% · ${e.units.toLocaleString()}단위`
+      : `${segPct}% · ${e.units.toLocaleString()}단위`;
     const cls = (running && !ghost)? '' : 'paused';
-    return `<div class="aiprow ${cls}" title="${e.who}: ${e.done}/${e.total} 배치${e.fails?` · 실패 ${e.fails}건(원장 기록)`:''}">
+    return `<div class="aiprow ${cls}" title="${e.who}: 이번 조각 ${e.done}/${e.total} 배치(${segPct}%)${e.whole_pct!==undefined?` · 코퍼스 전체 기준 ${e.whole_pct}%`:''}${e.fails?` · 실패 ${e.fails}건(원장 기록)`:''}">
       <b>${esc(e.who)}</b>
       <span class="aibar"><i style="width:${pct}%"></i></span>
-      <span class="num">${pct}% · ${e.units.toLocaleString()}단위</span></div>`;
+      <span class="num">${numTxt}</span></div>`;
   }).join('');
   // 완주한 주자가 있으면 [🏁 지금 마감] — 남은 주자 한도 회복을 기다리지 않고 병합으로
   const done100 = d.extractors.filter(e=>e.total && e.done>=e.total).map(e=>e.who);

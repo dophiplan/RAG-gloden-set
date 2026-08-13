@@ -461,11 +461,15 @@ def _extractor_rows(code, prog=None):
             v = c.get(role)
             if not isinstance(v, dict):
                 continue
-            a = agg.setdefault(role, {"done": 0, "total": 0, "units": 0, "fails": 0})
+            a = agg.setdefault(role, {"done": 0, "total": 0, "units": 0, "fails": 0, "chunks_est": 0})
             a["done"] += v.get("done", 0)
             a["total"] += int(v.get("n_batches") or (0 if tagged else tt_any))
             a["units"] += len(v.get("units", []))
             a["fails"] += len(v.get("fails") or [])
+            # 이 구간에서 지나간 청크 수 근사 (배치 비율 × 구간 청크) — '한 경주 %' 분자용
+            nb, nc = int(v.get("n_batches") or 0), int(v.get("n_chunks") or 0)
+            if nb and nc:
+                a["chunks_est"] += int(nc * min(1.0, v.get("done", 0) / nb))
     # [난희 지적 2026-08-13] Kimi·codex가 안 보임 — 체크포인트가 정리되면 줄이 사라지고,
     # 이어달리기 대기조는 애초에 기록이 없어 화면에서 증발. 편성된 AI는 '대기'로라도 항상 표시.
     active_roles = set()
@@ -479,16 +483,33 @@ def _extractor_rows(code, prog=None):
                         if have.get(r) and use.get(r, True)}
     except Exception:
         pass
+    # [난희 지적 2026-08-13 2차] %는 '한 경주'로 이어져야 한다 — 구멍을 발견하면 떨어진 채로
+    # 이어지고, 조각(범위)마다 0%부터 새로 시작하는 것처럼 보이면 안 됨.
+    # 분모 = 코퍼스 전체 청크(고정). 분자 = 이미 지도에 들어간 청크(기커버) + 이번 조각 진행분(근사).
+    whole = None
+    try:
+        ctx = json.loads((ROOT / "results" / f"_gapctx_{code}.json").read_text(encoding="utf-8"))
+        whole = {"total": int(ctx["total_chunks"]), "before": int(ctx["covered_before"]),
+                 "base_role": ctx.get("base_role", "generator")}
+    except Exception:
+        pass
     rows, tot = [], 0
     for role, label in names.items():
         if role in agg:
             a = agg[role]
             tot += a["units"]
-            rows.append({"who": label, "role": role, "done": a["done"],
-                         "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]})
+            row = {"who": label, "role": role, "done": a["done"],
+                   "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]}
+            if whole and whole["total"]:
+                # 이번 조각에서 이 주자가 지나간 청크(배치 비율 근사) + 기커버(기여 주자에게)
+                seg = int(a.get("chunks_est") or 0)
+                base = whole["before"] if role == whole["base_role"] else 0
+                row["whole_pct"] = round(min(base + seg, whole["total"]) / whole["total"] * 100)
+            rows.append(row)
         elif role in active_roles:
             rows.append({"who": label, "role": role, "done": 0, "total": 0,
-                         "units": 0, "fails": 0, "idle": True})
+                         "units": 0, "fails": 0, "idle": True,
+                         **({"whole_pct": 0} if whole else {})})
     return rows, tot
 
 

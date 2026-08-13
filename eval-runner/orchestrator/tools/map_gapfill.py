@@ -211,7 +211,15 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True
     merged = units + added
     ver = next_version(mp)
     out = gc.write_map(prod, merged, version=ver)
+    # 이 조각의 성과는 방금 지도에 합쳐졌다 — 조각 기록장(체크포인트)을 정리해야
+    # 다음 실행에서 '기커버(지도) + 옛 조각 기록'으로 이중 계산되지 않는다 (한 경주 % 정합).
+    gc._ckpt_path(prod, tag).unlink(missing_ok=True)
     unc_after = uncovered(chunks, merged)
+    # 한 경주 % 기준점 갱신 — 다음 폴링부터 '지도에 실제로 들어간 만큼'으로 표시
+    ctx.update({"covered_before": tot_n - len(unc_after), "map": out.name,
+                "scope_chunks": 0})
+    (ROOT / "results" / f"_gapctx_{prod}.json").write_text(
+        json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
     print(f"■ 저장: {out.name}  ({len(units):,} → {len(merged):,}단위)")
     print(f"■ 커버율: 청크 {1 - len(unc_all) / tot_n:.1%} → {1 - len(unc_after) / tot_n:.1%} · "
           f"글자 {1 - _chars(unc_all) / tot_ch:.1%} → {1 - _chars(unc_after) / tot_ch:.1%}")
