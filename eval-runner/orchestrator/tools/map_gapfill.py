@@ -26,6 +26,7 @@ map_gapfill.py — ③ 커버리지맵 '구멍 메우기' (미커버 청크만 �
 """
 import argparse
 import collections
+import json
 import re
 import sys
 from pathlib import Path
@@ -142,6 +143,13 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None, merge=True
         return 0
 
     tag = f"_gap{scope}"
+    # [난희 지적 2026-08-13] 패널 %가 '이번 조각' 진도만 보여줌 — 전체 지도 완성도로 보여야 한다.
+    # 대시보드가 전체 %를 계산할 수 있게 맥락 저장: 전체 청크 · 이미 커버 · 이번 범위.
+    ctx = {"total_chunks": tot_n, "covered_before": tot_n - len(unc_all),
+           "scope": scope, "scope_chunks": len(target),
+           "map": mp.name, "stage": "COVERAGE_MAP"}
+    (ROOT / "results" / f"_gapctx_{prod}.json").write_text(
+        json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
     ledger_append("COVERAGE_MAP", "MAP_GAPFILL_START", "script:map_gapfill",
                   evidence={"기존 맵": mp.name, "기존 단위": len(units), "범위": scope,
                             "미커버 청크": len(target), "미커버 글자": _chars(target),
