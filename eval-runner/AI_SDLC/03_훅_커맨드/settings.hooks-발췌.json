@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/nanheekim && git add eval-runner/ 2>/dev/null && (git diff --cached --quiet || (git commit -q -m \"auto: 작업 자동 저장 $(date +'%Y-%m-%d %H:%M')\" -m \"Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>\" && git push -q origin main)); true",
+            "timeout": 45,
+            "statusMessage": "eval-runner 자동 커밋·푸시…"
+          }
+        ]
+      }
+    ]
+  }
+}

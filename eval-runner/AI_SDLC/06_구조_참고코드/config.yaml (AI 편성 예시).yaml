@@ -1,0 +1,54 @@
+models:
+  generator: {provider: "cli", command: ["claude", "-p"], model: "claude-opus-4-8"}
+  judge:     {provider: "moonshot", model: "kimi-k2.6", temperature: 1, api_key_env: "JUDGE_KEY", max_tokens: 16384}   # 2026-07-23 난희 결정: K3→K2.6 (비용) · 규칙 C: ⑥ 캘리브레이션은 이 모델로 측정
+  # 앙상블 추출 전용 (판정 아님 — 규칙 C 무관): K3는 추론에 예산을 써서 대량 베껴쓰기에 부적합.
+  # 실측: K3 25청크=빈 응답, 10청크=345초 / v1-128k 25청크=223초·1축 통과 96%
+  reviewer:  {provider: "cli", command: ["codex", "exec", "--skip-git-repo-check"], prompt_arg: true}   # 2026-08-05 합류: ChatGPT Plus 구독 (스모크 1문항 통과) — 교차 검토 역할
+  judge_extract: {provider: "moonshot", model: "moonshot-v1-128k", temperature: 0.3, api_key_env: "JUDGE_KEY", max_tokens: 16384}
+
+pipeline:
+  band: [60, 75]              # 차수당 문항 밴드
+  goldenset_target: 880       # 골든셋 목표 규모 — 맵 단위가 이보다 많으면 문서별 비례 대표 추출 (2026-07-23 난희 결정: v1급 규모, 브리지 측정 호환)
+  goldenset_exclude_sources: ["Known Issue"]   # 출제 제외 소스 (2026-07-23 난희 결정: 내부 결함 목록은 고객 질문이 아님)
+  recheck_rate: 0.05          # 본판정 무작위 재검 (1키 모드면 코드가 0.10으로 강제 상향)
+  recheck_seed: null          # null이면 실행 시 생성 — 원장에 시드+추출 목록 기록 의무
+  goldenset_quota:            # [예약 · v3 발주 2026-08-05] v3 세대 제작 시 활성화 — docs/골든셋_v3_출제규칙_개정발주_v1_0.md
+    e_type: 0.10              # E형 함정(부재 인정) — v1 수준 복원
+    complex: 0.10             # 복합(비교·다중 조건·복수 단위 결합)
+    table: 0.05               # 표 기반 (표 청크 보유량 내)
+  calibration_threshold: 0.90
+  stage2_dual: true           # ⑦ 이중 판정 — Kimi(정) + claude 새 세션(검토), 불일치만 사람 게이트
+
+terrain:                      # 제품별 프로파일 — 다제품 충돌 방지 [v1.2]
+  profiles:
+    RV:
+      citation_pattern: 'RV-[A-Z]+(?:-[A-Z0-9]+)*-\d+'
+      question_id_pattern: 'RV[A-Z]*-[A-Z]\d+'
+      anchor_patterns:
+        - '\(20\d\d-\d\d-\d\d (게시|시행|인덱싱|작성|서술) 기준\)'
+      anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)'   # 앵커 변형 의심 후보 (미포착 변형 → 플래그, FAIL 금지)
+      # 앵커 의무 범위 — 실측 근거: RVT(B3 약관) 91/91 · RVB(B6 블로그) 297/297 앵커 100%,
+      # RV/RVW/RVA/RVC 0% (B2 파일럿 7건은 자율 표기 → 플래그 대상 아님)
+      anchor_required_prefixes: [RVT, RVB]
+      appendix_switches: [T-1]
+      map_fact_column: '이 단위가 말하는 사실'
+      map_unit_column: 'Unit ID'
+    RC:
+      citation_pattern: 'RC-[A-Z]+(?:-[A-Z0-9]+)*-\d+'
+      question_id_pattern: 'RC-[A-Z]\d+'
+      anchor_patterns: []
+      anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)'
+      appendix_switches: []
+      map_fact_column: '이 단위가 말하는 사실'
+      map_unit_column: 'Unit ID'
+    RM: {citation_pattern: 'RM-[A-Z]+(?:-[A-Z0-9]+)*-\d+', question_id_pattern: 'RM-[A-Z]\d+', anchor_patterns: [], anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)', appendix_switches: [], map_fact_column: '이 단위가 말하는 사실', map_unit_column: 'Unit ID', onboarding: true}
+    HR: {citation_pattern: 'HR-[A-Z]+(?:-[A-Z0-9]+)*-\d+', question_id_pattern: 'HR-[A-Z]\d+', anchor_patterns: [], anchor_suspect_pattern: '\(20\d\d-\d\d-\d\d[^)]*\)', appendix_switches: [], map_fact_column: '이 단위가 말하는 사실', map_unit_column: 'Unit ID', onboarding: true}
+
+paths:
+  data: "./data"
+  tools: "../tools"
+  results: "./results"
+  queue: "./검수큐"
+  ledger: "./ledger.jsonl"
+  state: "./state.json"
+  manifest: "./catalog/manifest.json"
