@@ -190,11 +190,24 @@ def _extract_batch(prod, part, cfg, call_role, depth=0):
         got = got if isinstance(got, list) else [got]
         return [u for u in got if isinstance(u, dict)]
     except RuntimeError as e:
-        if "절단" in str(e) and len(part) >= 2 and depth < 3:
-            mid = len(part) // 2
-            print(f"    ✂ 응답 절단 — 배치 {len(part)}청크를 반으로 쪼개 재시도 (분할 {depth + 1}단)")
-            return (_extract_batch(prod, part[:mid], cfg, call_role, depth + 1)
-                    + _extract_batch(prod, part[mid:], cfg, call_role, depth + 1))
+        if "절단" in str(e) and depth < 6:
+            if len(part) >= 2:
+                mid = len(part) // 2
+                print(f"    ✂ 응답 절단 — 배치 {len(part)}청크를 반으로 쪼개 재시도 (분할 {depth + 1}단)")
+                return (_extract_batch(prod, part[:mid], cfg, call_role, depth + 1)
+                        + _extract_batch(prod, part[mid:], cfg, call_role, depth + 1))
+            # [수리 2026-08-13] 청크 1개짜리 배치의 절단 — 배치는 더 못 쪼개므로 '본문'을 쪼갠다.
+            # 실측(CI 매뉴얼): 청크 1개=25,482자 평균 → 추출 카드가 Kimi 출력 한도(16k 토큰) 초과,
+            # 기존 이등분은 len(part)>=2 조건에 막혀 전 배치가 하드 실패했음.
+            # 문장 경계(개행·마침표)에서 자르므로 fact 원문 복사(1축 대조)는 깨지지 않는다.
+            t = str(part[0].get("text") or "")
+            if len(t) >= 2000:
+                mid = len(t) // 2
+                cut = max(t.rfind("\n", 0, mid), t.rfind("。", 0, mid), t.rfind(". ", 0, mid))
+                cut = cut + 1 if cut > len(t) // 4 else mid
+                print(f"    ✂ 응답 절단 — 청크 본문 {len(t):,}자를 반으로 쪼개 재시도 (분할 {depth + 1}단)")
+                return (_extract_batch(prod, [{**part[0], "text": t[:cut]}], cfg, call_role, depth + 1)
+                        + _extract_batch(prod, [{**part[0], "text": t[cut:]}], cfg, call_role, depth + 1))
         raise
 
 
