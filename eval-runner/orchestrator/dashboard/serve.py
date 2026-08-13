@@ -48,6 +48,21 @@ def display_of(code):
     return PRODUCT_META.get(code, {}).get("display", code)
 
 
+def _worker_alive(code):
+    """제품별 실행 워커(auto_run) 생존 — 상태가 RUNNING인데 실행 주체가 없으면 '유령 RUNNING'.
+    [수리 2026-08-13 난희 지적] 멈춰 있는데 돌고 있는 것처럼 보이던 문제."""
+    pf = ROOT / "results" / f"_run_{code}.pid"
+    if not pf.exists():
+        return False
+    try:
+        pid = int(pf.read_text().strip())
+    except Exception:
+        return False
+    st = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)],
+                        capture_output=True, text=True).stdout.strip()
+    return bool(st) and not st.startswith("Z")   # 좀비(Z)는 죽은 것
+
+
 def _qa_ver(p):
     """외부QA 파일의 vN — 최신 선택은 반드시 이 숫자로 (import_qa._ver_of와 동일 규칙 [P1-2])"""
     m = re.search(r"_v(\d+)\.xlsx$", p.name)
@@ -72,6 +87,7 @@ def api_state():
         latest = max(papers, key=_qa_ver) if papers else None
         pm = re.search(r"_(\d+)문항_", latest.name) if latest else None
         ps["_qa"] = {"paper": N(latest.name), "n": int(pm.group(1)) if pm else None} if latest else None
+        ps["_worker"] = _worker_alive(code)   # RUNNING 표시의 진위 판정용
     # 모델 모드 부가
     try:
         from model_adapter import detect_mode, effective_recheck_rate
@@ -466,10 +482,12 @@ def api_progress(code):
         if not rows:
             return {"active": False}
         return {"active": False, "snapshot": True, "stage": _st.get("stage"),
-                "status": _st.get("status"), "extractors": rows, "units_total": tot,
+                "status": _st.get("status"), "worker_alive": _worker_alive(code),
+                "extractors": rows, "units_total": tot,
                 "phase": "멈춘 자리 (체크포인트 보존)"}
     d["active"] = True
     d["status"] = _st.get("status")
+    d["worker_alive"] = _worker_alive(code)
     rows, tot = _extractor_rows(code, d)
     if rows:
         d["extractors"] = rows

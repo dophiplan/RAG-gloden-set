@@ -132,7 +132,11 @@ def _extract_batch(prod, part, cfg, call_role, depth=0):
         out = llm.chat(call_role, SYSTEM,
                        json.dumps({"product": prod, "chunks": part}, ensure_ascii=False), cfg)
         got = llm.extract_json(out)
-        return got if isinstance(got, list) else [got]
+        # [수리 2026-08-13] dict 아닌 값(숫자·문자 등)이 섞이면 이후 검수에서
+        # "'int' object has no attribute 'get'"로 전체가 멈춘다 — 실측: 8,303개 중 1개(71240)가
+        # 3만 단위 작업을 중단시켰음. 여기서 걸러 유입 자체를 막는다 (판정 경로 동종 수리와 대칭).
+        got = got if isinstance(got, list) else [got]
+        return [u for u in got if isinstance(u, dict)]
     except RuntimeError as e:
         if "절단" in str(e) and len(part) >= 2 and depth < 3:
             mid = len(part) // 2
@@ -154,7 +158,7 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator"):
     rk = ck.get(role) or {}
     if rk.get("n_chunks") != len(target):  # 코퍼스가 달라졌으면 옛 체크포인트 무시 (오염 방지)
         rk = {}
-    units = list(rk.get("units", []))
+    units = [u for u in rk.get("units", []) if isinstance(u, dict)]   # 과거 오염분 방어
     fails = list(rk.get("fails", []))
     done = int(rk.get("done", 0))
     if use_ckpt and done:
