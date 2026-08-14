@@ -196,6 +196,7 @@ def run(prod, scope="all", measure=False, role=None, shard_spec=None):
         return 0 if got else 2
 
     raw, per_role = collect_ckpt_units(prod, tag)
+    raw = [{**u, "unit_id": f"TMP-{i:06d}"} for i, u in enumerate(raw)]   # ID 유일화 — collect()와 동일 수리
     print(f"■ 회수한 원시 단위: {len(raw):,}  {per_role}")
     if not raw:
         ledger_append("COVERAGE_MAP", "MAP_GAPFILL_EMPTY", "script:map_gapfill",
@@ -271,6 +272,11 @@ def collect(prod, scope):
     if not raw:
         print("⚠ 회수 0 — 지도 미변경")
         return 2
+    # [수리 2026-08-14] 추출기가 붙인 unit_id 는 어차피 병합 때 새로 매긴다 — 그런데 검수가
+    # 그 임시 ID의 중복(배치마다 001부터 재시작)을 이유로 멀쩡한 사실을 탈락시켰다.
+    # 실측: 11,367건 중 9,774건이 'ID 중복'으로 억울 탈락 (사실 자체는 원문 일치).
+    # 검수 전에 ID를 유일화해 '사실 실재'만 보게 한다.
+    raw = [{**u, "unit_id": f"TMP-{i:06d}"} for i, u in enumerate(raw)]
     ok, rej = gc.verify_units(raw, chunks)
     have = {gc.norm(u["fact"]) for u in units}
     nums = [int(m.group(1)) for u in units

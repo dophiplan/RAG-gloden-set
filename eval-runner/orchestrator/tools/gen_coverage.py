@@ -263,8 +263,11 @@ def generate_units(prod, chunks, cfg, retry_ids=None, role="generator", ckpt_tag
             fails = [f for f in fails if int(f["batch"].split("/")[0]) not in consec]
             done = consec[0] - 1
             if use_ckpt:
-                ck[role] = {"done": done, "units": units, "fails": fails, "n_chunks": len(target)}
-                _ckpt_save(prod, ck)
+                # [수리 2026-08-14] tag 누락 — 일시중단 체크포인트가 무태그 파일로 저장돼
+                # 구멍 메우기 기록이 본추출 파일에 섞이고 패널 집계가 이중 계산되던 결함
+                ck[role] = {"done": done, "units": units, "fails": fails,
+                            "n_chunks": len(target), "n_batches": total}
+                _ckpt_save(prod, ck, ckpt_tag)
             _progress(prod, f"일시 중단 — {role} 연속 {len(consec)}회 실패 (한도 의심, 재개 가능)",
                       role, done, total, fails, chunks=len(target))
             ledger_append("COVERAGE_MAP", "COVERAGE_PAUSED", f"script:{role}",
