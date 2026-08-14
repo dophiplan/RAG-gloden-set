@@ -70,19 +70,27 @@ def read_map(path):
 
 
 def uncovered(chunks, units):
-    """맵의 사실 문장이 (같은 출처의) 청크 원문에 실재하는지 문자 대조 → 단위 0개인 청크 목록.
-    출처로 범위를 좁히는 이유: 서로 다른 문서의 짧은 상투구(「はい。」 등)가 우연히 맞아
-    미커버 청크를 커버로 위장하는 것을 막는다."""
+    """맵의 사실 문장이 청크 원문에 실재하는지 문자 대조 → 단위 0개인 청크 목록.
+    1차: 같은 출처의 사실로 대조 (짧은 상투구 「はい。」 우연 일치 차단).
+    2차 [수리 2026-08-14]: 긴 사실(정규화 30자↑)은 출처 무관 대조 — 같은 Q&A가 여러 페이지에
+    중복 게시된 코퍼스에서, 이미 지도에 있는 내용의 '복사본 페이지' 112청크가 영원히
+    미커버로 남던 측정 왜곡 수리 (30자 우연 일치는 실질적으로 불가능)."""
     by_src = collections.defaultdict(list)
+    long_facts = []
     for u in units:
         f = gc.norm(u.get("fact", ""))
         if len(f) >= 8:
             by_src[gc._gkey(u.get("source", ""))].append(f)
+        if len(f) >= 30:
+            long_facts.append(f)
     out = []
     for c in chunks:
         t = gc.norm(c.get("text", ""))
-        if not any(f in t for f in by_src.get(gc._gkey(c.get("source", "")), [])):
-            out.append(c)
+        if any(f in t for f in by_src.get(gc._gkey(c.get("source", "")), [])):
+            continue
+        if any(f in t for f in long_facts):
+            continue
+        out.append(c)
     return out
 
 
