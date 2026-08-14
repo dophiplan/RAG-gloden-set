@@ -297,7 +297,7 @@ const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
 const GATE_DIAMOND = new Set(["CALIBRATION"]);
 // U3: 상태는 전부 한글로
 const STATUS_KO = {RUNNING:'진행 중', WAITING_HUMAN:'결정 대기 (내 차례)', WAITING_INPUT:'파일 대기',
-                   PENDING:'대기', HALTED:'⛔ 사고 정지', REJECTED:'반려 — 재제출 대기', DONE:'완료'};
+                   PENDING:'대기', HALTED:'⛔ 사고 정지', REJECTED:'반려 — 수리 후 재발행', DONE:'완료'};
 let S = {state:null, catalog:null, queue:null, scores:null, ledger:null};
 let cur = null, rejectTarget = null, busy = false;
 const $ = id => document.getElementById(id);
@@ -429,8 +429,20 @@ function nextAction(){
     return {icon:'🔒', text:'반려 잠금 — 사유: '+esc(String(ps.reject_lock.reason||'').slice(0,80))
       +' · 반려하신 게 정상 반영된 상태예요. '+fix, retry: !busy};
   }
-  if(ps.status==='REJECTED')
+  if(ps.status==='REJECTED'){
+    // [난희 지적 2026-08-14] 반려 잠금 중 수리가 돌고 있으면 '진행 중'이 함께 보여야 한다
+    // — "반려"만 보이면 멈춘 걸로 오해. 잠금(사람 결정 보존)과 수리(자동)는 동시에 참일 수 있다.
+    const rl = ps.reject_lock;
+    if(rl){
+      const p = window._prog;
+      const working = p && p.active && p.worker_alive !== false;
+      const why = String(rl.reason||'').slice(0,70);
+      return working
+        ? {icon:'🔧', text:`반려 잠금 유지 중 (사유: ${why}) — 그 원인을 지금 자동 수리하는 중이에요. 아래 AI 진행 패널이 그 작업입니다. 수리가 끝나면 새 승인 카드가 와요 — 지금 누를 것 없음.`}
+        : {icon:'🔒', text:`반려 잠금 (사유: ${why}) — 수리가 멈춰 있어요. 원인 해결 후 [▶ 다시 시도]를 누르면 재개돼요.`, retry:true};
+    }
     return {icon:'↩', text:'반려 접수됨 — 사유는 기록됐고 재출제 준비가 끝났어요. 자동으로 이어지지 않았다면 [▶ 이어서 진행]을 눌러주세요.', run:true};
+  }
   if(ps.status==='RUNNING' && ps._worker === false){
     // [수리 2026-08-13 난희 지적] 유령 RUNNING — 상태는 진행 중인데 실행 주체(워커)가 없음
     const sname = (S.catalog.products[cur]||{stages:[]}).stages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage;
