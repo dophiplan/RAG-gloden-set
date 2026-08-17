@@ -589,6 +589,53 @@ def api_xlsx(relpath, max_rows=400, name=None, prod=None):
     return {"file": N(p.name), "path": N(str(p.relative_to(base))), "sheets": sheets}
 
 
+_TR_SYSTEM = """[TASK:TRANSLATE_JA_KO] 너는 일본어→한국어 통역사다.
+입력: JSON 배열 [{"no":1,"ja":"일본어"}, …]. 규칙: ① 의역 금지 — 원문 구조 유지(오역 검증 가능하게)
+② 고유명사(서비스명·요금제명)는 원문 표기 유지 ③ 확신 없으면 뒤에 " (※확인 필요)".
+출력: JSON 배열만 — [{"no":1,"ko":"한국어"}, …]"""
+
+
+def api_translate(prod, texts, cap=120):
+    """실물 팝업 [日|한] — 일본어 문자열 목록을 한국어로. 캐시 우선, 미번역분만 AI 호출.
+    캐시는 금고(data/<prod>/번역/_팝업번역캐시.json)에 원문 병기로 저장 (난희 규칙 2026-08-07).
+    번역은 판정이 아니라 통역 — 추출전용 모델(judge_extract) 사용, 규칙 C 무관."""
+    import sys as _sys
+    _sys.path.insert(0, str(ROOT / "tools"))
+    import llm
+    from olib import load_config
+    if not re.fullmatch(r"[A-Z0-9]{1,8}", prod or ""):
+        return {"ok": False, "out": "제품 코드 오류"}
+    texts = [str(t)[:500] for t in texts][:cap]
+    cdir = ROOT / "data" / prod / "번역"
+    cdir.mkdir(parents=True, exist_ok=True)
+    cf = cdir / "_팝업번역캐시.json"
+    try:
+        cache = json.loads(cf.read_text(encoding="utf-8")) if cf.exists() else {}
+    except Exception:
+        cache = {}
+    todo = [t for t in dict.fromkeys(texts) if t not in cache]
+    err = None
+    if todo:
+        cfg = load_config()
+        role = "judge_extract" if cfg.get("models", {}).get("judge_extract") else "generator"
+        for i in range(0, len(todo), 30):
+            part = todo[i:i + 30]
+            payload = [{"no": k + 1, "ja": t} for k, t in enumerate(part)]
+            try:
+                out = llm.chat(role, _TR_SYSTEM, json.dumps(payload, ensure_ascii=False), cfg)
+                got = llm.extract_json(out)
+                for x in got if isinstance(got, list) else []:
+                    if isinstance(x, dict) and "no" in x and 1 <= int(x["no"]) <= len(part):
+                        cache[part[int(x["no"]) - 1]] = str(x.get("ko", ""))[:600]
+            except Exception as e:
+                err = str(e)[:150]
+                break
+        # 캐시 = 원문 병기 통역 기록 (키=일본어 원문, 값=한국어) — 금고 저장이라 유출 없음
+        cf.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
+    return {"ok": True, "map": {t: cache[t] for t in texts if t in cache},
+            "미번역": sum(1 for t in texts if t not in cache), "err": err}
+
+
 def _s2_ledger_file(prod):
     d = ROOT / "data" / prod / "07_stage2"
     c = sorted(d.glob(f"{prod}_본판정_판정대장_*.xlsx")) if d.is_dir() else []
@@ -840,6 +887,10 @@ def api_action(payload):
         args += ["new-round", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
     elif cmd == "expand":
         args += ["expand", "--product", payload["product"], "--actor", payload.get("actor", "난희")]
+    elif cmd == "translate":
+        # [난희 요청 2026-08-14] 실물 팝업 [日|한] 전환 — 일본어 셀을 한국어로 (참고용)
+        # 번역 기록 규칙: 원문 병기 캐시를 금고(data/<제품>/번역/)에 저장 — 오역 검증 가능
+        return api_translate(payload.get("product", ""), payload.get("texts") or [])
     elif cmd == "qa-import":
         # 외부 Q&A 인입 — 업로드 직후 자동 대조·분류 (G19)
         args += ["qa-import", "--product", payload["product"], "--actor", payload.get("actor", "난희")]

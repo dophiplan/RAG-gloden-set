@@ -1050,14 +1050,43 @@ async function openGateX(name, gateId, nAcks){
     <button class="btn reject" onclick="xdlg.close();openReject('${gateId}')">반려 (사유 필수)</button>
     <button class="btn approve" ${nAcks?'disabled title="체크리스트는 카드에서 확인 후 승인"':''} onclick="xdlg.close();doApprove('${gateId}',0)">승인</button>`;
 }
+/* [난희 요청 2026-08-14] 실물 팝업 [日|한] — 일본어 셀을 한국어로 전환 (참고용 통역, 원문은 툴팁) */
+let XLANG = 'ja', XLK = {}, XSHEET = null, XBUSY = false;
+const hasJa = s => /[ぁ-ヿ]/.test(s);   // 가나 포함 = 일본어 문장
+function xLangBtns(){
+  return `<span style="margin-left:auto"></span>
+    <button class="xtab ${XLANG==='ja'?'on':''}" onclick="setXLang('ja')">日 원문</button>
+    <button class="xtab ${XLANG==='ko'?'on':''}" onclick="setXLang('ko')" ${XBUSY?'disabled':''}>한 번역${XBUSY?' (번역 중…)':''}</button>`;
+}
+async function setXLang(l){
+  if(l==='ko'){
+    const s = XD.sheets[XSHEET];
+    const need = [...new Set(s.rows.slice(1).flatMap(r=>r.filter(c=>hasJa(c)&&!XLK[c])))].slice(0,120);
+    if(need.length){
+      XBUSY = true; renderXTabs(); $('x-note').textContent = `한국어 번역 중… (${need.length}칸 — 처음엔 1~2분, 다음부턴 즉시)`;
+      const r = await act({cmd:'translate', product: PV().code, texts: need}, true);
+      XBUSY = false;
+      if(r && r.map) Object.assign(XLK, r.map);
+      if(r && r.err) $('x-note').textContent = `번역 일부 실패(${r.err}) — 된 것만 표시`;
+    }
+  }
+  XLANG = l; showSheet(XSHEET);
+}
+function renderXTabs(){
+  const names = Object.keys(XD.sheets);
+  $('x-tabs').innerHTML = (names.length>1 ? names.map(n=>`<button class="xtab ${n===XSHEET?'on':''}" onclick="showSheet('${esc(n)}',this)">${esc(n)}</button>`).join('') : '') + xLangBtns();
+}
 function showSheet(name, btn){
-  document.querySelectorAll('.xtab').forEach(b=>b.classList.remove('on'));
-  if(btn) btn.classList.add('on');
+  XSHEET = name;
   const s = XD.sheets[name];
-  $('x-note').textContent = `${s.total.toLocaleString()}행` + (s.truncated? ` (앞 ${s.rows.length-1}행 표시 — 전체는 [받기])` : '');
+  renderXTabs();
+  const done = XLANG==='ko';
+  $('x-note').textContent = `${s.total.toLocaleString()}행` + (s.truncated? ` (앞 ${s.rows.length-1}행 표시 — 전체는 [받기])` : '')
+    + (done? ' · 한국어 번역 표시 중 (참고용 — 원문은 칸에 마우스 올리면)' : '');
   const [h, ...rows] = s.rows;
+  const cell = c => (done && XLK[c]) ? `<td title="${esc(c)}">${esc(XLK[c])}</td>` : `<td>${esc(c)}</td>`;
   $('x-body').innerHTML = `<table class="xtbl"><thead><tr>${(h||[]).map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    <tbody>${rows.map(r=>`<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
 /* ⚖ ⑦ 불일치 검토 팝업 — 갈린 문항만, 클릭으로 최종 확정 (판정대장에 즉시 기록) */
