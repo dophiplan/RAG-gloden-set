@@ -657,6 +657,17 @@ function renderQueue(){
     let review = '';
     const gi = bodyMain.indexOf('### 👀');
     if(gi >= 0){ review = bodyMain.slice(gi).trim(); bodyMain = bodyMain.slice(0, gi).trim(); }
+    // [난희 실측 2026-08-14 "요약문이 없어"] 🇰🇷 한국어 요약·재실측 추기가 '## 재개' 뒤에 붙어
+    // 위의 split 에서 통째로 잘려나갔음 — 전체 본문에서 직접 뽑아 카드 맨 위에 보여준다
+    let koSum = '';
+    for(const mark of ['## 🇰🇷', '## ✅ 재실측']){
+      const ki = c.body.indexOf(mark);
+      if(ki < 0) continue;
+      let sec = c.body.slice(ki);
+      const end = sec.indexOf('\n## ', 4);
+      if(end > 0) sec = sec.slice(0, end);
+      koSum += (koSum?'\n\n':'') + sec.trim();
+    }
     const acks = c.acks.map((a,ai)=>`<div class="ackrow"><input type="checkbox" id="ack_${ci}_${ai}" onchange="ackCheck(${ci})"><label for="ack_${ci}_${ai}">${esc(a)}</label></div>`).join('');
     const isNotice = c.id.startsWith('MODELALERT');   // 알림형 카드 — 확인하고 닫으면 끝
     const isCalin = c.id.startsWith('CALIN_') && S.calin && S.calin.rows && S.calin.rows.length;
@@ -707,6 +718,9 @@ function renderQueue(){
     return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}">
       <h4>${srcBadge(c)}${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
+      ${koSum?`<div class="evidence" style="max-height:520px;border-left:3px solid var(--run)">${esc(koSum)}</div>
+      <div style="border-top:2px solid var(--line);margin:10px 0"></div>
+      <div class="hint" style="margin-bottom:6px">아래는 참고용 상세(원문 실측 수치)</div>`:''}
       ${review?`<div class="evidence" style="max-height:420px">${esc(review)}</div>
       <div style="border-top:2px solid var(--line);margin:10px 0"></div>
       <div class="hint" style="margin-bottom:6px">아래는 참고용 상세(실측 수치·소견)</div>`:''}
