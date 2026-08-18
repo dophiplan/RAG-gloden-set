@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-18T08:57:25",
+  "updated": "2026-08-18T09:01:30",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,16 +1988,91 @@
           "done_at": "2026-08-18T08:57:25"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_CI_파일럿",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-18T09:01:29"
+        }
+      ],
       "halt_reason": "반려 무효화 사고 — 사람 반려(14:00:46) 1초 뒤 자동 진행이 REJECTED→RUNNING으로 되돌려 커버율 17.8% 맵으로 ④ 골든셋 생성이 시작됐음. 워커 정지·구멍 메우기 완료 후 재개",
       "strategy": "ensemble",
       "start_mode": "full",
       "close_ensemble": true,
       "goldenset": {
-        "phase": "PLAN_GATE",
-        "round": 0,
-        "done_units": [],
-        "batch": "B1"
+        "phase": "ROUNDS",
+        "round": 1,
+        "done_units": [
+          "CI-DOC-001",
+          "CI-DOC-070",
+          "CI-DOC-095",
+          "CI-DOC-129",
+          "CI-DOC-173",
+          "CI-DOC-175",
+          "CI-DOC-194",
+          "CI-DOC-198",
+          "CI-DOC-202",
+          "CI-DOC-207",
+          "CI-DOC-215",
+          "CI-DOC-216",
+          "CI-DOC-217",
+          "CI-DOC-219",
+          "CI-DOC-220",
+          "CI-DOC-223",
+          "CI-DOC-226",
+          "CI-DOC-227",
+          "CI-DOC-239",
+          "CI-DOC-241",
+          "CI-DOC-247",
+          "CI-DOC-253",
+          "CI-DOC-260",
+          "CI-DOC-265",
+          "CI-DOC-266",
+          "CI-DOC-267",
+          "CI-DOC-268",
+          "CI-DOC-270",
+          "CI-DOC-271",
+          "CI-DOC-272"
+        ],
+        "batch": "B1",
+        "last_batch": {
+          "label": "파일럿",
+          "file": "CI_골든셋_파일럿_31문항_v1_0.xlsx",
+          "units": [
+            "CI-DOC-001",
+            "CI-DOC-070",
+            "CI-DOC-095",
+            "CI-DOC-129",
+            "CI-DOC-173",
+            "CI-DOC-175",
+            "CI-DOC-194",
+            "CI-DOC-198",
+            "CI-DOC-202",
+            "CI-DOC-207",
+            "CI-DOC-215",
+            "CI-DOC-216",
+            "CI-DOC-217",
+            "CI-DOC-219",
+            "CI-DOC-220",
+            "CI-DOC-223",
+            "CI-DOC-226",
+            "CI-DOC-227",
+            "CI-DOC-239",
+            "CI-DOC-241",
+            "CI-DOC-247",
+            "CI-DOC-253",
+            "CI-DOC-260",
+            "CI-DOC-265",
+            "CI-DOC-266",
+            "CI-DOC-267",
+            "CI-DOC-268",
+            "CI-DOC-270",
+            "CI-DOC-271",
+            "CI-DOC-272"
+          ]
+        }
       }
     }
   }
