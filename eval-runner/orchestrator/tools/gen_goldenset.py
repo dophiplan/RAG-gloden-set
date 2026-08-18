@@ -399,7 +399,10 @@ def run(prod, cfg):
                 ledger_append("GOLDENSET_BATCH", "BATCH_REJECTED", "script:verify_batch",
                               evidence={"batch": N(path.name), "log": out[-400:]}, product=prod)
                 path.unlink()
-                items = generate_items_chunked(prod, batch_units, start_no=len(gs["done_units"]) + 1,
+                # [P0-1 잔재 수리 2026-08-18] 재생성 경로가 옛 번호 계산(누계+1)을 쓰고 있었음 —
+                # 실측: 4차가 검수 반려→재생성되며 CI-180을 3차 마지막과 중복 발급 (조인 키 충돌)
+                items = generate_items_chunked(prod, batch_units,
+                                               start_no=next_item_no(prod) or (len(gs["done_units"]) + 1),
                                                want_e=is_pilot, cfg=cfg, feedback=fb)
                 ground_citations(items, batch_units)
                 path = write_batch(prod, items, label)
