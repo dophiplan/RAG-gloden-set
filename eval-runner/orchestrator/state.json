@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-18T17:53:45",
+  "updated": "2026-08-18T18:00:45",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "CALIBRATION",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1994,7 +1994,15 @@
           "done_at": "2026-08-18T17:53:45"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "CALIN_CI",
+          "stage": "CALIBRATION",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-18T18:00:44"
+        }
+      ],
       "halt_reason": "반려 무효화 사고 — 사람 반려(14:00:46) 1초 뒤 자동 진행이 REJECTED→RUNNING으로 되돌려 커버율 17.8% 맵으로 ④ 골든셋 생성이 시작됐음. 워커 정지·구멍 메우기 완료 후 재개",
       "strategy": "ensemble",
       "start_mode": "full",
