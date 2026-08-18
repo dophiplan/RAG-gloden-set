@@ -231,11 +231,23 @@ def main():
     else:
         checks.append(("③ citation 실재", "PASS", f"citation {ncit}건 전건 맵 실재"))
 
-    # ④ 질문 중복
+    # ④ 질문 중복 — 배치 내 + [수리 2026-08-18] 전 차수(union)와도 대조.
+    # 실측: 15차 CI-793이 8차 CI-480과 동일 질문인데 7종 PASS — 배치 내부만 보고 있었음
+    # (같은 지식이 성적에 이중 반영되는 왜곡). union 질문 합집합과 교차 검사 추가.
     qn = Counter(norm(r["질문"]) for r in rows if r["질문"])
     dups = {q: c for q, c in qn.items() if c > 1}
-    checks.append(("④ 질문 중복", "FAIL" if dups else "PASS",
-                   f"중복 {len(dups)}" + (f" — 예: {list(dups)[:2]}" if dups else " · 0")))
+    prev_q = set()
+    for up in (a.union or []):
+        try:
+            urows, _, _, _ = read_batch(up)
+        except SystemExit:
+            continue
+        prev_q |= {norm(r["질문"]) for r in urows if r["질문"]}
+    cross = [r["ID"] for r in rows if r["질문"] and norm(r["질문"]) in prev_q]
+    fail = bool(dups) or bool(cross)
+    checks.append(("④ 질문 중복", "FAIL" if fail else "PASS",
+                   f"배치 내 {len(dups)} · 전 차수와 {len(cross)}"
+                   + (f" — 예: {(list(dups)[:1] + cross[:2])[:2]}" if fail else " · 0")))
 
     # ⑧ 제품명 내부코드 검사 [2026-07-23 설계본부 지적: 결함본도 7종 PASS — 제품명 결함을
     #    구조적으로 못 잡았음. 질문·정답에 내부 트랙 코드(RC2 등)가 노출되면 응시 불가 시험지]
