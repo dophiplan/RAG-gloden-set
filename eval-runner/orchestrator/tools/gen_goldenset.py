@@ -140,6 +140,15 @@ def next_item_no(prod):
     return mx + 1 if mx else None
 
 
+def _normalize_ids(items, prod, start_no):
+    """ID 규격 강제 [2차 실측 2026-08-18: 74건 중 43건이 'CI-D32' 등 변형] — AI가 붙인 ID를
+    믿지 않고 스크립트가 순번으로 다시 매긴다 (start_no부터 연속, 형식 <제품>-NNN 고정).
+    ID는 채점·판정·캘리브레이션의 조인 키라 규격이 흔들리면 안 된다."""
+    for k, it in enumerate(items):
+        it["ID"] = f"{prod}-{start_no + k:03d}"
+    return items
+
+
 def _clean_anon_prefix(items, prod, name):
     """익명 제품코드 접두어 제거 안전망 [파일럿 실측 2026-08-18] — 프롬프트 지시(규칙 ④)가
     무시돼도 스크립트가 뗀다. 실명 제품(product_name 이 코드와 다름)은 손대지 않는다."""
@@ -168,7 +177,7 @@ def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
     out = llm.chat("generator", SYSTEM_GEN, body, cfg)
     # 문항 1개면 extract_json이 배열 아닌 낱개 객체를 준다 — 항상 목록으로 정규화
     # (마지막 소차수 1문항 생성에서 'str has no get' HALT — 07-24 2차 사고)
-    norm = lambda x: _clean_anon_prefix([x] if isinstance(x, dict) else [i for i in x if isinstance(i, dict)], prod, name)
+    norm = lambda x: _normalize_ids(_clean_anon_prefix([x] if isinstance(x, dict) else [i for i in x if isinstance(i, dict)], prod, name), prod, start_no)
     try:
         return norm(llm.extract_json(out))
     except ValueError:
