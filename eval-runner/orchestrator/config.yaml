@@ -52,3 +52,4 @@ paths:
   ledger: "./ledger.jsonl"
   state: "./state.json"
   manifest: "./catalog/manifest.json"
+goldenset_chunk_chars: 8000   # 출제 소분할 글자 상한 — 꼬리 구간(긴 매뉴얼 조각) 절단 반환 대응 [10차 실측 29건, 2026-08-18]
