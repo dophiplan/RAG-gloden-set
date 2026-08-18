@@ -92,10 +92,23 @@ def main(prod, n_items):
             expected[tid] = ("0점", fl[1] + " — 조항2 엄격")
     random.shuffle(trials)   # 패턴 학습 방지 (시드 고정 = 재현 가능)
 
-    # 채점 — ⑦과 동일 경로(judge_batch, Kimi)
+    # 채점 — 응답 채점용 직접 호출 [수리 2026-08-18: judge_batch(build_judge_request)는
+    # 허용 키 목록에 '응답'이 없어 변조 답안을 걸러버림 — Kimi가 정답만 보고 채점해 전건 합격,
+    # 도구가 만든 거짓 불합격 판정이었음. ⑧ 응답 채점 상황을 그대로 재현하는 전용 호출로 교체]
     rubric, rname = load_rubric(prod)
-    verdicts = judge_batch(trials, rubric, cfg)
-    vmap = {N(v.get("ID", "")): N(v.get("판정", "")) for v in verdicts}
+    SYS_R = ("[TASK:RESPONSE_GRADING] 너는 RAG 응답 채점관이다. 입력의 판정 기준서만 따르라.\n"
+             "각 항목의 '응답'(수험자가 낸 답)을 '정답'(모범답안·필수 요소)과 대조해 채점하라.\n"
+             "출력: JSON 배열만 — [{ID, 판정(합격|부분|0점), 판정문}]. 판정문에 기준서 조항을 인용하라.")
+    vmap = {}
+    for i in range(0, len(trials), 12):
+        part = [{"ID": t["ID"], "질문": t["질문"], "정답": t["정답"], "응답": t["응답"]}
+                for t in trials[i:i + 12]]
+        resp = llm.chat("judge", SYS_R, json.dumps({"items": part, "rubric": rubric},
+                                                   ensure_ascii=False), cfg)
+        r = llm.extract_json(resp)
+        for v in ([r] if isinstance(r, dict) else r):
+            if isinstance(v, dict):
+                vmap[N(v.get("ID", ""))] = N(v.get("판정", ""))
 
     ok_p = ok_f = n_p = n_f = 0
     detail = []
