@@ -264,14 +264,41 @@ def verify(prod, batch_path, union_paths):
 
 def generate_items_chunked(prod, batch_units, start_no, want_e, cfg, chunk=25, feedback=None):
     """[수리 2026-07-23] 75단위 단발 호출은 응답 절단 반복(75요청→40·42·13 생산) —
-    25단위씩 소분할 호출로 차수 생산량을 밴드에 안정화. E형은 마지막 조각에만."""
+    25단위씩 소분할 호출로 차수 생산량을 밴드에 안정화. E형은 마지막 조각에만.
+    [수리 2026-08-18] 소분할은 '개수'가 아니라 '재료 글자수'로도 잘라야 한다 — CI 실측:
+    남은 단위일수록 fact 가 길어(표·절차 조각) 25개 고정이면 절단 반환이 가속(5차 2→6차 9→7차 24).
+    글자 상한(기본 12,000자)을 먼저 걸고, 그래도 잘리면 조각 이등분 재시도."""
+    CHUNK_CHARS = int(cfg.get("goldenset_chunk_chars") or 12000)
+
+    def parts_of(units):
+        out, cur, cch = [], [], 0
+        for u in units:
+            n = len(str(u.get("fact") or ""))
+            if cur and (cch + n > CHUNK_CHARS or len(cur) >= chunk):
+                out.append(cur)
+                cur, cch = [], 0
+            cur.append(u)
+            cch += n
+        if cur:
+            out.append(cur)
+        return out
+
+    def gen(part, sno, we, depth=0):
+        got = generate_items(prod, part, start_no=sno, want_e=we, cfg=cfg, feedback=feedback)
+        # 생산 미달(요청 대비 절반 미만) = 절단 의심 — 조각을 반으로 쪼개 재시도 (최대 2단)
+        if len(got) < max(1, len(part) // 2) and len(part) >= 4 and depth < 2:
+            mid = len(part) // 2
+            print(f"    ✂ 생산 미달 {len(got)}/{len(part)} — 조각 이등분 재시도 (분할 {depth + 1}단)")
+            a = gen(part[:mid], sno, False, depth + 1)
+            b = gen(part[mid:], sno + len(a), we, depth + 1)
+            return a + b
+        return got
+
+    pieces = parts_of(batch_units)
     items = []
-    for off in range(0, len(batch_units), chunk):
-        part = batch_units[off:off + chunk]
-        last = off + chunk >= len(batch_units)
-        got = generate_items(prod, part, start_no=start_no + len(items),
-                             want_e=(want_e and last), cfg=cfg, feedback=feedback)
-        items += got
+    for pi, part in enumerate(pieces):
+        last = pi == len(pieces) - 1
+        items += gen(part, start_no + len(items), want_e and last)
     return items
 
 
