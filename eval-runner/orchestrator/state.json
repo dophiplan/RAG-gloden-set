@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-18T17:00:12",
+  "updated": "2026-08-18T17:06:26",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,15 +1988,7 @@
           "done_at": "2026-08-18T08:57:25"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_CI_15차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-18T17:00:10"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": "반려 무효화 사고 — 사람 반려(14:00:46) 1초 뒤 자동 진행이 REJECTED→RUNNING으로 되돌려 커버율 17.8% 맵으로 ④ 골든셋 생성이 시작됐음. 워커 정지·구멍 메우기 완료 후 재개",
       "strategy": "ensemble",
       "start_mode": "full",
@@ -2372,7 +2364,6 @@
           "CI-DOC-18015",
           "CI-DOC-18051",
           "CI-DOC-18114",
-          "CI-DOC-18171",
           "CI-DOC-18256",
           "CI-DOC-18284",
           "CI-DOC-18312",
@@ -2825,7 +2816,7 @@
         "batch": "B1",
         "last_batch": {
           "label": "15차",
-          "file": "CI_골든셋_15차_32문항_v1_0.xlsx",
+          "file": "CI_골든셋_15차_31문항_v1_1.xlsx",
           "units": [
             "CI-DOC-16257",
             "CI-DOC-16426",
@@ -2838,7 +2829,6 @@
             "CI-DOC-18015",
             "CI-DOC-18051",
             "CI-DOC-18114",
-            "CI-DOC-18171",
             "CI-DOC-18256",
             "CI-DOC-18284",
             "CI-DOC-18312",
@@ -2985,7 +2975,8 @@
           "CI-DOC-14835",
           "CI-DOC-15677",
           "CI-DOC-16322"
-        ]
+        ],
+        "reject_feedback": "CI-793 중복 — 8차 CI-480과 동일 질문. 해당 문항만 제외"
       }
     }
   }
