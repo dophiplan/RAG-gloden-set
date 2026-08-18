@@ -5032,3 +5032,4 @@
 {"ts": "2026-08-19T08:44:45", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→PENDING", "evidence": {}, "reason": null}
 {"ts": "2026-08-19T08:44:57", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-08-19T08:47:16", "product": "CI", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEWED", "evidence": {"gate": "S2DIFF_CI", "소견 길이": 4120, "주입": "프롬프트 v1.2 + 판례집 + 카드 + 산출물 표본 (작업 맥락 없음)"}, "reason": null}
+{"ts": "2026-08-19T08:48:35", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:claude(작업AI)", "action": "STALE_GATE_CLOSED", "evidence": {"카드": "S2DIFF_CI(구판 85건)", "사유": "기준서 불일치판 카드 — 재판정 완료 후 새 카드로 대체"}, "reason": null}

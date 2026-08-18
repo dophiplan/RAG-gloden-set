@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-19T08:44:57",
+  "updated": "2026-08-19T08:48:35",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -2000,15 +2000,7 @@
           "done_at": "2026-08-19T08:43:18"
         }
       },
-      "open_gates": [
-        {
-          "id": "S2DIFF_CI",
-          "stage": "STAGE2",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-19T08:37:53"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
