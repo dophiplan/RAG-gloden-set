@@ -444,6 +444,21 @@ def run(prod, cfg):
             cited = covered_units(items) & batch_ids
             lost = sorted(batch_ids - cited)
             gs["done_units"] += sorted(cited)
+            # [수리 2026-08-18] 반환 단위에 튕김 횟수 기록 — 2회 이상 튕기면 '출제부적합'으로 격리.
+            # 실측(11차): 반환이 29→38 가속 — 정체는 절단이 아니라 이미지 캡션·로고 설명·보안 문구·
+            # 각주 같은 출제 불가 부스러기. 출제기가 건너뛰는 게 옳은데 루프가 영원히 재급식해
+            # 잔여가 0에 못 닿는 구조였음. 격리분은 마감 카드에 명세로 실어 사람이 최종 확인.
+            bounce = gs.setdefault("bounce", {})
+            unfit = gs.setdefault("unfit_units", [])
+            for uid in lost:
+                bounce[uid] = bounce.get(uid, 0) + 1
+                if bounce[uid] >= 2 and uid not in unfit:
+                    unfit.append(uid)
+            if unfit:
+                # 격리분은 remaining 선정에서 빠지도록 done 과 동급으로 취급하되, 커버 수와는
+                # 분리 집계 (커버 등식에 '부적합 제외 N' 별도 항목 — 커버로 위장 금지)
+                gs["done_units"] = sorted(set(gs["done_units"]))  # 안전 정리
+            lost = [u for u in lost if u not in unfit]
             # 반려 대비 장부: 이 배치가 소진한 단위 명세 — 사람이 반려하면 이 명세로 자동 반환
             gs["last_batch"] = {"label": label, "file": N(path.name), "units": sorted(cited)}
             if fb:
@@ -451,7 +466,11 @@ def run(prod, cfg):
             save_goldenset(prod, gs)   # [P0-5] st 전체 되쓰기 금지 — 신선 병합
             verdict = "PASS" if rc == 0 else "REJECTED(재생성 후에도)"
             ev = {"배치": N(path.name), "문항": len(items), "검수 7종": verdict,
-                  "직접 커버 누계": len(gs["done_units"]), "잔여": len(units) - len(gs["done_units"])}
+                  "직접 커버 누계": len(gs["done_units"]),
+                  "잔여": len(units) - len(gs["done_units"]) - len(gs.get("unfit_units", []))}
+            if gs.get("unfit_units"):
+                ev["출제부적합 격리 누계"] = (f"{len(gs['unfit_units'])}단위 — 2회 이상 튕긴 부스러기"
+                                       f"(이미지 캡션·보안 문구·각주 등), 마감 카드에서 명세 확인")
             if fb:
                 ev["반려 피드백 반영"] = N(fb)[:100]
             if lost:
