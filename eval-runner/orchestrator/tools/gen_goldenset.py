@@ -104,7 +104,12 @@ SYSTEM_GEN = """[TASK:GOLDENSET_ITEMS] 너는 RAG 평가 골든셋 출제기다(
 규칙: ① '근거 원문 발췌'는 해당 unit의 fact 문장 그대로(변형 금지 — 1축 문자 대조됨)
 ② '근거 출처'에 unit_id 와 source(URL/파일명) 병기 — 채점기 출처 대조용
 ③ '정답' 끝에 반드시 "필수: 요소1, 요소2" 줄 포함 — 채점기 필수 요소 파싱 규격
-④ 질문에 제품명 명시 ⑤ want_e=true면 코퍼스 부재 소재 E형 1문항 추가 ⑥ 질문 중복 금지."""
+④ 질문은 **실제 고객이 상담 창구에 묻는 자연스러운 문장**으로 쓴다.
+   - product_name 이 실제 서비스명이면 문맥상 자연스러울 때만 질문에 포함.
+   - product/prefix 가 익명 코드(예: 'CI')면 **ID 접두어로만 쓰고 질문 문장에는 절대 넣지 마라**
+     — 고객은 내부 코드를 모른다. ("CIについて、…ですか？" 같은 문장 금지 [파일럿 실측 2026-08-18:
+     31문항 전부 익명 코드 접두어가 붙어 부자연 — 질문은 소재 서비스명(Netflix 등)으로 시작하라])
+⑤ want_e=true면 코퍼스 부재 소재 E형 1문항 추가 ⑥ 질문 중복 금지."""
 
 
 def next_item_no(prod):
@@ -135,6 +140,20 @@ def next_item_no(prod):
     return mx + 1 if mx else None
 
 
+def _clean_anon_prefix(items, prod, name):
+    """익명 제품코드 접두어 제거 안전망 [파일럿 실측 2026-08-18] — 프롬프트 지시(규칙 ④)가
+    무시돼도 스크립트가 뗀다. 실명 제품(product_name 이 코드와 다름)은 손대지 않는다."""
+    if name and N(name) != N(prod):
+        return items
+    pat = re.compile(rf"^\s*{re.escape(prod)}\s*(について、?|に関して、?|では、?|の)\s*")
+    for it in items:
+        q = N(it.get("질문", ""))
+        q2 = pat.sub("", q)
+        if q2 != q and len(q2) >= 8:
+            it["질문"] = q2
+    return items
+
+
 def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
     prof = cfg["terrain"]["profiles"][prod]
     name = prof.get("product_name", prod)
@@ -149,7 +168,7 @@ def generate_items(prod, units, start_no, want_e, cfg, feedback=None):
     out = llm.chat("generator", SYSTEM_GEN, body, cfg)
     # 문항 1개면 extract_json이 배열 아닌 낱개 객체를 준다 — 항상 목록으로 정규화
     # (마지막 소차수 1문항 생성에서 'str has no get' HALT — 07-24 2차 사고)
-    norm = lambda x: [x] if isinstance(x, dict) else [i for i in x if isinstance(i, dict)]
+    norm = lambda x: _clean_anon_prefix([x] if isinstance(x, dict) else [i for i in x if isinstance(i, dict)], prod, name)
     try:
         return norm(llm.extract_json(out))
     except ValueError:
