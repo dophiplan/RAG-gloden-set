@@ -146,6 +146,9 @@ def _normalize_ids(items, prod, start_no):
     ID는 채점·판정·캘리브레이션의 조인 키라 규격이 흔들리면 안 된다."""
     for k, it in enumerate(items):
         it["ID"] = f"{prod}-{start_no + k:03d}"
+        # 닻 표기 통일 [3차 실측 2026-08-18: 必須(일) 25건·필수(한) 50건 혼용] — 규격은 '필수:' 하나
+        if it.get("정답"):
+            it["정답"] = N(it["정답"]).replace("必須:", "필수:").replace("必須：", "필수:")
     return items
 
 
