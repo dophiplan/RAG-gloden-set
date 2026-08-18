@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-14T16:58:37",
+  "updated": "2026-08-18T08:57:25",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,8 +1972,8 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "COVERAGE_MAP",
-      "status": "WAITING_HUMAN",
+      "stage": "GOLDENSET_BATCH",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1985,27 +1985,10 @@
           "done_at": "2026-08-07T08:46:03"
         },
         "COVERAGE_MAP": {
-          "done_at": "2026-08-13T14:00:47"
+          "done_at": "2026-08-18T08:57:25"
         }
       },
-      "open_gates": [
-        {
-          "id": "COVMAP_CI",
-          "stage": "COVERAGE_MAP",
-          "flags": [
-            {
-              "type": "잔여 미커버 (초단문·링크의존 FAQ)",
-              "id": "청크 43건 (0.03%)",
-              "candidates": [
-                "답이 한 줄('수수료 없음')이거나 '여기를 확인' 링크 안내형 — 시험 재료 부적합 유형",
-                "포함하려면 별도 지시, 아니면 ack 후 승인"
-              ]
-            }
-          ],
-          "acked": false,
-          "issued": "2026-08-14T16:58:36"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": "반려 무효화 사고 — 사람 반려(14:00:46) 1초 뒤 자동 진행이 REJECTED→RUNNING으로 되돌려 커버율 17.8% 맵으로 ④ 골든셋 생성이 시작됐음. 워커 정지·구멍 메우기 완료 후 재개",
       "strategy": "ensemble",
       "start_mode": "full",
@@ -2015,12 +1998,6 @@
         "round": 0,
         "done_units": [],
         "batch": "B1"
-      },
-      "reject_lock": {
-        "stage": "COVERAGE_MAP",
-        "gate_id": "COVMAP_CI",
-        "reason": "커버율 17.8% 실측 — 구멍 메우기 완료 후 재발행 대기 (난희 반려 14:00:46)",
-        "ts": "2026-08-13T14:00:46"
       }
     }
   }
