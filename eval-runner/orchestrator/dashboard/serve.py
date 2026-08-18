@@ -851,6 +851,14 @@ def api_calin(prod):
         rows.append({"id": N(r[0]), "type": N(r[1]), "q": N(r[2]), "a": N(r[3]),
                      "crit": N(r[4]), "v": N(r[5]) if len(r) > 5 and r[5] else ""})
     wb.close()
+    # [난희 요청 2026-08-18] 일본어 문항 한국어 병기 — 번역 캐시(금고)에서 붙임 (참고용, 원문이 정본)
+    try:
+        cache = json.loads((ROOT / "data" / prod / "번역" / "_팝업번역캐시.json").read_text(encoding="utf-8"))
+        for row in rows:
+            row["q_ko"] = cache.get(row["q"], "")
+            row["a_ko"] = cache.get(row["a"], "")
+    except Exception:
+        pass
     return {"rows": rows, "file": N(f.name)}
 
 

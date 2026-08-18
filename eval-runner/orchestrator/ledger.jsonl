@@ -4980,3 +4980,4 @@
 {"ts": "2026-08-18T18:00:44", "product": "CI", "stage": "CALIBRATION", "gate_id": "CALIN_CI", "actor": "script:orchestrator", "action": "ISSUE_GATE_CARD", "evidence": {"파일": "CI_judge_캘리브레이션_판정30_v1_0.xlsx", "judge 판정": "완료·보존", "사람 판정": "0/30 기입"}, "reason": null}
 {"ts": "2026-08-18T18:00:45", "product": "CI", "stage": "CALIBRATION", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→WAITING_HUMAN", "evidence": {"사람 판정": "미기입"}, "reason": null}
 {"ts": "2026-08-18T18:00:45", "product": "CI", "stage": "CALIBRATION", "gate_id": null, "actor": "script:auto_run", "action": "AUTO_RUN_STOPPED", "evidence": {"사유": "WAITING_HUMAN 도달 — 사람 차례거나 완료"}, "reason": null}
+{"ts": "2026-08-18T18:02:57", "product": "CI", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEWED", "evidence": {"gate": "CALIN_CI", "소견 길이": 1899, "주입": "프롬프트 v1.2 + 판례집 + 카드 + 산출물 표본 (작업 맥락 없음)"}, "reason": null}

@@ -1150,7 +1150,9 @@ function renderCalinDlg(){
   $('cal-body').innerHTML = bulkbar + (rows.map((r,i)=>`<div class="calrow ${r.v?'done':''}">
       <div class="calq"><label style="cursor:pointer"><input type="checkbox" ${CALSEL.has(r.id)?'checked':''} onchange="calSel('${esc(r.id)}',this.checked)">
         <b>${i+1}. [${esc(r.id)}]</b></label> ${esc(r.q)}</div>
+      ${r.q_ko?`<div class="calq" style="opacity:.85">🇰🇷 ${esc(r.q_ko)}</div>`:''}
       <div class="cala">답: ${esc(r.a)}</div>
+      ${r.a_ko?`<div class="cala" style="opacity:.85">🇰🇷 ${esc(r.a_ko)}</div>`:''}
       <div class="cala hint">기준: ${esc(r.crit)}</div>
       <div class="btns" style="margin:5px 0 0">
         <button class="btn ${r.v==='합격'?'approve':''}" onclick="setCalin('${esc(r.id)}','합격')">합격</button>
