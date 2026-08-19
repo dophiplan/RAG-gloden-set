@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-19T08:59:04",
+  "updated": "2026-08-19T09:12:24",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,8 +1972,8 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "STAGE2",
-      "status": "WAITING_HUMAN",
+      "stage": "SCORING",
+      "status": "WAITING_INPUT",
       "calibration_passed": true,
       "scorer_version": "7f27b2ac8c7a5e7574149c4694981df4ebe02a3410605e1df6f5ee936f8bf092",
       "compare_blocked": false,
@@ -1997,18 +1997,10 @@
           "done_at": "2026-08-18T18:10:40"
         },
         "STAGE2": {
-          "done_at": "2026-08-19T08:43:18"
+          "done_at": "2026-08-19T09:12:24"
         }
       },
-      "open_gates": [
-        {
-          "id": "S2DIFF_CI",
-          "stage": "STAGE2",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-19T08:59:03"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
