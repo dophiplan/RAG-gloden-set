@@ -34,7 +34,7 @@ def anorm(s):
     return STRIP.sub("", unicodedata.normalize("NFC", str(s or ""))).lower()
 
 
-def main(prod, rate, role="generator"):
+def main(prod, rate, role="generator", shard=None):
     cfg = load_config()
     z = zipfile.ZipFile(ROOT / "data" / prod / "벡터감사" / "exports.zip_")
     rows = []
@@ -45,6 +45,9 @@ def main(prod, rate, role="generator"):
             rows.append({"doc": ("FAQ" if r["doc_key"] == "288882413337" else "매뉴얼") + f"_{r['chunk_index']}",
                          "chunk_id": int(r["chunk_index"]),
                          "text": N(r.get("text", "")), "source": N(r.get("title", ""))})
+    if shard:                     # "i/n" — 전량 재추출용 라운드로빈 분담 (결정적)
+        si, sn = (int(x) for x in shard.split("/"))
+        rows = [r for k, r in enumerate(rows) if k % sn == si - 1]
     chars = sum(len(r["text"]) for r in rows)
     plan = gc.plan_batches(rows, cfg)
     print(f"표본: {len(rows):,}청크 · {chars:,}자 → {len(plan)}배치 (claude 단독)")
@@ -53,7 +56,10 @@ def main(prod, rate, role="generator"):
                   evidence={"표본": f"{len(rows):,}청크 (1/{rate}) · {len(plan)}배치", "주자": who + " 단독",
                             "목적": "팀장님 데이터 재추출 vs 우리 지도 비교 (난희 발주)"}, product=prod)
     units = gc.generate_units(prod, rows, cfg, role=role,
-                              ckpt_tag=f"_rebasecmp_{role}", phase=f"재추출 비교 (팀장님 데이터 표본, {who})")
+                              ckpt_tag=f"_rebasecmp_{role}" + (f"_s{shard.split(chr(47))[0]}" if shard else ""), phase=f"재추출 비교 (팀장님 데이터 표본, {who})")
+    if shard:   # 샤드 모드 = 추출만 (비교·리포트는 전 조각 완주 후 별도)
+        print(f"조각 {shard} 추출 완료 — 체크포인트 보존")
+        return
     # 1축: 팀장님 텍스트 기준
     big = anorm(" ".join(r["text"] for r in rows))
     ok = [u for u in units if isinstance(u, dict) and len(anorm(u.get("fact", ""))) >= 10
@@ -100,5 +106,6 @@ if __name__ == "__main__":
     ap.add_argument("product")
     ap.add_argument("--rate", type=int, default=20, help="N청크마다 1개 표본 (기본 20 = 5%)")
     ap.add_argument("--role", default="generator", choices=["generator", "judge", "reviewer"])
+    ap.add_argument("--shard", help="'1/3' — 전량 재추출 분담 조각")
     a = ap.parse_args()
-    main(a.product, a.rate, a.role)
+    main(a.product, a.rate, a.role, a.shard)
