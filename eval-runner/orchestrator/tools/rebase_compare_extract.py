@@ -34,7 +34,7 @@ def anorm(s):
     return STRIP.sub("", unicodedata.normalize("NFC", str(s or ""))).lower()
 
 
-def main(prod, rate):
+def main(prod, rate, role="generator"):
     cfg = load_config()
     z = zipfile.ZipFile(ROOT / "data" / prod / "벡터감사" / "exports.zip_")
     rows = []
@@ -48,11 +48,12 @@ def main(prod, rate):
     chars = sum(len(r["text"]) for r in rows)
     plan = gc.plan_batches(rows, cfg)
     print(f"표본: {len(rows):,}청크 · {chars:,}자 → {len(plan)}배치 (claude 단독)")
+    who = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}.get(role, role)
     ledger_append("SCORING", "REBASE_EXTRACT_START", "script:rebase_compare",
-                  evidence={"표본": f"{len(rows):,}청크 (1/{rate}) · {len(plan)}배치", "주자": "claude 단독",
+                  evidence={"표본": f"{len(rows):,}청크 (1/{rate}) · {len(plan)}배치", "주자": who + " 단독",
                             "목적": "팀장님 데이터 재추출 vs 우리 지도 비교 (난희 발주)"}, product=prod)
-    units = gc.generate_units(prod, rows, cfg, role="generator",
-                              ckpt_tag="_rebasecmp", phase="재추출 비교 (팀장님 데이터 표본, claude)")
+    units = gc.generate_units(prod, rows, cfg, role=role,
+                              ckpt_tag=f"_rebasecmp_{role}", phase=f"재추출 비교 (팀장님 데이터 표본, {who})")
     # 1축: 팀장님 텍스트 기준
     big = anorm(" ".join(r["text"] for r in rows))
     ok = [u for u in units if isinstance(u, dict) and len(anorm(u.get("fact", ""))) >= 10
@@ -75,8 +76,8 @@ def main(prod, rate):
     ov_rate = overlap / max(1, len(ok))
     print(f"겹침(우리 지도에 이미 있음): {overlap:,} ({ov_rate:.1%}) · 신규(우리에 없음): {new:,}")
 
-    out = ROOT / "data" / prod / "벡터감사" / f"재추출비교_r1_{datetime.date.today():%Y%m%d}.md"
-    L = [f"# 재추출 비교 r1 — 팀장님 데이터 표본 {len(rows):,}청크, claude 단독",
+    out = ROOT / "data" / prod / "벡터감사" / f"재추출비교_r1_{who}_{datetime.date.today():%Y%m%d}.md"
+    L = [f"# 재추출 비교 r1 — 팀장님 데이터 표본 {len(rows):,}청크, {who} 단독",
          "", f"- 실행: {datetime.datetime.now().isoformat(timespec='seconds')} · 표본 1/{rate} (결정적)",
          "", "| 지표 | 값 |", "|---|---|",
          f"| 추출 단위 (1축 통과) | {len(ok):,} |",
@@ -98,5 +99,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("product")
     ap.add_argument("--rate", type=int, default=20, help="N청크마다 1개 표본 (기본 20 = 5%)")
+    ap.add_argument("--role", default="generator", choices=["generator", "judge", "reviewer"])
     a = ap.parse_args()
-    main(a.product, a.rate)
+    main(a.product, a.rate, a.role)
