@@ -34,3 +34,14 @@ gen_coverage.CoveragePaused: generator 73/302 배치에서 중단
   [generator] 커버리지 추출 105/302 배치…
   [generator] 커버리지 추출 110/302 배치…
   [generator] 커버리지 추출 115/302 배치…
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/rebase_compare_extract.py", line 111, in <module>
+    main(a.product, a.rate, a.role, a.shard)
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/rebase_compare_extract.py", line 58, in main
+    units = gc.generate_units(prod, rows, cfg, role=role,
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 116/302 배치에서 중단
+표본: 7,118청크 · 7,024,556자 → 302배치 (claude 단독)
+  [generator] 체크포인트 재개 — 116/302 배치부터 이어서
