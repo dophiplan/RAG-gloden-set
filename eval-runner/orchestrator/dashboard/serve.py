@@ -506,8 +506,11 @@ def _extractor_rows(code, prog=None):
                    "total": a["total"] or tt_any, "units": a["units"], "fails": a["fails"]}
             if a.get("mtime"):
                 row["age_min"] = max(0, int((_time.time() - a["mtime"]) // 60))
-            if whole and whole["total"]:
-                # 이번 조각에서 이 주자가 지나간 청크(배치 비율 근사) + 기커버(기여 주자에게)
+            # [난희 실측 2026-08-20] '전체의 %'는 커버리지맵 분모(우리 3,007청크) 기준이라
+            # 재추출(팀장님 21,354청크) 같은 다른 작업에선 91%에 얼어붙은 것처럼 보임 —
+            # 진행 파일의 국면이 구멍 메우기가 아니면 조각 배치 %로 표시 (분모가 맞는 자만 쓴다)
+            phase_now = str((prog or {}).get("phase") or "")
+            if whole and whole["total"] and ("구멍 메우기" in phase_now or not phase_now):
                 seg = int(a.get("chunks_est") or 0)
                 base = whole["before"] if role == whole["base_role"] else 0
                 row["whole_pct"] = round(min(base + seg, whole["total"]) / whole["total"] * 100)
@@ -538,7 +541,8 @@ def api_progress(code):
     stale_stage = bool(d) and d.get("stage", "COVERAGE_MAP") != _st.get("stage")
     if not d or stale_stage:
         # 진행 파일이 없거나 낡음 — 체크포인트만으로 '멈춘 자리' 보고 (active=False, snapshot=True)
-        rows, tot = _extractor_rows(code)
+        # [2026-08-20] 스냅샷 경로도 진행 파일의 국면은 넘긴다 — '전체의 %' 적용 여부 판단용
+        rows, tot = _extractor_rows(code, d if d else None)
         if not rows:
             return {"active": False}
         return {"active": False, "snapshot": True, "stage": _st.get("stage"),
