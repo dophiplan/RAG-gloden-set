@@ -80,12 +80,13 @@
   /* AI 팀 진행 패널 — 멈춤·사고 상태에서도 '누가 어디까지' 항상 보이게 [난희 요청] */
   .aiprog{margin:8px 0 2px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-size:11.5px}
   .aiprog .hd{font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px}
-  .aiprow{display:grid;grid-template-columns:58px 1fr 116px;gap:8px;align-items:center;margin:3px 0}
+  /* [난희 요청 2026-08-20] 진행 막대를 줄이고 텍스트를 한 줄로 — 칸 배분: 이름 58px · 막대 최대 140px · 텍스트 나머지 전부 */
+  .aiprow{display:grid;grid-template-columns:58px minmax(70px,140px) 1fr;gap:8px;align-items:center;margin:3px 0}
   .aiprow b{color:var(--tx)}
   .aibar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}
   .aibar i{display:block;height:100%;border-radius:5px;background:var(--run)}
   .aiprow.paused .aibar i{background:#ffcc66}
-  .aiprow .num{text-align:right;color:var(--tx2);font-variant-numeric:tabular-nums}
+  .aiprow .num{text-align:right;color:var(--tx2);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .qachip{font-size:11px;font-weight:600;color:#c9a6ff;background:rgba(170,120,255,.10);border:1px solid rgba(170,120,255,.55);border-radius:999px;padding:4px 11px;margin-left:10px;white-space:nowrap}
   /* G20: 외부 Q&A 옆길 레인 — ①~⑨ 본선 아래, 별도 트랙이 어디까지 왔는지 */
   .qalane{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:10px;padding:7px 12px;border:1px dashed rgba(170,120,255,.45);border-radius:10px;background:rgba(170,120,255,.05);font-size:11px}
