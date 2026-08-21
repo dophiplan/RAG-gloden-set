@@ -1,0 +1,9 @@
+usage: sprint_takeover.py [-h] --piece {1,2,3} --role
+                          {generator,reviewer,judge}
+usage: sprint_takeover.py [-h] --piece {1,2,3} --role
+                          {generator,reviewer,judge}
+usage: sprint_takeover.py [-h] --piece {1,2,3} --role
+                          {generator,reviewer,judge}
+sprint_takeover.py: error: argument --role: expected one argument
+sprint_takeover.py: error: argument --role: expected one argument
+sprint_takeover.py: error: argument --role: expected one argument
