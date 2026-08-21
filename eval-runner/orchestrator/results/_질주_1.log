@@ -1,1 +1,37 @@
 최종 잔여 1,506청크 / 8차선 — 내 몫 189 (claude 차선1)
+  [generator] 커버리지 추출 5/8 배치…
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/final_dash.py", line 66, in <module>
+    gc.generate_units("CI", mine, cfg, role=a.role, ckpt_tag=f"_rebasecmp_final{a.piece}",
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 3/8 배치에서 중단
+최종 잔여 1,478청크 / 8차선 — 내 몫 185 (claude 차선1)
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/final_dash.py", line 66, in <module>
+    gc.generate_units("CI", mine, cfg, role=a.role, ckpt_tag=f"_rebasecmp_final{a.piece}",
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 0/8 배치에서 중단
+최종 잔여 1,456청크 / 8차선 — 내 몫 182 (claude 차선1)
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/final_dash.py", line 66, in <module>
+    gc.generate_units("CI", mine, cfg, role=a.role, ckpt_tag=f"_rebasecmp_final{a.piece}",
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 0/8 배치에서 중단
+최종 잔여 1,433청크 / 8차선 — 내 몫 180 (claude 차선1)
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/final_dash.py", line 66, in <module>
+    gc.generate_units("CI", mine, cfg, role=a.role, ckpt_tag=f"_rebasecmp_final{a.piece}",
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 0/8 배치에서 중단
+최종 잔여 1,433청크 / 8차선 — 내 몫 180 (claude 차선1)
+Traceback (most recent call last):
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/final_dash.py", line 66, in <module>
+    gc.generate_units("CI", mine, cfg, role=a.role, ckpt_tag=f"_rebasecmp_final{a.piece}",
+  File "/Users/nanheekim/eval-runner/orchestrator/tools/gen_coverage.py", line 278, in generate_units
+    raise CoveragePaused(f"{role} {done}/{total} 배치에서 중단")
+gen_coverage.CoveragePaused: generator 0/8 배치에서 중단
+최종 잔여 1,433청크 / 8차선 — 내 몫 180 (claude 차선1)
