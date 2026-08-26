@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T18:14:08",
+  "updated": "2026-08-26T18:22:11",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,15 +1988,7 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_CI_2차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T18:14:06"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
