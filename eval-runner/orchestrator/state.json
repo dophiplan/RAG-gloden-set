@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T17:39:12",
+  "updated": "2026-08-26T17:40:11",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,12 +1988,20 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSPLAN_CI",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T17:40:10"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
       "goldenset": {
-        "phase": "MATERIAL",
+        "phase": "PLAN_GATE",
         "round": 0,
         "done_units": [],
         "batch": "B1",
