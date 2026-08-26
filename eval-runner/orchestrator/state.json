@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T23:04:04",
+  "updated": "2026-08-26T23:12:20",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,8 +1972,8 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "stage": "CALIBRATION",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1986,17 +1986,15 @@
         },
         "COVERAGE_MAP": {
           "done_at": "2026-08-26T17:35:52"
+        },
+        "GOLDENSET_BATCH": {
+          "done_at": "2026-08-26T23:12:19"
+        },
+        "UNIFIED_LEDGER": {
+          "done_at": "2026-08-26T23:12:20"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSCLOSE_CI",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T23:04:03"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
