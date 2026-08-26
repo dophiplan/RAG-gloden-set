@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T23:21:54",
+  "updated": "2026-08-26T23:35:50",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,9 +1972,9 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "CALIBRATION",
-      "status": "WAITING_HUMAN",
-      "calibration_passed": false,
+      "stage": "STAGE2",
+      "status": "RUNNING",
+      "calibration_passed": true,
       "scorer_version": null,
       "compare_blocked": false,
       "stage_history": {
@@ -1992,17 +1992,12 @@
         },
         "UNIFIED_LEDGER": {
           "done_at": "2026-08-26T23:12:20"
+        },
+        "CALIBRATION": {
+          "done_at": "2026-08-26T23:35:50"
         }
       },
-      "open_gates": [
-        {
-          "id": "CALIN_CI",
-          "stage": "CALIBRATION",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T23:21:53"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
