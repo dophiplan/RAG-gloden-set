@@ -49,7 +49,13 @@ for u in raw:
 print(f"② 검증·중복 제거: {len(ok):,}단위 (원문 실재·유일)")
 
 # ③ 우리 지도와 비교
-ours = mg.read_map(mg.latest_map("CI"))
+import re as _re
+def _vkey(p): return [int(x) for x in _re.findall(r"\d+", p.stem.split("코퍼스판")[-1])]
+_arc = sorted((ROOT / "data/CI/아카이브_r1_제작산출물/03_coverage_map").glob("*코퍼스판_v*.xlsx"), key=_vkey)
+_live = sorted((ROOT / "data/CI/03_coverage_map").glob("*코퍼스판_v*.xlsx"), key=_vkey)
+_map = (_live or _arc)[-1]
+print("비교 기준 지도:", _map.name)
+ours = mg.read_map(_map)   # r1 지도가 아카이브로 이동됨(r2 준비) — 비교는 아카이브 최신판(v1_18)
 our_facts = " § ".join(anorm(u["fact"]) for u in ours)
 overlap = sum(1 for u in ok if anorm(u["fact"]) in our_facts)
 new = [u for u in ok if anorm(u["fact"]) not in our_facts]

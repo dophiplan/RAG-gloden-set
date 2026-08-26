@@ -802,8 +802,12 @@ function renderScores(ps){
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
-    const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)"
-      return (typeof v==='number'&&n)? `${v} <span class="hint">(${Math.round(v/n*100)}%)</span>` : esc(String(v??'·')); };
+    const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)" · 미응시/결측은 '-' (숫자 금지 [난희 지시 2026-08-25])
+      // 검색축만 회차: 생성 계열 지표는 값이 0으로 계산돼 와도 무조건 '-' — "0 (0%)" 오독 원천 차단
+      const GEN_KEYS = ['pass','partial','E환각','E거절'];
+      if(sc[r]['검색축만'] && GEN_KEYS.includes(k)) return `<span class="hint" title="미응시 — 이 회차는 검색축만 측정">-</span>`;
+      if(v==null || v==='미응시') return `<span class="hint" title="미응시 — 이 회차에서 측정하지 않음">-</span>`;
+      return (typeof v==='number'&&n)? `${v} <span class="hint">(${Math.round(v/n*100)}%)</span>` : esc(String(v)); };
     const row = (nm,k)=>`<tr><td class="m">${nm}</td>${rounds.map((r,i)=>
       `<td class="${i===rounds.length-1?'cur':''}">${fmt(r,k)}</td>`).join('')}</tr>`;
     // 전 회차 대비 변화 — 같은 시험지(세대) 안에서만 의미 있음
@@ -812,7 +816,7 @@ function renderScores(ps){
       const p=sc[rounds[i-1]], v=sc[r];
       const d1=(typeof v.top1==='number'&&typeof p.top1==='number')? v.top1-p.top1 : null;
       const d5=(typeof v.top5==='number'&&typeof p.top5==='number')? v.top5-p.top5 : null;
-      const s=x=> x===null?'·':(x>0?`▲${x}`:x<0?`▼${-x}`:'—');
+      const s=x=> x===null?'-':(x>0?`▲${x}`:x<0?`▼${-x}`:'—');
       return `<td class="${i===rounds.length-1?'cur':''}" style="color:${(d1??0)>0?'var(--ok,#3dd6b0)':(d1??0)<0?'var(--halt)':'inherit'}">${s(d1)}/${s(d5)}</td>`;}).join('')}</tr>`;
     const nRep = code? rounds.filter(r=>sc[r].scorer!=='기록 이관').length : 0;
     const repLinks = nRep? `<button class="archbtn" onclick="openReports('${encodeURIComponent(code)}','${esc(label)}')">📤 리포트 보관함 ${nRep} ›</button>` : '';
@@ -1018,7 +1022,7 @@ function openReports(codeEnc, label){
   $('rpt-body').innerHTML = rounds.map(r=>{
     const v = sc[r];
     return `<div class="frow">
-      <span class="fn"><b>${esc(r)}</b> · top1 ${v.top1??'·'} · top5 ${v.top5??'·'}${v.n?` / ${v.n}문항`:''}${v.pass==='미응시'?' · 검색축만':''}</span>
+      <span class="fn"><b>${esc(r)}</b> · top1 ${v.top1??'-'} · top5 ${v.top5??'-'}${v.n?` / ${v.n}문항`:''}${v.pass==='미응시'?' · 검색축만':''}</span>
       <a class="dl" href="/api/report?product=${encodeURIComponent(code)}&round=${encodeURIComponent(r)}" download>⬇ 받기</a>
     </div>`;
   }).join('') || '<div class="note">받을 수 있는 회차 리포트가 아직 없어요</div>';

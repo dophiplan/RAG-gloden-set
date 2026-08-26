@@ -36,6 +36,9 @@ def j(o):
 PRODUCT_META = {
     "RV2": {"display": "RV", "product_name": "리모트뷰", "gen": "골든셋 v2.0 — 현역(구축 중)"},
     "RC2": {"display": "RC", "product_name": "리모트콜", "gen": "골든셋 v2.0 — 현역(구축 중)"},
+    # CI: 채점센터 vault(data/CI = RAG-eval-CI-vault 클론) 연동 제품 — 채점은 vault에서 수행,
+    # 관제판은 data/CI를 읽어 표시만 한다. 동기화: dashboard/CI_동기화.command (git pull)
+    "CI": {"display": "CI", "product_name": "파트너 CI (채점센터 연동)", "gen": "r1 채점 완료 — r2 신규 출제 중"},
 }
 LEGACY_GENS = {   # display → 이전 세대 (데이터 폴더 코드, 라벨) — 은퇴일: 원장 GOLDENSET_RETIRED
     "RV": [{"code": "RV", "gen": "골든셋 v1 · 806문항 — 2026-07-20 은퇴(정답키 공개, 참고용)"}],
@@ -87,6 +90,13 @@ def api_state():
         if code in HIDDEN_CODES:
             continue
         meta = PRODUCT_META.get(code, {"display": code, "product_name": code, "gen": "현역"})
+        if code == "CI":   # vault 동기화분에서 r2 신규 출제 진행률을 라벨에 반영
+            led = ROOT / "data" / "CI" / "09_r2_시험지" / "CI_r2_원장.jsonl"
+            try:
+                n_r2 = sum(1 for _ in led.open(encoding="utf-8")) if led.exists() else 0
+                meta = {**meta, "gen": f"r1 채점 완료(기계 31.4%·사람판독 58.2%) — r2 신규 출제 중 {n_r2}/300"}
+            except Exception:
+                pass
         st["_products"][meta["display"]] = {
             "code": code, "name": meta["product_name"], "gen": meta["gen"],
             "legacy": LEGACY_GENS.get(meta["display"], []),
@@ -204,6 +214,8 @@ def api_scores():
         if not m:
             continue
         prod, rnd = m.group(1), m.group(2)
+        if prod == "CI":
+            continue   # CI 정본은 vault(data/CI) 어댑터 — results의 옛 실패 잔해(전건 miss)가 0%로 덮어쓰지 않게
         rp = d / "score_report.json"
         if not rp.exists():
             continue
@@ -230,13 +242,68 @@ def api_scores():
             "pass": ("미응시" if search_only else g.get("pass", 0)),
             "partial": ("미응시" if search_only else g.get("partial", 0)),
             "검색축만": search_only, "분석": anal,
-            "E환각": sum(1 for r in rep if r.get("E형환각")),
-            "E거절": sum(1 for r in rep if r.get("E형거절")),
+            "E환각": ("미응시" if search_only else sum(1 for r in rep if r.get("E형환각"))),
+            "E거절": ("미응시" if search_only else sum(1 for r in rep if r.get("E형거절"))),
             "n": len(rep),
             # G20: 외부 Q&A 별도 트랙은 기계 내용 대조 채점 — 라벨로 구분 (골든셋 채점기 아님)
             "scorer": ("내용 대조(Q&A 트랙)" if any(d.glob("외부QA_r*_리포트.md"))
                        else "run_score_v11"),
         }
+    # CI — 채점센터 vault(data/CI) 실측 집계. vault의 score_report.json은 {"meta","results"} 형식
+    ci_dir = ROOT / "data" / "CI" / "08_scoring"
+    if ci_dir.exists():
+        for d in sorted(ci_dir.glob("score_CI_*")):
+            rp = d / "score_report.json"
+            if not rp.exists():
+                continue
+            try:
+                raw = json.loads(rp.read_text(encoding="utf-8"))
+                rep = raw.get("results", raw) if isinstance(raw, dict) else raw
+            except Exception:
+                continue
+            m = re.fullmatch(r"score_CI_(r\d+|base\d+)", d.name)
+            rnd = m.group(1) if m else d.name.replace("score_CI_", "")
+            c = Counter(r.get("검색") for r in rep)
+            g = Counter(r.get("생성") for r in rep)
+            top1 = c.get("hit_top1", 0)
+            search_only = all(r.get("생성") in (None, "미응시") for r in rep)   # 로그 실측으로 판정
+            out.setdefault("CI", {})[rnd] = {
+                "top1": top1, "top5": top1 + c.get("hit_top5", 0),
+                "pass": ("미응시" if search_only else g.get("pass", 0)),
+                "partial": ("미응시" if search_only else g.get("partial", 0)),
+                "검색축만": search_only,
+                "분석": {"사람판독_도달률": "58.2% (미적중 708건 전건판독 확정)" if rnd == "r1" else None,
+                         "출처": "채점센터 vault(data/CI) 동기화분"},
+                "E환각": ("미응시" if search_only else sum(1 for r in rep if r.get("E형환각"))),
+                "E거절": ("미응시" if search_only else sum(1 for r in rep if r.get("E형거절"))),
+                "n": len(rep), "scorer": "채점센터 vault",
+            }
+        # top50 진단 — 문항별 리포트 없이 회차인덱스의 집계만 존재 → 진단 행으로 병기
+        try:
+            import glob as _g
+            idxs = list(ci_dir.glob("*회차인덱스*.json"))
+            if idxs and "base50" not in out.get("CI", {}):
+                idx = json.loads(idxs[0].read_text(encoding="utf-8"))
+                for ent in idx.get("회차", []):
+                    if str(ent.get("회차")) == "top50진단":
+                        mm = re.search(r"(\d+)\s*/\s*(\d+)", str(ent.get("채점", {}).get("기계대조_top50", "")))
+                        if mm:
+                            out.setdefault("CI", {})["base50"] = {
+                                "top1": None, "top5": int(mm.group(1)), "n": int(mm.group(2)),
+                                "pass": "미응시", "partial": "미응시", "검색축만": True,
+                                "E환각": "미응시", "E거절": "미응시", "scorer": "진단(top_k=50·개선 전 형상)",
+                                "분석": {"note": ent.get("채점", {}).get("미적중708_분해"),
+                                         "출처": "채점센터 vault 회차인덱스"}}
+        except Exception:
+            pass
+    # CIQA 기준선 라벨 — base1/2/3은 재응시가 아니라 서로 다른 기준선 3종 (사전 실측 참고선)
+    _ciqa_names = {"base1": "문자검색(FAQ 포함) — 사전 기준선", "base2": "매뉴얼만 문자검색 — 사전 기준선",
+                   "base3": "맥락 질문 14문항 — 사전 기준선"}
+    for rnd, nm_ in _ciqa_names.items():
+        if rnd in out.get("CIQA", {}):
+            out["CIQA"][rnd].setdefault("분석", {})
+            if isinstance(out["CIQA"][rnd]["분석"], dict) or out["CIQA"][rnd]["분석"] is None:
+                out["CIQA"][rnd]["분석"] = {**(out["CIQA"][rnd]["분석"] or {}), "기준선": nm_}
     # 문서 기록 이관 — 로컬 재채점본이 없는 회차를 인수인계 보고서 수치로 병기 (출처 라벨)
     for f in (ROOT / "results").glob("기록이관_*.json"):
         prod = f.stem.split("_", 1)[1]

@@ -1,5 +1,7 @@
-
-# 기밀 단어 목록 — 절대 추적 금지 (단어 자체가 기밀)
-eval-runner/orchestrator/기밀단어.txt
-기밀단어.txt
-eval-runner/orchestrator/results/_ledger_backup_*.jsonl
+키설정.txt
+.env
+*.key
+__pycache__/
+node_modules/
+.DS_Store
+orchestrator/data/CI/
