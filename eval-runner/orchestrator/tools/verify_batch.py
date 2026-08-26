@@ -249,6 +249,17 @@ def main():
                    f"배치 내 {len(dups)} · 전 차수와 {len(cross)}"
                    + (f" — 예: {(list(dups)[:1] + cross[:2])[:2]}" if fail else " · 0")))
 
+    # ⑨ r2 규격 검사 [지시서 v1_0 배선 2026-08-26]: 발췌 20자↑ · 유형 고정 어휘
+    R2_TYPES = {"사실확인", "수치", "절차", "조건", "가부", "정의", "E형"}
+    short_ex = [r["ID"] for r in rows
+                if r.get("발췌") and all(len(norm(seg)) < 20 for seg in split_segments(r["발췌"]) if norm(seg))]
+    bad_type = [r["ID"] for r in rows if norm(r.get("유형", "")) and
+                re.sub(r"[\(（].*", "", N(r.get("유형", ""))).strip() not in R2_TYPES]
+    fail9 = bool(short_ex) or bool(bad_type)
+    checks.append(("⑨ r2 규격(발췌20자·유형어휘)", "FAIL" if fail9 else "PASS",
+                   f"짧은 발췌 {len(short_ex)} · 유형 이탈 {len(bad_type)}"
+                   + (f" — 예: {(short_ex[:2] + bad_type[:2])[:3]}" if fail9 else "")))
+
     # ⑧ 제품명 내부코드 검사 [2026-07-23 설계본부 지적: 결함본도 7종 PASS — 제품명 결함을
     #    구조적으로 못 잡았음. 질문·정답에 내부 트랙 코드(RC2 등)가 노출되면 응시 불가 시험지]
     prod_name = terrain.get("product_name")
