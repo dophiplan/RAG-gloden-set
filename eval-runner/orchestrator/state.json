@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-27T00:56:20",
+  "updated": "2026-08-27T01:03:22",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,10 +1972,10 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "STAGE2",
-      "status": "WAITING_HUMAN",
+      "stage": "SCORING",
+      "status": "HALTED",
       "calibration_passed": true,
-      "scorer_version": null,
+      "scorer_version": "7f27b2ac8c7a5e7574149c4694981df4ebe02a3410605e1df6f5ee936f8bf092",
       "compare_blocked": false,
       "stage_history": {
         "CORPUS_AUDIT": {
@@ -1995,18 +1995,13 @@
         },
         "CALIBRATION": {
           "done_at": "2026-08-26T23:35:50"
+        },
+        "STAGE2": {
+          "done_at": "2026-08-27T01:03:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "S2DIFF_CI",
-          "stage": "STAGE2",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-27T00:56:19"
-        }
-      ],
-      "halt_reason": null,
+      "open_gates": [],
+      "halt_reason": "{\"형식 게이트\": [\"meta 코퍼스 버전:OK\", \"answer null:OK\", \"meta 전 회차 대조:OK\", \"ID 중복:OK\", \"전량(골든셋 커버):FAIL\", \"rank 연속:OK\", \"source 실재:OK\"]}",
       "strategy": "ensemble",
       "start_mode": "full",
       "goldenset": {
