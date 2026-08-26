@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T22:52:18",
+  "updated": "2026-08-26T22:56:04",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,13 +1988,21 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_CI_8차",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T22:56:02"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
       "goldenset": {
         "phase": "ROUNDS",
-        "round": 7,
+        "round": 8,
         "done_units": [
           "CI-DOC-1017",
           "CI-DOC-102",
@@ -2160,6 +2168,7 @@
           "CI-DOC-45715",
           "CI-DOC-46122",
           "CI-DOC-46508",
+          "CI-DOC-4684",
           "CI-DOC-46895",
           "CI-DOC-47281",
           "CI-DOC-48054",
@@ -2216,6 +2225,7 @@
           "CI-DOC-64889",
           "CI-DOC-65143",
           "CI-DOC-65245",
+          "CI-DOC-65346",
           "CI-DOC-65448",
           "CI-DOC-65550",
           "CI-DOC-65651",
@@ -2363,8 +2373,7 @@
             "CI-DOC-4684",
             "CI-DOC-65346"
           ]
-        },
-        "reject_feedback": "CI-341, CI-342 결함 — CI-341:발췌20자미만; CI-342:발췌20자미만 — 해당 문항만 제외"
+        }
       }
     }
   }
