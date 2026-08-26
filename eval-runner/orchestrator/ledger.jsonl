@@ -5375,3 +5375,4 @@
 {"ts": "2026-08-26T22:02:15", "product": "CI", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "WAITING_HUMAN→PENDING", "evidence": {}, "reason": null}
 {"ts": "2026-08-26T22:02:15", "product": "CI", "stage": "GOLDENSET_BATCH", "gate_id": "GSBATCH_CI_7차", "actor": "script:r2_driver(난희(위임: r2 전체컨트롤 2026-08-26))", "action": "R2_DRIVER_REJECT", "evidence": {"결함": ["CI-318:발췌20자미만", "CI-319:발췌20자미만", "CI-320:발췌20자미만", "CI-321:발췌20자미만", "CI-324:발췌20자미만"]}, "reason": null}
 {"ts": "2026-08-26T22:02:15", "product": "CI", "stage": "GOLDENSET_BATCH", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-08-26T22:03:12", "product": "CI", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "GSBATCH_CI_7차", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
