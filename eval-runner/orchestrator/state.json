@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T20:36:00",
+  "updated": "2026-08-26T20:42:13",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,15 +1988,7 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_CI_5차",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T20:35:59"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
@@ -2168,13 +2160,11 @@
           "CI-DOC-45715",
           "CI-DOC-46122",
           "CI-DOC-46508",
-          "CI-DOC-4684",
           "CI-DOC-46895",
           "CI-DOC-47281",
           "CI-DOC-48054",
           "CI-DOC-48440",
           "CI-DOC-49213",
-          "CI-DOC-49600",
           "CI-DOC-49986",
           "CI-DOC-5071",
           "CI-DOC-50759",
@@ -2185,7 +2175,6 @@
           "CI-DOC-52192",
           "CI-DOC-52403",
           "CI-DOC-52790",
-          "CI-DOC-53176",
           "CI-DOC-53563",
           "CI-DOC-53641",
           "CI-DOC-53743",
@@ -2227,7 +2216,6 @@
           "CI-DOC-64889",
           "CI-DOC-65143",
           "CI-DOC-65245",
-          "CI-DOC-65346",
           "CI-DOC-65448",
           "CI-DOC-65550",
           "CI-DOC-65651",
@@ -2317,13 +2305,11 @@
         ],
         "last_batch": {
           "label": "5차",
-          "file": "CI_골든셋_5차_59문항_v1_0.xlsx",
+          "file": "CI_골든셋_5차_55문항_v1_1.xlsx",
           "units": [
-            "CI-DOC-4684",
             "CI-DOC-48054",
             "CI-DOC-48440",
             "CI-DOC-49213",
-            "CI-DOC-49600",
             "CI-DOC-49986",
             "CI-DOC-50759",
             "CI-DOC-51145",
@@ -2331,7 +2317,6 @@
             "CI-DOC-51918",
             "CI-DOC-52403",
             "CI-DOC-52790",
-            "CI-DOC-53176",
             "CI-DOC-53563",
             "CI-DOC-54794",
             "CI-DOC-55180",
@@ -2358,7 +2343,6 @@
             "CI-DOC-64116",
             "CI-DOC-64503",
             "CI-DOC-64889",
-            "CI-DOC-65346",
             "CI-DOC-66333",
             "CI-DOC-66719",
             "CI-DOC-67106",
@@ -2379,7 +2363,8 @@
             "CI-DOC-72902",
             "CI-DOC-73288"
           ]
-        }
+        },
+        "reject_feedback": "CI-228, CI-229, CI-233, CI-241 결함 — CI-228:발췌20자미만; CI-229:발췌20자미만; CI-233:발췌20자미만; CI-241:발췌20자미만 — 해당 문항만 제외"
       }
     }
   }
