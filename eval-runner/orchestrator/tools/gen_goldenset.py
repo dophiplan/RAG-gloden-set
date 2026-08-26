@@ -369,8 +369,17 @@ def run(prod, cfg):
         man = [u for u in all_units if _is_man(u)]
         faq = [u for u in all_units if not _is_man(u)]
         t_faq = round(target * ratio[0] / (ratio[0] + ratio[1]))
-        units = (select_representative(faq, t_faq)
-                 + select_representative(man, target - t_faq))
+        # [수리 2026-08-26] select_representative는 문서당 최소 1개 보장이라 문서 수(2,152)가
+        # 목표(320)보다 크면 폭발 (실측: 2,242 선정 → 30차수). 층화는 계층 내 등간격으로 —
+        # 정확히 목표 수만 뽑되 코퍼스 전체에 고르게 분포 (결정적·재현 가능).
+        def _stride_pick(pool, n):
+            if n <= 0 or not pool:
+                return []
+            if len(pool) <= n:
+                return list(pool)
+            step = len(pool) / n
+            return [pool[int(i * step)] for i in range(n)]
+        units = _stride_pick(faq, t_faq) + _stride_pick(man, target - t_faq)
     elif target:
         units = select_representative(all_units, target)
     else:
