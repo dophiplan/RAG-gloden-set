@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T16:31:35",
+  "updated": "2026-08-26T17:35:52",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1972,8 +1972,8 @@
       "strategy": "ensemble"
     },
     "CI": {
-      "stage": "COVERAGE_MAP",
-      "status": "WAITING_HUMAN",
+      "stage": "GOLDENSET_BATCH",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1983,17 +1983,12 @@
         },
         "TERRAIN": {
           "done_at": "2026-08-25T13:57:35"
+        },
+        "COVERAGE_MAP": {
+          "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [
-        {
-          "id": "COVMAP_CI",
-          "stage": "COVERAGE_MAP",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T16:31:33"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"

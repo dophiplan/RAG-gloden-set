@@ -361,7 +361,20 @@ def run(prod, cfg):
                      if not any(x in u.get("source", "") for x in excl)]
     # 목표 규모 대표 추출 (결정적 — 재진입 때마다 같은 선정)
     target = cfg["pipeline"].get("goldenset_target")
-    units = select_representative(all_units, target) if target else all_units
+    ratio = cfg["pipeline"].get("goldenset_faq_manual_ratio")   # 예: [4, 6] — r2 설계서 5조
+    if target and ratio:
+        def _is_man(u):
+            src = str(u.get("source", ""))
+            return src.lower().endswith((".pdf", ".docx")) or "マニュアル" in src or "매뉴얼" in src
+        man = [u for u in all_units if _is_man(u)]
+        faq = [u for u in all_units if not _is_man(u)]
+        t_faq = round(target * ratio[0] / (ratio[0] + ratio[1]))
+        units = (select_representative(faq, t_faq)
+                 + select_representative(man, target - t_faq))
+    elif target:
+        units = select_representative(all_units, target)
+    else:
+        units = all_units
     st, gs = gs_state(prod)
     if gs.get("expand_units"):
         # G19 · 증분 확대 모드 — 새 단위 전량이 출제 대상 (대표 추출 재선정 금지: 명단 갱신 사고 방지)

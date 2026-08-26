@@ -8,7 +8,8 @@ models:
 
 pipeline:
   band: [60, 75]              # 차수당 문항 밴드
-  goldenset_target: 880       # 골든셋 목표 규모 — 맵 단위가 이보다 많으면 문서별 비례 대표 추출 (2026-07-23 난희 결정: v1급 규모, 브리지 측정 호환)
+  goldenset_target: 320       # r2 규모 (설계서 v1_0: 신규 300 + 여유 7% — 2026-08-26 난희 위임. r1은 880이었음)
+  goldenset_faq_manual_ratio: [4, 6]   # r2 층화 — FAQ:매뉴얼 (설계서 5조, r1 정답 분포 실측 반영)
   goldenset_exclude_sources: ["Known Issue"]   # 출제 제외 소스 (2026-07-23 난희 결정: 내부 결함 목록은 고객 질문이 아님)
   recheck_rate: 0.05          # 본판정 무작위 재검 (1키 모드면 코드가 0.10으로 강제 상향)
   recheck_seed: null          # null이면 실행 시 생성 — 원장에 시드+추출 목록 기록 의무
