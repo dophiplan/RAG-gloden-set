@@ -5472,3 +5472,4 @@
 {"ts": "2026-08-26T23:35:50", "product": "CI", "stage": "CALIBRATION", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
 {"ts": "2026-08-26T23:35:50", "product": "CI", "stage": "CALIBRATION", "gate_id": null, "actor": "script:pipeline", "action": "STAGE_DONE", "evidence": {"캘리브레이션": "이미 통과 (규칙 C 지문 유효)"}, "reason": null}
 {"ts": "2026-08-26T23:35:50", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-08-26T23:37:22", "product": "CI", "stage": "GOVERNANCE", "gate_id": null, "actor": "설계본부:독립세션", "action": "SBB_REVIEW_LATE", "evidence": {"gate": "CAL_CI", "처리": "소환 중 승인됨 — 완료 카드에 소견 보존, 큐 재생성 안 함"}, "reason": null}
