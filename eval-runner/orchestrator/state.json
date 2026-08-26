@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-25T16:53:11",
+  "updated": "2026-08-26T16:31:35",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "COVERAGE_MAP",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1985,7 +1985,15 @@
           "done_at": "2026-08-25T13:57:35"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "COVMAP_CI",
+          "stage": "COVERAGE_MAP",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T16:31:33"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full"
