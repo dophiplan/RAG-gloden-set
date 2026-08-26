@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T17:42:10",
+  "updated": "2026-08-26T17:55:06",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,16 +1988,92 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSBATCH_CI_파일럿",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T17:55:05"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
       "goldenset": {
-        "phase": "PLAN_GATE",
-        "round": 0,
-        "done_units": [],
+        "phase": "ROUNDS",
+        "round": 1,
+        "done_units": [
+          "CI-DOC-001",
+          "CI-DOC-1017",
+          "CI-DOC-102",
+          "CI-DOC-1118",
+          "CI-DOC-1220",
+          "CI-DOC-1322",
+          "CI-DOC-1423",
+          "CI-DOC-1525",
+          "CI-DOC-1627",
+          "CI-DOC-1728",
+          "CI-DOC-1830",
+          "CI-DOC-1932",
+          "CI-DOC-204",
+          "CI-DOC-305",
+          "CI-DOC-32379",
+          "CI-DOC-32481",
+          "CI-DOC-32582",
+          "CI-DOC-32684",
+          "CI-DOC-32786",
+          "CI-DOC-32887",
+          "CI-DOC-32989",
+          "CI-DOC-33091",
+          "CI-DOC-33192",
+          "CI-DOC-33294",
+          "CI-DOC-407",
+          "CI-DOC-509",
+          "CI-DOC-610",
+          "CI-DOC-712",
+          "CI-DOC-814",
+          "CI-DOC-915"
+        ],
         "batch": "B1",
-        "reject_feedback": "선정 2,242(목표 320 초과) — 문서당 최소1 규칙이 v2 지도 문서 수에 폭발. 등간격 층화로 수리 후 재계획"
+        "bounce": {},
+        "unfit_units": [],
+        "last_batch": {
+          "label": "파일럿",
+          "file": "CI_골든셋_파일럿_31문항_v1_0.xlsx",
+          "units": [
+            "CI-DOC-001",
+            "CI-DOC-1017",
+            "CI-DOC-102",
+            "CI-DOC-1118",
+            "CI-DOC-1220",
+            "CI-DOC-1322",
+            "CI-DOC-1423",
+            "CI-DOC-1525",
+            "CI-DOC-1627",
+            "CI-DOC-1728",
+            "CI-DOC-1830",
+            "CI-DOC-1932",
+            "CI-DOC-204",
+            "CI-DOC-305",
+            "CI-DOC-32379",
+            "CI-DOC-32481",
+            "CI-DOC-32582",
+            "CI-DOC-32684",
+            "CI-DOC-32786",
+            "CI-DOC-32887",
+            "CI-DOC-32989",
+            "CI-DOC-33091",
+            "CI-DOC-33192",
+            "CI-DOC-33294",
+            "CI-DOC-407",
+            "CI-DOC-509",
+            "CI-DOC-610",
+            "CI-DOC-712",
+            "CI-DOC-814",
+            "CI-DOC-915"
+          ]
+        }
       }
     }
   }
