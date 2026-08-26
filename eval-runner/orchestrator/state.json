@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T17:55:06",
+  "updated": "2026-08-26T18:02:10",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "WAITING_HUMAN",
+      "status": "RUNNING",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,15 +1988,7 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [
-        {
-          "id": "GSBATCH_CI_파일럿",
-          "stage": "GOLDENSET_BATCH",
-          "flags": [],
-          "acked": false,
-          "issued": "2026-08-26T17:55:05"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
@@ -2004,7 +1996,6 @@
         "phase": "ROUNDS",
         "round": 1,
         "done_units": [
-          "CI-DOC-001",
           "CI-DOC-1017",
           "CI-DOC-102",
           "CI-DOC-1118",
@@ -2040,9 +2031,8 @@
         "unfit_units": [],
         "last_batch": {
           "label": "파일럿",
-          "file": "CI_골든셋_파일럿_31문항_v1_0.xlsx",
+          "file": "CI_골든셋_파일럿_30문항_v1_1.xlsx",
           "units": [
-            "CI-DOC-001",
             "CI-DOC-1017",
             "CI-DOC-102",
             "CI-DOC-1118",
@@ -2073,7 +2063,8 @@
             "CI-DOC-814",
             "CI-DOC-915"
           ]
-        }
+        },
+        "reject_feedback": "CI-001 결함 — CI-001:발췌20자미만 — 해당 문항만 제외"
       }
     }
   }
