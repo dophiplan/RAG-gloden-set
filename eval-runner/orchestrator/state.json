@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T23:12:20",
+  "updated": "2026-08-26T23:21:54",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "CALIBRATION",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1994,7 +1994,15 @@
           "done_at": "2026-08-26T23:12:20"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "CALIN_CI",
+          "stage": "CALIBRATION",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T23:21:53"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
