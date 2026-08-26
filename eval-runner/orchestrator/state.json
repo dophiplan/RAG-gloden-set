@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T23:02:19",
+  "updated": "2026-08-26T23:04:04",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "GOLDENSET_BATCH",
-      "status": "RUNNING",
+      "status": "WAITING_HUMAN",
       "calibration_passed": false,
       "scorer_version": null,
       "compare_blocked": false,
@@ -1988,12 +1988,20 @@
           "done_at": "2026-08-26T17:35:52"
         }
       },
-      "open_gates": [],
+      "open_gates": [
+        {
+          "id": "GSCLOSE_CI",
+          "stage": "GOLDENSET_BATCH",
+          "flags": [],
+          "acked": false,
+          "issued": "2026-08-26T23:04:03"
+        }
+      ],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
       "goldenset": {
-        "phase": "ROUNDS",
+        "phase": "DONE",
         "round": 7,
         "done_units": [
           "CI-DOC-1017",
@@ -2354,7 +2362,9 @@
           "CI-DOC-86039",
           "CI-DOC-53176",
           "CI-DOC-49600",
-          "CI-DOC-81789"
+          "CI-DOC-81789",
+          "CI-DOC-4684",
+          "CI-DOC-65346"
         ],
         "last_batch": {
           "label": "8차",
@@ -2363,8 +2373,7 @@
             "CI-DOC-4684",
             "CI-DOC-65346"
           ]
-        },
-        "reject_feedback": "CI-343, CI-344 결함 — CI-343:발췌20자미만; CI-344:발췌20자미만 — 해당 문항만 제외"
+        }
       }
     }
   }
