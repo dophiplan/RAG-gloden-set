@@ -5486,3 +5486,4 @@
 {"ts": "2026-08-27T00:39:42", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:pipeline", "action": "RUN_BLOCKED_BY_REJECT_LOCK", "evidence": {"반려 사유": "재시도", "반려 카드": "S2MISS_CI", "반려 시각": "2026-08-27T00:38:11"}, "reason": null}
 {"ts": "2026-08-27T00:40:01", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "사람:claude작업AI(난희 위임)", "action": "RESUME_AFTER_FIX", "evidence": {"halt_was": null, "반려 잠금 해제": {"stage": "STAGE2", "gate_id": "S2MISS_CI", "reason": "재시도", "ts": "2026-08-27T00:38:11"}}, "reason": "S2MISS 재시도 반려는 잠금 대상 아님 — 누락 20건 재판정 재개"}
 {"ts": "2026-08-27T00:40:01", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "PENDING→RUNNING", "evidence": {}, "reason": null}
+{"ts": "2026-08-27T00:40:12", "product": "CI", "stage": "STAGE2", "gate_id": null, "actor": "script:orchestrator", "action": "RUNNING→RUNNING", "evidence": {}, "reason": null}
