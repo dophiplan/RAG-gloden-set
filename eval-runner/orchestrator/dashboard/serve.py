@@ -509,22 +509,40 @@ def api_runlog(code, n=8):
     return {"lines": marks[-n:]}
 
 
+def _race_started_at(code):
+    """이번 경주의 시작 시각 — 재온보딩 시 갱신되는 ①감사 완료 시각(state.stage_history).
+    이전 경주의 체크포인트·역할 기록이 새 경주 화면에 합산되는 것을 막는 기준.
+    [난희 실측 2026-08-25] r2 재온보딩 후에도 codex가 '8/8 배치(100%)·막대 84%'로 표시 —
+    8/21 재추출(rebasecmp) 잔재 파일이 글롭 합산에 섞여서. 이 시각 이전 기록은 화면에서 제외."""
+    try:
+        st = json.loads((ROOT / "state.json").read_text(encoding="utf-8"))["products"][code]
+        ts = st["stage_history"]["CORPUS_AUDIT"]["done_at"]
+        import datetime as _dt
+        return _dt.datetime.fromisoformat(ts).timestamp() - 60   # 파일시각 오차 여유
+    except Exception:
+        return None
+
+
 def _extractor_rows(code, prog=None):
     """추출자별 현황 — 체크포인트가 진실. 진행 파일(뛰는 중에만 갱신)이 없어도 읽힌다.
     [난희 요청 2026-08-10] 멈춤·사고 상태에서도 '누가 어디까지' 보여야 한다.
     [수리 2026-08-13 난희 실측] 구멍 메우기(_gapfaq 등 태그 체크포인트)가 도는데 패널이 안 보임 —
-    본 추출 파일(_ckpt_coverage_CI.json)만 읽어서. 태그 파일 전부 합산한다."""
+    본 추출 파일(_ckpt_coverage_CI.json)만 읽어서. 태그 파일 전부 합산한다.
+    단, 합산은 '이번 경주' 안에서만 — 이전 경주 잔재는 _race_started_at 기준으로 제외."""
     roles = (prog or {}).get("roles") or {}
     tt_any = max([(v or {}).get("total") or 0 for v in roles.values()] or [0])
     names = {"generator": "claude", "judge": "Kimi", "reviewer": "codex"}
     agg = {}   # role → {done,total,units,fails} (여러 구간 합산)
     import time as _time
+    race = _race_started_at(code)
     for ck in sorted((ROOT / "results").glob(f"_ckpt_coverage_{code}*.json")):
         try:
             c = json.loads(ck.read_text(encoding="utf-8"))
             mt = ck.stat().st_mtime
         except Exception:
             continue
+        if race and mt < race:
+            continue   # 이전 경주의 체크포인트 — 이번 경주 합산에서 제외
         tagged = ck.stem != f"_ckpt_coverage_{code}"   # 태그 파일 = 구멍 메우기 등 부가 구간
         for role in names:
             v = c.get(role)
@@ -559,9 +577,13 @@ def _extractor_rows(code, prog=None):
     # 분모 = 코퍼스 전체 청크(고정). 분자 = 이미 지도에 들어간 청크(기커버) + 이번 조각 진행분(근사).
     whole = None
     try:
-        ctx = json.loads((ROOT / "results" / f"_gapctx_{code}.json").read_text(encoding="utf-8"))
-        whole = {"total": int(ctx["total_chunks"]), "before": int(ctx["covered_before"]),
-                 "base_role": ctx.get("base_role", "generator")}
+        _gp = ROOT / "results" / f"_gapctx_{code}.json"
+        # 이전 경주가 남긴 gapctx(예: 옛 지도 v1_18의 기커버 2,964)로 '전체 %'를 계산하면
+        # 새 경주 막대가 부풀어 보임 — 이번 경주 것일 때만 신뢰
+        if not (race and _gp.stat().st_mtime < race):
+            ctx = json.loads(_gp.read_text(encoding="utf-8"))
+            whole = {"total": int(ctx["total_chunks"]), "before": int(ctx["covered_before"]),
+                     "base_role": ctx.get("base_role", "generator")}
     except Exception:
         pass
     rows, tot = [], 0
@@ -605,6 +627,18 @@ def api_progress(code):
             d = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             d = {}
+    # 진행 파일의 역할 칸은 그 역할이 뛸 때만 다시 써진다 — 이번 경주에서 아직 안 뛴 주자의
+    # 칸에는 이전 경주 기록이 그대로 남는다(예: codex 8/8, ts 8/21). 이번 경주 이전 ts는 제거
+    # → 그 주자는 아래 대기조(⏳) 줄로 표시된다.
+    _race = _race_started_at(code)
+    if _race and isinstance(d.get("roles"), dict):
+        import datetime as _dt
+        def _fresh(v):
+            try:
+                return _dt.datetime.fromisoformat(str((v or {}).get("ts"))).timestamp() >= _race
+            except Exception:
+                return True   # ts 없으면 판단 불가 — 기존 동작 유지
+        d["roles"] = {r: v for r, v in d["roles"].items() if _fresh(v)}
     stale_stage = bool(d) and d.get("stage", "COVERAGE_MAP") != _st.get("stage")
     if not d or stale_stage:
         # 진행 파일이 없거나 낡음 — 체크포인트만으로 '멈춘 자리' 보고 (active=False, snapshot=True)

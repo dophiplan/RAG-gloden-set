@@ -65,6 +65,9 @@ def select_representative(units, target):
     7,848단위 전량 소진(≈105차수) 대신 v1급 규모로 출제하기 위한 표본 — 문서마다 최소 1단위 보장,
     문서 안에서는 등간격으로 뽑아 문서 전체에 고르게 분포."""
     from collections import defaultdict
+    _short = [u for u in units if len(N(u.get("fact", ""))) < 20]
+    if _short:
+        units = [u for u in units if len(N(u.get("fact", ""))) >= 20]   # r1 교훈: 발췌 20자 하한 — 짧은 fact는 출제 재료에서 제외
     if len(units) <= target:
         return units
     by_doc = defaultdict(list)
