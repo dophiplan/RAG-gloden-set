@@ -1206,15 +1206,33 @@ async function doUpload(input, cardId, noAutoRun, scopeSelId){
 }
 /* 파일별 메모 — 보낸 사람이 단 조건("생성축 전체 응시", "top_k=50 진단" 등)을 파일에 붙인다.
    취소(null)면 메모 없이 진행. 여러 파일이면 파일마다 물어봐서 각각 다른 조건을 달 수 있게. */
+/* prompt()는 브라우저가 드래그&드롭 도중엔 차단한다 — 자체 입력창으로 대체 (Promise 반환) */
 function askMemo(fname){
-  const m = prompt(`"${fname}"\n\n이 파일에 붙일 메모가 있나요? (팀장님이 단 조건 등)\n없으면 그냥 [확인]`, '');
-  return (m||'').trim();
+  return new Promise(res=>{
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:center;justify-content:center';
+    ov.innerHTML=`<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;width:min(480px,90vw)">
+      <div style="font-weight:700;margin-bottom:4px">📝 파일 메모</div>
+      <div class="hint" style="margin-bottom:10px;word-break:break-all">"${fname.replace(/</g,'&lt;')}"<br>보낸 사람이 단 조건이 있으면 적어주세요 (예: "생성축 전체 응시")</div>
+      <input id="_memoIn" style="width:100%;font:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--tx);padding:8px 10px" placeholder="없으면 비워두고 [올리기]">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button class="btn" id="_memoSkip">메모 없이 올리기</button>
+        <button class="btn approve" id="_memoOk">올리기</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const inp=ov.querySelector('#_memoIn'); inp.focus();
+    const fin=v=>{ ov.remove(); res((v||'').trim()); };
+    ov.querySelector('#_memoOk').onclick=()=>fin(inp.value);
+    ov.querySelector('#_memoSkip').onclick=()=>fin('');
+    inp.onkeydown=e=>{ if(e.key==='Enter') fin(inp.value); if(e.key==='Escape') fin(''); };
+  });
 }
 async function doUploadFiles(files, cardId, noAutoRun, scopeSelId){
   if(!files.length) return;
   const sel = scopeSelId? document.getElementById(scopeSelId) : null;
   const scope = sel? sel.value : '';   // 응시 범위 선언 — 게이트가 실물과 대조
-  const memos = files.map(f=>askMemo(f.name));   // busy 전에 — prompt가 렌더를 막지 않게
+  const memos = [];
+  for(const f of files) memos.push(await askMemo(f.name));   // busy 전에 — 파일마다 순서대로
   busy = true; render();
   toast(`⏳ 업로드 중… (${files.length}개)`, 0);
   try{
@@ -1308,7 +1326,7 @@ async function uploadRound(input){
 }
 async function uploadRoundFile(f){
   if(!f) return;
-  const memo = askMemo(f.name);
+  const memo = await askMemo(f.name);
   if(PS().stage!=='SCORING' || PS().status==='DONE'){      // ⑨/완료면 ⑧로 복귀 (원장 기록)
     const d = await act({cmd:'new-round', product:PV().code});
     if(!d.ok) return;
