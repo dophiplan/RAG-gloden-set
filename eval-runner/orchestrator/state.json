@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-27T01:06:17",
+  "updated": "2026-08-27T16:30:37",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -1973,7 +1973,7 @@
     },
     "CI": {
       "stage": "SCORING",
-      "status": "WAITING_INPUT",
+      "status": "PENDING",
       "calibration_passed": true,
       "scorer_version": "7f27b2ac8c7a5e7574149c4694981df4ebe02a3410605e1df6f5ee936f8bf092",
       "compare_blocked": false,

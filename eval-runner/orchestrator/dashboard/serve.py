@@ -1124,6 +1124,36 @@ def api_action(payload):
         ledger_append("MAINTENANCE", "ALERT_DISMISSED", "사람:난희",
                       evidence={"card": name, "처리": "확인 후 닫음 — 같은 내용 재발행 억제"})
         return {"ok": True, "out": "알림 닫음 — 같은 내용으로는 다시 안 떠요"}
+    elif cmd == "stop":
+        # ⏹ 비상 정지 — 이 제품의 자동 진행 워커와 하위 작업을 즉시 종료 (잘못 올린 파일 등)
+        import os, signal
+        prod = payload["product"]
+        killed = []
+        pidf = ROOT / "results" / f"_run_{prod}.pid"
+        if pidf.exists():
+            try:
+                os.kill(int(pidf.read_text()), signal.SIGTERM)
+                killed.append(f"auto_run({pidf.read_text()})")
+            except (ValueError, ProcessLookupError):
+                pass
+            pidf.unlink(missing_ok=True)
+        # auto_run이 낳은 하위 pipeline 프로세스도 같이 정리
+        out = subprocess.run(["pgrep", "-f", f"pipeline.py run --product {prod}"],
+                             capture_output=True, text=True).stdout.split()
+        for pid in out:
+            try:
+                os.kill(int(pid), signal.SIGTERM)
+                killed.append(f"pipeline({pid})")
+            except (ValueError, ProcessLookupError):
+                pass
+        sys.path.insert(0, str(ROOT / "tools"))
+        from olib import ledger_append
+        ledger_append("INPUT", "EMERGENCY_STOP", "사람:난희",
+                      evidence={"종료": killed or "실행 중인 작업 없음",
+                                "사유": "사람이 관제판 [⏹ 멈추기] — 잘못 올린 파일 등"}, product=prod)
+        return {"ok": True, "out": killed and f"⏹ 멈췄어요 — {', '.join(killed)} 종료. "
+                "상태·산출물 정리가 필요하면 Claude에게 알려주세요." or
+                "지금 실행 중인 자동 작업이 없어요 (이미 멈춘 상태)."}
     elif cmd == "run":
         # 장시간 AI 작업(③ 등) — 백그라운드 실행. 서버(단일 스레드)와 화면이 얼지 않게.
         import os

@@ -619,7 +619,7 @@ function render(){
     <div id="aiprogwrap">${renderAiProgress()}</div>
   </div>
   <main>
-    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
+    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}<button class="archbtn" style="float:right;color:var(--bad,#e5534b)" title="지금 돌고 있는 자동 작업을 즉시 종료해요 — 잘못 올린 파일 등. 산출물 정리는 별도" onclick="if(confirm('지금 진행 중인 자동 작업을 멈출까요?')) act({cmd:'stop', product:PV().code})">⏹ 멈추기</button></div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
     <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">

@@ -260,6 +260,13 @@ def st_stage2(prod, cfg):
 
 
 def st_scoring(prod, cfg):
+    # [가드 2026-08-27] CI는 채점센터(vault) 전용 채점기(코퍼스 원문 대조) 소관 —
+    # 관제판 채점기(run_score_v11)가 돌면 전건 0점 오채점이 된다 (실사고: 드래그 업로드 직후 자동 채점).
+    # 로그 접수·보관까지만 관제판이 하고, 채점은 사람이 채점센터에 의뢰한다.
+    if prod == "CI":
+        logs = files_in(prod, "08_scoring", "*응답로그*.json")
+        return "WAITING_INPUT", {"logs": len(logs),
+                                 "안내": "CI 채점은 채점센터 소관 — 로그 접수됨, Claude에게 채점을 요청하세요"}
     try:
         import scoring
         return scoring.run(prod, cfg)
