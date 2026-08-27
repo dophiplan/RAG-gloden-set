@@ -617,6 +617,15 @@ def cmd_reject(a):
     # 단계가 일치할 때만 상태 전이 (approve의 stage 가드와 대칭)
     if ps["stage"] == g["stage"]:
         set_status(prod, "REJECTED", reason=a.reason)
+        # [수리 2026-08-27] 재시도류 카드(S2MISS: 응답 누락 — 카드 스스로 "[반려]+재시도"를 권함)는
+        # 반려 = 재실행 지시이므로 잠금을 걸지 않는다. 실측: 2026-08-27 S2MISS_CI 반려가 잠겨
+        # auto_run 이 멈춤 — 사람이 resume 으로 수동 해제해야 했음.
+        if a.gate_id.startswith("S2MISS"):
+            ledger_append(g["stage"], "REJECT_RETRY_NO_LOCK", f"사람:{a.actor}", gate_id=a.gate_id,
+                          evidence={"사유": "재시도류 카드 — 반려가 곧 재실행 지시라 잠금 제외"},
+                          product=prod)
+            print(f"↩ 반려(재시도) — {a.gate_id} · 잠금 없이 자동 재실행 허용 (누락분만 다시 판정)")
+            return
         # [P0 수리 2026-08-13] 반려 잠금 — 사람의 반려가 자동 진행에 1초 만에 지워지던 사고.
         # 실측: COVMAP_CI 반려(14:00:46) → cmd_run 의 'REJECTED 은 재검사' 경로가 즉시 재실행 →
         #   맵 파일이 이미 있으니 STAGE_DONE → ④ 진입 (커버율 17.8% 맵으로 출제 시작).
