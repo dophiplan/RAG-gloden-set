@@ -190,6 +190,12 @@
   .dlg-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
   .toast{position:fixed;bottom:18px;right:18px;z-index:10000;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:12px;max-width:420px;white-space:pre-wrap;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none}
 [data-drop].dropping{outline:2px dashed var(--run);outline-offset:-2px;background:color-mix(in srgb,var(--run) 8%,transparent)}
+/* 파일을 끌기 시작하면 놓을 수 있는 영역 전부를 표시 — "어디에 놓지?"가 안 보이던 문제 */
+body.dragging [data-drop]{outline:2px dashed var(--run);outline-offset:-2px;position:relative}
+body.dragging [data-drop]::after{content:'⇩ 여기에 놓기';position:absolute;top:6px;right:8px;font-size:11px;
+  color:var(--run);background:var(--panel2);border:1px solid var(--run);border-radius:8px;padding:2px 8px;
+  pointer-events:none;z-index:5}
+body.dragging [data-drop].dropping{background:color-mix(in srgb,var(--run) 12%,transparent)}
 </style>
 </head>
 <body>
@@ -1453,17 +1459,21 @@ setInterval(()=>{ if(!busy && !window._demoMode) loadAll(true); }, 15000);   // 
    재렌더(innerHTML 교체)에도 살아남도록 document 위임 방식. */
 document.addEventListener('dragover', e=>{
   e.preventDefault();   // 빗나간 드롭이 브라우저 파일 열기로 이어지지 않게 전면 차단
+  if([...(e.dataTransfer?.types||[])].includes('Files')) document.body.classList.add('dragging');
   const z = e.target.closest && e.target.closest('[data-drop]');
   if(!z) return;
   e.dataTransfer.dropEffect = 'copy';
   z.classList.add('dropping');
 });
 document.addEventListener('dragleave', e=>{
+  // 창 밖으로 나가면 전체 표시 해제
+  if(!e.relatedTarget) document.body.classList.remove('dragging');
   const z = e.target.closest && e.target.closest('[data-drop]');
   if(z && !z.contains(e.relatedTarget)) z.classList.remove('dropping');
 });
 document.addEventListener('drop', e=>{
   e.preventDefault();
+  document.body.classList.remove('dragging');
   const z = e.target.closest && e.target.closest('[data-drop]');
   document.querySelectorAll('[data-drop].dropping').forEach(x=>x.classList.remove('dropping'));
   if(!z) return;
