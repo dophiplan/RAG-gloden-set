@@ -192,7 +192,7 @@
 [data-drop].dropping{outline:2px dashed var(--run);outline-offset:-2px;background:color-mix(in srgb,var(--run) 8%,transparent)}
 /* 파일을 끌기 시작하면 놓을 수 있는 영역 전부를 표시 — "어디에 놓지?"가 안 보이던 문제 */
 body.dragging [data-drop]{outline:2px dashed var(--run);outline-offset:-2px;position:relative}
-body.dragging [data-drop]::after{content:'⇩ 여기에 놓기';position:absolute;top:6px;right:8px;font-size:11px;
+body.dragging [data-drop]::after{content:'⇩ ' attr(data-droplabel) ' 놓기';position:absolute;top:6px;right:8px;font-size:11px;
   color:var(--run);background:var(--panel2);border:1px solid var(--run);border-radius:8px;padding:2px 8px;
   pointer-events:none;z-index:5}
 body.dragging [data-drop].dropping{background:color-mix(in srgb,var(--run) 12%,transparent)}
@@ -581,7 +581,7 @@ function render(){
   const expandBtn = ['SCORING','MAINTENANCE'].includes(ps.stage)
     ? `<button class="expandbtn" style="margin-left:10px" title="새 코퍼스(매뉴얼·FAQ 등)를 추가하면 새 재료만 추출·출제해 골든셋을 키워요 — 기존 문항·성적은 그대로"
         onclick="if(confirm('골든셋 증분 확대를 시작할까요?\\n(기존 문항·판정·성적 보존 — 추가 코퍼스 업로드 카드가 생깁니다)')) act({cmd:'expand', product:PV().code})">＋ 코퍼스 보강 (증분 확대)</button>` : '';
-  const qaBtn = `<label class="expandbtn" data-drop="qa" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
+  const qaBtn = `<label class="expandbtn" data-drop="qa" data-droplabel="외부 Q&A(xlsx·csv·json)" style="margin-left:10px;cursor:pointer" title="다른 회사가 만든 질문·답변 파일(xlsx·csv·json)을 올리면: 코퍼스 대조 → 3갈래 분류(편입 후보/E형 후보/부분 일치) → 승인 카드. 코퍼스가 아직 없으면 접수만 하고 보류돼요">📥 외부 Q&A 올리기<input type="file" multiple accept=".xlsx,.csv,.json" style="display:none" onchange="uploadQA(this)"></label><button class="expandbtn" style="margin-left:6px" title="이미 올린 외부 Q&A를 다시 분류해요 — 코퍼스를 나중에 올렸을 때(보류 → 3갈래) 누르세요" onclick="reQA()">🔁 재대조</button>`;
   // G20/G26: 외부 Q&A 트랙 표시 — 난희 결정: 큰 레인 대신 진행선 맨 앞 배지 하나로 압축.
   // 배지 = [외부 Q&A · 현재 단계], 상세(단계 사슬+다음 할 일)는 마우스 오버 툴팁.
   const qaGateOpen = (ps.open_gates||[]).some(g=>g.id.startsWith('QAIMP_'));
@@ -621,7 +621,7 @@ function render(){
     <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">
       ${renderQueue()}
     </div></div>
-    <div class="panel" ${canNewRound()?'data-drop="round"':''}><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
+    <div class="panel" ${canNewRound()?'data-drop="round" data-droplabel="팀장님 응답로그(json)"':''}><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
       ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점(⑧) → 보고서'
       :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 실물 채점 추가로 돌리기</button></div><div class="p-body">
       <input type="file" id="roundFile" accept=".json" style="display:none" onchange="uploadRound(this)">
@@ -724,7 +724,7 @@ function renderQueue(){
       </div>${isCorpus
         ?`<div class="hint">올라간 파일 <b>${up.length}개</b>${up.length?` — ${esc(up.slice(0,4).join(', '))}${up.length>4?` 외 ${up.length-4}개`:''}`:''}<br>여러 번 나눠 올려도 돼요 — 전부 올린 뒤 [다 올렸어요]를 누르면 검사가 시작돼요. (선택창에서 Cmd 클릭 = 한번에 여러 개)</div>`
         :`<div class="hint">파일을 올리면 자동으로: 저장 → 검사 → 다음 단계 진행 · 파일을 이 카드에 끌어다 놓아도 돼요</div>`}`})();
-    return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}" ${c.kind==='GATE'?'':`data-drop="card" data-card="${esc(c.id)}" data-nocorun="${c.id.includes('CORPUS')?1:''}" data-scopesel="scope_${ci}"`}>
+    return `<div class="card ${c.kind==='GATE'?'human-card':''}" data-file="${esc(c.file)}" ${c.kind==='GATE'?'':`data-drop="card" data-droplabel="${c.id.includes('CORPUS')?'코퍼스 원문 파일':c.id.includes('SCORING')?'응답로그(json)':'요청된 파일'}" data-card="${esc(c.id)}" data-nocorun="${c.id.includes('CORPUS')?1:''}" data-scopesel="scope_${ci}"`}>
       <h4>${srcBadge(c)}${esc(c.title)}</h4>
       <div class="meta">${c.kind==='GATE'?'🙋 결정해 주세요':'📎 파일을 올려주세요'} · ${esc(c.file)}</div>
       ${koSum?`<div class="evidence" style="max-height:520px;border-left:3px solid var(--run)">${esc(koSum)}</div>
@@ -850,7 +850,7 @@ function renderScores(ps){
   // Q&A 트랙 상세 표 + 조작 버튼 (꾸러미 전달 → 로그 채점) — 시험지 발행 후에만 노출
   const qaControls = qaTrack? `<div class="btns" style="margin:6px 0 4px">
       <a class="btn" style="text-decoration:none" href="/api/qa-handoff?product=${encodeURIComponent(pv.code)}" download title="시험지(질문만)+안내문+응답로그 예시 zip — 팀장님께 전달">📦 Q&A 꾸러미</a>
-      <label class="btn" data-drop="qalog" style="cursor:pointer" title="팀장님이 준 Q&A 응답로그(json)를 올리면 즉시 채점돼요 — 내용 대조 기준, 기존 성적과 분리 집계">⬆ Q&A 응답로그 채점<input type="file" accept=".json" style="display:none" onchange="uploadQALog(this)"></label>
+      <label class="btn" data-drop="qalog" data-droplabel="Q&A 응답로그(json)" style="cursor:pointer" title="팀장님이 준 Q&A 응답로그(json)를 올리면 즉시 채점돼요 — 내용 대조 기준, 기존 성적과 분리 집계">⬆ Q&A 응답로그 채점<input type="file" accept=".json" style="display:none" onchange="uploadQALog(this)"></label>
     </div><div class="hint" style="margin-bottom:8px">외부 Q&A 시험지 <b>${qaTrack.n??'?'}문항</b> 발행됨 (${esc(qaTrack.paper)}) — 이 트랙 성적은 골든셋 회차와 안 섞여요</div>` : '';
   const qaBody = (mk('외부 Q&A', qaSc, true, qaCode, qaBadge)||'')
     + (mk('기준선(참고) — 단순검색 실측', qaBase, true, qaCode,
