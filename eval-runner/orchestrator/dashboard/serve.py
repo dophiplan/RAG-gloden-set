@@ -90,11 +90,22 @@ def api_state():
         if code in HIDDEN_CODES:
             continue
         meta = PRODUCT_META.get(code, {"display": code, "product_name": code, "gen": "현역"})
-        if code == "CI":   # vault 동기화분에서 r2 신규 출제 진행률을 라벨에 반영
-            led = ROOT / "data" / "CI" / "09_r2_시험지" / "CI_r2_원장.jsonl"
+        if code == "CI":   # vault 동기화분에서 최신 회차 실측을 라벨에 반영 (하드코딩 금지)
             try:
-                n_r2 = sum(1 for _ in led.open(encoding="utf-8")) if led.exists() else 0
-                meta = {**meta, "gen": f"r1 채점 완료(기계 31.4%·사람판독 58.2%) — r2 신규 출제 중 {n_r2}/300"}
+                best = None
+                for d in sorted((ROOT / "data" / "CI" / "08_scoring").glob("score_CI_r2_*")):
+                    rp = d / "score_report.json"
+                    if not rp.exists():
+                        continue
+                    rep = json.loads(rp.read_text(encoding="utf-8"))["results"]
+                    n = sum(1 for r in rep if r.get("검색") != "해당없음(E형)")
+                    t5 = sum(1 for r in rep if r.get("검색") in ("hit_top1", "hit_top5"))
+                    if n and (best is None or t5 / n > best):
+                        best = t5 / n
+                if best is not None:
+                    meta = {**meta, "gen": f"r2 검색축 채점 완료(top5 {best:.1%} · 앵커 확정 33.3%→56.7%) — 생성축 응시 대기"}
+                else:
+                    meta = {**meta, "gen": "r2 발행 완료(488문항) — 응답로그 대기"}
             except Exception:
                 pass
         st["_products"][meta["display"]] = {
