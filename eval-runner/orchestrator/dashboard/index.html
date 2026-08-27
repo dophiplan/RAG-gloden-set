@@ -1204,15 +1204,23 @@ async function doUpload(input, cardId, noAutoRun, scopeSelId){
   input.value='';
   return doUploadFiles(files, cardId, noAutoRun, scopeSelId);
 }
+/* 파일별 메모 — 보낸 사람이 단 조건("생성축 전체 응시", "top_k=50 진단" 등)을 파일에 붙인다.
+   취소(null)면 메모 없이 진행. 여러 파일이면 파일마다 물어봐서 각각 다른 조건을 달 수 있게. */
+function askMemo(fname){
+  const m = prompt(`"${fname}"\n\n이 파일에 붙일 메모가 있나요? (팀장님이 단 조건 등)\n없으면 그냥 [확인]`, '');
+  return (m||'').trim();
+}
 async function doUploadFiles(files, cardId, noAutoRun, scopeSelId){
   if(!files.length) return;
   const sel = scopeSelId? document.getElementById(scopeSelId) : null;
   const scope = sel? sel.value : '';   // 응시 범위 선언 — 게이트가 실물과 대조
+  const memos = files.map(f=>askMemo(f.name));   // busy 전에 — prompt가 렌더를 막지 않게
   busy = true; render();
   toast(`⏳ 업로드 중… (${files.length}개)`, 0);
   try{
-    for(const f of files){
-      const r=await fetch(`/api/upload?product=${PV().code}&target=${encodeURIComponent(cardId)}&name=${encodeURIComponent(f.name)}${scope?`&scope=${scope}`:''}`,
+    for(const [fi,f] of files.entries()){
+      const memo = memos[fi];
+      const r=await fetch(`/api/upload?product=${PV().code}&target=${encodeURIComponent(cardId)}&name=${encodeURIComponent(f.name)}${scope?`&scope=${scope}`:''}${memo?`&memo=${encodeURIComponent(memo)}`:''}`,
         {method:'POST', body:f});
       const d=await r.json();
       toast(d.out||'업로드 실패');
@@ -1300,6 +1308,7 @@ async function uploadRound(input){
 }
 async function uploadRoundFile(f){
   if(!f) return;
+  const memo = askMemo(f.name);
   if(PS().stage!=='SCORING' || PS().status==='DONE'){      // ⑨/완료면 ⑧로 복귀 (원장 기록)
     const d = await act({cmd:'new-round', product:PV().code});
     if(!d.ok) return;
@@ -1307,7 +1316,7 @@ async function uploadRoundFile(f){
   busy = true; render();
   toast('⏳ 응답로그 업로드 중…', 0);
   try{
-    const r = await fetch(`/api/upload?product=${PV().code}&target=SCORING&name=${encodeURIComponent(f.name)}`,
+    const r = await fetch(`/api/upload?product=${PV().code}&target=SCORING&name=${encodeURIComponent(f.name)}${memo?`&memo=${encodeURIComponent(memo)}`:''}`,
       {method:'POST', body:f});
     const d = await r.json();
     toast(d.out||'업로드 실패');

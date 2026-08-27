@@ -1362,14 +1362,21 @@ class H(SimpleHTTPRequestHandler):
         scope = N(q.get("scope", [""])[0])
         if scope in ("search", "full") and name.lower().endswith(".json") and "08_scoring" in sub:
             (dest_dir / f"{name}.scope").write_text(scope, encoding="utf-8")
+        # 파일별 메모 사이드카 — 보낸 사람이 단 조건("생성축 전체 응시", "top_k=50 진단" 등)을
+        # 파일 옆에 붙여 보존. 채점자가 로그를 열기 전에 조건을 읽는다.
+        memo = N(q.get("memo", [""])[0]).strip()[:500]
+        if memo:
+            (dest_dir / f"{name}.memo").write_text(memo, encoding="utf-8")
         sys.path.insert(0, str(ROOT / "tools"))
         from olib import ledger_append
         ledger_append("INPUT", "FILE_UPLOADED", "사람:대시보드",
                       evidence={"file": name, "size": n, "dest": f"data/{prod}/{sub}/",
                                 **({"응시 범위 선언": "검색축만" if scope == "search" else "전체"}
-                                   if scope in ("search", "full") else {})},
+                                   if scope in ("search", "full") else {}),
+                                **({"메모": memo} if memo else {})},
                       product=prod)
-        return {"ok": True, "out": f"업로드 완료: {name} ({n:,}B) → data/{prod}/{sub}/ — 입구 검사를 실행합니다"}
+        return {"ok": True, "out": f"업로드 완료: {name} ({n:,}B) → data/{prod}/{sub}/"
+                                   f"{' · 메모 저장됨' if memo else ''} — 입구 검사를 실행합니다"}
 
 
 def main():
