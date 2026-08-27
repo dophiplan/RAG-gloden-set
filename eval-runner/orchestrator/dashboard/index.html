@@ -196,6 +196,10 @@ body.dragging [data-drop]::after{content:'⇩ ' attr(data-droplabel) ' 놓기';p
   color:var(--run);background:var(--panel2);border:1px solid var(--run);border-radius:8px;padding:2px 8px;
   pointer-events:none;z-index:5}
 body.dragging [data-drop].dropping{background:color-mix(in srgb,var(--run) 12%,transparent)}
+/* 별도 트랙(외부 Q&A) 우체통은 노란색으로 구분 — 정식 회차 우체통(초록) 안에 겹쳐 보여도 다른 곳임 */
+body.dragging [data-drop="qa"],body.dragging [data-drop="qalog"]{outline-color:var(--warn,#d9a441)}
+body.dragging [data-drop="qa"]::after,body.dragging [data-drop="qalog"]::after{color:var(--warn,#d9a441);border-color:var(--warn,#d9a441)}
+body.dragging [data-drop="qa"].dropping,body.dragging [data-drop="qalog"].dropping{background:color-mix(in srgb,var(--warn,#d9a441) 12%,transparent)}
 </style>
 </head>
 <body>
