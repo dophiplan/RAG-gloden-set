@@ -125,9 +125,12 @@
   .arch[open] summary::before{transform:rotate(90deg)}
   .arch .frow{opacity:.75}
 
-  main{display:grid;grid-template-columns:290px 1fr 560px;gap:16px;padding:8px 24px 20px}
-  @media(max-width:1400px){main{grid-template-columns:270px 1fr 480px}}
-  @media(max-width:1100px){main{grid-template-columns:1fr}}
+  main{display:grid;grid-template-columns:290px 1fr 6px 560px;gap:12px;padding:8px 24px 20px}
+  @media(max-width:1400px){main{grid-template-columns:270px 1fr 6px 480px}}
+  @media(max-width:1100px){main{grid-template-columns:1fr}.vsplit{display:none}}
+  /* 검수큐 ↔ 성적 히스토리 사이 폭 조절 손잡이 — 드래그로 좌우 조절, 더블클릭 = 원래대로 */
+  .vsplit{cursor:col-resize;border-radius:3px;background:var(--line);opacity:.5;align-self:stretch}
+  .vsplit:hover,.vsplit.on{background:var(--run);opacity:1}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .p-head{padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;color:var(--tx2);display:flex;justify-content:space-between;align-items:center}
   .p-body{padding:14px 16px}
@@ -619,13 +622,14 @@ function render(){
     </div>
     <div id="aiprogwrap">${renderAiProgress()}</div>
   </div>
-  <main>
+  <main id="mainGrid" style="${window.innerWidth>1100?`grid-template-columns:${window.innerWidth>1400?290:270}px 1fr 6px ${_scoreW()}px`:''}">
     <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
     <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">
       ${renderQueue()}
     </div></div>
+    <div class="vsplit" id="vsplit" title="드래그로 좌우 폭 조절 · 더블클릭 = 원래대로"></div>
     <div class="panel" ${canNewRound()?'data-drop="round" data-droplabel="팀장님 응답로그(json)"':''}><div class="p-head">성적 히스토리 — ${cur} <button class="archbtn" ${canNewRound()?'':'disabled'} onclick="$('roundFile').click()" title="${canNewRound()
       ?'팀장님 응답로그(json)를 올리면: 회차 자동 부여 → 형식 게이트 → 채점(⑧) → 보고서'
       :'아직 못 써요 — 골든셋 v2가 완성(⑧ 실물 채점 도달)돼야 정답키로 채점할 수 있어요. 지금은 ①에 코퍼스부터.'}">⬆ 실물 채점 추가로 돌리기</button></div><div class="p-body">
@@ -1486,6 +1490,31 @@ const dlg=$('dlg'), rdlg=$('rdlg');
 
 loadAll();
 setInterval(()=>{ if(!busy && !window._demoMode) loadAll(true); }, 15000);   // 데모 중 폴링이 가짜 데이터를 지우고 TypeError 내는 것 방지
+
+/* 검수큐 ↔ 성적 히스토리 폭 조절 — 손잡이 드래그, 더블클릭 원복. 선택은 localStorage에 기억 */
+function _scoreW(){
+  try{ const v=parseInt(localStorage.getItem('scoreW')); if(v>=320 && v<=1400) return v; }catch(e){}
+  return window.innerWidth>1400? 560 : 480;
+}
+document.addEventListener('mousedown', e=>{
+  const sp = e.target.closest && e.target.closest('#vsplit');
+  if(!sp) return;
+  e.preventDefault(); sp.classList.add('on');
+  const mg=$('mainGrid'), startX=e.clientX, startW=_scoreW();
+  const left = window.innerWidth>1400? 290:270;
+  const move=ev=>{
+    const w=Math.min(1400, Math.max(320, startW + (startX - ev.clientX)));
+    mg.style.gridTemplateColumns=`${left}px 1fr 6px ${w}px`;
+    try{ localStorage.setItem('scoreW', w); }catch(err){}
+  };
+  const up=()=>{ sp.classList.remove('on'); document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+});
+document.addEventListener('dblclick', e=>{
+  if(!(e.target.closest && e.target.closest('#vsplit'))) return;
+  try{ localStorage.removeItem('scoreW'); }catch(err){}
+  const mg=$('mainGrid'); if(mg) mg.style.gridTemplateColumns='';
+});
 
 /* 드래그&드롭 업로드 — 모든 파일 추가 영역([data-drop])에 끌어다 놓기 지원.
    재렌더(innerHTML 교체)에도 살아남도록 document 위임 방식. */
