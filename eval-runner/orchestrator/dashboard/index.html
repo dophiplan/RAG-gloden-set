@@ -484,6 +484,11 @@ function nextAction(){
 function renderAiProgress(){
   const d = window._prog;
   if(!d || !(d.extractors||[]).length) return '';
+  // [난희 지적 2026-08-28] ③이 끝나고 뒷단계로 넘어갔으면, 전원 대기(뛰는 주자 없음)인 이 패널은 숨긴다
+  // — "멈춘 자리"는 ③ 진행 중일 때만 의미가 있음. 재개하면(active) 다시 나타난다.
+  const allIdle = !d.active && d.extractors.every(e=>e.idle);
+  const pastCov = STAGE_ORDER.indexOf(PS().stage) > STAGE_ORDER.indexOf('COVERAGE_MAP');
+  if(allIdle && pastCov) return '';
   const running = !!d.active;
   const age = d.ts ? Math.max(0, Math.round((Date.now()-new Date(d.ts).getTime())/60000)) : null;
   const ghost = running && d.worker_alive === false;
