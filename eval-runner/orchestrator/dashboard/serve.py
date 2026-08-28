@@ -106,6 +106,27 @@ def api_state():
                     meta = {**meta, "gen": f"r2 검색축 채점 완료(top5 {best:.1%} · 앵커 확정 33.3%→56.7%) — 생성축 응시 대기"}
                 else:
                     meta = {**meta, "gen": "r2 발행 완료(488문항) — 응답로그 대기"}
+                # 생성축 이중판정 실시간 진행 — 체크포인트/확정 파일에서 즉석 계산 (화면 15초 자동 갱신)
+                gdir = ROOT / "data" / "CI" / "08_scoring" / "score_CI_r2_생성축"
+                if gdir.exists():
+                    def _jn(p):
+                        try:
+                            d_ = json.loads(p.read_text(encoding="utf-8"))
+                            return len(d_.get("verdicts", d_)) if isinstance(d_, dict) else 0
+                        except Exception:
+                            return 0
+                    kimi_fin = gdir / "judge_kimi_v1_1.json"
+                    kimi_ck = gdir / "judge_kimi_v1_1.json.ckpt"
+                    rev_fin = gdir / "judge_claude_review.json"
+                    rev_ck = gdir / "judge_claude_review.json.ckpt"
+                    if rev_fin.exists():
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + " — 생성축 이중판정 ✅ 완료 (성적표 확정)"}
+                    elif rev_ck.exists():
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — 생성축 판정: Kimi 완료 · claude 검토 {_jn(rev_ck)}/488"}
+                    elif kimi_fin.exists():
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + " — 생성축 판정: Kimi 488/488 완료 · claude 교차 검토 대기"}
+                    elif kimi_ck.exists():
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — 생성축 판정 진행 중: Kimi {_jn(kimi_ck)}/488"}
             except Exception:
                 pass
         st["_products"][meta["display"]] = {
