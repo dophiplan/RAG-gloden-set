@@ -1,4 +1,4 @@
-# project-squad01-rsult-202608
+# project-squad01-result-202608
 
 ## 1. 개요
 
