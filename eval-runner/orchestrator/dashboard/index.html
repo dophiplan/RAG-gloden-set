@@ -430,6 +430,9 @@ function nextAction(){
     return {icon:'⛔', text:'사고 정지 — 원인: '+r+'. 일시적 오류(응답 형식 등)면 [▶ 다시 시도]로 이어갈 수 있어요. 같은 원인으로 또 멈추면 그때 저(Claude)를 불러주세요.', retry:true};
   }
   if(ps.status==='WAITING_INPUT'){
+    // 채점센터(vault) 작업이 도는 중이면 그게 지금의 진짜 상태 — "파일 대기"보다 우선 표시
+    const j = judgeNote();
+    if(j) return j;
     const c = myCards.find(c=>c.kind==='INPUT');
     return {icon:'📎', text:'지금 할 일: 왼쪽 카드의 [파일 업로드] 버튼으로 '+(c? c.title.replace(/INPUT_[A-Z_0-9]+ — /,'') : '필요한 파일')+' 파일을 올려주세요. 올리면 자동으로 진행돼요.'};
   }
@@ -755,6 +758,16 @@ function ackCheck(ci){
   if(btn) btn.disabled = !all;
 }
 
+/* 채점센터(vault) 이중판정 진행 — 제품 라벨(gen)에 실려 오는 실시간 문구를 상태 패널로 승격 */
+function judgeNote(){
+  const g = (PV().gen||'');
+  const m = g.match(/생성축 (판정|이중판정)[^·]*.*$/);
+  if(!m) return null;
+  const tail = g.split(' — ').slice(1).join(' — ') || m[0];
+  if(g.includes('✅'))
+    return {icon:'✅', text:'생성축 이중판정 완료! 성적표가 확정됐어요 — Claude가 병기 성적표와 가이드를 정리해서 알려드립니다.'};
+  return {icon:'⚖️', text:'지금 상태: '+tail+' — 채점센터가 자동으로 진행 중이라 기다리면 돼요 (이 표시는 15초마다 갱신). 완료되면 ✅로 바뀝니다.'};
+}
 function renderDetail(ps){
   const i = STAGE_ORDER.indexOf(ps.stage);
   const cs = (S.catalog.products[cur]||{stages:[]}).stages[i];
@@ -766,7 +779,9 @@ function renderDetail(ps){
     ["회차 비교", ps.compare_blocked?'차단 <small>재채점 중</small>':'허용'],
   ];
   const note = cs? `${cs.what}\n\n누가 하나: ${stageAI(ps.stage).how}\n세션 정책: ${stageAI(ps.stage).session}\n쓰는 파일: ${cs.consumes.join(' · ')}\n만드는 파일: ${cs.produces.join(' · ')}` : '';
+  const jn = judgeNote();
   return `<div class="kv">${kv.map(([k,v])=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
+    ${jn?`<div class="note" style="border-left-color:var(--run)">${jn.icon} ${esc(jn.text)}</div>`:''}
     ${ps.halt_reason?`<div class="note" style="border-left-color:var(--halt);color:var(--halt)">⛔ ${esc(ps.halt_reason)}</div>`:''}
     ${ps.status==='RUNNING'?`<div class="fh" style="font-size:10px;letter-spacing:.1em;color:var(--tx2);margin:10px 0 4px;display:flex;justify-content:space-between"><span>진행 요약 (챕터 전환만)</span><span><a href="/results/_run_${esc(PV().code)}.log" target="_blank" style="color:var(--run);text-decoration:none">원문 로그 ↗</a> · <a href="/results/logs/${esc(PV().code)}/" target="_blank" style="color:var(--tx2);text-decoration:none">지난 로그 📂</a></span></div><div class="runlog" id="runlog">요약 불러오는 중…</div>`:''}
     <div class="note">${esc(note)}</div>`;
