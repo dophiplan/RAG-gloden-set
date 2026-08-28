@@ -1364,6 +1364,9 @@ class H(SimpleHTTPRequestHandler):
         # 채점만 모드: SCORING 카드에 골든셋(xlsx)과 로그(json)를 같이 올려도 자동 분류
         if "SCORING" in target and name.lower().endswith(".xlsx"):
             sub = "05_unified_ledger"
+        # [난희 지시 2026-08-28] CI 수신 자료(팀장님 응답로그 등)는 전용 폴더에 모은다
+        if prod == "CI" and sub == "08_scoring":
+            sub = "08_scoring/전달 받은 자료"
         if not re.fullmatch(r"[A-Z0-9]{1,8}", prod):
             return {"ok": False, "out": f"제품 코드 오류: {prod}"}
         dest_dir = ROOT / "data" / prod / sub
