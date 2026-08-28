@@ -119,7 +119,11 @@ def api_state():
                     kimi_ck = gdir / "judge_kimi_v1_1.json.ckpt"
                     rev_fin = gdir / "judge_claude_review.json"
                     rev_ck = gdir / "judge_claude_review.json.ckpt"
-                    if rev_fin.exists():
+                    if rev_fin.exists() and (gdir / "최종판정_488.json").exists():
+                        # 확정까지 끝난 상태 — '판정 중' 문구 대신 확정 요약 (다음 로그 대기로 복귀)
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0]
+                                + " · 생성축 확정(합격 77.0%·E환각 6) — 다음 로그 대기"}
+                    elif rev_fin.exists():
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0] + " — 생성축 이중판정 ✅ 완료 (성적표 확정)"}
                     elif rev_ck.exists():
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — 생성축 판정: Kimi 완료 · claude 검토 {_jn(rev_ck)}/488"}
