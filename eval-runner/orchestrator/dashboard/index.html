@@ -398,6 +398,9 @@ function stageView(code){
       return {k, cls:'input', label:'새 로그 대기'};
     if(hist[k] && (i<curIdx || ps.status==='DONE')) return {k, cls:'done', label:'완료'};
     if(i===curIdx){
+      // [난희 지적 2026-08-28] 채점센터 판정이 도는 동안 ⑧이 '파일 대기'로 보이면 헷갈림 — '판정 중'으로
+      if(k==='SCORING' && ps.status==='WAITING_INPUT' && typeof judgeNote==='function' && judgeNote())
+        return {k, cls:'run', label:(PV().gen||'').includes('✅')?'판정 완료':'판정 중'};
       const map = {RUNNING:[ps._worker===false?'halt':'run', ps._worker===false?'⚠ 멈춤':'진행 중'], WAITING_HUMAN:['human','결정 대기'],
                    WAITING_INPUT:['input','파일 대기'],
                    HALTED:['halt', (ps.halt_reason||'').startsWith('의도적 잠금')?'🔒 잠금':'사고 정지'],
@@ -631,7 +634,7 @@ function render(){
     <div id="aiprogwrap">${renderAiProgress()}</div>
   </div>
   <main id="mainGrid" style="${window.innerWidth>1100?`grid-template-columns:${window.innerWidth>1400?290:270}px 1fr 6px ${_scoreW()}px`:''}">
-    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
+    <div class="panel"><div class="p-head">현재 단계 — ${CIRC[STAGE_ORDER.indexOf(ps.stage)]} ${catStages[STAGE_ORDER.indexOf(ps.stage)]?.name||ps.stage} · ${(ps.status==='HALTED'&&(ps.halt_reason||'').startsWith('의도적 잠금'))?'🔒 잠금':(ps.stage==='SCORING'&&ps.status==='WAITING_INPUT'&&judgeNote())?((PV().gen||'').includes('✅')?'판정 완료':'판정 중'):(STATUS_KO[ps.status]||ps.status)}</div><div class="p-body">
       ${renderDetail(ps)}
     </div></div>
     <div class="panel"><div class="p-head">내가 할 일 (검수큐) <span class="num">${S.queue.filter(c=>c.product===PV().code||c.product==='공통').length}건</span></div><div class="p-body" id="queuebody">
