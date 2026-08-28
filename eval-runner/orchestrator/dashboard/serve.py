@@ -296,15 +296,20 @@ def api_scores():
             if idxs and "base50" not in out.get("CI", {}):
                 idx = json.loads(idxs[0].read_text(encoding="utf-8"))
                 for ent in idx.get("회차", []):
-                    if str(ent.get("회차")) == "top50진단":
-                        mm = re.search(r"(\d+)\s*/\s*(\d+)", str(ent.get("채점", {}).get("기계대조_top50", "")))
-                        if mm:
-                            out.setdefault("CI", {})["base50"] = {
-                                "top1": None, "top5": int(mm.group(1)), "n": int(mm.group(2)),
-                                "pass": "미응시", "partial": "미응시", "검색축만": True,
-                                "E환각": "미응시", "E거절": "미응시", "scorer": "진단(top_k=50·개선 전 형상)",
-                                "분석": {"note": ent.get("채점", {}).get("미적중708_분해"),
-                                         "출처": "채점센터 vault 회차인덱스"}}
+                    rname = str(ent.get("회차"))
+                    if not rname.startswith("top50진단"):
+                        continue
+                    key = "base50" if rname == "top50진단" else "r2진단50"
+                    mm = re.search(r"(\d+)\s*/\s*(\d+)", str(ent.get("채점", {}).get("기계대조_top50", "")))
+                    if mm:
+                        out.setdefault("CI", {})[key] = {
+                            "top1": None, "top5": int(mm.group(1)), "n": int(mm.group(2)),
+                            "pass": "미응시", "partial": "미응시", "검색축만": True,
+                            "E환각": "미응시", "E거절": "미응시",
+                            "scorer": ent.get("채점", {}).get("표시", "진단(top_k=50·개선 전 형상)"),
+                            "분석": {"note": ent.get("채점", {}).get("미적중708_분해")
+                                             or ent.get("채점", {}).get("미적중_분해"),
+                                     "출처": "채점센터 vault 회차인덱스"}}
         except Exception:
             pass
     # CIQA 기준선 라벨 — base1/2/3은 재응시가 아니라 서로 다른 기준선 3종 (사전 실측 참고선)
