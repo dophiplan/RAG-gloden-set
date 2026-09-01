@@ -143,8 +143,9 @@ def api_state():
                             _sum = f"비E형 합격 {_p}/{len(_g)} ({_p/max(1,len(_g)):.1%}) · E환각 {_e}"
                         except Exception:
                             _sum = "확정"
+                        # 표 제목은 라벨의 " — " 앞부분만 쓴다 → 회차명을 제목부에 넣어야 보인다
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0]
-                                + f" · {_rnd} 생성축 확정({_sum}) — 다음 로그 대기"}
+                                + f" · {_rnd} 생성축({_sum}) — 다음 로그 대기"}
                     elif rev_fin.exists():
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 이중판정 ✅ 완료 (확정 집계 중)"}
                     elif rev_ck.exists():
