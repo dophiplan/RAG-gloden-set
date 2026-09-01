@@ -203,6 +203,20 @@ body.dragging [data-drop].dropping{background:color-mix(in srgb,var(--run) 12%,t
 body.dragging [data-drop="qa"],body.dragging [data-drop="qalog"]{outline-color:var(--warn,#d9a441)}
 body.dragging [data-drop="qa"]::after,body.dragging [data-drop="qalog"]::after{color:var(--warn,#d9a441);border-color:var(--warn,#d9a441)}
 body.dragging [data-drop="qa"].dropping,body.dragging [data-drop="qalog"].dropping{background:color-mix(in srgb,var(--warn,#d9a441) 12%,transparent)}
+.lg-day{border-bottom:1px solid var(--line)}
+.lg-day:last-child{border-bottom:none}
+.lg-day>summary{display:flex;align-items:center;gap:10px;cursor:pointer;padding:7px 4px;
+  font:600 12px/1 var(--mono,ui-monospace);color:var(--tx2);list-style:none}
+.lg-day>summary::-webkit-details-marker{display:none}
+.lg-day>summary::before{content:'▸';font-size:11px;color:var(--tx2);transition:transform .15s}
+.lg-day[open]>summary::before{transform:rotate(90deg)}
+.lg-day[open]>summary{color:var(--tx)}
+.lg-day>summary:hover{background:rgba(255,255,255,.03)}
+.lg-date{min-width:96px}
+.lg-cnt{font-size:11px;color:var(--run);min-width:34px}
+.lg-peek{font:400 11px/1.4 'IBM Plex Sans KR',sans-serif;color:#5d6785;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:1}
+.lg-rows{padding:2px 0 8px 16px;border-left:2px solid var(--line);margin-left:6px}
 </style>
 </head>
 <body>
@@ -929,16 +943,37 @@ function renderScores(ps){
 }
 
 function renderLedger(){
-  const rows = S.ledger.map(r=>{
+  // 날짜별 아코디언 — 오늘 날짜는 기본 열림, 지난 날짜는 접힘 (난희 지시 2026-09-01)
+  const byDay = {};
+  for(const r of S.ledger){
+    const ts=(r.ts||''); const day=ts.slice(0,10) || '(날짜 없음)';
+    (byDay[day]=byDay[day]||[]).push(r);
+  }
+  const today=new Date().toISOString().slice(0,10);
+  const days=Object.keys(byDay).sort().reverse();          // 최신 날짜 위로
+  const rowHtml=r=>{
     const cls = r.stage==='APPEAL'||r.action==='appeal' ? 'lg-appeal'
       : (r.action||'').includes('HALT')||(r.action||'').includes('REFUSED')||(r.action||'').includes('LEAK') ? 'lg-halt' : '';
     const actor = (r.actor||'').startsWith('script') ? `<span class="lg-script">${esc(r.actor)}</span>` : esc(r.actor);
     const ev = r.evidence && Object.keys(r.evidence).length ? ` · ${esc(JSON.stringify(r.evidence)).slice(0,110)}` : '';
-    return `<div class="lg-row ${cls}">${esc((r.ts||'').slice(5,16))} <b>${esc(r.stage)}${r.product?'·'+esc(r.product):''}</b> · ${actor} · ${esc(r.action)}${r.reason?' · '+esc(r.reason).slice(0,80):''}${ev}</div>`;
+    return `<div class="lg-row ${cls}">${esc((r.ts||'').slice(11,16))} <b>${esc(r.stage)}${r.product?'·'+esc(r.product):''}</b> · ${actor} · ${esc(r.action)}${r.reason?' · '+esc(r.reason).slice(0,80):''}${ev}</div>`;
+  };
+  const wd=['일','월','화','수','목','금','토'];
+  const html=days.map(day=>{
+    const rs=byDay[day].slice().reverse();                 // 그 날 안에서도 최신 위로
+    const isToday=(day===today);
+    const label=day==='(날짜 없음)'? day
+      : `${day.slice(5).replace('-','/')} (${wd[new Date(day+'T00:00:00').getDay()]})${isToday?' · 오늘':''}`;
+    const acts=[...new Set(rs.map(r=>r.action).filter(Boolean))].slice(0,3).join(' · ');
+    return `<details class="lg-day"${isToday?' open':''}>
+      <summary><span class="lg-date">${label}</span><span class="lg-cnt">${rs.length}건</span><span class="lg-peek">${esc(acts)}</span></summary>
+      <div class="lg-rows">${rs.map(rowHtml).join('')}</div>
+    </details>`;
   }).join('');
-  $('ledger').innerHTML = rows || '(운영 기록 시작 — 여기에 모든 결정이 자동으로 남아요)';
-  $('ledgerCount').textContent = `최근 ${S.ledger.length}행`;
+  $('ledger').innerHTML = html || '(운영 기록 시작 — 여기에 모든 결정이 자동으로 남아요)';
+  $('ledgerCount').textContent = `최근 ${S.ledger.length}행 · ${days.length}일`;
 }
+
 
 /* 트랙 툴팁 */
 const tip = document.createElement('div'); tip.className='tip'; document.body.appendChild(tip);
