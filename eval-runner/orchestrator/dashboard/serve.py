@@ -128,8 +128,19 @@ def api_state():
                     if rev_fin.exists() and _fin.exists():
                         try:
                             _v = json.loads(_fin.read_text(encoding="utf-8"))
-                            _p = sum(1 for x in _v.values() if x.get("최종") == "합격")
-                            _sum = f"합격 {_p}/{len(_v)}"
+                            # 비E형만 집계 (E형 부재인정은 별도 지표) — 라벨 오해 방지
+                            import openpyxl as _ox
+                            _led = sorted((ROOT / "data" / "CI" / "05_unified_ledger").glob("*통합대장_488*.xlsx"))
+                            _et = {}
+                            if _led:
+                                _ws = _ox.load_workbook(_led[-1], read_only=True)["골든셋_전체"]
+                                _h = [N(c) for c in next(_ws.iter_rows(max_row=1, values_only=True))]
+                                for _r in _ws.iter_rows(min_row=2, values_only=True):
+                                    _et[N(_r[0])] = "E" in N(_r[_h.index("유형")])
+                            _g = [i for i in _v if not _et.get(i)]
+                            _p = sum(1 for i in _g if _v[i].get("최종") == "합격")
+                            _e = sum(1 for i in _v if _et.get(i) and _v[i].get("최종") == "0점")
+                            _sum = f"비E형 합격 {_p}/{len(_g)} ({_p/max(1,len(_g)):.1%}) · E환각 {_e}"
                         except Exception:
                             _sum = "확정"
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0]
