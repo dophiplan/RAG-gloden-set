@@ -795,6 +795,28 @@ function renderDetail(ps){
     <div class="note">${esc(note)}</div>`;
 }
 
+/* 회차 열 순서 — 시험지 세대 → 계열 → 응시 순으로 사람이 읽는 순서대로 정렬
+   (기존: 이름의 숫자만 보고 정렬해 r2-1·rr30 등이 뒤죽박죽으로 섞임 — 난희 지적 2026-09-01) */
+function roundOrder(a,b){
+  const rank=r=>{
+    const m=r.match(/^r(\d+)/); const gen=m? parseInt(m[1]) : 90;      // 세대(r1/r2…), base류는 뒤로
+    let sub=50;                                                          // 같은 세대 안 순서
+    if(/^r\d+$/.test(r)) sub=0;                                          // 원판(r1, r2)
+    else if(r.includes('재응시')) sub=10;
+    else if(r.includes('window512')) sub=22;
+    else if(r.includes('window')) sub=20;
+    else if(r.includes('rr30')) sub=30;
+    else if(r.includes('rr50')) sub=31;
+    else if(r.includes('진단')) sub=40;
+    else if(r.includes('-1')) sub=61;                                    // 재응시 회차(r2-1)
+    else if(r.includes('생성축')) sub=60;
+    if(r.startsWith('base')) return [95, parseInt(r.replace(/\D/g,''))||0];
+    return [gen, sub];
+  };
+  const [ga,sa]=rank(a), [gb,sb]=rank(b);
+  return ga-gb || sa-sb || a.localeCompare(b);
+}
+
 // U6: 성적 히스토리 — 상단: 세대(버전)별 회차 누적 현황 / 하단: 세대별 상세 추이
 function renderScores(ps){
   const pv = PV();
@@ -803,7 +825,7 @@ function renderScores(ps){
   // ── 버전별 누적 현황 줄 (몇 회차가 쌓였고 마지막이 어느 회차인지) — 세대별
   const genRow = g=>{
     const sc = g.sc || S.scores[g.code] || {};
-    const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
+    const rounds = Object.keys(sc).sort(roundOrder);
     const n = rounds.length ? sc[rounds[rounds.length-1]].n : 0;
     const flow = rounds.map(r=>sc[r].scorer==='기록 이관'?r+'*':r).join(' → ');
     return `<div class="score-row"><span><b>${esc(g.label)}</b> ${g.badge||(g.retired?'<span class="haltbadge">은퇴 · 참고</span>':'<span class="hint">현역</span>')}</span>
@@ -839,7 +861,7 @@ function renderScores(ps){
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
   const mk = (label, sc, retired, code, badge) => {
     if(!sc || !Object.keys(sc).length) return '';
-    const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
+    const rounds = Object.keys(sc).sort(roundOrder);
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
     const fmt = (r,k)=>{ const v=sc[r][k], n=sc[r].n;   // 숫자면 % 병기 — "236 (27%)" · 미응시/결측은 '-' (숫자 금지 [난희 지시 2026-08-25])
       // 검색축만 회차: 생성 계열 지표는 값이 0으로 계산돼 와도 무조건 '-' — "0 (0%)" 오독 원천 차단
@@ -853,6 +875,8 @@ function renderScores(ps){
     const delta = `<tr><td class="m">Δ 전회차</td>${rounds.map((r,i)=>{
       if(i===0) return `<td class="hint">기준선</td>`;
       const p=sc[rounds[i-1]], v=sc[r];
+      // [난희 지적 2026-09-01] 문항 수가 다른 회차 간 건수 차이는 무의미 — 비교 금지
+      if(p.n && v.n && p.n!==v.n) return `<td class="${i===rounds.length-1?'cur':''}"><span class="hint" title="앞 회차와 문항 수가 달라 건수 비교 불가 (${p.n} vs ${v.n}문항)">비교 불가</span></td>`;
       const d1=(typeof v.top1==='number'&&typeof p.top1==='number')? v.top1-p.top1 : null;
       const d5=(typeof v.top5==='number'&&typeof p.top5==='number')? v.top5-p.top5 : null;
       const s=x=> x===null?'-':(x>0?`▲${x}`:x<0?`▼${-x}`:'—');
@@ -1056,7 +1080,7 @@ function hideITip(){ $('itip').style.display = 'none'; }
 function openReports(codeEnc, label){
   const code = decodeURIComponent(codeEnc);
   const sc = S.scores[code] || {};
-  const rounds = Object.keys(sc).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,''))).filter(r=>sc[r].scorer!=='기록 이관');
+  const rounds = Object.keys(sc).sort(roundOrder).filter(r=>sc[r].scorer!=='기록 이관');
   $('rpt-title').textContent = label;
   $('rpt-body').innerHTML = rounds.map(r=>{
     const v = sc[r];
