@@ -1,0 +1,500 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG 품질 루프 — 8월</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* 관제판(다크 콘솔)의 시각 언어를 그대로 발표 지면으로 — 의도적 단일 다크 테마 */
+:root{
+  --bg:#0c111f; --panel:#141a2c; --panel2:#1a2136; --line:#2a3450;
+  --tx:#e8ecf7; --tx2:#8b95b3; --run:#4ade80; --warn:#fbbf24; --bad:#f87171;
+  --anchor:#7dd3fc; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);
+  font:16px/1.75 'IBM Plex Sans KR',-apple-system,'Apple SD Gothic Neo',sans-serif}
+.wrap{max-width:1060px;margin:0 auto;padding:48px 28px 80px;display:flex;flex-direction:column;gap:56px}
+h1{font-size:34px;line-height:1.3;margin:0;text-wrap:balance}
+h2{font-size:22px;margin:0 0 4px}
+h3{font-size:16px;margin:0}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.14em;color:var(--run);text-transform:uppercase}
+.muted{color:var(--tx2)}
+section{display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px}
+.phead{font:600 12px/1 var(--mono);letter-spacing:.1em;color:var(--tx2);margin-bottom:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:600 12px var(--mono);color:var(--tx2);text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #1e2740;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.big{font:600 44px/1.1 var(--mono);color:var(--run)}
+.big small{font:500 13px 'IBM Plex Sans KR';color:var(--tx2);display:block;margin-top:8px;letter-spacing:0}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.pill{display:inline-block;font:600 11px var(--mono);padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--tx2)}
+.pill.g{color:var(--run);border-color:color-mix(in srgb,var(--run) 45%,transparent)}
+.pill.w{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.pill.b{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+/* 진행선 트랙 재현 */
+.track{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:10px 0 4px}
+.stage{flex:1;min-width:88px;text-align:center;position:relative}
+.stage::before{content:'';position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line)}
+.stage:first-child::before{display:none}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--run);color:var(--run);
+  font:600 13px var(--mono);display:inline-flex;align-items:center;justify-content:center;
+  background:var(--panel);position:relative;z-index:1}
+.stage .nm{font-size:12px;margin-top:6px}
+.stage .st{font:11px var(--mono);color:var(--run)}
+.stage.wait .dot{border-color:var(--warn);color:var(--warn)}
+.stage.wait .st{color:var(--warn)}
+/* 막대 비교 */
+.bar{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;font-size:13px}
+.bar .tr{height:12px;border-radius:6px;background:var(--panel2);overflow:hidden}
+.bar .tr i{display:block;height:100%;border-radius:6px}
+/* 원장 테일 */
+.ledger{font:12.5px/1.9 var(--mono);background:#0a0f1b;border:1px solid var(--line);
+  border-radius:10px;padding:14px 18px;overflow-x:auto;white-space:pre}
+.ledger b{color:var(--run);font-weight:600}
+.loop{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.loop .step{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.loop .who{font:600 11px var(--mono);letter-spacing:.08em}
+.loop .who.eval{color:var(--anchor)} .loop .who.plat{color:var(--warn)}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.note{border-left:3px solid var(--run);background:var(--panel2);border-radius:0 10px 10px 0;padding:12px 16px;font-size:14px}
+.kpt h3{font-family:var(--mono);font-size:13px;letter-spacing:.1em}
+.kpt .k{color:var(--run)} .kpt .p{color:var(--bad)} .kpt .t{color:var(--anchor)}
+.split{display:grid;grid-template-columns:7fr 3fr;gap:14px;align-items:stretch}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.stat{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid #1e2740}
+.stat:last-child{border-bottom:none}
+.stat .v{font:600 22px var(--mono)}
+.stat .k{font-size:12.5px;color:var(--tx2)}
+/* 성적 히스토리 표 — 숨쉴 공간 + 줄무늬 (좁은 화면에선 가로 스크롤) */
+.histTbl{min-width:880px}
+.histTbl th{padding:10px 14px;font-size:12px;line-height:1.5;white-space:normal}
+.histTbl td{padding:12px 14px;font-size:13.5px;white-space:nowrap}
+.histTbl tr:nth-child(odd) td{background:rgba(255,255,255,.025)}
+@media(max-width:640px){h1{font-size:26px}.big{font-size:34px}}
+</style>
+
+<div class="wrap">
+
+<!-- ─── 표지 ─── -->
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">RAG 평가 프로젝트 · 2026.08 회고 — 스쿼드 목표 : 품질</span>
+  <h1>진단하고, 수리하고, 다시 쟀다<br>— 품질 루프 2회 완주의 기록</h1>
+  <p class="muted" style="max-width:66ch;margin:0">평가(채점센터)가 원인을 지목하고, 플랫폼이 수리하고, 같은 문항으로 다시 재는 루프를
+  실협업 2주 만에 두 바퀴 돌렸습니다. 검색 정확도 향상을 공식 확정하고 GPU 투자 근거까지 확보했으며, 답변 품질의 기준선과 <b>환각 억제의 대가</b>까지 수치화했고,
+  이 과정 전체를 <b>표준 규격 v1</b>로 승격했습니다. 발표: 김난희 · 2026-09-03</p>
+</header>
+
+<!-- ─── So What ─── -->
+<section>
+  <div class="grid3">
+    <div class="panel"><div class="big">2.7<span style="font-size:24px">배</span><small>검색 1순위 정답률 (앵커 120문항, 16.7→45.8%) — 잣대 동결 공식 확정</small></div></div>
+    <div class="panel"><div class="big">76.3<span style="font-size:24px">%</span><small>최종 답변(생성축) 합격 — 대표 지표 · 재응시(r2-1)에서 환각 6→4·수치 오답 17→11 개선 확인</small></div></div>
+    <div class="panel"><div class="big" style="color:var(--anchor)">v1<small>RAG 평가 표준 규격 — 3제품 실전 검증분 승격, 다음 제품은 재발명 없이 시작</small></div></div>
+  </div>
+</section>
+
+<!-- ─── 관제탑: 9단계 무인 파이프라인 ─── -->
+<section>
+  <span class="eyebrow">하네스 — 관제탑에서 본 8월</span>
+  <h2>9단계 파이프라인을 무인으로 완주했다</h2>
+  <div class="panel">
+    <div class="phead">RAG 평가 관제판 · CI — 실제 운영 화면의 진행선</div>
+    <div class="track">
+      <div class="stage"><span class="dot">①</span><div class="nm">코퍼스 실측</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">②</span><div class="nm">지형 판정</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">③</span><div class="nm">커버리지맵</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">④</span><div class="nm">골든셋 배치</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">⑤</span><div class="nm">통합 대장</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">⑥</span><div class="nm">캘리브레이션</div><div class="st">완료</div></div>
+      <div class="stage"><span class="dot">⑦</span><div class="nm">본판정</div><div class="st">완료</div></div>
+      <div class="stage wait"><span class="dot">⑧</span><div class="nm">실물 채점</div><div class="st">다음 로그 대기</div></div>
+      <div class="stage"><span class="dot" style="border-color:var(--line);color:var(--tx2)">⑨</span><div class="nm">유지보수</div><div class="st" style="color:var(--tx2)">—</div></div>
+    </div>
+    <p class="muted" style="font-size:13.5px;margin:10px 0 0">사람은 게이트 결정만, 실행은 AI 앙상블(출제 claude · 채점 Kimi · 교차 codex)이 밤새 수행.
+    7월 발표의 "자동화 계획"이 8월에 <b>실전 가동</b>됐습니다 — 커버리지맵 87,198단위 → 시험지 488문항 → 채점까지. 관제탑에 <b>11회차</b>가 누적됐습니다.</p>
+  </div>
+  <div class="grid3">
+    <div class="panel"><h3>사람 개입은 카드로만</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0">검수큐 게이트 카드 승인/반려 + 판정 불일치 팝업 클릭 확정 — 엑셀 왕복 0회</p></div>
+    <div class="panel"><h3>실수 방지 장치 2개 추가</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0">제품별 채점기 라우팅 가드(잘못된 채점 원천 차단) + 정지 프로세스 추가(진행 중 작업 즉시 중단·원장 기록) — 운영 이슈를 재발 방지 장치로 전환</p></div>
+    <div class="panel"><h3>AI가 멈춰도 일은 안 멈춘다</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0">작업 상태를 AI의 기억이 아니라 저장소(원장·현황 브리핑)에 보관 — AI 세션이 한도로 끊기거나 계정을 바꿔도, <b style="color:var(--tx)">새 세션이 이어받아 같은 자리에서 즉시 계속</b> (8월 실제 승계로 검증)</p></div>
+  </div>
+</section>
+
+<!-- ─── 품질 루프 ─── -->
+<section>
+  <span class="eyebrow">협업 — 품질 루프가 실제로 돈 방식</span>
+  <h2>채점·진단으로 고장과 개선 방향을 요청하고 → 플랫폼이 고치고 → 검증으로 방향을 맞춰갔다</h2>
+  <div class="loop">
+    <div class="step"><div class="who eval">채점센터</div><b>① 진단·개선 요청</b><p class="muted" style="font-size:13px;margin:6px 0 0">r1 채점(31.4%) + 미적중 708건 전건판독 → 고장 3곳과 개선 방향을 짚어 요청: 키워드 검색 무력화 · 리랭커 절단 · 청킹 경계</p></div>
+    <div class="step"><div class="who plat">플랫폼</div><b>② 수리</b><p class="muted" style="font-size:13px;margin:6px 0 0">하이브리드 검색 복구 + 리랭커 window 개발 — 실험 로그를 당일 생성·전달</p></div>
+    <div class="step"><div class="who eval">채점센터</div><b>③ 검증·방향 정렬</b><p class="muted" style="font-size:13px;margin:6px 0 0">재응시 2벌 당일 채점 — 수리 효과 분해(하이브리드 +4.4%p · window +17%p)로 "이 방향이 맞다"를 함께 확인</p></div>
+    <div class="step"><div class="who eval">채점센터</div><b>④ 확정</b><p class="muted" style="font-size:13px;margin:6px 0 0">앵커 120문항(비공개 재사용)으로 전후 공식 확정 — 33.3% → 56.7%</p></div>
+    <div class="step"><div class="who plat">플랫폼</div><b>⑤ 합의</b><p class="muted" style="font-size:13px;margin:6px 0 0">"대표 지표 = 생성축" 제안 → 실증 데이터로 수용 · "단계적 실험·개선 반복" 확정</p></div>
+  </div>
+  <div class="note">커뮤니케이션 원칙 — 성적만 던지지 않는다: <b>수고 인정 → 실측 근거 → 실험 방법 → 탈출구</b>("효과 없으면 버려도 됨").
+  이 구조로 회신한 제안 3건이 전부 <b>하루 안에</b> 실험 로그로 되돌아왔습니다.</div>
+</section>
+
+<!-- ─── 협의 수정 기록 ─── -->
+<section>
+  <span class="eyebrow">협의 기록 — 합의가 실제 수정으로 이어졌다</span>
+  <h2>말로 끝난 협의는 없다 — 합의 7건, 수정 7건</h2>
+  <div class="panel scroll">
+    <table>
+      <tr><th>협의 주제</th><th>합의 내용</th><th>실제 수정 (누가·무엇을)</th></tr>
+      <tr><td><b>시험지 출제 규격</b></td><td>발췌는 원문 그대로 20자↑ · 유형 6종 고정 · 필수요소 수치 명시</td><td>평가: r2 규칙 내장(전 문항 기계 검증) + 앵커 93건 보정</td></tr>
+      <tr><td><b>채점 기준 병기</b></td><td>기계 잣대 유지 + 의미 판독 병기, 합산 금지</td><td>평가: 전 성적표를 2열 병기 형식으로 발행</td></tr>
+      <tr><td><b>이웃 청크(동봉) 인정</b></td><td>로그에 구분 표기되면 인정, 본체와 병기</td><td>플랫폼: 로그 표기 추가 / 평가: 병기 채점기 신규 제작</td></tr>
+      <tr><td><b>대표 지표 선정</b></td><td>대표=생성축 · 검색축=진단</td><td>플랫폼 제안 → 평가가 실증(213건 중 136건 구제)으로 검증 후 수용</td></tr>
+      <tr><td><b>입력 상한 512자</b></td><td>품질 동일·지연 2.3배 → 불채택(256 유지)</td><td>플랫폼 판단을 평가가 문항 짝지음 통계로 지지</td></tr>
+      <tr><td><b>리랭크 대상 확대</b></td><td>CPU 지연 제약으로 즉시 적용 불가</td><td>평가: 실험 목적을 "GPU 도입 투자 근거 정량화"로 재정의</td></tr>
+      <tr><td><b>집계 정합성</b> <span class="pill w">교차 검증</span></td><td>플랫폼이 평가 성적표의 수치 불일치를 지적</td><td>평가: 집계 오류 정정 + 문서 통일 — 검증이 양방향으로 작동한 사례</td></tr>
+      <tr><td><b>리랭크 폭 확대</b></td><td>CPU 지연 제약으로 즉시 적용 불가 → GPU 도입 근거 실험으로 목적 재정의</td><td>플랫폼: 폭 30·50 로그 2벌 / 평가: 폭별 채점(+10.6%p)·꼬리 75건 구간 분해 회신</td></tr>
+      <tr><td><b>환각 억제 + 부작용</b> <span class="pill w">진행 중</span></td><td>개선 3종 적용 후 부작용(과잉 거절)까지 함께 측정하기로</td><td>플랫폼: 개선 3종 자체 적용·r2-1 응시 / 평가: 환각 6→4 확인 + 과잉 거절 7→13 특정 + 2단 판단 설계 제안</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ─── 시험지 양→질 ─── -->
+<section>
+  <span class="eyebrow">시험지도 품질로 — 양보다 검증 밀도</span>
+  <h2>문항 수는 절반으로 줄이고, 문항마다 검증을 걸었다</h2>
+  <div class="grid2">
+    <div class="panel">
+      <div class="phead">r1 시험지 — 양 위주 (1,033문항)</div>
+      <ul class="muted" style="font-size:13.5px">
+        <li>빠르게 많이 출제 — 첫 진단용으로는 역할을 다함</li>
+        <li>대신 결함이 섞임: 근거 발췌가 너무 짧은 문항 130건(우연 일치로 점수 부풀림), 유형 라벨 177종 난립, 옮겨 적기 오타</li>
+        <li>결과: 점수를 읽을 때마다 <b style="color:var(--tx)">각주가 붙는 시험지</b> — "이 수치는 부풀려졌을 수 있음…"</li>
+      </ul>
+    </div>
+    <div class="panel" style="border-color:color-mix(in srgb,var(--run) 40%,var(--line))">
+      <div class="phead" style="color:var(--run)">r2 시험지 — 질 위주 (488문항 · 전 문항 검증 통과)</div>
+      <ul class="muted" style="font-size:13.5px">
+        <li><b style="color:var(--tx)">전 문항 기계 검증</b>: 근거 발췌는 원문에서 그대로 복사·20자 이상(전건 대조), 유형은 고정 6종</li>
+        <li><b style="color:var(--tx)">문항 품질도 이중판정</b>: AI 둘이 독립 판정 + 사람 캘리브레이션(채점관 면접) 통과 후 발행</li>
+        <li>앵커 120 · 표현 변형 40 · 자료 부재 40을 설계적으로 배치 — 비교선·강건성·환각 검사까지 시험지 안에</li>
+        <li>결과: <b style="color:var(--tx)">각주 없이 읽는 시험지</b> — 오늘 발표의 모든 수치가 여기서 나옴</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">문항 수 1,033 → 488은 후퇴가 아니라 선택 — 통계적으로 488이면 오차 ±4%p 이내라 측정에 충분하고,
+  절반으로 줄인 만큼 <b>문항 하나하나에 풀 검증</b>을 걸 수 있었습니다. 응시·채점 부담도 절반이라 회차를 더 자주 돌립니다.
+  이 규격은 표준 v1에 편입되어 다음 제품부터 기본값입니다.</div>
+</section>
+
+<!-- ─── 플랫폼 개선 상세 ─── -->
+<section>
+  <span class="eyebrow">플랫폼 측 개선 (팀장님 수행분) × 평가 실측</span>
+  <h2>무엇을 고쳤고, 얼마나 올랐나</h2>
+  <div class="panel scroll">
+    <table>
+      <tr><th>수리 / 실험</th><th>내용</th><th>효과 (평가 실측)</th></tr>
+      <tr><td><b>하이브리드 검색 복구</b></td><td>일본어 토크나이저 문제로 키워드 검색 무력화(문항 89.5%가 의미 검색 단독 폴백) → 수리</td><td class="num">폴백 0% · top5 +4.4%p · FAQ 26→59%</td></tr>
+      <tr><td><b>리랭커 window</b> <span class="pill g">주역</span></td><td>순위 장치가 자료 앞부분만 읽던 것을 질문 관련 구간을 찾아 읽도록 개선</td><td class="num"><b>top5 +17%p</b></td></tr>
+      <tr><td>입력 상한 512자 실험</td><td>상한 확대의 품질 영향 검증</td><td class="num">품질 동일 · 지연 2.3배 → 근거 있는 불채택</td></tr>
+      <tr><td>이웃 청크 동봉 span 2</td><td>검색 확정 후 인접 청크 부착</td><td class="num">동봉 인정 +2.2%p — 옵션 확보</td></tr>
+      <tr><td>다회 검색(ReAct) 구조 공유</td><td>질문 변형 재검색 루프(최대 15턴) 구조 공개</td><td class="num">1턴 실패 213건 중 136건 구제 실증</td></tr>
+      <tr><td><b>리랭크 폭 확대</b> <span class="pill g">GPU 근거</span></td><td>리랭커가 정밀 정렬하는 후보 수를 10 → 30 / 50으로 확대 (실험)</td><td class="num">top5 60.0% / <b>62.9% (+10.6%p)</b> · GPU 시 31.4s→약 1s</td></tr>
+      <tr><td><b>환각 억제 3종</b></td><td>근거 충실성 블록 · evidence 신뢰도 가산 · 수치 근거 검증기</td><td class="num">E형 환각 6→<b>4</b> · 수치 0점 17→<b>11</b> · 단 과잉 거절 7→13</td></tr>
+    </table>
+  </div>
+  <div class="panel">
+    <div class="phead">앵커 120문항 — 같은 문항으로 잰 개선 전후 (회색 = 개선 전 · 색 = 개선 후)</div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div>
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">정답이 5순위 안에 든 비율</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="bar"><span class="muted">개선 전</span><span class="tr"><i style="width:33.3%;background:var(--tx2)"></i></span><span class="num">33.3%</span></div>
+          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:56.7%;background:var(--run)"></i></span><span class="num" style="color:var(--run)"><b>56.7%</b></span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">정답이 1순위(맨 위)에 온 비율</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="bar"><span class="muted">개선 전</span><span class="tr"><i style="width:16.7%;background:var(--tx2)"></i></span><span class="num">16.7%</span></div>
+          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:45.8%;background:var(--anchor)"></i></span><span class="num" style="color:var(--anchor)"><b>45.8% · 2.7배</b></span></div>
+        </div>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin:12px 0 0">시험지를 새로 만들어도(r2) 옛 시험지 재응시(52.8%)와 같은 점수(52.3%)가 나와
+    측정 자체의 신뢰도 검증됨 — "시험이 쉬워진 것 아니냐"는 질문에 대한 답.</p>
+  </div>
+</section>
+
+<!-- ─── 성적 히스토리 재현 ─── -->
+<section>
+  <span class="eyebrow">성적 히스토리 — 향상의 궤적 (실데이터)</span>
+  <h2>2주 협업으로 선이 이렇게 올랐다</h2>
+  <div class="panel">
+      <div class="phead">검색 top5 정답률 — 회차별 궤적 (같은 잣대·기계 대조)</div>
+      <svg viewBox="0 0 780 420" style="width:100%;height:auto;display:block" role="img" aria-label="검색 top5가 31.4%에서 62.9%로 오른 궤적과 생성축 76%대 유지">
+        <g stroke="#232c47" stroke-width="1">
+          <line x1="70" y1="350" x2="750" y2="350"/><line x1="70" y1="270" x2="750" y2="270"/>
+          <line x1="70" y1="190" x2="750" y2="190"/><line x1="70" y1="110" x2="750" y2="110"/>
+          <line x1="70" y1="30" x2="750" y2="30"/>
+        </g>
+        <g font-family="IBM Plex Mono,monospace" font-size="12" fill="#8b95b3">
+          <text x="58" y="354" text-anchor="end">0%</text><text x="58" y="274" text-anchor="end">20%</text>
+          <text x="58" y="194" text-anchor="end">40%</text><text x="58" y="114" text-anchor="end">60%</text>
+          <text x="58" y="34" text-anchor="end">80%</text>
+        </g>
+        <!-- 검색축 면적 + 선: 31.4 / 35.8 / 52.8 / 52.3 / 60.0 / 62.9 -->
+        <polygon points="120,224 245,207 370,139 495,141 620,110 720,98 720,350 120,350" fill="#4ade80" opacity="0.09"/>
+        <polyline points="120,224 245,207 370,139 495,141 620,110 720,98" fill="none" stroke="#4ade80" stroke-width="3.5" stroke-linejoin="round"/>
+        <circle cx="120" cy="224" r="6" fill="#8b95b3"/><circle cx="245" cy="207" r="6" fill="#4ade80"/>
+        <circle cx="370" cy="139" r="6" fill="#4ade80"/><circle cx="495" cy="141" r="6" fill="#4ade80"/>
+        <circle cx="620" cy="110" r="6" fill="#4ade80"/><circle cx="720" cy="98" r="8" fill="#4ade80" stroke="#e8ecf7" stroke-width="2.5"/>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" font-weight="600" fill="#e8ecf7">
+          <text x="120" y="248" text-anchor="middle">31.4%</text><text x="245" y="231" text-anchor="middle">35.8%</text>
+          <text x="370" y="125" text-anchor="middle">52.8%</text><text x="495" y="165" text-anchor="middle">52.3%</text>
+          <text x="620" y="96" text-anchor="middle">60.0%</text>
+          <text x="726" y="84" text-anchor="middle" fill="#4ade80" font-size="16">62.9%</text>
+        </g>
+        <!-- 생성축(대표 지표) 점선 -->
+        <polyline points="495,45 720,46" fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-dasharray="6 5"/>
+        <circle cx="495" cy="45" r="5" fill="#7dd3fc"/><circle cx="720" cy="46" r="6" fill="#7dd3fc"/>
+        <g font-family="IBM Plex Mono,monospace" font-size="13" fill="#7dd3fc">
+          <text x="495" y="34" text-anchor="middle">76.3%</text><text x="722" y="36" text-anchor="middle">76.1%</text>
+        </g>
+        <text x="600" y="62" font-family="IBM Plex Sans KR,sans-serif" font-size="12" fill="#7dd3fc">생성축(최종 답변) — 대표 지표</text>
+        <!-- 사건 주석 -->
+        <g font-family="IBM Plex Sans KR,sans-serif" font-size="12" fill="#8b95b3">
+          <text x="182" y="238" text-anchor="middle">① 키워드 검색 복구</text>
+          <text x="307" y="160" text-anchor="middle" fill="#e8ecf7">② 리랭커 window</text>
+          <text x="560" y="128" text-anchor="middle">③ 리랭크 폭 확대(GPU 전제)</text>
+        </g>
+        <!-- 콜아웃 -->
+        <g font-family="IBM Plex Mono,monospace">
+          <rect x="600" y="150" width="150" height="34" rx="8" fill="#14261c" stroke="#4ade80" stroke-width="1"/>
+          <text x="675" y="173" text-anchor="middle" font-size="15" font-weight="600" fill="#4ade80">검색 +31.5%p · 2배</text>
+        </g>
+        <!-- x축 -->
+        <g font-family="IBM Plex Sans KR,sans-serif" font-size="12" fill="#8b95b3">
+          <text x="120" y="378" text-anchor="middle">r1 · 개선 전</text>
+          <text x="245" y="378" text-anchor="middle">재응시(수리1)</text>
+          <text x="370" y="378" text-anchor="middle">재응시(수리2)</text>
+          <text x="495" y="378" text-anchor="middle">r2 · 새 시험지</text>
+          <text x="620" y="378" text-anchor="middle">폭 30</text>
+          <text x="722" y="378" text-anchor="middle" fill="#e8ecf7" font-weight="600">폭 50 · r2-1</text>
+        </g>
+      </svg>
+      <p class="muted" style="font-size:13px;margin:10px 0 0">초록 실선 = 검색축(진단 지표) · 하늘 점선 = <b style="color:var(--tx)">생성축(대표 지표 — 사용자가 받는 답의 품질)</b>.
+      검색은 31.4%→62.9%로 2배가 됐고(마지막 두 점은 GPU 전제), 생성축은 76%대 유지 — <b style="color:var(--tx)">r2-1에서는 검색 향상분(+3.0%p)이 환각 억제의 부작용(-3.3%p)과 상쇄</b>됐습니다(아래 참조).
+      시험지를 새로 만들어도 점수가 유지된 것(52.8→52.3%)도 핵심 검증 — 오른 것은 시험이 아니라 시스템. 앵커 120문항 확정 33.3%→56.7%.
+      참고 좌표: 업계 전반 검색률 50% 안팎(6월 8개사 벤치마킹).</p>
+  </div>
+  <div class="panel scroll">
+    <div class="phead">회차별 상세 — 관제탑 성적 히스토리 (실화면 그대로 · 좁은 화면은 좌우로 밀어 보세요)</div>
+    <table class="num histTbl">
+      <tr><th style="font-family:'IBM Plex Sans KR'">지표</th><th>r1</th><th>r1재응시<br>개선1(동봉)</th><th>r1재응시<br>개선2(window)</th><th>r2_window</th><th>r2_window<br>512</th><th>r2진단50</th><th>r2_rr30</th><th style="color:var(--run)">r2_rr50</th><th>r2_생성축</th><th style="color:var(--anchor)">r2-1_생성축</th></tr>
+      <tr><td style="font-family:'IBM Plex Sans KR'">top1 (1위 명중)</td><td>180 <span class="muted">(17%)</span></td><td>202 <span class="muted">(20%)</span></td><td>399 <span class="muted">(39%)</span></td><td>173 <span class="muted">(35%)</span></td><td>170 <span class="muted">(35%)</span></td><td class="muted">—</td><td>184 <span class="muted">(38%)</span></td><td style="color:var(--run)">192 <span class="muted">(39%)</span></td><td>173 <span class="muted">(35%)</span></td><td>192 <span class="muted">(39%)</span></td></tr>
+      <tr><td style="font-family:'IBM Plex Sans KR'">top5 (1~5위 누적)</td><td>324 <span class="muted">(31%)</span></td><td>369 <span class="muted">(36%)</span></td><td>545 <span class="muted">(53%)</span></td><td>234 <span class="muted">(48%)</span></td><td>238 <span class="muted">(49%)</span></td><td>325 <span class="muted">(73%)</span></td><td>268 <span class="muted">(60%)</span></td><td style="color:var(--run)"><b>281 <span style="font-weight:400">(63%)</span></b></td><td>234 <span class="muted">(48%)</span></td><td>281 <span class="muted">(63%)</span></td></tr>
+      <tr><td style="font-family:'IBM Plex Sans KR'">생성 합격 (비E형 447)</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td style="color:var(--run)"><b>341 <span style="font-weight:400">(76.3%)</span></b></td><td style="color:var(--anchor)"><b>340 <span style="font-weight:400">(76.1%)</span></b></td></tr>
+      <tr><td style="font-family:'IBM Plex Sans KR'">E형 환각 (41문항)</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td style="color:var(--warn)">6</td><td style="color:var(--run)"><b>4</b></td></tr>
+      <tr><td style="font-family:'IBM Plex Sans KR'">과잉 거절 (정답 있는데 거절)</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td>7</td><td style="color:var(--warn)"><b>13</b></td></tr>
+    </table>
+    <p class="muted" style="font-size:13px;margin:12px 0 0">r1 계열은 1,033문항 · r2 계열은 488문항(비E형 447 + 자료 부재 41)이라 건수는 회차 간 직접 비교 불가 — %로 비교. ·
+    r2_rr30/rr50 = 리랭크 폭 실험(GPU 전제) · r2-1 = 폭 50 + 환각 개선 3종 적용 회차 · 전 수치는 원장과 채점 리포트에서 재현 가능.</p>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h3>미적중 213건의 정체 — top50 진단</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        <div class="bar"><span>회수 문제 (50위에도 없음)</span><span class="tr"><i style="width:57%;background:var(--bad)"></i></span><span class="num">122 · 57%</span></div>
+        <div class="bar"><span>꼬리 11~50위 (리랭크 밖)</span><span class="tr"><i style="width:35%;background:var(--warn)"></i></span><span class="num">75 · 35%</span></div>
+        <div class="bar"><span>6~10위 (정밀도)</span><span class="tr"><i style="width:8%;background:var(--tx2)"></i></span><span class="num">16 · 8%</span></div>
+      </div>
+      <p class="muted" style="font-size:13px;margin:12px 0 0">병목이 순위(r1 53%)에서 <b>회수(57%)</b>로 이동 — 다음 개선의 조준점이 기계 분해로 나온다.</p>
+    </div>
+    <div class="panel">
+      <h3>답변 품질의 해부 (생성축 이중판정)</h3>
+      <ul class="muted" style="font-size:13.5px;margin-top:12px">
+        <li>Kimi 정판정 × Claude 교차 검토 — 일치율 <b style="color:var(--tx)">90.8%</b>, 갈린 45건만 원문 대조로 확정</li>
+        <li>1턴 검색 적중 문항의 답변 합격률 <b style="color:var(--tx)">87.6%</b> vs 미적중 63.8% — 검색 개선이 답변 품질로 직결</li>
+        <li>자료 부재 질문 41개: 정상 거절 35 · <b style="color:var(--warn)">환각 6건</b> — 다회 검색으로도 못 막는 영역, 9월 1순위 과제</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── r2-1 트레이드오프 ─── -->
+<section>
+  <span class="eyebrow">추가 회차 (r2-1) — 환각 개선의 대가를 수치화했다</span>
+  <h2>총점은 제자리, 그런데 이번 회차가 알려준 것이 더 크다</h2>
+  <div class="grid2">
+    <div class="panel">
+      <div class="phead">r2 → r2-1 (폭 50 + 근거 충실성 개선 3종)</div>
+      <table>
+        <tr><th>지표</th><th>r2</th><th>r2-1</th><th>판독</th></tr>
+        <tr><td>생성 합격률 (비E형 447)</td><td class="num">76.3%</td><td class="num">76.1%</td><td class="muted">제자리</td></tr>
+        <tr><td><b>E형 환각</b></td><td class="num">6건</td><td class="num" style="color:var(--run)"><b>4건</b></td><td><span class="pill g">개선</span></td></tr>
+        <tr><td><b>수치 유형 0점</b> (42문항)</td><td class="num">17건</td><td class="num" style="color:var(--run)"><b>11건</b></td><td><span class="pill g">개선</span></td></tr>
+        <tr><td>과잉 거절 (정답 있는데 거절)</td><td class="num">7건</td><td class="num" style="color:var(--warn)"><b>13건</b></td><td><span class="pill w">부작용</span></td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="phead">효과 분해 — 두 힘이 상쇄됐다 (실측)</div>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
+        <div class="stat"><span class="k" style="font-weight:700;color:var(--tx)">검색 개선 (리랭크 폭 50)</span>
+          <span class="v" style="color:var(--run)">+3.0%p</span>
+          <span class="k">검색 적중 문항 234 → 281개로 확대</span></div>
+        <div class="stat"><span class="k" style="font-weight:700;color:var(--tx)">답변 규칙 (개선 3종)</span>
+          <span class="v" style="color:var(--warn)">−3.3%p</span>
+          <span class="k">근거 약한 문항의 합격률 63.8% → 57.8% (거절 압력)</span></div>
+      </div>
+      <div class="note" style="margin-top:14px;font-size:13.5px"><b>발견</b> — 환각을 줄이는 힘과 정답을 거절하는 힘은
+      <b>같은 손잡이</b>다. 부작용을 미리 측정 항목에 넣어둔 덕에 원인을 즉시 지목할 수 있었다.</div>
+    </div>
+  </div>
+  <div class="panel" style="border-color:color-mix(in srgb,var(--warn) 40%,var(--line))">
+    <div class="phead" style="color:var(--warn)">🚧 현재 봉착한 난관과 해결 진행 (9/1)</div>
+    <div class="grid2">
+      <div>
+        <h3 style="font-size:14.5px">난관 — 환각을 막으니 좋은 근거도 못 쓴다</h3>
+        <ul class="muted" style="font-size:13.5px;margin-top:8px">
+          <li>과잉 거절 13건의 <b style="color:var(--tx)">근거 점수 중앙값 0.879</b> — 검색은 정답 문서를 잘 찾아왔다</li>
+          <li>그런데 답변이 "완전 일치하는 내용을 확인할 수 없었습니다"로 거절</li>
+          <li>실례: "GOLD 연회비를 포인트로 낼 수 있나?" ← 근거에 "연회비는 포인트 대상 외"가 있는데 거절 (r2에선 정확히 답했던 문항)</li>
+          <li>원인 특정: <b style="color:var(--tx)">임계값이 아니라 "부재 판정 문구"</b> (임계 미만은 13건 중 2건뿐)</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:14.5px">해결 진행 — 판단을 2단으로 분리 (플랫폼 전달 완료)</h3>
+        <ul class="muted" style="font-size:13.5px;margin-top:8px">
+          <li><b style="color:var(--tx)">1단 점수 축</b>: ≥0.7 의미 추론 허용 / 0.2~0.7 부분 답변 / &lt;0.2 엄격 거절(현행)</li>
+          <li><b style="color:var(--tx)">2단 대상 축</b>: 답변 전 "근거가 질문이 묻는 대상 자체를 다루는가?" 자문 1회</li>
+          <li>두 축은 <b style="color:var(--tx)">세트 필수</b> — 과잉 거절 10/13이 ≥0.7 구간이고, <b style="color:var(--warn)">환각 4건 중 3건도 ≥0.7 구간</b>이라 점수만으론 못 잡는다</li>
+          <li>다음 회차는 <b style="color:var(--tx)">목표 수치를 미리 두지 않고 실측 후 함께 조정</b> — 여러 힘이 상쇄될 수 있어, 회차마다 재고 다음 손잡이를 정하는 방식</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 표준화 ─── -->
+<section>
+  <span class="eyebrow">표준화 — 이번 달의 구조적 성과</span>
+  <h2>세 제품에서 시행착오로 배운 것을 표준 규칙으로 만들었다 — 다음 제품은 재발명 없이 시작</h2>
+  <div class="grid2">
+    <div class="panel">
+      <div class="phead">불변 표준 (제품이 바뀌어도 안 고침)</div>
+      <ul style="font-size:14px">
+        <li><b>측정 철학 6조</b> — 실측만 · 3권 분립 · 하한선 발표 · 잣대 동결 비교 · 재료 보존 ·
+          <b style="color:var(--anchor)">짝 지표 동시 측정</b>(v1.1 신설 — 억제형 개선은 반대편 손실을 만들므로 부작용을 같은 회차에 함께 잰다. r2-1 실증)</li>
+        <li><b>지표 체계</b> — 대표 = 생성축(사용자 체감) · 진단 = 검색축(원인 조준) · E형 환각률</li>
+        <li><b>시험지 구성</b> — 앵커 20~30% 필수(회차 비교선) · 표현 변형 · 자료 부재 문항</li>
+        <li><b>절차 관문</b> — 캘리브레이션 · 함정 면접 · 이중판정 · top_k 진단</li>
+        <li><b>무인 오픈 게이트 골격</b> — 환각률 · 수치 합격률 · 검색 top5 · 답변 0점률</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div class="phead">제품별 커스텀 — 협의 체크리스트 10항</div>
+      <p style="font-size:14px;margin:0 0 10px">새 제품은 발주자와 작업자가 이 표를 채워야 온보딩:</p>
+      <ul class="muted" style="font-size:13.5px">
+        <li>용도·오픈 형태 (사람 보조? 무인?) → 게이트 통과선 숫자</li>
+        <li>플랫폼 구조 (다회 검색 유무 — 검색축이 제품을 대표하나?)</li>
+        <li>로그 형식 · 코퍼스 대조 수단 · 판정기준서 커스텀</li>
+        <li>문항 구성비 · 유형 가중 · 기밀 수준 · 회차 주기</li>
+      </ul>
+      <div class="note" style="margin-top:12px;font-size:13.5px">건강검진과 같은 원리 — <b>검사 항목·절차는 표준, 정상 범위 숫자는 사람마다 커스텀.</b>
+      4번째 제품부터는 이번 CI 같은 밤샘 발명 없이 이 문서 한 장으로 시작합니다.<br>
+      <span class="muted">표준은 <b>v1.1</b>까지 개정(9/1) — 검증된 것만 승격하고, 미검증 아이디어는 별도 "개정 후보" 목록에 보류합니다(현재 5건).</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── 오픈 판정 ─── -->
+<section>
+  <span class="eyebrow">오픈 판정 — 지금 상태로 되는 것 vs 안 되는 것</span>
+  <h2>"열어도 되나?"를 감이 아니라 게이트로 답한다</h2>
+  <div class="panel scroll">
+    <table>
+      <tr><th>용도</th><th>판정</th><th>근거</th></tr>
+      <tr><td><b>상담원 보조</b> (사람이 확인 후 답변)</td><td><span class="pill g">⭕ 가능</span></td><td>4문제 중 3개는 바로 쓸 답 + 틀려도 사람이 거름</td></tr>
+      <tr><td><b>RFP 데모</b> (시연)</td><td><span class="pill g">⭕ 가능</span></td><td>개선 스토리·측정 체계까지 보여줄 게 많음</td></tr>
+      <tr><td><b>고객 직접 응대</b> (무인)</td><td><span class="pill b">❌ 아직</span></td><td>환각 4/41(9.8%) · 과잉 거절 13건 · 검색 top5 52%(운영) — 게이트 미통과, 개선 진행 중</td></tr>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="phead">무인 오픈 게이트 4종 — 통과하면 열고, 못 하면 안 연다</div>
+      <table class="num">
+        <tr><th style="font-family:'IBM Plex Sans KR'">게이트</th><th>지금</th><th>통과선(제안)</th></tr>
+        <tr><td style="font-family:'IBM Plex Sans KR'">자료 없을 때 지어내기(환각)</td><td style="color:var(--warn)">14.6% → <b style="color:var(--run)">9.8%</b></td><td>5% 이하</td></tr>
+        <tr><td style="font-family:'IBM Plex Sans KR'">수치·요금 답변 합격</td><td>0점 17→<b style="color:var(--run)">11건</b>(42문항)</td><td>90% 이상</td></tr>
+        <tr><td style="font-family:'IBM Plex Sans KR'">검색 top5</td><td>52.3% (GPU 시 <b style="color:var(--run)">62.9%</b>)</td><td>65% 이상</td></tr>
+        <tr><td style="font-family:'IBM Plex Sans KR'">답변 0점률</td><td>14.5%</td><td>8% 이하</td></tr>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>이 표의 의미</h3>
+      <p class="muted" style="font-size:13.5px;margin:10px 0 0">"오픈 여부"가 의견 싸움이 아니라 <b style="color:var(--tx)">숫자 통과의 문제</b>가 됩니다.
+      지금은 상담원 보조로 가치를 내면서, 9월 개선(환각 억제·수치 인용 규칙)으로 게이트를 하나씩
+      통과시키는 경로 — 통과선 숫자 자체는 사업 판단으로 확정합니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SSOT / 원장 ─── -->
+<section>
+  <span class="eyebrow">SSOT — 기록이 곧 신뢰</span>
+  <h2>"그 숫자, 어디서 나왔어요?"에 3초 안에 답할 수 있다</h2>
+  <p class="muted" style="max-width:70ch;margin:0">이 프로젝트의 모든 결정과 숫자는 <b style="color:var(--tx)">원장(항공기의 블랙박스 같은 기록 파일)</b>에
+  자동으로 쌓입니다. 언제, 누가(사람인지 AI인지), 무엇을, 왜 결정했는지가 한 줄씩 — 8월까지 5,500줄.
+  덮어쓰기가 불가능한 구조라 "나중에 고쳐 쓴 기록"이 존재할 수 없습니다.</p>
+  <div class="panel">
+    <div class="phead">오늘 발표의 숫자들이 태어난 순간 — 원장에서 뽑은 기록</div>
+    <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px">
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">1</span>시험지 288문항 품질 판정 완료 — AI 둘의 의견이 갈린 5건만 사람에게 올라옴</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">2</span>틀린 213문항 해부 — "검색이 못 데려온 것 122 · 데려왔는데 묻힌 것 75"</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">3</span><b style="color:var(--run)">답변 품질 확정: 합격 76.3%</b> — 채점관 둘 일치 90.8%, 갈린 45건은 원문 대조로 결론</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">4</span>플랫폼과 지표 합의 — "대표 점수는 최종 답변 기준으로" (근거 데이터 첨부)</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">5</span><b style="color:var(--anchor)">평가 표준 규격 v1 제정</b> — 세 제품의 경험을 규칙으로 승격</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">6</span>리랭크 폭 실험 채점 — <b style="color:var(--run)">top5 62.9%</b>, GPU 도입 근거 확정(+10.6%p·속도 14배)</div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">7</span>r2-1 생성축 확정 — 환각 6→4·수치 0점 17→11, 과잉 거절 7→13 <b style="color:var(--warn)">부작용 특정</b></div>
+      <div><span class="num" style="color:var(--tx2);margin-right:8px">8</span><b style="color:var(--anchor)">표준 v1.1 개정</b> — "개선의 부작용도 같은 회차에 함께 잰다"를 철학으로 승격</div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="panel"><h3>이게 왜 좋은가 ①</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0"><b style="color:var(--tx)">숫자에 출처가 생긴다.</b> 보고서의 어떤 수치든 "원장 몇 월 며칠 줄"로 거슬러 올라가 재현할 수 있어, 따져 물어도 안 무너진다</p></div>
+    <div class="panel"><h3>이게 왜 좋은가 ②</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0"><b style="color:var(--tx)">사람이 바뀌어도 일이 이어진다.</b> 담당자(사람이든 AI든)가 바뀌어도 원장만 읽으면 같은 자리에서 이어받는다 — 8월에 실제로 겪고 증명함</p></div>
+    <div class="panel"><h3>이게 왜 좋은가 ③</h3><p class="muted" style="font-size:13.5px;margin:8px 0 0"><b style="color:var(--tx)">화면과 실제가 안 어긋난다.</b> 관제탑 숫자는 손으로 적는 게 아니라 결과 파일에서 자동 계산 — 문서 따로 현실 따로가 구조적으로 불가능</p></div>
+  </div>
+</section>
+
+<!-- ─── 다음 달 ─── -->
+<section>
+  <span class="eyebrow">다음 달 계획 — 9월</span>
+  <h2>두 트랙으로 나눠 계속 돈다</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill g">즉시 트랙</span> &nbsp;현행 인프라(CPU)에서 바로</h3>
+      <ul style="font-size:14px;margin-top:12px">
+        <li><b>환각 억제 부작용 해소</b> — r2-1에서 환각 6→4 감소·과잉 거절 7→13 확인 → 2단 판단(점수 축+대상 축) 분리 설계 전달, 로그 1벌 재검증 (목표 수치는 실측 후 플랫폼과 함께 결정)</li>
+        <li><b>수치 인용 규칙</b> — "금액·기간은 검색 근거에 있는 값만" (없는 수수료 합산 안내 유형 차단)</li>
+        <li><b>수치·표 직렬화</b> — 회수 실패의 40%가 표 구역: 행 단위 자연문으로 인입</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3><span class="pill g">GPU 트랙 ✅ 실측 완료</span> &nbsp;투자 근거 확정 (8/31)</h3>
+      <p style="font-size:14px;margin:12px 0 0">리랭크 폭 실험 완료 — 폭 30: top5 60.0% · <b>폭 50: 62.9% (+10.6%p)</b>.
+      CPU는 문항당 31.4초로 운영 불가하나 <b>GPU 도입 시 약 1초</b>(플랫폼 확인) —
+      <b>"정확도 +10.6%p + 속도 14배"</b>의 투자 근거 확정. 후속: r3 생성축(폭50+환각 개선 3종) 검증 진행.</p>
+    </div>
+  </div>
+  <div class="note"><b>운영 합의(플랫폼)</b> — "76.3% 현행 만족 · 결과 바탕으로 하나씩 단계적으로 실험·개선 반복" →
+  개선마다 같은 488문항 재응시, 앵커 비교로 당일 회신하는 회차 루프 상시화. 4번째 제품은 표준 규격 v1로 온보딩.</div>
+</section>
+
+<footer class="muted" style="font-size:12.5px;border-top:1px solid var(--line);padding-top:18px">
+  근거 데이터: 전 수치는 관제판 원장(ledger.jsonl)과 채점 리포트에서 재현 가능 · 제품명은 코드명(CI) 운용 ·
+  RAG 평가 프로젝트 8월 회고 — 김난희
+</footer>
+
+</div>
