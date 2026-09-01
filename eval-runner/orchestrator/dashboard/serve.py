@@ -107,7 +107,12 @@ def api_state():
                 else:
                     meta = {**meta, "gen": "r2 발행 완료(488문항) — 응답로그 대기"}
                 # 생성축 이중판정 실시간 진행 — 체크포인트/확정 파일에서 즉석 계산 (화면 15초 자동 갱신)
-                gdir = ROOT / "data" / "CI" / "08_scoring" / "score_CI_r2_생성축"
+                # [수리 2026-09-01] 특정 폴더 하드코딩 → 생성축 폴더 중 '가장 최근에 움직인' 것을 자동 추적
+                # (회차가 늘어도 관제탑이 항상 현재 도는 판정을 보여준다 — 난희 지적)
+                _gdirs = sorted((ROOT / "data" / "CI" / "08_scoring").glob("score_CI_*생성축*"),
+                                key=lambda p: max([f.stat().st_mtime for f in p.glob("*")] or [0]))
+                gdir = _gdirs[-1] if _gdirs else (ROOT / "data" / "CI" / "08_scoring" / "score_CI_r2_생성축")
+                _rnd = gdir.name.replace("score_CI_", "").replace("_생성축", "")
                 if gdir.exists():
                     def _jn(p):
                         try:
@@ -119,18 +124,24 @@ def api_state():
                     kimi_ck = gdir / "judge_kimi_v1_1.json.ckpt"
                     rev_fin = gdir / "judge_claude_review.json"
                     rev_ck = gdir / "judge_claude_review.json.ckpt"
-                    if rev_fin.exists() and (gdir / "최종판정_488.json").exists():
-                        # 확정까지 끝난 상태 — '판정 중' 문구 대신 확정 요약 (다음 로그 대기로 복귀)
+                    _fin = gdir / "최종판정_488.json"
+                    if rev_fin.exists() and _fin.exists():
+                        try:
+                            _v = json.loads(_fin.read_text(encoding="utf-8"))
+                            _p = sum(1 for x in _v.values() if x.get("최종") == "합격")
+                            _sum = f"합격 {_p}/{len(_v)}"
+                        except Exception:
+                            _sum = "확정"
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0]
-                                + " · 생성축 확정(합격 77.0%·E환각 6) — 다음 로그 대기"}
+                                + f" · {_rnd} 생성축 확정({_sum}) — 다음 로그 대기"}
                     elif rev_fin.exists():
-                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + " — 생성축 이중판정 ✅ 완료 (성적표 확정)"}
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 이중판정 ✅ 완료 (확정 집계 중)"}
                     elif rev_ck.exists():
-                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — 생성축 판정: Kimi 완료 · claude 검토 {_jn(rev_ck)}/488"}
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 판정: Kimi 완료 · claude 검토 {_jn(rev_ck)}/488"}
                     elif kimi_fin.exists():
-                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + " — 생성축 판정: Kimi 488/488 완료 · claude 교차 검토 대기"}
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 판정: Kimi 488/488 완료 · claude 교차 검토 대기"}
                     elif kimi_ck.exists():
-                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — 생성축 판정 진행 중: Kimi {_jn(kimi_ck)}/488"}
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 판정 진행 중: Kimi {_jn(kimi_ck)}/488"}
             except Exception:
                 pass
         st["_products"][meta["display"]] = {
