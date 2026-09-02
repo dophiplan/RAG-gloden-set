@@ -416,7 +416,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   <div class="panel scroll">
     <table>
       <tr><th>용도</th><th>판정</th><th>근거</th></tr>
-      <tr><td><b>상담원 보조</b> (사람이 확인 후 답변)</td><td><span class="pill g">⭕ 가능</span></td><td>4문제 중 3개는 바로 쓸 답 + 틀려도 사람이 거름</td></tr>
+      <tr><td><b>상담원 보조</b> (사람이 확인 후 답변)</td><td><span class="pill g">⭕ 가능</span><div class="muted" style="font-size:11px;margin-top:4px">발주측 판단: 현행 단계 만족</div></td><td>4문제 중 3개는 바로 쓸 답. "틀려도 사람이 거름"은 <b>전제</b>이지 실측이 아님 — 아래 참조</td></tr>
       <tr><td><b>RFP 데모</b> (시연)</td><td><span class="pill g">⭕ 가능</span></td><td>개선 스토리·측정 체계까지 보여줄 게 많음</td></tr>
       <tr><td><b>고객 직접 응대</b> (무인)</td><td><span class="pill b">❌ 아직</span></td><td>환각 4/41(9.8%) · 과잉 거절 13건 · 검색 top5 52%(운영) — 게이트 미통과, 개선 진행 중</td></tr>
     </table>
@@ -435,9 +435,18 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div class="panel">
       <h3>이 표의 의미</h3>
       <p class="muted" style="font-size:13.5px;margin:10px 0 0">"오픈 여부"가 의견 싸움이 아니라 <b style="color:var(--tx)">숫자 통과의 문제</b>가 됩니다.
-      지금은 상담원 보조로 가치를 내면서, 9월 개선(환각 억제·수치 인용 규칙)으로 게이트를 하나씩
+      발주측 판단으로 지금은 상담원 보조 용도로 쓰면서, 9월 개선(환각 억제·수치 인용 규칙)으로 게이트를 하나씩
       통과시키는 경로 — 통과선 숫자 자체는 사업 판단으로 확정합니다.</p>
     </div>
+  </div>
+  <div class="note" style="border-left-color:var(--warn)">
+    <b>사람 보조는 왜 게이트 미통과로도 열 수 있나 — 그리고 그 전제</b><br>
+    무인 게이트는 "시스템이 얼마나 맞나"를 재지만, 사람 보조는 오답이 고객에게 닿기 전에 상담원이 한 번 더 보므로
+    같은 정답률로도 노출 위험이 다릅니다. 단 전제가 하나 있습니다 — <b style="color:var(--tx)">틀린 답이 상담원 눈에 띄어야</b> 합니다.
+    이번 회차 실측: 0점 57건 중 <b style="color:var(--warn)">52건</b>(비E형의 11.6%)이 표·출처까지 갖춘 자신 있는 형태의 오답이고,
+    그중 <b style="color:var(--warn)">31건(60%)</b>은 시스템 신뢰도 점수로도 정답과 구별되지 않습니다.
+    즉 "사람이 거른다"는 상담원의 원문 확인 절차가 있을 때만 성립하며, 상담원이 실제로 얼마나 걸러내는지(검출률)는
+    <b style="color:var(--tx)">아직 재지 않았습니다</b> — 9월 검증 항목입니다.
   </div>
 </section>
 
