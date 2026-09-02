@@ -115,11 +115,16 @@ def api_state():
                 _rnd = gdir.name.replace("score_CI_", "").replace("_생성축", "")
                 if gdir.exists():
                     def _jn(p):
-                        try:
-                            d_ = json.loads(p.read_text(encoding="utf-8"))
-                            return len(d_.get("verdicts", d_)) if isinstance(d_, dict) else 0
-                        except Exception:
-                            return 0
+                        # [2026-09-02] 샤드 병렬 실행(judge_x.shardKofN.json.ckpt)도 합산 — 문항 ID 기준 중복 제거
+                        ids = set()
+                        cands = [p] + sorted(p.parent.glob(p.name.replace(".json.ckpt", ".shard*of*.json.ckpt")))
+                        for q in cands:
+                            try:
+                                d_ = json.loads(q.read_text(encoding="utf-8"))
+                                ids |= set((d_.get("verdicts", d_) if isinstance(d_, dict) else {}).keys())
+                            except Exception:
+                                pass
+                        return len(ids)
                     kimi_fin = gdir / "judge_kimi_v1_1.json"
                     kimi_ck = gdir / "judge_kimi_v1_1.json.ckpt"
                     rev_fin = gdir / "judge_claude_review.json"
