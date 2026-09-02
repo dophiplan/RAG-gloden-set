@@ -148,6 +148,10 @@ def api_state():
                                 + f" · {_rnd} 생성축({_sum}) — 다음 로그 대기"}
                     elif rev_fin.exists():
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 이중판정 ✅ 완료 (확정 집계 중)"}
+                    elif kimi_ck.exists() and rev_ck.exists() and not kimi_fin.exists():
+                        # [2026-09-02] 두 판정자가 병렬로 뛰는 경우 — 둘의 진행을 함께 보인다 (기존 분기는 순차 실행 가정)
+                        meta = {**meta, "gen": meta["gen"].split(" — ")[0]
+                                + f" — {_rnd} 생성축 이중판정 진행 중: Kimi {_jn(kimi_ck)}/488 · claude {_jn(rev_ck)}/488"}
                     elif rev_ck.exists():
                         meta = {**meta, "gen": meta["gen"].split(" — ")[0] + f" — {_rnd} 생성축 판정: Kimi 완료 · claude 검토 {_jn(rev_ck)}/488"}
                     elif kimi_fin.exists():
