@@ -144,7 +144,7 @@ def api_state():
                                     _et[N(_r[0])] = "E" in N(_r[_h.index("유형")])
                             _g = [i for i in _v if not _et.get(i)]
                             _p = sum(1 for i in _g if _v[i].get("최종") == "합격")
-                            _e = sum(1 for i in _v if _et.get(i) and _v[i].get("최종") == "0점")
+                            _e = sum(1 for i in _v if _et.get(i) and _v[i].get("최종") in ("0점", "환각"))   # [2026-09-02] 신형 라벨 '환각' 포함
                             _sum = f"비E형 합격 {_p}/{len(_g)} ({_p/max(1,len(_g)):.1%}) · E환각 {_e}"
                         except Exception:
                             _sum = "확정"
