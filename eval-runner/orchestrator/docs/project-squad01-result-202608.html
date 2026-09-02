@@ -92,7 +92,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 <!-- ─── So What ─── -->
 <section>
   <div class="grid3">
-    <div class="panel"><div class="big">2.7<span style="font-size:24px">배</span><small>검색 1순위 정답률 (앵커 120문항, 16.7→45.8%) — 잣대 동결 공식 확정</small></div></div>
+    <div class="panel"><div class="big">2.7<span style="font-size:24px">배</span><small>검색 1순위 정답률 (앵커 120문항, 16.7→45.8% · GPU 시 50.8%) — 잣대 동결 공식 확정</small></div></div>
     <div class="panel"><div class="big">76.3<span style="font-size:24px">%</span><small>최종 답변(생성축) 합격 — 대표 지표 · 재응시(r2-1)에서 환각 6→4·수치 오답 17→11 개선 확인</small></div></div>
     <div class="panel"><div class="big" style="color:var(--anchor)">v1<small>RAG 평가 표준 규격 — 3제품 실전 검증분 승격, 다음 제품은 재발명 없이 시작</small></div></div>
   </div>
@@ -133,7 +133,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div class="step"><div class="who eval">채점센터</div><b>① 진단·개선 요청</b><p class="muted" style="font-size:13px;margin:6px 0 0">r1 채점(31.4%) + 미적중 708건 전건판독 → 고장 3곳과 개선 방향을 짚어 요청: 키워드 검색 무력화 · 리랭커 절단 · 청킹 경계</p></div>
     <div class="step"><div class="who plat">플랫폼</div><b>② 수리</b><p class="muted" style="font-size:13px;margin:6px 0 0">하이브리드 검색 복구 + 리랭커 window 개발 — 실험 로그를 당일 생성·전달</p></div>
     <div class="step"><div class="who eval">채점센터</div><b>③ 검증·방향 정렬</b><p class="muted" style="font-size:13px;margin:6px 0 0">재응시 2벌 당일 채점 — 수리 효과 분해(하이브리드 +4.4%p · window +17%p)로 "이 방향이 맞다"를 함께 확인</p></div>
-    <div class="step"><div class="who eval">채점센터</div><b>④ 확정</b><p class="muted" style="font-size:13px;margin:6px 0 0">앵커 120문항(비공개 재사용)으로 전후 공식 확정 — 33.3% → 56.7%</p></div>
+    <div class="step"><div class="who eval">채점센터</div><b>④ 확정</b><p class="muted" style="font-size:13px;margin:6px 0 0">앵커 120문항(비공개 재사용)으로 전후 공식 확정 — 33.3% → 56.7% (GPU 시 67.5%)</p></div>
     <div class="step"><div class="who plat">플랫폼</div><b>⑤ 합의</b><p class="muted" style="font-size:13px;margin:6px 0 0">"대표 지표 = 생성축" 제안 → 실증 데이터로 수용 · "단계적 실험·개선 반복" 확정</p></div>
   </div>
   <div class="note">커뮤니케이션 원칙 — 성적만 던지지 않는다: <b>수고 인정 → 실측 근거 → 실험 방법 → 탈출구</b>("효과 없으면 버려도 됨").
@@ -211,14 +211,14 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
         <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">정답이 5순위 안에 든 비율</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div class="bar"><span class="muted">개선 전</span><span class="tr"><i style="width:33.3%;background:var(--tx2)"></i></span><span class="num">33.3%</span></div>
-          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:56.7%;background:var(--run)"></i></span><span class="num" style="color:var(--run)"><b>56.7%</b></span></div>
+          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:56.7%;background:var(--run)"></i></span><span class="num" style="color:var(--run)"><b>56.7%</b> <span class="muted" style="font-weight:400">· GPU 시 67.5%</span></span></div>
         </div>
       </div>
       <div>
         <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">정답이 1순위(맨 위)에 온 비율</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div class="bar"><span class="muted">개선 전</span><span class="tr"><i style="width:16.7%;background:var(--tx2)"></i></span><span class="num">16.7%</span></div>
-          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:45.8%;background:var(--anchor)"></i></span><span class="num" style="color:var(--anchor)"><b>45.8% · 2.7배</b></span></div>
+          <div class="bar"><span><b>개선 후</b></span><span class="tr"><i style="width:45.8%;background:var(--anchor)"></i></span><span class="num" style="color:var(--anchor)"><b>45.8% · 2.7배</b> <span class="muted" style="font-weight:400">· GPU 시 50.8%</span></span></div>
         </div>
       </div>
     </div>
