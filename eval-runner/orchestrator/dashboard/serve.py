@@ -334,9 +334,16 @@ def api_scores():
             c = Counter(r.get("검색") for r in rep)
             g = Counter(r.get("생성") for r in rep)
             top1 = c.get("hit_top1", 0)
+            top5 = top1 + c.get("hit_top5", 0)
+            # [2026-09-07] 후보 50 덤프처럼 hits가 6~50위까지 실린 리포트: 채점기는 rank≤50을 전부 hit_top5로 세므로
+            # '적중순위'로 다시 세어 top5는 1~5위만, top50(1~50위 누적)은 별도 칸에 — 누적은 하되 오독은 막는다
+            ranks = [r.get("적중순위") for r in rep if isinstance(r.get("적중순위"), int)]
+            top50 = None
+            if ranks and max(ranks) > 5:
+                top1 = sum(1 for k in ranks if k == 1); top5 = sum(1 for k in ranks if k <= 5); top50 = len(ranks)
             search_only = all(r.get("생성") in (None, "미응시") for r in rep)   # 로그 실측으로 판정
             out.setdefault("CI", {})[rnd] = {
-                "top1": top1, "top5": top1 + c.get("hit_top5", 0),
+                "top1": top1, "top5": top5, **({"top50": top50} if top50 is not None else {}),
                 "pass": ("미응시" if search_only else g.get("pass", 0)),
                 "partial": ("미응시" if search_only else g.get("partial", 0)),
                 "검색축만": search_only,

@@ -914,7 +914,7 @@ function renderScores(ps){
         <span>${badge||(retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>')}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
-        <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
+        <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],...(rounds.some(r=>sc[r].top50!=null)?[["후보50 (1~50위 누적 · 리랭크 후보 안)",'top50']]:[]),["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
       </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
   // Q&A 트랙 상세 표 + 조작 버튼 (꾸러미 전달 → 로그 채점) — 시험지 발행 후에만 노출
