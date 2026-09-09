@@ -963,8 +963,9 @@ function renderScores(ps){
     + qaControls;
   // [2026-09-09 난희 지적 "비교 불가가 뭐냐 · 다른 조건은 단순검색 실측 카테고리로"] 회차를 줄(lane)로 나눠 따로 표시 —
   // 정식 회차(생성축 포함) / 검색축 실험(색인·옵션 실험, 검색만) / Vertex 대조군. Δ 전회차는 같은 줄 안에서만 계산돼 조건이 다른 회차끼리 비교되지 않는다.
-  const LANE_ORDER=['정식 회차','검색축 실험','Vertex 대조군','_'];
-  const LANE_LABEL={'정식 회차':'정식 회차 (검색축+생성축)','검색축 실험':'검색축 실험 (색인·옵션 — 검색만, 생성 미응시)','Vertex 대조군':'Vertex 대조군 (같은 시험지·같은 채점기)'};
+  const LANE_ORDER=['정식 회차','검색축 실험','Vertex 대조군','진단 — r2 시험지 top50 (참고)','이전 세대 — r1 시험지 1,033문항 (참고)','진단 — r1 시험지 top50 (참고)','_'];
+  const LANE_LABEL={'정식 회차':'정식 회차 (검색축+생성축)','검색축 실험':'검색축 실험 (색인·옵션 — 검색만, 생성 미응시)','Vertex 대조군':'Vertex 대조군 (같은 시험지·같은 채점기)',
+    '진단 — r2 시험지 top50 (참고)':'진단 — r2 시험지 top50 (참고, 폭 50 상한 실측)','이전 세대 — r1 시험지 1,033문항 (참고)':'이전 세대 — r1 시험지 1,033문항 (은퇴 · 참고 — r2와 시험지가 달라 건수 비교 안 함)','진단 — r1 시험지 top50 (참고)':'진단 — r1 시험지 top50 (참고)'};
   const byLane = sc=>{ const L={}; for(const [r,v] of Object.entries(sc||{})){ const k=v.lane||'_'; (L[k]=L[k]||{})[r]=v; } return L; };
   const mkLanes = g=>{ const L=byLane(S.scores[g.code]); const keys=Object.keys(L);
     if(keys.length<=1) return mk(g.label, S.scores[g.code], g.retired, g.code);

@@ -449,7 +449,11 @@ def api_scores():
                 "E거절": ("미응시" if search_only else sum(1 for r in rep if r.get("E형거절"))),
                 "n": len(rep), "scorer": "채점센터 vault",
                 # 줄(lane) — 정식 회차(생성축 포함) / 검색축 실험(색인·옵션 실험, 검색만) / Vertex 대조군. Δ는 같은 줄 안에서만 의미 있음
-                "lane": ("Vertex 대조군" if "vertex" in rnd else ("검색축 실험" if search_only and not re.fullmatch(r"r\d+(-\d+)?(_생성축)?", rnd) else "정식 회차")),
+                # [2026-09-09 난희 "비교 불가 값이 뭐냐"] r1 시험지(1,033문항) 회차는 r2(488)와 시험지가 달라 건수 비교가 무의미 → 별도 줄(참고)
+                "lane": ("이전 세대 — r1 시험지 1,033문항 (참고)" if len(rep) > 1000
+                         else "Vertex 대조군" if "vertex" in rnd
+                         else "검색축 실험" if search_only and not re.fullmatch(r"r\d+(-\d+)?(_생성축)?", rnd)
+                         else "정식 회차"),
             }
         # top50 진단 — 문항별 리포트 없이 회차인덱스의 집계만 존재 → 진단 행으로 병기
         try:
@@ -465,6 +469,7 @@ def api_scores():
                     mm = re.search(r"(\d+)\s*/\s*(\d+)", str(ent.get("채점", {}).get("기계대조_top50", "")))
                     if mm:
                         out.setdefault("CI", {})[key] = {
+                            "lane": ("진단 — r1 시험지 top50 (참고)" if key == "base50" else "진단 — r2 시험지 top50 (참고)"),
                             "top1": None, "top5": int(mm.group(1)), "n": int(mm.group(2)),
                             "pass": "미응시", "partial": "미응시", "검색축만": True,
                             "E환각": "미응시", "E거절": "미응시",
