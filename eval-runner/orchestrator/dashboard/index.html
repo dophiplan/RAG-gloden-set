@@ -342,15 +342,16 @@ async function loadAll(fromPoll){
   catch(e){ if(!fromPoll) toast('⚠ 서버 응답이 없어요 — 15초 후 자동 재시도 (계속되면 실전모드_켜기를 다시 실행)'); }
 }
 async function _loadAll(fromPoll){
-  const [st,cat,q,sc,lg,ai] = await Promise.all([
+  const [st,cat,q,sc,lg,ai,vx] = await Promise.all([
     fetch('/api/state').then(r=>r.json()),
     fetch('/api/catalog').then(r=>r.json()),
     fetch('/api/queue').then(r=>r.json()),
     fetch('/api/scores').then(r=>r.json()),
     fetch('/api/ledger').then(r=>r.json()),
     fetch('/api/ai_status').then(r=>r.json()),
+    fetch('/api/vertex').then(r=>r.json()).catch(()=>null),
   ]);
-  S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg, ai};
+  S = {state:st, catalog:cat, queue:q, scores:sc, ledger:lg, ai, vertex:vx};
   const disp = Object.keys(st._products||{});
   if(!disp.length){   // [P3] 제품 0개(신규 설치 등)면 PV()가 undefined → render TypeError 백지
     $('tabs').innerHTML = `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
@@ -358,7 +359,7 @@ async function _loadAll(fromPoll){
     return;
   }
   if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
-  if(!cur || (cur!=='__VERTEX__' && !st._products[cur])) cur = disp[0];   // Vertex 탭은 제품이 아니라 별도 화면
+  if(!cur || !st._products[cur]) cur = disp[0];
   // ⑥ 채점관 면접 카드가 있으면 답안지(30문항)도 함께 로드 — 카드 안에서 바로 판정
   const calCard = q.find(c=>c.id.startsWith('CALIN_')||c.id.startsWith('CAL_'));
   S.calin = calCard ? await fetch('/api/calin?product='+encodeURIComponent(calCard.product)).then(r=>r.json()).catch(()=>({rows:[]})) : null;
@@ -584,10 +585,7 @@ function render(){
     // 다른 탭에서도 "돌아가는 중"이 보이게 — AI 작업 진행 중인 제품은 ⚙ 표시
     const spin = st.products[pv.code].status==='RUNNING' ? '⚙ ' : '';
     return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';localStorage.setItem('보던탭',cur);render()">${spin}${disp} ${esc(pv.name)}${badge}</button>`;
-  }).join('') + `<button role="tab" aria-selected="${cur==='__VERTEX__'}" style="border:1px solid var(--run);margin-left:6px" onclick="cur='__VERTEX__';localStorage.setItem('보던탭',cur);render()" title="Vertex AI Search 대조군 — 같은 시험지·같은 채점기로 잰 세 판">🔍 Vertex 비교</button>`
-   + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
-  // [2026-09-09 난희] Vertex 자료는 CI 회차 흐름(우리 시스템의 개선 이력)과 성격이 다른 '대조군'이라 별도 탭으로 — 제품 상태·게이트·진행선과 무관
-  if(cur==='__VERTEX__'){ renderVertex(); window.scrollTo(0, winY); return; }
+  }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
   // U2: 모드 배지 — 지금 가짜인지 진짜인지 크게
   const md = st._mode||{};
   const modeColor = md.cls==='live'?'ok':(md.cls==='practice'?'warn':'bad');
@@ -816,34 +814,28 @@ function renderDetail(ps){
    (기존: 이름의 숫자만 보고 정렬해 r2-1·rr30 등이 뒤죽박죽으로 섞임 — 난희 지적 2026-09-01) */
 
 // ── Vertex 대조군 탭 ─────────────────────────────────────────────────────────────
-async function renderVertex(){
-  const V = window._vx || (window._vx = await fetch('/api/vertex').then(r=>r.json()).catch(()=>null));
-  if(!V){ $('view').innerHTML='<div class="note">Vertex 자료를 읽지 못했어요 (/api/vertex)</div>'; return; }
-  for(const id of ['modeBadge','calBadge','killBadge']) if($(id)) $(id).innerHTML='';
+function vertexTableHTML(V){
+  // [2026-09-09 난희] Vertex 비교는 CI 코퍼스로 한 실험 → CI 탭 성적 히스토리 안의 하위 탭으로 (최상위 탭 아님)
+  if(!V||!V.panels) return '<div class="note">Vertex 자료 없음 (/api/vertex)</div>';
   const P = V.panels; const h = x => esc(String(x??'-'));
-  const short = p => p.판.replace(/\s*\(.*?\)\s*/g,'');                       // "Vertex 옵션 변경 판"
-  const spd = p => { const m=(p.속도||'').match(/P50 ([\d.]+)s/); return m? m[1]+'초' : ((p.속도||'').match(/(\d+)s P50/)||[])[1] ? ((p.속도||'').match(/(\d+)s P50/)[1]+'초') : '-'; };
+  const short = p => p.판.replace(/\s*\(.*?\)\s*/g,'');
+  const spd = p => { const m=(p.속도||'').match(/P50 ([\d.]+)s/); if(m) return m[1]+'초'; const m2=(p.속도||'').match(/(\d+)s P50/); return m2? m2[1]+'초' : '-'; };
   const pct = x => (String(x||'').match(/\(([\d.]+%)\)/)||[])[1] || String(x||'-');
-  // ── 핵심 표: 판 5줄 × 4칸 — "누가 더 정확하고 누가 더 빨랐나" 한눈에
   const main = `<table class="scoreTbl" style="font-size:13px"><thead><tr><th class="m">판</th><th>답변 합격률</th><th>E형 환각 (40)</th><th>앵커 120</th><th>답변 완료 속도</th></tr></thead><tbody>
     ${P.map(p=>`<tr><td class="m" title="형상: ${esc(p.형상)}"><b>${esc(short(p))}</b> <span class="hint">${esc((p.판.match(/\((.*?)\)/)||[])[1]||'')}</span></td>
       <td><b>${h(p.합격률)}</b></td><td>${p.E환각===0?'<b style="color:var(--ok,#3dd6b0)">0</b>':h(p.E환각)}</td><td>${h(pct(p.앵커))}</td><td title="${esc(p.속도||'')}">${spd(p)}${/서버 내부/.test(p.속도||'')?' <span class="hint">(서버)</span>':''}</td></tr>`).join('')}
   </tbody></table>`;
-  // ── 상세 (접힘)
   const rows = [['부분 / 0점', p=>`${h(p.부분)} / ${h(p['0점'])}`],['E형 부재 인정', p=>h(p.E부재)],['검색 top5', p=>h(p.검색_top5)],['검색 top1', p=>h(p.검색_top1)],
     ['적중군 합격률', p=>h(p.적중군)],['미적중군 합격률', p=>h(p.미적중군)],['과잉 거절', p=>h(p.과잉거절)],['이중판정 일치', p=>h(p.일치)],['속도 상세', p=>`<span style="font-size:11px">${h(p.속도)}</span>`],['형상', p=>`<span style="font-size:11px;color:var(--tx2)">${esc(p.형상)}</span>`]];
-  const detail = `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">상세 지표 펼치기 (부분/0점 · 검색 · 적중군 · 과잉 거절 · 일치 · 속도 상세 · 형상)</summary>
+  const detail = `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">상세 지표 펼치기</summary>
     <div style="overflow-x:auto;margin-top:6px"><table class="scoreTbl"><thead><tr><th class="m">지표</th>${P.map(p=>`<th>${esc(short(p))}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(([nm,f])=>`<tr><td class="m">${nm}</td>${P.map(p=>`<td>${f(p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
     <div class="hint" style="margin-top:6px">Vertex 속도는 클라이언트 왕복, 자사는 서버 내부 시간(단위 다름). 자체 문서 판 검색은 문서 단위라 청크 단위 자사와 직접 비교하지 않음.</div></details>`;
-  const docs = V.docs.map(d=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><b style="min-width:0">${esc(d.title.split(' (')[0])}</b><span class="hint">${esc(d.mtime)}</span>${d.viewable?`<button class="xtab" onclick="openVertexDoc('${encodeURIComponent(d.name)}','${esc(d.title)}')">열기</button>`:'<span class="hint">xlsx · 전달함</span>'}</div>`).join('');
-  $('view').innerHTML = `
-    <div class="card"><div class="score-row"><span><b>Vertex 비교</b> — 같은 시험지 488 · 같은 채점기</span><span></span><span class="hint">대조군</span></div>
-      <div class="hint" style="margin:2px 0 8px">자사 청크를 준 Vertex는 −11.5%p, <b>원본을 준 Vertex는 −1.4%p</b> → 격차의 본체는 청킹·색인. 자사가 앞선 곳: E형 환각 0. Vertex가 앞선 곳: 속도.</div>
-      <div style="overflow-x:auto">${main}</div>${detail}
-    </div>
-    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>문서</b></span></div>${docs}</div>
-    <div class="card" style="margin-top:10px"><div class="hint">${esc(V.자원)}</div></div>`;
+  const docs = (V.docs||[]).map(d=>`<div style="display:flex;gap:8px;align-items:center;padding:2px 0"><b>${esc(d.title.split(' (')[0])}</b><span class="hint">${esc(d.mtime)}</span>${d.viewable?`<button class="xtab" onclick="openVertexDoc('${encodeURIComponent(d.name)}','${esc(d.title)}')">열기</button>`:'<span class="hint">xlsx · 전달함</span>'}</div>`).join('');
+  return `<div class="hint" style="margin:2px 0 8px">같은 시험지 488 · 같은 채점기. 자사 청크를 준 Vertex는 −11.5%p, <b>원본을 준 Vertex는 −1.4%p</b> → 격차의 본체는 청킹·색인. 자사가 앞선 곳: E형 환각 0. Vertex가 앞선 곳: 속도.</div>
+    <div style="overflow-x:auto">${main}</div>${detail}
+    <div style="margin-top:10px;font-size:10px;letter-spacing:.1em;color:var(--tx2)">문서</div>${docs}
+    <div class="hint" style="margin-top:8px">${esc(V.자원||'')}</div>`;
 }
 async function openVertexDoc(name, title){
   const r = await fetch('/api/vertex-doc?name='+name).then(r=>r.json()).catch(()=>null);
@@ -985,8 +977,13 @@ function renderScores(ps){
   // 보관함 = 은퇴 골든셋의 현황 줄 + 상세 성적표까지 (옛 회차 기록은 여기서 열람)
   const archBody = archGens.map(g=>genRow(g) + (mk(g.label, S.scores[g.code], true, g.code)||'')).join('') + impNote(archGens);
   const open = !!VSTATE['scores:'+cur];   // 자동 갱신 후에도 보고 있던 화면 유지
+  // [2026-09-09 난희] Vertex 비교는 CI 안의 하위 탭 — 이 제품 성적에 Vertex 대조군 줄이 있을 때만 버튼이 뜬다
+  const hasVx = !!S.vertex && Object.values(S.scores[PV().code]||{}).some(v=>v.lane==='Vertex 대조군');
+  const vxSub = hasVx && localStorage.getItem('vxsub:'+cur)==='vertex';
+  const subTabs = hasVx? `<div style="margin:0 0 8px"><button class="xtab ${vxSub?'':'on'}" onclick="localStorage.setItem('vxsub:${esc(cur)}','ours');render()">우리 회차</button><button class="xtab ${vxSub?'on':''}" onclick="localStorage.setItem('vxsub:${esc(cur)}','vertex');render()">🔍 Vertex 비교</button></div>` : '';
+  const mainBody = vxSub? vertexTableHTML(S.vertex) : (summary+curBody);
   return `<div class="vswitch" data-vskey="scores:${esc(cur)}">
-    <div class="curview" style="display:${open?'none':'block'}">${summary}${curBody}</div>
+    <div class="curview" style="display:${open?'none':'block'}">${subTabs}${mainBody}</div>
     <div class="archwrap" style="display:${open?'block':'none'}">
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.1em;color:var(--tx2);margin-bottom:6px">
         <span>📦 보관함 — 은퇴한 골든셋 (참고용)</span><button class="archbtn" onclick="closeArch(this)" aria-label="닫기">✕</button></div>
