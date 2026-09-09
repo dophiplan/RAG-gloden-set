@@ -908,7 +908,7 @@ function renderScores(ps){
       ${archGens.length?`<button class="archbtn" onclick="toggleArch(this)" title="은퇴한 골든셋 리스트 — 누적 현황·성적표 (참고용)">📦 보관함 ${archGens.length} ›</button>`:''}</div>`
     + curGens.map(genRow).join('') + qaRow + baseRow + divider;
   // ── 하단: 세대별 상세 추이 — 표 (행=지표, 열=회차, 마지막 열=최신 강조)
-  const mk = (label, sc, retired, code, badge) => {
+  const mk = (label, sc, retired, code, badge, noDelta) => {   // noDelta: 서로 다른 기준선(재응시 아님)은 Δ 행 자체를 안 그림 [2026-09-09 난희]
     if(!sc || !Object.keys(sc).length) return '';
     const rounds = Object.keys(sc).sort(roundOrder);
     const head = rounds.map((r,i)=>`<th class="${i===rounds.length-1?'cur':''}">${r}${sc[r].scorer==='기록 이관'?'*':''}${sc[r].분석&&code?`<span class="ihelp" onmouseenter="showITip(event,'${encodeURIComponent(code)}','${r}')" onmouseleave="hideITip()">ⓘ</span>`:''}</th>`).join('');
@@ -949,7 +949,7 @@ function renderScores(ps){
         <span>${badge||(retired?'<span class="haltbadge">키 공개 후 참고</span>':'<span class="hint">현역</span>')}</span></div>
       <div style="overflow-x:auto"><table class="scoreTbl">
         <thead><tr><th class="m">지표</th>${head}</tr></thead>
-        <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],...(rounds.some(r=>sc[r].top50!=null)?[["후보50 (1~50위 누적 · 리랭크 후보 안)",'top50']]:[]),["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1?delta:''}</tbody>
+        <tbody>${[["top1 (1위 명중)",'top1'],["top5 (1~5위 누적)",'top5'],...(rounds.some(r=>sc[r].top50!=null)?[["후보50 (1~50위 누적 · 리랭크 후보 안)",'top50']]:[]),["생성 pass",'pass'],["E환각",'E환각']].map(([nm,k])=>row(nm,k)).join('')}${rounds.length>1&&!noDelta?delta:''}</tbody>
       </table></div>${refLine}${repLinks?`<div class="hint" style="margin:2px 0 6px">팀장님 보고용 꾸러미(리포트+원자료): ${repLinks}</div>`:''}`;
   };
   // Q&A 트랙 상세 표 + 조작 버튼 (꾸러미 전달 → 로그 채점) — 시험지 발행 후에만 노출
@@ -959,7 +959,7 @@ function renderScores(ps){
     </div><div class="hint" style="margin-bottom:8px">외부 Q&A 시험지 <b>${qaTrack.n??'?'}문항</b> 발행됨 (${esc(qaTrack.paper)}) — 이 트랙 성적은 골든셋 회차와 안 섞여요</div>` : '';
   const qaBody = (mk('외부 Q&A', qaSc, true, qaCode, qaBadge)||'')
     + (mk('기준선(참고) — 단순검색 실측', qaBase, true, qaCode,
-          '<span class="hint">base1 FAQ포함 · base2 매뉴얼만 · base3 맥락시험지</span>')||'')
+          '<span class="hint">base1 FAQ포함 · base2 매뉴얼만 · base3 맥락시험지 — 서로 다른 기준선 3종(재응시 아님)이라 회차 간 Δ는 없음</span>', true)||'')
     + qaControls;
   // [2026-09-09 난희 지적 "비교 불가가 뭐냐 · 다른 조건은 단순검색 실측 카테고리로"] 회차를 줄(lane)로 나눠 따로 표시 —
   // 정식 회차(생성축 포함) / 검색축 실험(색인·옵션 실험, 검색만) / Vertex 대조군. Δ 전회차는 같은 줄 안에서만 계산돼 조건이 다른 회차끼리 비교되지 않는다.
