@@ -222,6 +222,93 @@ def api_ledger(n=60):
     return out
 
 
+def api_vertex():
+    """Vertex 대조군 탭 — 자사 r4·r5와 Vertex 세 판(기본값·옵션 변경·자체 문서)을 같은 잣대로 한 표에. 수치는 채점 산출물(_분석.json·score_report·응답로그)에서 즉석 계산.
+    [2026-09-09 난희] Vertex 자료는 CI 회차 흐름과 성격이 달라(대조군) 별도 탭으로."""
+    import statistics as _st
+    ci = ROOT / "data" / "CI" / "08_scoring"
+    panels = [("자사 r4 (9/1)", "score_CI_r2-2_생성축", None, "팀장님 v1 청킹 · 하이브리드+리랭크 폭50+ReAct · 2단 판단 · 임계 0.7"),
+              ("자사 r5 (9/4)", "score_CI_r2-3_생성축", None, "v2 재청킹 색인 · 임계 0.5 · 그 외 r4 동일"),
+              ("Vertex 기본값 판 (9/3)", "score_CI_vertex_r2", "vertex_r2/CI_골든셋_r2v2_Vertex_응답로그_*.json", "같은 21,354 청크 · 옵션 미변경 · 내장 요약 stable"),
+              ("Vertex 옵션 변경 판 (9/4)", "score_CI_vertex_r2_knobs", "vertex_r2/*손잡이판*응답로그_*.json", "같은 청크 · 풀50→Ranking API→answer API(모델 고정·저관련 폴백·인용·grounding)"),
+              ("Vertex 자체 문서 판 (9/7)", "score_CI_vertex_b2_digital", "score_CI_vertex_b2_digital/CI_Vertex_b2_digital_응답로그*.json", "원본 xlsx 2종→문서 3,009 · 디지털 파서(무료) · Vertex 자체 구절 추출 · answer API 네이티브")]
+    cols = []
+    for label, folder, logglob, shape in panels:
+        d = ci / folder; row = {"판": label, "형상": shape}
+        try:
+            a = json.loads((d / "_분석.json").read_text(encoding="utf-8"))
+            row.update({"합격률": a["비E형"]["합격률"], "합격": a["비E형"]["합격"], "부분": a["비E형"]["부분"], "0점": a["비E형"]["0점"],
+                        "E부재": a["E형"].get("부재인정"), "E환각": a["E형"].get("환각"), "앵커": a["앵커 120"].get("합격률"),
+                        "과잉거절": a["과잉 거절"].get("그중 합격 실패"), "적중군": a["검색 적중/미적중 분리"]["적중군"]["합격률"],
+                        "미적중군": a["검색 적중/미적중 분리"]["미적중군"]["합격률"], "일치": a["이중판정 일치(비E형)"]})
+        except Exception as e:
+            row["오류"] = str(e)[:80]
+        try:
+            rep = json.loads((d / "score_report.json").read_text(encoding="utf-8")); rep = rep.get("results", rep)
+            seen = set(); rr = []
+            for r in rep:
+                if r.get("id") in seen: continue
+                seen.add(r.get("id")); rr.append(r)
+            ne = [r for r in rr if r.get("검색") != "해당없음(E형)" and not r.get("E형거절") and not r.get("E형환각")]
+            t1 = sum(1 for r in ne if r.get("검색") == "hit_top1"); t5 = t1 + sum(1 for r in ne if r.get("검색") == "hit_top5")
+            row.update({"검색_top1": f"{t1}/{len(ne)} ({t1/len(ne):.1%})" if ne else None, "검색_top5": f"{t5}/{len(ne)} ({t5/len(ne):.1%})" if ne else None})
+            if "b2" in folder:
+                try:
+                    dd = json.loads((d / "score_report_검색축_문서.json").read_text(encoding="utf-8"))["results"]; seen2 = set(); ne2 = []
+                    for r in dd:
+                        if r.get("id") in seen2 or r.get("검색") == "해당없음(E형)": continue
+                        seen2.add(r.get("id")); ne2.append(r)
+                    t5d = sum(1 for r in ne2 if str(r.get("검색", "")).startswith("hit"))
+                    row["검색_top5"] = f"구절(엄격) {row['검색_top5']} · 문서(관대) {t5d/len(ne2):.1%}" if ne2 else row["검색_top5"]
+                    row["검색_주의"] = "문서 단위 hits — 청크 단위 자사와 직접 비교 불가"
+                except Exception:
+                    pass
+        except Exception as e:
+            row.setdefault("오류", str(e)[:80])
+        if logglob:
+            try:
+                lf = sorted(ci.glob(logglob))[-1]; lg = json.loads(lf.read_text(encoding="utf-8"))["responses"]
+                ok = [r for r in lg if not r.get("error") and isinstance(r.get("latency_ms"), dict)]
+                def pct(k, q):
+                    v = sorted(r["latency_ms"][k] for r in ok if r["latency_ms"].get(k) is not None)
+                    return v[min(len(v) - 1, int(len(v) * q))] / 1000 if v else None
+                tot = "total" if ok and "total" in ok[0]["latency_ms"] else None
+                s50 = pct("search", .5); a50 = pct(tot, .5) if tot else None; a95 = pct(tot, .95) if tot else None
+                if a50 is None:  # 기본값 판: search+answer 합
+                    v = sorted((r["latency_ms"].get("search") or 0) + (r["latency_ms"].get("answer") or 0) for r in ok)
+                    a50 = v[len(v) // 2] / 1000 if v else None; a95 = v[int(len(v) * .95)] / 1000 if v else None
+                row["속도"] = f"검색 {s50:.2f}s · 답변 완료 P50 {a50:.1f}s / P95 {a95:.1f}s (클라이언트 왕복)" if s50 is not None else None
+            except Exception as e:
+                row["속도"] = None
+        else:
+            row["속도"] = "답변 완료 31s P50 (서버 내부, 플랫폼 보고) · 검색 단계 28.7s P50 (9/8 v3 로그 search_ms)" if "r2-3" in folder else "답변 완료 31s P50 (서버 내부, 플랫폼 보고)"
+        cols.append(row)
+    docs = []
+    for rel, title in [("CI_Vertex비교_보고_20260903.md", "본부장님용 전체 보고서 (4열 · 속도 A/B안 · 3계층)"),
+                       ("CI_Vertex비교_팀장님공유_20260907.md", "팀장님 공유 정리 (강점/보강 · 유형별 분해)"),
+                       ("CI_청킹비교_자사v2_vs_Vertex_20260907.md", "청킹 비교 — 자사 v2 청크 vs Vertex 구절"),
+                       ("vertex_r2/CI_Vertex_세팅기록_2026-09-03.md", "세팅 기록 — 세 판의 형상·옵션·결과"),
+                       ("CI_본부장미션_Vertex비교_분석_20260902.md", "9/2 미션 분석 · 되묻기"),
+                       ("score_CI_vertex_b2_digital/CI_성적_Vertex_4열비교집계.xlsx", "4열 집계 xlsx (유형별 분해 시트)")]:
+        f = ci / rel
+        if f.exists():
+            import datetime as _dt
+            docs.append({"name": rel, "title": title, "mtime": _dt.datetime.fromtimestamp(f.stat().st_mtime).strftime("%m/%d %H:%M"), "viewable": f.suffix == ".md"})
+    return {"panels": cols, "docs": docs,
+            "미션": "본부장님(9/2): Vertex와 비교 · 속도 1~2초(=답변 완료 4~5초, Vertex 수준으로 읽힘 — 확인 전) · 사용자 눈높이 Vertex만큼",
+            "한줄": "자사 청크를 준 Vertex는 −11.5%p, 원본을 준 Vertex는 −1.4%p → 격차의 본체는 청킹·색인. 자사가 지키는 것: E형 부재 인정·수치·근거 단위. 따라갈 것: 속도(검색 단계 28.7s)·FAQ/표 청킹",
+            "자원": "GCP nhkim-test · 데이터 스토어 3종 · 예산 알림 ₩20,000 · 실험 후 삭제하지 않고 상시 대조군으로 유지(난희 결정) · 추가 청구 0~수백 원"}
+
+
+def api_vertex_doc(name):
+    ci = ROOT / "data" / "CI" / "08_scoring"
+    allow = {"CI_Vertex비교_보고_20260903.md", "CI_Vertex비교_팀장님공유_20260907.md", "CI_청킹비교_자사v2_vs_Vertex_20260907.md",
+             "vertex_r2/CI_Vertex_세팅기록_2026-09-03.md", "CI_본부장미션_Vertex비교_분석_20260902.md"}
+    if name not in allow:
+        return None
+    return (ci / name).read_text(encoding="utf-8")
+
+
 def api_queue():
     import time
     q = ROOT / "검수큐"
@@ -329,6 +416,15 @@ def api_scores():
                 rep = raw.get("results", raw) if isinstance(raw, dict) else raw
             except Exception:
                 continue
+            # [2026-09-09 난희 지적 "비교 불가가 뭐냐"] 검색축 리포트는 쌍둥이 40문항이 두 번(원문항 목록+쌍둥이 매핑) 실려 528행,
+            # 생성축·Vertex는 488행 → 같은 시험지인데 '문항 수 다름 → 비교 불가'로 오표시. ID 기준 첫 행만 남겨 전 회차 488 기준으로 통일.
+            _seen = set(); _dedup = []
+            for _r in rep:
+                _k = _r.get("id")
+                if _k in _seen:
+                    continue
+                _seen.add(_k); _dedup.append(_r)
+            rep = _dedup
             m = re.fullmatch(r"score_CI_(r\d+|base\d+)", d.name)
             rnd = m.group(1) if m else d.name.replace("score_CI_", "")
             c = Counter(r.get("검색") for r in rep)
@@ -352,6 +448,8 @@ def api_scores():
                 "E환각": ("미응시" if search_only else sum(1 for r in rep if r.get("E형환각"))),
                 "E거절": ("미응시" if search_only else sum(1 for r in rep if r.get("E형거절"))),
                 "n": len(rep), "scorer": "채점센터 vault",
+                # 줄(lane) — 정식 회차(생성축 포함) / 검색축 실험(색인·옵션 실험, 검색만) / Vertex 대조군. Δ는 같은 줄 안에서만 의미 있음
+                "lane": ("Vertex 대조군" if "vertex" in rnd else ("검색축 실험" if search_only and not re.fullmatch(r"r\d+(-\d+)?(_생성축)?", rnd) else "정식 회차")),
             }
         # top50 진단 — 문항별 리포트 없이 회차인덱스의 집계만 존재 → 진단 행으로 병기
         try:
@@ -1302,6 +1400,12 @@ class H(SimpleHTTPRequestHandler):
             return self._send(200, j(api_ledger()))
         if self.path.startswith("/api/queue"):
             return self._send(200, j(api_queue()))
+        if self.path.startswith("/api/vertex-doc"):
+            from urllib.parse import urlparse, parse_qs
+            q = parse_qs(urlparse(self.path).query); t = api_vertex_doc(N(q.get("name", [""])[0]))
+            return self._send(404 if t is None else 200, j({"ok": t is not None, "text": t or ""}))
+        if self.path.startswith("/api/vertex"):
+            return self._send(200, j(api_vertex()))
         if self.path.startswith("/api/scores"):
             return self._send(200, j(api_scores()))
         if self.path.startswith("/api/catalog"):

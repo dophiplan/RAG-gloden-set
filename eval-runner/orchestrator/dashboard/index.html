@@ -358,7 +358,7 @@ async function _loadAll(fromPoll){
     return;
   }
   if(!cur) cur = localStorage.getItem('보던탭');        // 새로고침해도 보던 탭 유지
-  if(!cur || !st._products[cur]) cur = disp[0];
+  if(!cur || (cur!=='__VERTEX__' && !st._products[cur])) cur = disp[0];   // Vertex 탭은 제품이 아니라 별도 화면
   // ⑥ 채점관 면접 카드가 있으면 답안지(30문항)도 함께 로드 — 카드 안에서 바로 판정
   const calCard = q.find(c=>c.id.startsWith('CALIN_')||c.id.startsWith('CAL_'));
   S.calin = calCard ? await fetch('/api/calin?product='+encodeURIComponent(calCard.product)).then(r=>r.json()).catch(()=>({rows:[]})) : null;
@@ -584,7 +584,10 @@ function render(){
     // 다른 탭에서도 "돌아가는 중"이 보이게 — AI 작업 진행 중인 제품은 ⚙ 표시
     const spin = st.products[pv.code].status==='RUNNING' ? '⚙ ' : '';
     return `<button role="tab" aria-selected="${disp===cur}" onclick="cur='${disp}';localStorage.setItem('보던탭',cur);render()">${spin}${disp} ${esc(pv.name)}${badge}</button>`;
-  }).join('') + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
+  }).join('') + `<button role="tab" aria-selected="${cur==='__VERTEX__'}" onclick="cur='__VERTEX__';localStorage.setItem('보던탭',cur);render()" title="Vertex AI Search 대조군 — 같은 시험지·같은 채점기로 잰 세 판">Vertex 대조군</button>`
+   + `<button class="addbtn" aria-label="제품 추가" onclick="dlg.showModal()">＋ 제품</button>`;
+  // [2026-09-09 난희] Vertex 자료는 CI 회차 흐름(우리 시스템의 개선 이력)과 성격이 다른 '대조군'이라 별도 탭으로 — 제품 상태·게이트·진행선과 무관
+  if(cur==='__VERTEX__'){ renderVertex(); window.scrollTo(0, winY); return; }
   // U2: 모드 배지 — 지금 가짜인지 진짜인지 크게
   const md = st._mode||{};
   const modeColor = md.cls==='live'?'ok':(md.cls==='practice'?'warn':'bad');
@@ -811,6 +814,40 @@ function renderDetail(ps){
 
 /* 회차 열 순서 — 시험지 세대 → 계열 → 응시 순으로 사람이 읽는 순서대로 정렬
    (기존: 이름의 숫자만 보고 정렬해 r2-1·rr30 등이 뒤죽박죽으로 섞임 — 난희 지적 2026-09-01) */
+
+// ── Vertex 대조군 탭 ─────────────────────────────────────────────────────────────
+async function renderVertex(){
+  const V = window._vx || (window._vx = await fetch('/api/vertex').then(r=>r.json()).catch(()=>null));
+  if(!V){ $('view').innerHTML='<div class="note">Vertex 자료를 읽지 못했어요 (/api/vertex)</div>'; return; }
+  for(const id of ['modeBadge','calBadge','killBadge']) if($(id)) $(id).innerHTML='';
+  const P = V.panels; const h = x => esc(String(x??'-'));
+  const rows = [['답변 합격률 (비E형 447 · 이중판정)', p=>`<b>${h(p.합격률)}</b> (${h(p.합격)})`],['부분 / 0점', p=>`${h(p.부분)} / ${h(p['0점'])}`],
+    ['E형 부재 인정 / 환각 (유효 40)', p=>`${h(p.E부재)} / <b>${h(p.E환각)}</b>`],['검색 top5', p=>h(p.검색_top5)+(p.검색_주의?` <span class="hint" title="${esc(p.검색_주의)}">ⓘ</span>`:'')],['검색 top1', p=>h(p.검색_top1)],
+    ['검색 적중군 답변 합격률', p=>h(p.적중군)],['검색 미적중군 답변 합격률', p=>h(p.미적중군)],['앵커 120 합격', p=>h(p.앵커)],['과잉 거절 (정답 있는데 물러남)', p=>h(p.과잉거절)],
+    ['이중판정 일치', p=>h(p.일치)],['속도 (마우스 올리면 상세)', p=>`<span style="font-size:11px" title="${esc(p.속도||'')}">${h((p.속도||'').replace(/\s*\(.*?\)/g,'').split(' · ').slice(0,2).join(' · '))}</span>`]];
+  const head = P.map(p=>`<th title="형상: ${esc(p.형상)}">${esc(p.판)} <span class="hint">ⓘ</span></th>`).join('');
+  const body = rows.map(([nm,f])=>`<tr><td class="m">${nm}</td>${P.map(p=>`<td>${f(p)}</td>`).join('')}</tr>`).join('');
+  const shape = '';   // 형상은 열 제목 툴팁(마우스 올리면)으로 — 표 폭 절약
+  const docs = V.docs.map(d=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><span style="min-width:60px" class="hint">${esc(d.mtime)}</span><b>${esc(d.title)}</b><span class="hint">${esc(d.name)}</span>${d.viewable?`<button class="xtab" onclick="openVertexDoc('${encodeURIComponent(d.name)}','${esc(d.title)}')">열기</button>`:'<span class="hint">(xlsx — 전달함 사본)</span>'}</div>`).join('');
+  $('view').innerHTML = `
+    <div class="card"><div class="score-row"><span><b>Vertex AI Search 대조군</b> — 같은 시험지(r2 488) · 같은 채점기</span><span></span><span class="hint">대조군 — 우리 시스템의 회차 흐름과 분리해서 봅니다</span></div>
+      <div class="hint" style="margin:4px 0 8px">${esc(V.미션)}</div>
+      <div class="note" style="margin-bottom:8px"><b>한 줄</b> — ${esc(V.한줄)}</div>
+      <div style="overflow-x:auto"><table class="scoreTbl"><thead><tr><th class="m">지표</th>${head}</tr></thead><tbody>${shape}${body}</tbody></table></div>
+      <div class="hint" style="margin-top:6px">Vertex 속도는 클라이언트(서울)→global 왕복, 자사는 서버 내부 시간 — 단위가 다릅니다. 자체 문서 판의 검색은 문서 단위라 청크 단위 자사와 직접 비교하지 않습니다(답변 합격률이 비교의 본체).</div>
+    </div>
+    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>문서</b></span><span></span><span class="hint">금고 data/CI/08_scoring/</span></div>${docs}</div>
+    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>자원·비용</b></span></div><div class="hint">${esc(V.자원)}</div></div>`;
+}
+async function openVertexDoc(name, title){
+  const r = await fetch('/api/vertex-doc?name='+name).then(r=>r.json()).catch(()=>null);
+  if(!r||!r.ok){ alert('문서를 읽지 못했어요'); return; }
+  let d = document.getElementById('vxdlg');
+  if(!d){ d=document.createElement('dialog'); d.id='vxdlg'; d.style.cssText='max-width:900px;width:92vw;max-height:88vh;background:var(--panel);color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:0'; document.body.appendChild(d); }
+  d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)"><b>${title}</b><button class="xtab" onclick="document.getElementById('vxdlg').close()">닫기</button></div><pre style="white-space:pre-wrap;font:12px/1.5 var(--mono);padding:12px 14px;margin:0;max-height:76vh;overflow:auto">${esc(r.text)}</pre>`;
+  d.showModal();
+}
+
 function roundOrder(a,b){
   const rank=r=>{
     const m=r.match(/^r(\d+)/); const gen=m? parseInt(m[1]) : 90;      // 세대(r1/r2…), base류는 뒤로
@@ -926,7 +963,15 @@ function renderScores(ps){
     + (mk('기준선(참고) — 단순검색 실측', qaBase, true, qaCode,
           '<span class="hint">base1 FAQ포함 · base2 매뉴얼만 · base3 맥락시험지</span>')||'')
     + qaControls;
-  const curBody = (displayGens.map(g=>mk(g.label, S.scores[g.code], g.retired, g.code)).filter(Boolean).join('<div style="height:10px"></div>')
+  // [2026-09-09 난희 지적 "비교 불가가 뭐냐 · 다른 조건은 단순검색 실측 카테고리로"] 회차를 줄(lane)로 나눠 따로 표시 —
+  // 정식 회차(생성축 포함) / 검색축 실험(색인·옵션 실험, 검색만) / Vertex 대조군. Δ 전회차는 같은 줄 안에서만 계산돼 조건이 다른 회차끼리 비교되지 않는다.
+  const LANE_ORDER=['정식 회차','검색축 실험','Vertex 대조군','_'];
+  const LANE_LABEL={'정식 회차':'정식 회차 (검색축+생성축)','검색축 실험':'검색축 실험 (색인·옵션 — 검색만, 생성 미응시)','Vertex 대조군':'Vertex 대조군 (같은 시험지·같은 채점기)'};
+  const byLane = sc=>{ const L={}; for(const [r,v] of Object.entries(sc||{})){ const k=v.lane||'_'; (L[k]=L[k]||{})[r]=v; } return L; };
+  const mkLanes = g=>{ const L=byLane(S.scores[g.code]); const keys=Object.keys(L);
+    if(keys.length<=1) return mk(g.label, S.scores[g.code], g.retired, g.code);
+    return LANE_ORDER.filter(k=>L[k] && k!=='Vertex 대조군').map(k=>mk(g.label+(k==='_'?'':' — '+LANE_LABEL[k]), L[k], g.retired, g.code)).filter(Boolean).join('<div style="height:6px"></div>'); };
+  const curBody = (displayGens.map(g=>mkLanes(g)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + (qaBody?`<div style="height:10px"></div>`+qaBody:'')
     + impNote(displayGens);
