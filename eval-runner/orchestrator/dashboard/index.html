@@ -821,23 +821,29 @@ async function renderVertex(){
   if(!V){ $('view').innerHTML='<div class="note">Vertex 자료를 읽지 못했어요 (/api/vertex)</div>'; return; }
   for(const id of ['modeBadge','calBadge','killBadge']) if($(id)) $(id).innerHTML='';
   const P = V.panels; const h = x => esc(String(x??'-'));
-  const rows = [['답변 합격률 (비E형 447 · 이중판정)', p=>`<b>${h(p.합격률)}</b> (${h(p.합격)})`],['부분 / 0점', p=>`${h(p.부분)} / ${h(p['0점'])}`],
-    ['E형 부재 인정 / 환각 (유효 40)', p=>`${h(p.E부재)} / <b>${h(p.E환각)}</b>`],['검색 top5', p=>h(p.검색_top5)+(p.검색_주의?` <span class="hint" title="${esc(p.검색_주의)}">ⓘ</span>`:'')],['검색 top1', p=>h(p.검색_top1)],
-    ['검색 적중군 답변 합격률', p=>h(p.적중군)],['검색 미적중군 답변 합격률', p=>h(p.미적중군)],['앵커 120 합격', p=>h(p.앵커)],['과잉 거절 (정답 있는데 물러남)', p=>h(p.과잉거절)],
-    ['이중판정 일치', p=>h(p.일치)],['속도 (마우스 올리면 상세)', p=>`<span style="font-size:11px" title="${esc(p.속도||'')}">${h((p.속도||'').replace(/\s*\(.*?\)/g,'').split(' · ').slice(0,2).join(' · '))}</span>`]];
-  const head = P.map(p=>`<th title="형상: ${esc(p.형상)}">${esc(p.판)} <span class="hint">ⓘ</span></th>`).join('');
-  const body = rows.map(([nm,f])=>`<tr><td class="m">${nm}</td>${P.map(p=>`<td>${f(p)}</td>`).join('')}</tr>`).join('');
-  const shape = '';   // 형상은 열 제목 툴팁(마우스 올리면)으로 — 표 폭 절약
-  const docs = V.docs.map(d=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><span style="min-width:60px" class="hint">${esc(d.mtime)}</span><b>${esc(d.title)}</b><span class="hint">${esc(d.name)}</span>${d.viewable?`<button class="xtab" onclick="openVertexDoc('${encodeURIComponent(d.name)}','${esc(d.title)}')">열기</button>`:'<span class="hint">(xlsx — 전달함 사본)</span>'}</div>`).join('');
+  const short = p => p.판.replace(/\s*\(.*?\)\s*/g,'');                       // "Vertex 옵션 변경 판"
+  const spd = p => { const m=(p.속도||'').match(/P50 ([\d.]+)s/); return m? m[1]+'초' : ((p.속도||'').match(/(\d+)s P50/)||[])[1] ? ((p.속도||'').match(/(\d+)s P50/)[1]+'초') : '-'; };
+  const pct = x => (String(x||'').match(/\(([\d.]+%)\)/)||[])[1] || String(x||'-');
+  // ── 핵심 표: 판 5줄 × 4칸 — "누가 더 정확하고 누가 더 빨랐나" 한눈에
+  const main = `<table class="scoreTbl" style="font-size:13px"><thead><tr><th class="m">판</th><th>답변 합격률</th><th>E형 환각 (40)</th><th>앵커 120</th><th>답변 완료 속도</th></tr></thead><tbody>
+    ${P.map(p=>`<tr><td class="m" title="형상: ${esc(p.형상)}"><b>${esc(short(p))}</b> <span class="hint">${esc((p.판.match(/\((.*?)\)/)||[])[1]||'')}</span></td>
+      <td><b>${h(p.합격률)}</b></td><td>${p.E환각===0?'<b style="color:var(--ok,#3dd6b0)">0</b>':h(p.E환각)}</td><td>${h(pct(p.앵커))}</td><td title="${esc(p.속도||'')}">${spd(p)}${/서버 내부/.test(p.속도||'')?' <span class="hint">(서버)</span>':''}</td></tr>`).join('')}
+  </tbody></table>`;
+  // ── 상세 (접힘)
+  const rows = [['부분 / 0점', p=>`${h(p.부분)} / ${h(p['0점'])}`],['E형 부재 인정', p=>h(p.E부재)],['검색 top5', p=>h(p.검색_top5)],['검색 top1', p=>h(p.검색_top1)],
+    ['적중군 합격률', p=>h(p.적중군)],['미적중군 합격률', p=>h(p.미적중군)],['과잉 거절', p=>h(p.과잉거절)],['이중판정 일치', p=>h(p.일치)],['속도 상세', p=>`<span style="font-size:11px">${h(p.속도)}</span>`],['형상', p=>`<span style="font-size:11px;color:var(--tx2)">${esc(p.형상)}</span>`]];
+  const detail = `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">상세 지표 펼치기 (부분/0점 · 검색 · 적중군 · 과잉 거절 · 일치 · 속도 상세 · 형상)</summary>
+    <div style="overflow-x:auto;margin-top:6px"><table class="scoreTbl"><thead><tr><th class="m">지표</th>${P.map(p=>`<th>${esc(short(p))}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(([nm,f])=>`<tr><td class="m">${nm}</td>${P.map(p=>`<td>${f(p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="hint" style="margin-top:6px">Vertex 속도는 클라이언트 왕복, 자사는 서버 내부 시간(단위 다름). 자체 문서 판 검색은 문서 단위라 청크 단위 자사와 직접 비교하지 않음.</div></details>`;
+  const docs = V.docs.map(d=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><b style="min-width:0">${esc(d.title.split(' (')[0])}</b><span class="hint">${esc(d.mtime)}</span>${d.viewable?`<button class="xtab" onclick="openVertexDoc('${encodeURIComponent(d.name)}','${esc(d.title)}')">열기</button>`:'<span class="hint">xlsx · 전달함</span>'}</div>`).join('');
   $('view').innerHTML = `
-    <div class="card"><div class="score-row"><span><b>Vertex AI Search 대조군</b> — 같은 시험지(r2 488) · 같은 채점기</span><span></span><span class="hint">대조군 — 우리 시스템의 회차 흐름과 분리해서 봅니다</span></div>
-      <div class="hint" style="margin:4px 0 8px">${esc(V.미션)}</div>
-      <div class="note" style="margin-bottom:8px"><b>한 줄</b> — ${esc(V.한줄)}</div>
-      <div style="overflow-x:auto"><table class="scoreTbl"><thead><tr><th class="m">지표</th>${head}</tr></thead><tbody>${shape}${body}</tbody></table></div>
-      <div class="hint" style="margin-top:6px">Vertex 속도는 클라이언트(서울)→global 왕복, 자사는 서버 내부 시간 — 단위가 다릅니다. 자체 문서 판의 검색은 문서 단위라 청크 단위 자사와 직접 비교하지 않습니다(답변 합격률이 비교의 본체).</div>
+    <div class="card"><div class="score-row"><span><b>Vertex 비교</b> — 같은 시험지 488 · 같은 채점기</span><span></span><span class="hint">대조군</span></div>
+      <div class="hint" style="margin:2px 0 8px">자사 청크를 준 Vertex는 −11.5%p, <b>원본을 준 Vertex는 −1.4%p</b> → 격차의 본체는 청킹·색인. 자사가 앞선 곳: E형 환각 0. Vertex가 앞선 곳: 속도.</div>
+      <div style="overflow-x:auto">${main}</div>${detail}
     </div>
-    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>문서</b></span><span></span><span class="hint">금고 data/CI/08_scoring/</span></div>${docs}</div>
-    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>자원·비용</b></span></div><div class="hint">${esc(V.자원)}</div></div>`;
+    <div class="card" style="margin-top:10px"><div class="score-row"><span><b>문서</b></span></div>${docs}</div>
+    <div class="card" style="margin-top:10px"><div class="hint">${esc(V.자원)}</div></div>`;
 }
 async function openVertexDoc(name, title){
   const r = await fetch('/api/vertex-doc?name='+name).then(r=>r.json()).catch(()=>null);
