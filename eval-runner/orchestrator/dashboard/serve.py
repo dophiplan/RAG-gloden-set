@@ -175,6 +175,10 @@ def api_state():
         pm = re.search(r"_(\d+)문항_", latest.name) if latest else None
         ps["_qa"] = {"paper": N(latest.name), "n": int(pm.group(1)) if pm else None} if latest else None
         ps["_worker"] = _worker_alive(code)   # RUNNING 표시의 진위 판정용
+        try:
+            ps["_paper"] = _paper_track(code, ps)   # 새 세대 시험지 제작 트랙(r3~) 배지
+        except Exception as _e:
+            ps["_paper"] = {"gen": "r?", "stage": "상태 확인 실패", "tail": str(_e)}
     # 모델 모드 부가
     try:
         from model_adapter import detect_mode, effective_recheck_rate
@@ -307,6 +311,41 @@ def api_vertex_doc(name):
     if name not in allow:
         return None
     return (ci / name).read_text(encoding="utf-8")
+
+
+def _paper_track(code, ps):
+    """새 세대 시험지 제작 트랙(채점센터, 2026-09-10 난희 지적: 관제판이 '실물 채점'에 서 있어 r3 착수가 안 보임).
+    새 시험지는 파이프라인 단계(①~⑨)가 아니라 금고 data/<code>/09_r<N>_시험지/ 폴더로 진행되므로,
+    폴더 실물(설계서·파일럿·검증·발행본)과 열린 게이트로 단계를 읽어 진행선 배지 하나로 보인다."""
+    import glob as _g
+    dirs = sorted(_g.glob(str(ROOT / "data" / code / "09_r[0-9]*_시험지")))
+    if not dirs:
+        return None
+    d = Path(dirs[-1]); gen = re.search(r"09_(r\d+)_", d.name).group(1)
+    design = sorted(d.glob(f"{code}_{gen}_시험지_설계_v*.md"))
+    pilots = sorted(d.glob(f"{code}_{gen}_파일럿_*문항_v*.xlsx"))
+    pub = sorted((ROOT / "data" / code / "08_scoring").glob(f"{code}_질문셋_발행본_v{gen[1:]}_*.xlsx"))
+    verdict = None
+    vj = d / "_파일럿_verify.json"
+    if vj.exists():
+        try:
+            verdict = json.loads(vj.read_text(encoding="utf-8")).get("verdict")
+        except Exception:
+            verdict = "?"
+    gate = next((g["id"] for g in ps.get("open_gates", []) if g["id"].upper().startswith(gen.upper())), None)
+    n_pilot = int(re.search(r"_(\d+)문항_", pilots[-1].name).group(1)) if pilots else 0
+    if pub:
+        stage, tail = "발행 완료 — 응시 대기", f"팀장님께 발행본(ID·질문)만 전달: {N(pub[-1].name)}"
+    elif gate and pilots:
+        stage, tail = f"파일럿 {n_pilot}문항 검수 대기", f"지금: 검수큐 카드 {gate} → [👁 실물 보고 결정]에서 첫 탭(0_검수용)으로 {n_pilot}문항 확인 → 승인/반려. 승인 뒤 본출제 착수"
+    elif pilots:
+        stage, tail = f"파일럿 {n_pilot}문항 검증 {verdict or '중'}", "기계 게이트 통과 후 검수 카드가 뜹니다"
+    elif design:
+        stage, tail = "설계 중", f"설계서 {N(design[-1].name)} 작성 중"
+    else:
+        stage, tail = "착수", "재료 선정 중"
+    return {"gen": gen, "stage": stage, "tail": tail, "design": N(design[-1].name) if design else None,
+            "pilot": N(pilots[-1].name) if pilots else None, "verdict": verdict, "gate": gate, "dir": N(d.name)}
 
 
 def api_queue():

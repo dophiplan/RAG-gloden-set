@@ -629,12 +629,21 @@ function render(){
       title="외부 Q&A는 골든셋 본선(①~⑨)과 분리된 별도 트랙 (AI 없음 — 기계 문자 대조)&#10;분류 검수 → 시험지 발행 → 응답로그 대기 → 채점&#10;${esc(tail)}">🧩 외부 Q&A · ${stg}</span>
       <span class="hint" style="margin-left:8px">${esc(tail)}</span></div>`;
   }
+  // 새 세대 시험지 제작 트랙(r3~) — 파이프라인 단계가 아니라 금고 폴더로 진행되는 일. 외부 Q&A와 같은 배지 방식
+  // (난희 지적 2026-09-10: 진행선이 '실물 채점'에 서 있어 r3 착수가 관제판에 안 보였음)
+  let paperLane = '';
+  const pp = ps._paper;
+  if(pp){
+    paperLane = `<div style="margin:2px 0 10px"><span class="srcbadge src-gs" style="font-size:11px;padding:4px 11px"
+      title="새 시험지 세대는 ①~⑨ 진행선과 별개로 채점센터 금고(${esc(pp.dir||'')})에서 만든다&#10;설계 → 재료 선정 → 파일럿 검수(사람) → 본출제 → 앵커·E형 병합 → 발행본(ID·질문만) → 응시&#10;${esc(pp.tail||'')}">📝 ${esc(pp.gen)} 시험지 · ${esc(pp.stage)}</span>
+      <span class="hint" style="margin-left:8px">${esc(pp.tail||'')}</span></div>`;
+  }
   let html = `
   <div class="track-wrap">
     <div class="track-title">${esc(PV().name)} (${cur}) — 현역: <b style="color:var(--tx)">${esc(PV().gen)}</b>${legacyLine?` · 이전 세대: ${legacyLine}`:''}${stratSel}${expandBtn}${qaBtn}</div>
     ${renderAiTeam()}
     <div class="nextbar" id="nextbar">${nextbarHtml(na)}</div>
-    ${qaLane}
+    ${paperLane}${qaLane}
     <button class="archbtn" style="float:right;color:var(--bad,#e5534b);margin:-2px 0 4px" title="지금 돌고 있는 자동 작업을 즉시 종료해요 — 잘못 올린 파일 등. 산출물 정리는 별도" onclick="if(confirm('지금 진행 중인 자동 작업을 멈출까요?')) act({cmd:'stop', product:PV().code})">⏹ 멈추기</button>
     <div class="track" id="track">${stages.map((s,i)=>{
       const gate = GATE_DIAMOND.has(s.k)?'gate '+(s.cls==='done'?'':'human'):'';
