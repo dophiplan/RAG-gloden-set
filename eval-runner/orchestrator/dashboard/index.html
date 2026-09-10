@@ -967,9 +967,17 @@ function renderScores(ps){
   const LANE_LABEL={'정식 회차':'정식 회차 (검색축+생성축)','검색축 실험':'검색축 실험 (색인·옵션 — 검색만, 생성 미응시)','Vertex 대조군':'Vertex 대조군 (같은 시험지·같은 채점기)',
     '진단 — r2 시험지 top50 (참고)':'진단 — r2 시험지 top50 (참고, 폭 50 상한 실측)','이전 세대 — r1 시험지 1,033문항 (참고)':'이전 세대 — r1 시험지 1,033문항 (은퇴 · 참고 — r2와 시험지가 달라 건수 비교 안 함)','진단 — r1 시험지 top50 (참고)':'진단 — r1 시험지 top50 (참고)'};
   const byLane = sc=>{ const L={}; for(const [r,v] of Object.entries(sc||{})){ const k=v.lane||'_'; (L[k]=L[k]||{})[r]=v; } return L; };
-  const mkLanes = g=>{ const L=byLane(S.scores[g.code]); const keys=Object.keys(L);
-    if(keys.length<=1) return mk(g.label, S.scores[g.code], g.retired, g.code);
-    return LANE_ORDER.filter(k=>L[k] && k!=='Vertex 대조군').map(k=>mk(g.label+(k==='_'?'':' — '+LANE_LABEL[k]), L[k], g.retired, g.code)).filter(Boolean).join('<div style="height:6px"></div>'); };
+  // [2026-09-10 난희] 회차가 많아 월 필터 — 채점일 기준. 전체/7월/8월/9월 버튼, 선택은 localStorage에 기억. 회차가 2개월 이상 걸칠 때만 표시
+  const monthFilterHTML = (sc, key)=>{ const months=[...new Set(Object.values(sc||{}).map(v=>v.month).filter(Boolean))].sort(); if(months.length<2) return '';
+    const sel=localStorage.getItem('scmonth:'+key)||'all'; const cnt=m=>Object.values(sc).filter(v=>m==='all'||v.month===m).length;
+    const btn=(m,label)=>`<button class="xtab ${sel===m?'on':''}" onclick="localStorage.setItem('scmonth:${key}','${m}');render()">${label} <span class="hint">${cnt(m)}</span></button>`;
+    return `<div style="margin:0 0 6px">${btn('all','전체')}${months.map(m=>btn(m, parseInt(m.slice(5))+'월')).join('')}</div>`; };
+  const monthFiltered = (sc, key)=>{ const sel=localStorage.getItem('scmonth:'+key)||'all'; if(sel==='all') return sc; const o={}; for(const [r,v] of Object.entries(sc||{})) if(v.month===sel) o[r]=v; return o; };
+  const mkLanes = g=>{ const scAll=S.scores[g.code]; const sc=monthFiltered(scAll, g.code); const L=byLane(sc); const keys=Object.keys(L);
+    const filt=monthFilterHTML(scAll, g.code);
+    if(!keys.length) return filt+`<div class="note">이 달에는 채점된 회차가 없어요</div>`;
+    if(keys.length<=1) return filt+mk(g.label, sc, g.retired, g.code);
+    return filt+LANE_ORDER.filter(k=>L[k] && k!=='Vertex 대조군').map(k=>mk(g.label+(k==='_'?'':' — '+LANE_LABEL[k]), L[k], g.retired, g.code)).filter(Boolean).join('<div style="height:6px"></div>'); };
   const curBody = (displayGens.map(g=>mkLanes(g)).filter(Boolean).join('<div style="height:10px"></div>')
     || `<div class="note">아직 성적 없음 — 실물 채점 후 여기에 회차별로 쌓여요. (실측 전에는 아무 숫자도 안 보여주는 게 원칙)</div>`)
     + (qaBody?`<div style="height:10px"></div>`+qaBody:'')

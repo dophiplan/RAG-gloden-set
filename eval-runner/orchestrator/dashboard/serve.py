@@ -438,7 +438,14 @@ def api_scores():
             if ranks and max(ranks) > 5:
                 top1 = sum(1 for k in ranks if k == 1); top5 = sum(1 for k in ranks if k <= 5); top50 = len(ranks)
             search_only = all(r.get("생성") in (None, "미응시") for r in rep)   # 로그 실측으로 판정
+            # [2026-09-10 난희] 회차가 많아 월 필터 필요 → 채점일(meta) 기준 월 태그. 없으면 파일 mtime
+            try:
+                _meta = raw.get("meta", {}) if isinstance(raw, dict) else {}
+                _date = str(_meta.get("채점일") or "")[:10] or __import__("datetime").date.fromtimestamp(rp.stat().st_mtime).isoformat()
+            except Exception:
+                _date = ""
             out.setdefault("CI", {})[rnd] = {
+                "date": _date, "month": _date[:7],
                 "top1": top1, "top5": top5, **({"top50": top50} if top50 is not None else {}),
                 "pass": ("미응시" if search_only else g.get("pass", 0)),
                 "partial": ("미응시" if search_only else g.get("partial", 0)),
@@ -469,6 +476,7 @@ def api_scores():
                     mm = re.search(r"(\d+)\s*/\s*(\d+)", str(ent.get("채점", {}).get("기계대조_top50", "")))
                     if mm:
                         out.setdefault("CI", {})[key] = {
+                            "date": str(ent.get("일자") or ""), "month": str(ent.get("일자") or "")[:7],
                             "lane": ("진단 — r1 시험지 top50 (참고)" if key == "base50" else "진단 — r2 시험지 top50 (참고)"),
                             "top1": None, "top5": int(mm.group(1)), "n": int(mm.group(2)),
                             "pass": "미응시", "partial": "미응시", "검색축만": True,
