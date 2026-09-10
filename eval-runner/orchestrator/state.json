@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-10T14:38:34",
+  "updated": "2026-09-10T15:53:07",
   "products": {
     "RV2": {
       "stage": "SCORING",
@@ -2000,34 +2000,7 @@
           "done_at": "2026-08-27T01:03:22"
         }
       },
-      "open_gates": [
-        {
-          "id": "R3PILOT_CI",
-          "stage": "R3_PAPER",
-          "flags": [
-            {
-              "type": "G6 표_하위",
-              "id": "CI3-P10~P15",
-              "candidates": "해석 6문항",
-              "note": "두 행/두 단위 결합이 맞는지"
-            },
-            {
-              "type": "G3 의미대응",
-              "id": "14건",
-              "candidates": "build_r3_pilot.py 출력 목록",
-              "note": "반려 시 필수 요소를 발췌 원문 어구로 고침"
-            },
-            {
-              "type": "설계 확인",
-              "id": "①~④",
-              "candidates": "설계서 §7",
-              "note": "②는 파이프라인 재온보딩(--force) 여부라 난희 결정 필수"
-            }
-          ],
-          "acked": false,
-          "issued": "2026-09-10T14:38:34"
-        }
-      ],
+      "open_gates": [],
       "halt_reason": null,
       "strategy": "ensemble",
       "start_mode": "full",
