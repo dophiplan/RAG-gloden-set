@@ -129,7 +129,7 @@ def api_state():
                     kimi_ck = gdir / "judge_kimi_v1_1.json.ckpt"
                     rev_fin = gdir / "judge_claude_review.json"
                     rev_ck = gdir / "judge_claude_review.json.ckpt"
-                    _fin = gdir / "최종판정_488.json"
+                    _fin = gdir / "최종판정.json" if (gdir / "최종판정.json").exists() else gdir / "최종판정_488.json"   # r3(510)부터 별칭
                     if rev_fin.exists() and _fin.exists():
                         try:
                             _v = json.loads(_fin.read_text(encoding="utf-8"))
